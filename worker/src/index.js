@@ -30,7 +30,7 @@ async function askGemini({ image, prompt }, env) {
     body: JSON.stringify({
       system_instruction: { parts: [{ text: SAFETY_CORE }] },
       contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: imageParts(image) }] }],
-      generationConfig: { temperature: 0.25, maxOutputTokens: 220 }
+      generationConfig: { maxOutputTokens: 220 }
     }),
     signal: AbortSignal.timeout(45000)
   });
