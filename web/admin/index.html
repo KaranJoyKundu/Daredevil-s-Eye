@@ -1,1 +1,27 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin settings · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css"></head><body><main><h1>Admin / Settings</h1><p>These settings are saved only in this browser on this device.</p><form id="settings-form"><label for="camera">ESP32-CAM address</label><input id="camera" type="url" required placeholder="http://192.168.0.104"><label for="contact-name">Trusted contact name</label><input id="contact-name" maxlength="80"><label for="contact-phone">Trusted contact phone</label><input id="contact-phone" type="tel" maxlength="30"><label for="language">Speech language</label><select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select><label for="rate">Speech speed</label><input id="rate" type="range" min="0.7" max="1.3" step="0.1"><label for="prompt">Additional AI prompt (optional)</label><textarea id="prompt" maxlength="4000" placeholder="Example: Use simple language and keep answers to two short sentences."></textarea><p>The core safety instructions cannot be changed and are always applied after this additional prompt.</p><button type="submit">Save settings</button></form><p id="message" role="status" aria-live="polite"></p><nav class="navlinks"><a href="/action/">Home</a><a href="/diagnostics/">Diagnostics</a><a href="/privacy/">Privacy</a></nav></main><script type="module" src="/admin/admin.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin settings · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css"></head>
+<body><main>
+<h1>Admin / Settings</h1><p>These settings are saved only in this browser on this device.</p>
+<form id="settings-form">
+<label for="camera">ESP32-CAM address</label><input id="camera" type="text" inputmode="url" required placeholder="192.168.0.104 or http://192.168.0.104"><small>Enter an IP address or full URL. The app adds http:// if you omit it.</small>
+<label for="contact-name">Trusted contact name</label><input id="contact-name" maxlength="80">
+<label for="contact-phone">Trusted contact phone</label><input id="contact-phone" type="tel" maxlength="30">
+<label for="language">Speech language</label><select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
+<label for="rate">Speech speed</label><input id="rate" type="range" min="0.7" max="1.3" step="0.1">
+<label for="prompt">Additional AI prompt (optional)</label><textarea id="prompt" maxlength="4000" placeholder="Example: Use simple language and keep answers to two short sentences."></textarea>
+<p>The core safety instructions cannot be changed and are always applied after this additional prompt.</p><button type="submit">Save settings</button>
+</form><p id="message" role="status" aria-live="polite"></p>
+<section class="panel" aria-labelledby="image-test-title">
+<h2 id="image-test-title">Test an image with AI</h2>
+<p>Choose a photo to see exactly what will be sent to Gemini. This test sends the selected image to your configured AI backend.</p>
+<label for="test-image">Choose test image</label><input id="test-image" type="file" accept="image/jpeg,image/png,image/webp">
+<img id="test-preview" alt="Preview of the exact image selected for AI analysis" hidden style="display:none;max-width:100%;max-height:360px;object-fit:contain;border-radius:12px;margin-top:12px">
+<p id="image-details" aria-live="polite">No image selected.</p>
+<label for="test-question">Question (optional)</label><input id="test-question" type="text" maxlength="1000" placeholder="What can you see?">
+<button id="test-image-button" type="button" disabled>Send this image to AI</button>
+<p id="test-status" role="status" aria-live="polite"></p>
+<div id="test-result" class="panel" aria-live="polite"></div>
+</section>
+<nav class="navlinks"><a href="/action/">Home</a><a href="/diagnostics/">Diagnostics</a><a href="/privacy/">Privacy</a></nav>
+</main><script type="module" src="/admin/admin.js"></script></body></html>
