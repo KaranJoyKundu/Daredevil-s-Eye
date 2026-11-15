@@ -1,0 +1,3 @@
+# No provider keys are required in mock mode.
+AI_MODE=mock
+APP_ENV=development
