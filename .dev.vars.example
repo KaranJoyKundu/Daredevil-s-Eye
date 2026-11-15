@@ -1,3 +1,6 @@
-# No provider keys are required in mock mode.
-AI_MODE=mock
+# Copy this file to .dev.vars and insert your NEW Gemini API key locally.
+# Never commit .dev.vars or place the key in browser JavaScript.
+AI_MODE=gemini
 APP_ENV=development
+GEMINI_MODEL=gemini-2.5-flash
+GEMINI_API_KEY=PASTE_YOUR_NEW_KEY_HERE
