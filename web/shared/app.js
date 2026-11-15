@@ -1,7 +1,7 @@
-import { captureImage, blobToDataUrl } from './camera.js';
+import { captureImage, blobToDataUrl } from './camera.js?v=20261116-urlfix4';
 import { requestAI } from './api.js';
 import { speak, stopSpeaking, listenOnce } from './speech.js';
-import { getSettings, saveSettings } from './settings.js';
+import { getSettings, saveSettings } from './settings.js?v=20261116-urlfix4';
 const $ = s => document.querySelector(s), status = $('#status');
 function announce(message) { status.textContent = message; speak(message); }
 async function run(mode, question = '') {
