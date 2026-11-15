@@ -15,7 +15,7 @@
 <section class="panel" aria-labelledby="image-test-title">
 <h2 id="image-test-title">Test an image with AI</h2>
 <p>Choose a photo to see exactly what will be sent to Gemini. This test sends the selected image to your configured AI backend.</p>
-<label for="test-image">Choose test image</label><input id="test-image" type="file" accept="image/jpeg,image/png,image/webp">
+<label for="test-image">Choose test image</label><input id="test-image" type="file" accept="image/jpeg,image/png,image/webp"><button id="capture-camera-button" type="button">Capture a test photo from ESP32-CAM</button><p>Or choose a photo from your device. The preview below is the exact image sent to the AI.</p>
 <img id="test-preview" alt="Preview of the exact image selected for AI analysis" hidden style="display:none;max-width:100%;max-height:360px;object-fit:contain;border-radius:12px;margin-top:12px">
 <p id="image-details" aria-live="polite">No image selected.</p>
 <label for="test-question">Question (optional)</label><input id="test-question" type="text" maxlength="1000" placeholder="What can you see?">
