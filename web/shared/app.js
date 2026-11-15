@@ -12,6 +12,13 @@ async function run(mode, question = '') {
     const image = await blobToDataUrl(await captureImage());
     announce('Analysing the photo. Please wait.');
     const result = await requestAI(mode === 'ask' ? '/api/ask' : '/api/describe', { image, question, customPrompt: settings.customPrompt });
+    if (result.mock) {
+      const warning = 'AI is still in MOCK mode. No image was analysed. Stop Wrangler, remove any AI_MODE=mock setting, and restart with --var AI_MODE:gemini.';
+      $('#result').textContent = warning;
+      announce(warning);
+      return;
+    }
+    if (result.provider !== 'Gemini' || !result.answer) throw new Error('The AI backend did not return a verified Gemini answer.');
     $('#result').textContent = result.disclaimer + '\n\n' + result.answer;
     announce(result.answer);
   } catch (error) { announce(error.message || 'Something went wrong.'); }
