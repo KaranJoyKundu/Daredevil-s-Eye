@@ -15,7 +15,13 @@
 <section class="panel" aria-labelledby="image-test-title">
 <h2 id="image-test-title">Test an image with AI</h2>
 <p>Choose a photo to see exactly what will be sent to Gemini. This test sends the selected image to your configured AI backend.</p>
-<label for="test-image">Choose test image</label><input id="test-image" type="file" accept="image/jpeg,image/png,image/webp"><button id="capture-camera-button" type="button">Capture a test photo from ESP32-CAM</button><p>Or choose a photo from your device. The preview below is the exact image sent to the AI.</p>
+<h3>Manual image URL</h3>
+<label for="test-image-url">Paste a direct image URL</label><input id="test-image-url" type="text" inputmode="url" placeholder="https://example.com/photo.jpg">
+<button id="load-image-url" type="button">Load URL and preview image</button>
+<p>Or choose a file from your device, or capture a still photo directly from the ESP32-CAM.</p>
+<label for="test-image">Choose image file</label><input id="test-image" type="file" accept="image/jpeg,image/png,image/webp">
+<button id="capture-camera-button" type="button">Capture a test photo from ESP32-CAM</button>
+<p>The preview below shows the exact image that will be sent to Gemini.</p>
 <img id="test-preview" alt="Preview of the exact image selected for AI analysis" hidden style="display:none;max-width:100%;max-height:360px;object-fit:contain;border-radius:12px;margin-top:12px">
 <p id="image-details" aria-live="polite">No image selected.</p>
 <label for="test-question">Question (optional)</label><input id="test-question" type="text" maxlength="1000" placeholder="What can you see?">
@@ -24,4 +30,4 @@
 <div id="test-result" class="panel" aria-live="polite"></div>
 </section>
 <nav class="navlinks"><a href="/action/">Home</a><a href="/diagnostics/">Diagnostics</a><a href="/privacy/">Privacy</a></nav>
-</main><script type="module" src="/admin/admin.js"></script></body></html>
+</main><script type="module" src="/admin/admin.js?v=20261116-urlfix4"></script></body></html>
