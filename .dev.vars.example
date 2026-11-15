@@ -2,5 +2,5 @@
 # Never commit .dev.vars or place the key in browser JavaScript.
 AI_MODE=gemini
 APP_ENV=development
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-3.8-flash
 GEMINI_API_KEY=PASTE_YOUR_NEW_KEY_HERE
