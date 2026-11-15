@@ -10,4 +10,5 @@ not_found_handling = "single-page-application"
 
 [vars]
 APP_ENV = "development"
+AI_MODE = "gemini"
 GEMINI_MODEL = "gemini-3.8-flash"
