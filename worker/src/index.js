@@ -21,9 +21,14 @@ function imageParts(dataUrl) {
   return { mime_type: match[1].toLowerCase(), data: match[2] };
 }
 
+function getMode(env) {
+  const raw = String(env.AI_MODE ?? 'gemini').trim().toLowerCase();
+  return raw || 'gemini';
+}
+
 async function askGemini({ image, prompt }, env) {
-  if (!env.GEMINI_API_KEY) throw new Error('Gemini is selected but GEMINI_API_KEY is not configured in the local Worker secrets.');
-  const model = String(env.GEMINI_MODEL || 'gemini-2.5-flash').replace(/^models\//, '');
+  if (!env.GEMINI_API_KEY) throw new Error('Gemini is selected but GEMINI_API_KEY is not configured in .dev.vars. Add the key, stop Wrangler, and restart it.');
+  const model = String(env.GEMINI_MODEL || 'gemini-3.8-flash').replace(/^models\//, '');
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
@@ -39,6 +44,7 @@ async function askGemini({ image, prompt }, env) {
     const message = data?.error?.message || 'Gemini request failed.';
     if (response.status === 429) throw new Error('Gemini rate limit or quota reached. Check AI Studio usage and billing.');
     if (response.status === 401 || response.status === 403) throw new Error('Gemini rejected the API key. Check the local GEMINI_API_KEY setting.');
+    if (response.status === 404) throw new Error(`Gemini model "${model}" was not found or is unavailable for this key.`);
     throw new Error(message.slice(0, 300));
   }
   const answer = (data?.candidates?.[0]?.content?.parts || []).map(part => part.text || '').join('').trim();
@@ -48,13 +54,35 @@ async function askGemini({ image, prompt }, env) {
 
 export async function handleApi(request, env = {}) {
   const url = new URL(request.url);
-  const mode = env.AI_MODE || 'mock';
+  const mode = getMode(env);
+  const model = String(env.GEMINI_MODEL || 'gemini-3.8-flash');
+
   if (request.method === 'GET' && url.pathname === '/api/health') {
-    return json({ ok: true, mode, providerConnected: mode === 'gemini' && Boolean(env.GEMINI_API_KEY), message: mode === 'gemini' ? 'Gemini mode selected.' : 'Mock mode active; no live image analysis.' });
+    const apiKeyConfigured = Boolean(env.GEMINI_API_KEY);
+    const supportedMode = mode === 'gemini' || mode === 'mock';
+    return json({
+      ok: supportedMode,
+      mode,
+      model: mode === 'gemini' ? model : null,
+      apiKeyConfigured,
+      providerConnected: mode === 'gemini' && apiKeyConfigured,
+      mockModeExplicitlyEnabled: mode === 'mock',
+      message: !supportedMode
+        ? `Unsupported AI_MODE "${mode}". Use "gemini" or explicitly "mock".`
+        : mode === 'gemini'
+          ? (apiKeyConfigured ? 'Gemini mode selected; API key is loaded.' : 'Gemini mode selected, but GEMINI_API_KEY is missing.')
+          : 'Mock mode explicitly enabled; no live image analysis.'
+    }, supportedMode ? 200 : 503);
   }
+
   if (request.method === 'GET' && url.pathname === '/api/config') {
-    return json({ aiMode: mode, liveAIEnabled: mode === 'gemini', availableModes: Object.entries(DEFAULT_MODES).map(([id, m]) => ({ id, label: m.label, usesCamera: m.usesCamera })) });
+    return json({
+      aiMode: mode,
+      liveAIEnabled: mode === 'gemini',
+      availableModes: Object.entries(DEFAULT_MODES).map(([id, m]) => ({ id, label: m.label, usesCamera: m.usesCamera }))
+    });
   }
+
   if (request.method === 'POST' && ['/api/describe', '/api/ask'].includes(url.pathname)) {
     let body;
     try { body = await request.json(); } catch { return json({ error: 'Request body must be valid JSON.' }, 400); }
@@ -63,11 +91,18 @@ export async function handleApi(request, env = {}) {
     const action = url.pathname.endsWith('/ask') ? 'ask' : 'describe';
     if (!body.image) return json({ error: 'A camera image is required for this endpoint.' }, 400);
     if (action === 'ask' && !body.question?.trim()) return json({ error: 'Please provide a question.' }, 400);
+    if (mode !== 'gemini' && mode !== 'mock') {
+      return json({ error: `Unsupported AI_MODE "${mode}". Set AI_MODE=gemini in .dev.vars or wrangler.toml.` }, 503);
+    }
     const prompt = buildPrompt({ mode: action, question: body.question || '', customPrompt: body.customPrompt || '' });
     if (mode === 'gemini') {
       try {
         const answer = await askGemini({ image: body.image, prompt }, env);
-        return json({ ok: true, mock: false, provider: 'Gemini', answer, disclaimer: 'AI can miss objects and hazards. Do not rely on this description alone for mobility or safety decisions.' });
+        return json({
+          ok: true, mock: false, provider: 'Gemini',
+          answer,
+          disclaimer: 'AI can miss objects and hazards. Do not rely on this description alone for mobility or safety decisions.'
+        });
       } catch (error) {
         return json({ error: error.name === 'TimeoutError' ? 'Gemini timed out. Please try again.' : error.message || 'Gemini request failed.' }, 502);
       }
@@ -75,9 +110,9 @@ export async function handleApi(request, env = {}) {
     return json({
       ok: true, mock: true,
       answer: action === 'ask'
-        ? `Mock mode: I received your question: “${body.question.trim()}”. Real image analysis is not connected yet.`
-        : 'Mock mode: the camera request was received, but image analysis is not connected.',
-      receivedImage: Boolean(body.image), promptPreview: prompt,
+        ? `Mock mode: I received your question: “${body.question.trim()}”. No image analysis was performed.`
+        : 'Mock mode is explicitly enabled. No objects or hazards were identified.',
+      receivedImage: Boolean(body.image),
       disclaimer: 'SIMULATED RESPONSE — do not use this output to make mobility or safety decisions.'
     });
   }
