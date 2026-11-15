@@ -1,4 +1,4 @@
-export async function requestMockAI(path, payload = {}) {
+export async function requestAI(path, payload = {}) {
   const response = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload), cache: 'no-store' });
   let data;
   try { data = await response.json(); } catch { throw new Error('Backend returned an unreadable response.'); }
