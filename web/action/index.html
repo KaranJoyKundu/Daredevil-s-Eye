@@ -1,3 +1,17 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1728"><title>Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css"></head>
-<body><main><h1>Daredevil's Eye</h1><p id="status" role="status" aria-live="polite">Ready. Mock mode is active; image recognition is not connected.</p><section class="actions" aria-label="Main actions"><button data-action="describe">Describe surroundings</button><button data-action="ask">Ask about surroundings</button><button data-action="sos">SOS</button><a class="button" href="/help/">Help</a></section><form id="question-form"><label for="question">Type a question</label><input id="question" maxlength="1000" autocomplete="off"><button type="submit">Ask</button></form><section><h2>Response</h2><pre id="result">No response yet.</pre></section><p><a href="/admin/">Settings</a> · <a href="/privacy/">Privacy</a> · <a href="/diagnostics/">Diagnostics</a></p><section id="consent-panel"><p>Camera images are sent to this app's backend. Mock mode does not analyse them. Continue only when you understand this prototype.</p><button id="consent-accept" type="button">Accept and continue</button></section><button data-action="repeat">Repeat response</button><button data-action="stop">Stop speech</button></main><script type="module" src="/shared/app.js"></script></body></html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07111f"><title>Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css"></head>
+<body><main>
+<header><h1>Daredevil's Eye</h1><p class="subtitle">Your audio-first visual assistant</p></header>
+<p id="status" role="status" aria-live="polite">Ready. Choose an action.</p>
+<section class="actions" aria-label="Main actions">
+<button class="action-card describe" data-action="describe" aria-label="Describe. What's around me?"><span class="symbol" aria-hidden="true">▣</span><strong>DESCRIBE</strong><span>What's around me?</span></button>
+<button class="action-card ask" data-action="ask" aria-label="Ask AI. Ask a question"><span class="symbol" aria-hidden="true">🎙</span><strong>ASK AI</strong><span>Ask a question</span></button>
+<button class="action-card sos" data-action="sos" aria-label="SOS. Contact trusted person"><span class="symbol" aria-hidden="true">☎</span><strong>SOS</strong><span>Contact trusted person</span></button>
+<a class="action-card help" href="/help/" aria-label="Help. Instructions and support"><span class="symbol" aria-hidden="true">ⓘ</span><strong>HELP</strong><span>Instructions and support</span></a>
+</section>
+<form id="question-form"><label for="question">Or type a question</label><input id="question" maxlength="1000" autocomplete="off"><button type="submit">Ask AI</button></form>
+<section><h2>Response</h2><pre id="result">Your response will appear here and be spoken aloud.</pre></section>
+<nav class="navlinks"><a href="/admin/">Admin / Settings</a><a href="/diagnostics/">Diagnostics</a><a href="/privacy/">Privacy</a></nav>
+<section id="consent-panel"><p><strong>Before using:</strong> a photo from your ESP32-CAM is sent to the configured AI provider for analysis. Do not use descriptions as a guarantee of safety. Photos are not intentionally stored by this app.</p><button id="consent-accept" type="button">I understand — continue</button></section>
+<button data-action="repeat">Repeat response</button><button data-action="stop">Stop speech</button>
+</main><script type="module" src="/shared/app.js"></script></body></html>
