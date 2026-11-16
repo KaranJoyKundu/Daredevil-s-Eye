@@ -29,13 +29,3 @@ class_name = "SOSDirectory"
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["SOSDirectory"]
-
-[[ratelimits]]
-name = "APP_AI_LIMIT"
-namespace_id = "2002"
-simple = { limit = 12, period = 60 }
-
-[[ratelimits]]
-name = "APP_SOS_LIMIT"
-namespace_id = "2003"
-simple = { limit = 90, period = 60 }
