@@ -32,7 +32,7 @@
 - Public visitors share the same Gemini project quota; no per-user quota isolation is implemented.
 - Six-character invitations have limited entropy; expiry, single use and attempt limiting reduce but do not eliminate guessing risk.
 - A compromised receiver browser can expose its receiver token.
-- Public pairing can be abused to consume attempts; rate limits are best effort.
+- Public SOS pairing can be abused to consume code-guess attempts; the SOS directory has its own per-IP attempt handling, but there is no API-wide Cloudflare request limit.
 - Browser storage can be cleared or copied by a local user.
 - ESP32-CAM local HTTP may be unauthenticated and must not be exposed directly to the Internet.
 - Browser SOS does not guarantee delivery or audible output.
