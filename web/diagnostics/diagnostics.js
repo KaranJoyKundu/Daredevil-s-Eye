@@ -10,13 +10,13 @@ let micState={hardware:false,permission:false,recognition:false,transcript:'',er
 
 function getPhoneProfile(){
  const ua=navigator.userAgent||'';
- const androidMatch=ua.match(/Android\\s([0-9.]+)/i);
- const modelMatch=ua.match(/\\b(SM-[A-Z0-9]+)\\b/i);
- const browser=/SamsungBrowser\\//i.test(ua)?'Samsung Internet':
-  /EdgA\\//i.test(ua)?'Microsoft Edge for Android':
-  /CriOS\\//i.test(ua)?'Chrome for iOS':
-  /Chrome\\//i.test(ua)?'Chrome':
-  /Firefox\\//i.test(ua)?'Firefox':'Other / not identified';
+ const androidMatch=ua.match(/Android\s([0-9.]+)/i);
+ const modelMatch=ua.match(/\b(SM-[A-Z0-9]+)\b/i);
+ const browser=/SamsungBrowser\//i.test(ua)?'Samsung Internet':
+  /EdgA\//i.test(ua)?'Microsoft Edge for Android':
+  /CriOS\//i.test(ua)?'Chrome for iOS':
+  /Chrome\//i.test(ua)?'Chrome':
+  /Firefox\//i.test(ua)?'Firefox':'Other / not identified';
  const voices=window.speechSynthesis?.getVoices?.()||[];
  const banglaVoices=voices.filter(voice=>/^bn(?:-|$)/i.test(voice.lang||''));
  const mimeTypes=['audio/webm;codecs=opus','audio/mp4','audio/ogg;codecs=opus']
@@ -44,7 +44,7 @@ function getPhoneProfile(){
   '',
   'Target profile: Android 16 Samsung Galaxy (first reference device: Galaxy A55).',
   'Note: browsers may hide or reduce device details. Confirm the exact model in Android Settings → About phone.'
- ].join('\\n');
+ ].join('\n');
 }
 $('#run-phone-check').addEventListener('click',()=>{
  $('#phone-output').textContent=getPhoneProfile();
@@ -68,10 +68,10 @@ $('#test-motion-sensor').addEventListener('click',async()=>{
   window.addEventListener('devicemotion',listener,{passive:true});
   await new Promise(resolve=>setTimeout(resolve,5000));
   window.removeEventListener('devicemotion',listener);
-  $('#phone-output').textContent=getPhoneProfile()+'\\n\\nMotion permission: '+permission+'\\nMotion events received in 5 seconds: '+count+'\\nLast sensor magnitude: '+(lastMagnitude??'no usable reading')+'\\n\\nThis only confirms that readings reached the browser. It does not validate SOS sensitivity or false-trigger safety.';
+  $('#phone-output').textContent=getPhoneProfile()+'\n\nMotion permission: '+permission+'\nMotion events received in 5 seconds: '+count+'\nLast sensor magnitude: '+(lastMagnitude??'no usable reading')+'\n\nThis only confirms that readings reached the browser. It does not validate SOS sensitivity or false-trigger safety.';
   $('#phone-status').textContent=count?'Motion sensor delivered readings. Do not use this result as a safety guarantee.':'No motion readings received. Check browser permissions and device sensor availability.';
  }catch(error){
-  $('#phone-output').textContent=getPhoneProfile()+'\\n\\nMotion test failed: '+error.message;
+  $('#phone-output').textContent=getPhoneProfile()+'\n\nMotion test failed: '+error.message;
   $('#phone-status').textContent='Motion test could not complete: '+error.message;
  }finally{button.disabled=false;}
 });
@@ -204,7 +204,7 @@ async function systemCheck(){
    'Gemini API key configured: '+(health.providerConfigured?'yes':'no'),
    'Mock mode: '+(health.mockModeExplicitlyEnabled?'enabled':'disabled'),
    'Available generateContent models: '+(models.models?.length??'could not load'),
-   'Microphone secure context: '+(window.isSecureContext?'yes':'no'),\n   'Browser: '+(/SamsungBrowser\\//i.test(navigator.userAgent)?'Samsung Internet':/Chrome\\//i.test(navigator.userAgent)?'Chrome':'other / not identified'),\n   'Android version (if exposed): '+(navigator.userAgent.match(/Android\\s([0-9.]+)/i)?.[1]||'not exposed'),
+   'Microphone secure context: '+(window.isSecureContext?'yes':'no'),\n   'Browser: '+(/SamsungBrowser\//i.test(navigator.userAgent)?'Samsung Internet':/Chrome\//i.test(navigator.userAgent)?'Chrome':'other / not identified'),\n   'Android version (if exposed): '+(navigator.userAgent.match(/Android\s([0-9.]+)/i)?.[1]||'not exposed'),
    'SOS receiver relay: '+(health.sosRelayConfigured?'configured':'check Wrangler Durable Object binding')
   ];
   if(models.error)lines.push('Model list error: '+models.error);
