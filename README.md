@@ -37,7 +37,7 @@ Blind mode has no header, menu or on-screen exit control. Its four main tiles ar
 | Model handling | Ranked photo-understanding models; per-request fallback/rotation on model errors | Actual quota exhaustion and provider error testing |
 | Personal key | Optional Gemini key in current tab's session storage | Key lifecycle and security review |
 | Admin | Six quick-jump shortcuts to main setting areas | Usability feedback |
-| Diagnostics | Six checks, including Check all at once | Physical camera/mic/speaker checks |
+| Diagnostics | Phone/browser capability report, motion sensor test, camera, microphone, AI, speaker, system and combined checks | Physical A55 camera/mic/speaker and SOS tests |
 | SOS | Paired receiver relay, two-tap control, optional three-shake trigger and optional spoken wake phrase with confirmation | Sensor false-positive, voice phrase and two-phone testing |
 | Consent | Versioned local consent record | Privacy review and participant testing |
 
@@ -127,3 +127,8 @@ The Gemini key is uploaded as a Cloudflare Worker secret. Do not put secret valu
 - [Changelog](CHANGELOG.md)
 
 The feature branch contains work that is not live until it is reviewed and merged to `main`. Automated checks do not replace hands-on device verification or supervised testing with blind and low-vision participants.
+
+
+## Android 16 Samsung target
+
+The first reference device is Samsung Galaxy A55 5G on Android 16 / One UI 8. The site remains a standards-based web app/PWA, not a native Android app. Run the new phone and motion checks at `/diagnostics/` before relying on any optional sensor or speech feature. The browser may hide the exact model/OS, and capability detection does not prove real-world reliability. Use Chrome for the initial baseline, then test Samsung Internet separately. Voice SOS and shake SOS remain foreground-only experiments; they are not guaranteed while locked or in the background.
