@@ -67,12 +67,12 @@
 <option value="custom">Custom · use the sliders</option>
 </select>
 <label for="speech-engine">Speech engine</label>
-<select id="speech-engine"><option value="device">Device voices (no extra AI request)</option><option value="gemini">Gemini studio voices (additional API usage)</option></select>
+<select id="speech-engine"><option value="device">Device voices (recommended; no extra AI request)</option><option value="gemini" disabled>Gemini studio voices (not available in this build)</option></select>
 <label for="gemini-voice">Gemini voice library</label>
 <select id="gemini-voice"></select>
 <label for="gemini-voice-style">Gemini voice delivery</label>
 <input id="gemini-voice-style" type="text" maxlength="300" placeholder="Warm, gentle, calm, friendly, natural adult feminine-presenting voice">
-<p class="hint">Gemini offers 14 prebuilt female voices, along with other voices. Choose a voice and preview it. Generating previews and speaking answers uses additional Gemini API requests.</p>
+<p class="hint">Gemini offers 14 prebuilt female voices, along with other voices. Gemini TTS is not wired to this Worker yet. Use device voices for the live demo; Gemini TTS can be added in a later phase.</p>
 <label for="voice-select">Installed voice on this device</label>
 <select id="voice-select"><option value="">Automatic device voice</option></select>
 <p id="voice-status" class="hint">Voice options depend on the voices installed in your browser or operating system.</p>

@@ -44,7 +44,7 @@ async function announceAnswer(message, disclaimer='') {
   const displayPromise=revealWords(output,message,runId);
   const speechPromise=speakResponse(message,{
     lang:spokenLanguage,
-    engine:settings.speechEngine,
+    engine:settings.speechEngine==='gemini'?'device':settings.speechEngine,
     onFallback:error=>{if(status)status.textContent='Using the device voice because the selected speech service failed: '+error.message;}
   });
   await Promise.allSettled([displayPromise,speechPromise]);

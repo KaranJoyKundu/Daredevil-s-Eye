@@ -49,7 +49,7 @@ $('#contact-phone').value=saved.emergencyPhone;
 $('#sos-code').value=saved.sosPairingCode;
 $('#language').value=saved.speechLanguage;
 $('#voice-preset').value=saved.speechPreset;
-$('#speech-engine').value=saved.speechEngine;
+$('#speech-engine').value=saved.speechEngine==='gemini'?'device':saved.speechEngine;
 $('#gemini-voice-style').value=saved.geminiTtsStyle;
 $('#speech-rate').value=saved.speechRate;
 $('#speech-pitch').value=saved.speechPitch;
