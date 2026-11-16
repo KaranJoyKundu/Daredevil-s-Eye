@@ -34,7 +34,7 @@ This roadmap replaces the old token/rate-limit checklist, which no longer descri
 - [x] Up to three camera frames and sharpness-based best-frame selection.
 - [x] Phone-control setup documentation and empty real-scene scorecard template.
 - [x] Project phone/WhatsApp contact link.
-- [ ] Latest PR CI rerun after correcting the test's model-rotation order assumption; verify the complete test count and JavaScript syntax check before merge. PR deployment is skipped by design.
+- [x] PR CI passed on commit c4a9895: 50 tests, 0 failures; JavaScript syntax check passed. Production deployment was skipped for the PR.
 - [ ] Android Chrome hands-on voice test with English, Bangla and mixed-language speech.
 - [ ] Confirm Bengali voice installation and pronunciation; source code cannot install phone TTS language data.
 - [ ] TalkBack test of Blind mode, focus order, touch targets and spoken status.
