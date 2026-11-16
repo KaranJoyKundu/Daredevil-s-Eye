@@ -24,7 +24,10 @@ const TRANSCRIPTION_MODELS = [
   'gemini-3.5-transcribe'
 ];
 const STATIC_VISION_FALLBACKS = VISION_MODEL_PRIORITY.slice(1);
+const LOW_COST_TRANSCRIPTION_MODELS = TRANSCRIPTION_MODELS.slice(0, 2);
+const HIGHER_COST_TRANSCRIPTION_FALLBACKS = TRANSCRIPTION_MODELS.slice(2);
 let visionRotation = 0;
+let transcriptionRotation = 0;
 let modelCache = { tag: '', expiresAt: 0, models: [] };
 
 function providerKey(request, env) {
@@ -100,6 +103,12 @@ export function rankVisionModels(models) {
         /flash-lite/i.test(model.id) ? 'Economy / low-latency' :
           /pro/i.test(model.id) ? 'Advanced reasoning' : 'Balanced multimodal'
     }));
+}
+
+export function getTranscriptionModelOrder() {
+  const first = LOW_COST_TRANSCRIPTION_MODELS[transcriptionRotation % LOW_COST_TRANSCRIPTION_MODELS.length];
+  transcriptionRotation = (transcriptionRotation + 1) % LOW_COST_TRANSCRIPTION_MODELS.length;
+  return [first, ...LOW_COST_TRANSCRIPTION_MODELS.filter(model => model !== first), ...HIGHER_COST_TRANSCRIPTION_FALLBACKS];
 }
 
 export async function listGeminiModels(apiKey) {
@@ -223,7 +232,7 @@ async function transcribeGemini(audio, apiKey) {
     'For mixed Bengali and English, translate Bengali portions and return one clear English question.',
     'Do not add explanations, labels, quotation marks, or commentary. Do not invent words that are unclear.'
   ].join(' ');
-  const candidates = TRANSCRIPTION_MODELS;
+  const candidates = getTranscriptionModelOrder();
   const attempted = [];
   let lastFailure = '';
   for (const candidate of candidates) {

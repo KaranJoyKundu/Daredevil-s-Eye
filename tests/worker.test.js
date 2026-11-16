@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {handleApi,rankVisionModels} from '../worker/src/index.js';
+import {handleApi,rankVisionModels,getTranscriptionModelOrder} from '../worker/src/index.js';
 import {detectSpokenLanguage} from '../web/shared/speech.js';
 
 const req=(path,body,headers={})=>new Request('https://local.test'+path,{
@@ -162,4 +162,15 @@ test('spoken language detection uses script content rather than the speaker acce
  assert.equal(detectSpokenLanguage('আমি কোথায় যাব?'),'bn-BD');
  assert.equal(detectSpokenLanguage('Where should I go?'),'en-US');
  assert.equal(detectSpokenLanguage('A Bangladeshi accent speaking English'),'en-US');
+});
+
+test('voice transcription rotates its two low-cost first-choice models before higher-cost fallbacks',()=>{
+ const first=getTranscriptionModelOrder();
+ const second=getTranscriptionModelOrder();
+ assert.equal(first[0],'gemini-3.1-flash-lite');
+ assert.equal(second[0],'gemini-3.5-flash-lite');
+ assert.equal(first[1],'gemini-3.5-flash-lite');
+ assert.equal(second[1],'gemini-3.1-flash-lite');
+ assert.equal(first[2],'gemini-3.8-flash');
+ assert.equal(first[3],'gemini-3.5-transcribe');
 });
