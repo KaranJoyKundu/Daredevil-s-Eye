@@ -11,6 +11,7 @@ if(!getAccessToken()){
 try{await verifyAccessToken(getAccessToken());}
 catch{location.replace('/access/?next='+encodeURIComponent(location.pathname));throw new Error('Private app access required.');}
 let latestCameraBlob=null,latestCameraUrl=null,selectedAiFile=null,micController=null;
+let micState={hardware:false,permission:false,recognition:false,transcript:'',error:''};
 
 async function runCamera(){
  const button=$('#run-camera');button.disabled=true;
@@ -43,17 +44,20 @@ $('#download-camera-image').addEventListener('click',()=>{
 });
 
 async function startMic(){
+ micState={hardware:false,permission:false,recognition:false,transcript:'',error:''};
  $('#mic-transcript').value='';
  $('#mic-status').textContent='Requesting microphone permission…';
  $('#run-mic').disabled=true;$('#stop-mic').disabled=false;
  micController=await listenOnce({
   lang:getSettings().speechLanguage,
+  onPermission:()=>{micState.hardware=true;micState.permission=true;$('#mic-status').textContent='Microphone found and permission granted. Starting recognition…';},
+  onStart:()=>{micState.recognition=true;$('#mic-status').textContent='Speech recognition started. Say a sentence…';},
   onInterim:text=>{$('#mic-transcript').value=text;$('#mic-status').textContent='Listening: '+text;},
-  onResult:text=>{$('#mic-transcript').value=text;$('#mic-status').textContent='Speech recognised.';},
-  onError:error=>{$('#mic-status').textContent=error;},
+  onResult:text=>{micState.transcript=text;$('#mic-transcript').value=text;$('#mic-status').textContent='Speech recognised.';},
+  onError:error=>{micState.error=error;$('#mic-status').textContent=error;},
   onEnd:()=>{
    $('#run-mic').disabled=false;$('#stop-mic').disabled=true;
-   if($('#mic-status').textContent.startsWith('Listening'))$('#mic-status').textContent='Listening ended. No final transcript was recognised.';
+   if(!micState.transcript&&!micState.error){micState.error='No speech was recognised. Speak clearly and try again.';$('#mic-status').textContent=micState.error;}
   }
  });
  if(!micController){$('#run-mic').disabled=false;$('#stop-mic').disabled=true;return null;}
@@ -102,14 +106,17 @@ $('#run-ai-test').addEventListener('click',runAiTest);
 
 async function runSpeaker(){
  const settings=getSettings();
- const text='Hello. This is a voice test for Daredevil’s Eye. I will speak clearly and calmly.';
+ const text=settings.speechLanguage==='bn-BD'
+  ? 'হ্যালো। এটি ডেয়ারডেভিলস আই-এর কণ্ঠস্বর পরীক্ষা। আমি পরিষ্কার ও শান্তভাবে কথা বলব।'
+  : 'Hello. This is a voice test for Daredevil’s Eye. I will speak clearly and calmly.';
  try{
   if(settings.speechEngine==='gemini'){
    await speakResponse(text,{engine:'gemini',voice:settings.geminiTtsVoice,style:settings.geminiTtsStyle,lang:settings.speechLanguage,fallback:false});
   }else{
-   speak(text,{lang:settings.speechLanguage,rate:settings.speechRate,pitch:settings.speechPitch,voiceURI:settings.speechVoiceURI});
+   const utterance=speak(text,{lang:settings.speechLanguage,rate:settings.speechRate,pitch:settings.speechPitch,voiceURI:settings.speechVoiceURI});
+   if(!utterance)throw new Error('This browser does not provide device speech synthesis.');
   }
-  $('#speaker-status').textContent='Playing the selected voice.';
+  $('#speaker-status').textContent='Speech playback was started. Confirm that you can hear it.';
   return true;
  }catch(error){$('#speaker-status').textContent='Speaker test failed: '+error.message;return false;}
 }
@@ -151,27 +158,27 @@ $('#run-all-tests').addEventListener('click',async()=>{
  // Start the microphone permission request immediately within the click action.
  const micStart=startMic();
  const sysPromise=systemCheck();
- report.push('Microphone: permission request started.');
  const cameraOK=await runCamera();
- report.push('Camera: '+(cameraOK?'PASS':'FAILED'));
+ report.push('CAMERA HARDWARE / CAPTURE: '+(cameraOK?'PASS':'FAIL — '+$('#camera-status').textContent));
  const mic=await micStart;
  if(mic){
-  $('#all-tests-status').textContent='Speak now for the microphone test (up to 6 seconds)…';
-  await new Promise(resolve=>setTimeout(resolve,6000));
+  $('#all-tests-status').textContent='Microphone is listening. Speak a complete sentence now…';
+  await new Promise(resolve=>setTimeout(resolve,8000));
   try{mic.stop();}catch{}
   micController=null;$('#run-mic').disabled=false;$('#stop-mic').disabled=true;
-  report.push('Microphone permission: PASS. Transcript: '+($('#mic-transcript').value||'(no speech recognised)'));
- }else{
-  report.push('Microphone: '+$('#mic-status').textContent);
  }
+ report.push('MICROPHONE HARDWARE: '+(micState.hardware?'PASS':'NOT CONFIRMED'));
+ report.push('MICROPHONE PERMISSION: '+(micState.permission?'PASS':'FAIL — '+(micState.error||$('#mic-status').textContent)));
+ report.push('SPEECH RECOGNITION START: '+(micState.recognition?'PASS':'FAIL / UNSUPPORTED'));
+ report.push('SPEECH TRANSCRIPTION: '+(micState.transcript?'PASS — '+micState.transcript:'FAIL — '+(micState.error||'No final transcript was received.')));
  const systemOK=await sysPromise;
- report.push('System/backend: '+(systemOK?'PASS':'CHECK OUTPUT ABOVE'));
- if(cameraOK){
+ report.push('BACKEND / MODEL / SOS: '+(systemOK?'PASS':'CHECK — '+$('#system-output').textContent));
+ if(cameraOK||selectedAiFile){
   const aiOK=await runAiTest();
-  report.push('Gemini image analysis: '+(aiOK?'PASS':'FAILED'));
- }else report.push('Gemini image analysis: SKIPPED because camera failed.');
+  report.push('GEMINI IMAGE ANALYSIS: '+(aiOK?'PASS':'FAIL — '+$('#ai-status').textContent));
+ }else report.push('GEMINI IMAGE ANALYSIS: SKIPPED — provide a camera photo or image file.');
  const speakerOK=await runSpeaker();
- report.push('Speaker: '+(speakerOK?'PASS':'FAILED'));
+ report.push('SPEAKER PLAYBACK START: '+(speakerOK?'REQUEST SENT — confirm you heard it':'FAIL — '+$('#speaker-status').textContent));
  $('#all-tests-output').textContent=report.join('\n\n');
  $('#all-tests-status').textContent='Combined check finished. Review each individual test and any errors above.';
  button.disabled=false;
