@@ -88,7 +88,7 @@ test('SOS endpoints fail clearly when the durable room is not configured',async(
  assert.match(d.error,/SOS relay is not configured/);
 });
 test('health reports whether SOS relay is configured',async()=>{
- const r=await handleApi(health(),{SOS_ROOM:{}});
+ const r=await handleApi(new Request('https://local.test/api/health'),{SOS_ROOM:{}});
  const d=await r.json();
  assert.equal(d.sosRelayConfigured,true);
 });
