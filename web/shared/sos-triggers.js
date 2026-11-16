@@ -30,7 +30,7 @@ export function createShakeSequenceTracker({
 }
 function normaliseTranscript(value) {
   return String(value || '').normalize('NFKC').toLocaleLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
+    .replace(/[^\p{L}\p{M}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
 }
 export function matchSosVoiceCommand(transcript, phase = 'wake') {
   const text = normaliseTranscript(transcript);
