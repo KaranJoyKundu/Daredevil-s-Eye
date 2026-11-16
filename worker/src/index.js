@@ -26,30 +26,65 @@ function getMode(env) {
   return raw || 'gemini';
 }
 
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 async function askGemini({ image, prompt }, env) {
   if (!env.GEMINI_API_KEY) throw new Error('Gemini is selected but GEMINI_API_KEY is not configured in .dev.vars. Add the key, stop Wrangler, and restart it.');
   const model = String(env.GEMINI_MODEL || 'gemini-3.8-flash').replace(/^models\//, '');
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: SAFETY_CORE }] },
-      contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: imageParts(image) }] }],
-      generationConfig: { maxOutputTokens: 220 }
-    }),
-    signal: AbortSignal.timeout(45000)
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const requestBody = {
+    system_instruction: { parts: [{ text: SAFETY_CORE }] },
+    contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: imageParts(image) }] }],
+    generationConfig: {
+      maxOutputTokens: 220,
+      // Low thinking is supported by Gemini 3.8 Flash and reduces latency for
+      // short, factual scene descriptions.
+      thinkingConfig: { thinkingLevel: 'low' }
+    }
+  };
+
+  // Gemini can be temporarily overloaded. Retry one 503 with a short backoff;
+  // don't retry 429 because that may represent an exhausted quota.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    let response;
+    try {
+      response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+        body: JSON.stringify(requestBody),
+        // Direct PowerShell vision test needed up to 90 seconds. The previous
+        // 45-second Worker deadline could abort a valid but slow Gemini reply.
+        signal: AbortSignal.timeout(120000)
+      });
+    } catch (error) {
+      if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+        throw new Error('Gemini did not respond within 120 seconds. The camera photo was captured, but the AI provider took too long. Try again once; repeated timeouts may indicate temporary Gemini congestion.');
+      }
+      throw new Error('Could not reach the Gemini API: ' + (error.message || 'network error'));
+    }
+
+    const data = await response.json().catch(() => ({}));
+    if (response.ok) {
+      const answer = (data?.candidates?.[0]?.content?.parts || []).map(part => part.text || '').join('').trim();
+      if (!answer) throw new Error('Gemini returned no readable answer. Please try another photo.');
+      return answer;
+    }
+
     const message = data?.error?.message || 'Gemini request failed.';
     if (response.status === 429) throw new Error('Gemini rate limit or quota reached. Check AI Studio usage and billing.');
     if (response.status === 401 || response.status === 403) throw new Error('Gemini rejected the API key. Check the local GEMINI_API_KEY setting.');
     if (response.status === 404) throw new Error(`Gemini model "${model}" was not found or is unavailable for this key.`);
+
+    if (response.status === 503 && attempt === 0) {
+      await wait(1500);
+      continue;
+    }
+    if (response.status === 503 || response.status === 504) {
+      throw new Error(`Gemini is temporarily overloaded or exceeded its processing deadline (HTTP ${response.status}). Please retry shortly.`);
+    }
     throw new Error(message.slice(0, 300));
   }
-  const answer = (data?.candidates?.[0]?.content?.parts || []).map(part => part.text || '').join('').trim();
-  if (!answer) throw new Error('Gemini returned no readable answer. Please try another photo.');
-  return answer;
+  throw new Error('Gemini request failed after retry.');
 }
 
 export async function handleApi(request, env = {}) {
@@ -104,7 +139,7 @@ export async function handleApi(request, env = {}) {
           disclaimer: 'AI can miss objects and hazards. Do not rely on this description alone for mobility or safety decisions.'
         });
       } catch (error) {
-        return json({ error: error.name === 'TimeoutError' ? 'Gemini timed out. Please try again.' : error.message || 'Gemini request failed.' }, 502);
+        return json({ error: error.message || 'Gemini request failed.' }, 502);
       }
     }
     return json({
