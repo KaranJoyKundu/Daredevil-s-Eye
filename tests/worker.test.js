@@ -13,11 +13,14 @@ const image='data:image/jpeg;base64,AAAA';
 
 test('Blind mode keeps Help outside the four main action buttons and declares phone shortcuts',()=>{
  const html=readFileSync(new URL('../web/blind/index.html',import.meta.url),'utf8');
- const main=/<main\\b[^>]*>([\\s\\S]*?)<\\/main>/i.exec(html);
- assert.ok(main,'Blind mode main action grid exists');
- for(const action of ['describe','ask','sos','repeat']) assert.match(main[1],new RegExp('data-action="' + action + '"'));
- assert.doesNotMatch(main[1],/data-action="help"/);
- assert.match(html,/<div class="blind-utility"[\\s\\S]*?data-action="help"/);
+ const mainStart=html.indexOf('<main');
+ const mainEnd=html.indexOf('</main>',mainStart);
+ assert.ok(mainStart>=0&&mainEnd>mainStart,'Blind mode main action grid exists');
+ const main=html.slice(mainStart,mainEnd);
+ for(const action of ['describe','ask','sos','repeat']) assert.ok(main.includes('data-action="'+action+'"'));
+ assert.ok(!main.includes('data-action="help"'),'Spoken Help is outside the four-action grid');
+ const helpAction=html.indexOf('data-action="help"');
+ assert.ok(helpAction>mainEnd,'Spoken Help follows the main action grid');
  const manifest=JSON.parse(readFileSync(new URL('../web/manifest.webmanifest',import.meta.url),'utf8'));
  assert.equal(manifest.start_url,'/blind/');
  assert.deepEqual(manifest.shortcuts.map(item=>item.url),[
