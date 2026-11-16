@@ -4,7 +4,7 @@
 
 - Added versioned privacy consent, migration from the first prototype and reset control.
 - Added owner-token protection for private Worker APIs.
-- Added Cloudflare approximate rate-limit bindings.
+- Removed app access-token login; the public demo uses Google's own Gemini quota without additional Cloudflare request limits.
 - Added per-install SOS rooms, one-time six-character invitations, expiry, attempt limiting, receiver-scoped tokens and session replacement.
 - Removed the need for the trusted receiver to know the owner app/Gemini token.
 - Added Bangladeshi Bengali response-language instructions.
