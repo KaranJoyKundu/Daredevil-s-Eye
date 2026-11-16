@@ -14,6 +14,11 @@ for(const [label,href] of links){
   menu.append(link);
 }
 document.body.prepend(bar);
-document.addEventListener('keydown',event=>{
-  if(event.key==='Escape')bar.querySelector('details')?.removeAttribute('open');
+const details=bar.querySelector('details');
+document.addEventListener('pointerdown',event=>{
+  if(details?.open&&!bar.querySelector('.site-menu')?.contains(event.target))details.removeAttribute('open');
 });
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape')details?.removeAttribute('open');
+});
+bar.querySelectorAll('.site-menu nav a').forEach(link=>link.addEventListener('click',()=>details?.removeAttribute('open')));
