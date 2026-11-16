@@ -35,7 +35,7 @@
 <select id="model"><option value="gemini-3.8-flash">Gemini 3.8 Flash (configured default)</option></select>
 <div class="inline-actions"><button id="refresh-models" type="button" class="secondary">Refresh available models</button></div>
 <p id="model-status" class="hint" role="status" aria-live="polite">Loading models enabled for this public demo…</p>
-<small>The public demo only exposes models enabled in the server-side allowlist to limit Gemini quota exposure. The current public deployment enables Gemini 3.8 Flash.</small>
+<small>The model list is retrieved from Google's Models API for your Gemini key. Google controls which models are available to your API project and applies its free-tier request/token quotas.</small>
 <div class="field-grid">
 <div><label for="wait-seconds">Maximum wait for Gemini</label>
 <select id="wait-seconds">
