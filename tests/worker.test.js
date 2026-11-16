@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {handleApi,rankVisionModels} from '../worker/src/index.js';
+import {detectSpokenLanguage} from '../web/shared/speech.js';
 
 const req=(path,body,headers={})=>new Request('https://local.test'+path,{
  method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(body)
@@ -155,4 +156,10 @@ test('transcription endpoint reports missing provider key without storing audio'
  const d=await r.json();
  assert.equal(r.status,502);
  assert.match(d.error,/No Gemini API key is available/i);
+});
+
+test('spoken language detection uses script content rather than the speaker accent',()=>{
+ assert.equal(detectSpokenLanguage('আমি কোথায় যাব?'),'bn-BD');
+ assert.equal(detectSpokenLanguage('Where should I go?'),'en-US');
+ assert.equal(detectSpokenLanguage('A Bangladeshi accent speaking English'),'en-US');
 });

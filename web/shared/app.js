@@ -7,6 +7,7 @@ import { hasCurrentConsent, acceptConsent } from './consent.js?v=20261116-voice1
 const $ = selector => document.querySelector(selector);
 const status = $('#status');
 let activeRecognition = null;
+let voiceStarting = false;
 let phonePhoto = null;
 let revealRun = 0;
 
@@ -87,6 +88,11 @@ async function run(mode, question = '', imageOverride = null) {
 }
 
 async function startVoiceQuestion() {
+  if(voiceStarting)return;
+  voiceStarting=true;
+  try{
+  try{activeRecognition?.stop();}catch{}
+  activeRecognition=null;
   if(status)status.textContent='Requesting microphone permission…';
   activeRecognition=await listenOnce({
     lang:getSettings().speechLanguage,
@@ -100,6 +106,7 @@ async function startVoiceQuestion() {
     onEnd:()=>{if(status?.textContent.startsWith('Listening')||status?.textContent.startsWith('The browser'))status.textContent='No speech was recognised. You can try again or type your question.';}
   });
   if(!activeRecognition)$('#question')?.focus();
+  }finally{voiceStarting=false;}
 }
 
 async function sendSos() {
