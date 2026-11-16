@@ -61,11 +61,21 @@ export class SOSDirectory {
       if (!/^[A-Z0-9]{6}$/.test(code)) return json({ ok: false, error: 'Enter the six-character SOS code.' }, 400);
       const ip = request.headers.get('cf-connecting-ip') || 'local-development';
       const ipHash = await hash(ip);
-      const minuteBucket = Math.floor(Date.now() / 60000);
-      const attemptsKey = 'attempts:' + ipHash + ':' + minuteBucket;
-      const attempts = (await this.state.storage.get(attemptsKey)) || 0;
-      if (attempts >= 8) return json({ ok: false, error: 'Too many pairing attempts. Wait one minute and try again.' }, 429);
-      await this.state.storage.put(attemptsKey, attempts + 1, { expirationTtl: 120 });
+      const now = Date.now();
+      const attemptsKey = 'attempts:' + ipHash;
+      let attemptRecord = await this.state.storage.get(attemptsKey);
+      if (!attemptRecord || now - attemptRecord.windowStartedAt >= 60000) {
+        attemptRecord = { windowStartedAt: now, count: 0 };
+      }
+      if (attemptRecord.count >= 8) return json({ ok: false, error: 'Too many pairing attempts. Wait one minute and try again.' }, 429);
+      await this.state.storage.put(attemptsKey, { ...attemptRecord, count: attemptRecord.count + 1 });
+      // Keep only recent attempt buckets so the directory does not grow forever.
+      if (attemptRecord.count % 4 === 0) {
+        const oldAttempts = await this.state.storage.list({ prefix: 'attempts:' });
+        for (const [key, value] of oldAttempts) {
+          if (now - value.windowStartedAt > 120000) await this.state.storage.delete(key);
+        }
+      }
 
       const codeHash = await hash(code);
       const inviteKey = 'invite:' + codeHash;
