@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07111f"><title>Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css"></head>
+<body><main>
+<header><h1>Daredevil's Eye</h1><p class="subtitle">Your audio-first visual assistant</p></header>
+<p id="status" role="status" aria-live="polite">Ready. Choose an action.</p>
+<section class="actions" aria-label="Main actions">
+<button class="action-card describe" data-action="describe" aria-label="Describe. What's around me?"><span class="symbol" aria-hidden="true">▣</span><strong>DESCRIBE</strong><span>What's around me?</span></button>
+<button class="action-card ask" data-action="ask" aria-label="Ask AI. Ask a question"><span class="symbol" aria-hidden="true">🎙</span><strong>ASK AI</strong><span>Ask a question</span></button>
+<button class="action-card sos" data-action="sos" aria-label="SOS. Contact trusted person"><span class="symbol" aria-hidden="true">☎</span><strong>SOS</strong><span>Contact trusted person</span></button>
+<a class="action-card help" href="/help/" aria-label="Help. Instructions and support"><span class="symbol" aria-hidden="true">ⓘ</span><strong>HELP</strong><span>Instructions and support</span></a>
+</section>
+<a id="sos-call-link" class="button" href="#" hidden style="display:none">Call trusted contact</a>
+<label class="button" for="phone-photo">Use phone camera / upload photo</label><input id="phone-photo" type="file" accept="image/*" capture="environment" hidden>
+<form id="question-form"><label for="question">Or type a question</label><input id="question" maxlength="1000" autocomplete="off"><button type="submit">Ask AI</button></form>
+<section><h2>Response</h2><pre id="result">Your response will appear here and be spoken aloud.</pre></section>
+<nav class="navlinks"><a href="/access/">Unlock</a><a href="/admin/">Admin / Settings</a><a href="/diagnostics/">Diagnostics</a><a href="/contact/">Contact</a><a href="/sos-receiver/">SOS Receiver</a><a href="/privacy/">Privacy</a></nav>
+<section id="consent-panel"><p><strong>Before using:</strong> camera images are sent to the app backend and Gemini for analysis. If Gemini voice is selected, response text is sent to Gemini TTS. Browser speech recognition may use the browser vendor's recognition service. Images and microphone recordings are not intentionally stored by this app. Do not use descriptions as a guarantee of safety.</p><p id="consent-status" class="hint" role="status" aria-live="polite"></p><button id="consent-accept" type="button">I understand — continue</button><a href="/privacy/">Read privacy details</a></section>
+<button data-action="repeat">Repeat response</button><button data-action="stop">Stop speech</button>
+</main><script type="module" src="/shared/app.js?v=20261116-auth1"></script></body></html>

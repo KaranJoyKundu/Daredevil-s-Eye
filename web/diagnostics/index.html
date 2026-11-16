@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07111f"><title>Diagnostics · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css"></head>
+<body><main>
+<header><p class="eyebrow">DEVICE CHECKUP</p><h1>Diagnostics</h1><p class="subtitle">Six quick checks. Unlock your private session, choose a card, run the test and see the result here.</p></header>
+<section class="diagnostic-grid" aria-label="Diagnostic tests">
+<a class="diagnostic-card diag-blue" href="#camera-test"><span class="diag-icon">📷</span><strong>Camera</strong><small>Capture a still image</small></a>
+<a class="diagnostic-card diag-teal" href="#mic-test"><span class="diag-icon">🎙️</span><strong>Microphone</strong><small>Show what you say</small></a>
+<a class="diagnostic-card diag-purple" href="#ai-test"><span class="diag-icon">✨</span><strong>AI tester</strong><small>Send an image to Gemini</small></a>
+<a class="diagnostic-card diag-orange" href="#speaker-test"><span class="diag-icon">🔊</span><strong>Speaker</strong><small>Preview the selected voice</small></a>
+<a class="diagnostic-card diag-slate" href="#system-test"><span class="diag-icon">⚙️</span><strong>System</strong><small>Check backend and model</small></a>
+<a class="diagnostic-card diag-blue" href="#all-test"><span class="diag-icon">✅</span><strong>Check all at once</strong><small>Run the complete checkup</small></a>
+</section>
+
+<section id="camera-test" class="panel diagnostic-panel">
+<h2>📷 Camera test</h2>
+<p>Capture from the configured ESP32-CAM address. The returned still image and capture details will appear below.</p>
+<button id="run-camera" type="button">Capture camera photo</button>
+<p id="camera-status" class="hint" role="status" aria-live="polite">Not tested yet.</p>
+<img id="camera-preview" alt="Latest ESP32-CAM still capture" hidden style="display:none;max-width:100%;max-height:360px;object-fit:contain;border-radius:12px">
+<button id="download-camera-image" type="button" class="secondary" disabled>Download camera capture</button>
+<pre id="camera-output" class="result-output">Camera test output will appear here.</pre>
+</section>
+
+<section id="mic-test" class="panel diagnostic-panel">
+<h2>🎙️ Microphone test</h2>
+<p>Speak a short sentence. Your recognised words will appear in the box below. Browser microphone support may require HTTPS or a supported browser.</p>
+<div class="field-grid"><button id="run-mic" type="button">Start microphone test</button><button id="stop-mic" type="button" class="secondary" disabled>Stop microphone</button></div>
+<p class="hint">Microphone permission requires HTTPS or localhost. This app's plain HTTP LAN address cannot request microphone access on a phone. Use localhost on the PC or an HTTPS setup for the phone.</p>
+<p id="mic-status" class="hint" role="status" aria-live="polite">Microphone has not started.</p>
+<label for="mic-transcript">What the microphone heard</label>
+<textarea id="mic-transcript" readonly placeholder="Your recognised speech will appear here…"></textarea>
+</section>
+
+<section id="ai-test" class="panel diagnostic-panel">
+<h2>✨ AI image tester</h2>
+<p>Use the last camera capture or choose another image. The same model, response style and wait limit configured in Admin will be used.</p>
+<label for="diag-ai-file">Optional: choose a different image</label>
+<input id="diag-ai-file" type="file" accept="image/jpeg,image/png,image/webp">
+<img id="diag-ai-preview" alt="Selected image for AI test" hidden style="display:none;max-width:100%;max-height:300px;object-fit:contain;border-radius:12px">
+<label for="diag-ai-question">Question (optional)</label>
+<input id="diag-ai-question" type="text" maxlength="1000" placeholder="What is on the desk?">
+<button id="run-ai-test" type="button">Analyse image with Gemini</button>
+<p id="ai-status" class="hint" role="status" aria-live="polite">Capture a camera photo first or choose an image.</p>
+<pre id="ai-output" class="result-output">Gemini response will appear here.</pre>
+</section>
+
+<section id="speaker-test" class="panel diagnostic-panel">
+<h2>🔊 Speaker / voice test</h2>
+<p>Preview the voice and speaking style currently saved in Admin / Settings.</p>
+<button id="run-speaker" type="button">Play voice sample</button>
+<button id="stop-speaker" type="button" class="secondary">Stop speech</button>
+<p id="speaker-status" class="hint" role="status" aria-live="polite">Voice test ready.</p>
+</section>
+
+<section id="system-test" class="panel diagnostic-panel">
+<h2>⚙️ System & backend</h2>
+<p>Check the local Worker, configured model, API-key presence and available model catalogue.</p>
+<button id="run-system" type="button">Run system check</button>
+<pre id="system-output" class="result-output">Checking backend…</pre>
+</section>
+
+<section id="all-test" class="panel diagnostic-panel all-tests-panel">
+<h2>✅ Check all at once</h2>
+<p>Runs the camera capture, microphone permission and short speech test, Gemini image analysis, speaker preview and system check. The AI test sends a photo to Gemini and uses your API quota.</p>
+<button id="run-all-tests" type="button">Run all diagnostic checks</button>
+<p id="all-tests-status" class="hint" role="status" aria-live="polite">Ready to run the full checkup.</p>
+<pre id="all-tests-output" class="result-output">The combined test results will appear here.</pre>
+</section>
+
+<nav class="navlinks"><a href="/access/">Unlock</a><a href="/action/">Home</a><a href="/admin/">Admin / Settings</a><a href="/contact/">Contact</a><a href="/help/">Help</a></nav>
+</main><script type="module" src="/diagnostics/diagnostics.js?v=20261116-auth1"></script></body></html>
