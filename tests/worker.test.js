@@ -174,3 +174,34 @@ test('voice transcription rotates its two low-cost first-choice models before hi
  assert.equal(first[2],'gemini-3.8-flash');
  assert.equal(first[3],'gemini-3.5-transcribe');
 });
+
+test('vision fallback tries the next ranked model after a model-specific 429',async t=>{
+ const originalFetch=globalThis.fetch;
+ const attempts=[];
+ t.after(()=>{globalThis.fetch=originalFetch;});
+ globalThis.fetch=async input=>{
+  const url=new URL(String(input));
+  if(url.pathname.endsWith('/v1beta/models')){
+   return new Response(JSON.stringify({models:[
+    {name:'models/gemini-3.1-pro-preview',displayName:'Gemini Pro Preview',supportedGenerationMethods:['generateContent']},
+    {name:'models/gemini-3.8-flash',displayName:'Gemini Flash',supportedGenerationMethods:['generateContent']},
+    {name:'models/gemini-3.1-flash-lite',displayName:'Gemini Flash Lite',supportedGenerationMethods:['generateContent']}
+   ]}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  if(url.pathname.includes(':generateContent')){
+   const model=decodeURIComponent(url.pathname.split('/models/')[1].split(':')[0]);
+   attempts.push(model);
+   if(model==='gemini-3.8-flash'){
+    return new Response(JSON.stringify({error:{message:'model-specific quota exceeded'}}),{status:429,headers:{'content-type':'application/json'}});
+   }
+   return new Response(JSON.stringify({candidates:[{content:{parts:[{text:'A clear test answer.'}]}}]}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  throw new Error('Unexpected mocked fetch URL: '+url.href);
+ };
+ const r=await handleApi(req('/api/describe',{image,model:'gemini-3.8-flash'}),{GEMINI_API_KEY:'test-key-for-vision-fallback'});
+ const d=await r.json();
+ assert.equal(r.status,200);
+ assert.equal(d.answer,'A clear test answer.');
+ assert.equal(d.model,'gemini-3.1-pro-preview');
+ assert.deepEqual(attempts,['gemini-3.8-flash','gemini-3.1-pro-preview']);
+});
