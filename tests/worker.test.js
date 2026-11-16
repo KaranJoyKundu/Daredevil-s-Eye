@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {handleApi,rankVisionModels,getTranscriptionModelOrder} from '../worker/src/index.js';
 import {SOSRoom} from '../worker/src/sos-room.js';
-import {detectSpokenLanguage,selectVoiceForText,resolveSpeechLanguage} from '../web/shared/speech.js';
+import {detectSpokenLanguage,selectVoiceForText,resolveSpeechLanguage,cleanTextForSpeech,splitSpeechText} from '../web/shared/speech.js';
 import {createShakeSequenceTracker,getShakeMagnitude,matchSosVoiceCommand} from '../web/shared/sos-triggers.js';
 
 const req=(path,body,headers={})=>new Request('https://local.test'+path,{
@@ -474,4 +474,18 @@ test('receiver notification service worker requests a visible high-priority SOS 
  assert.match(worker,/notificationclick/);
  assert.match(receiver,/pushManager\.subscribe/);
  assert.match(receiver,/localStorage\.setItem\(TOKEN_KEY/);
+});
+
+
+test('speech text cleanup removes markdown links, code and raw URLs before speaking',()=>{
+ const cleaned=cleanTextForSpeech('**Door** [entrance](https://example.test/path) and https://example.test/raw `GPIO 18`');
+ assert.equal(cleaned,'Door entrance and GPIO 18');
+});
+
+test('long AI answers are split into sequential speech-sized chunks without losing words',()=>{
+ const sentence=Array.from({length:170},(_,index)=>'word'+index).join(' ');
+ const chunks=splitSpeechText(sentence,120);
+ assert.ok(chunks.length>1);
+ assert.ok(chunks.every(chunk=>chunk.length<=120));
+ assert.equal(chunks.join(' '),sentence);
 });
