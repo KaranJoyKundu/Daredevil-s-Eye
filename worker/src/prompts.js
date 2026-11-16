@@ -14,9 +14,9 @@ export const SCENE_RULES = [
   'Use natural spoken language, not a long visual inventory.',
   'Start with the main scene or most important visible object.',
   'Mention a possible obstacle only when the image gives concrete visual evidence for it; do not turn ordinary objects into hazards without a reason.',
-  'Use “left”, “centre”, and “right” relative to the image only when the position is clear.',
+  'Use image-relative positions only when clearly visible. Do not estimate distances.',
   'Mention people only as people present in the scene; do not identify them.',
-  'Do not repeatedly announce that the image is blurry. Mention image quality only when it materially limits what can be seen.',
+  'Mention image quality only when it materially limits what can be seen.',
   'Avoid headings, bullet lists, filler, and repeated disclaimers in the spoken answer.'
 ].join(' ');
 
@@ -32,12 +32,20 @@ export const DEFAULT_MODES = Object.freeze({
   homework: { label: 'General question', usesCamera: false, prompt: 'Answer the user clearly and briefly. No camera image is needed.' }
 });
 
-export function buildPrompt({ mode = 'describe', question = '', customPrompt = '', responseStyle = 'concise' } = {}) {
+export const RESPONSE_LANGUAGES = Object.freeze({
+  'en-US': 'Answer in natural, plain English.',
+  'en-GB': 'Answer in natural, plain English using UK spelling where appropriate.',
+  'bn-BD': 'Answer in natural Bangladeshi Bengali (বাংলা), using Bengali script. Use everyday spoken Bangladeshi wording, not transliterated Bengali. Keep the answer concise and easy to understand when spoken aloud.'
+});
+
+export function buildPrompt({ mode = 'describe', question = '', customPrompt = '', responseStyle = 'concise', responseLanguage = 'en-US' } = {}) {
   const selected = DEFAULT_MODES[mode] ?? DEFAULT_MODES.describe;
   const style = RESPONSE_STYLES[responseStyle] ?? RESPONSE_STYLES.concise;
+  const language = RESPONSE_LANGUAGES[responseLanguage] ?? RESPONSE_LANGUAGES['en-US'];
   return [
     selected.usesCamera ? SCENE_RULES : '',
     selected.prompt,
+    language,
     style,
     customPrompt,
     question ? 'User question: ' + question : '',
