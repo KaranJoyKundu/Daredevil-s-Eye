@@ -161,14 +161,28 @@ export async function handleApi(request, env = {}) {
 
   if (!url.pathname.startsWith('/api/')) return null;
 
-  const authAllowed = await enforceRateLimit(env.APP_AUTH_LIMIT, request, 'auth');
-  if (!authAllowed) return json({ error: 'Too many access attempts. Wait one minute and try again.' }, 429);
-  if (!appTokenConfigured(env)) return json({ error: 'Private app access is not configured. Set APP_ACCESS_TOKEN as a Worker secret.' }, 503);
   const origin = request.headers.get('origin');
   if (origin) {
     try { if (new URL(origin).origin !== url.origin) return json({ error: 'Cross-origin API requests are not allowed.' }, 403); }
     catch { return json({ error: 'Invalid request origin.' }, 403); }
   }
+
+  // Receiver endpoints are public by design, but each action is protected by
+  // a short-lived invitation or a 256-bit receiver token.
+  const receiverActions = {
+    '/api/sos/pair': 'pair',
+    '/api/sos/poll': 'poll',
+    '/api/sos/ack': 'ack'
+  };
+  if (request.method === 'POST' && receiverActions[url.pathname]) {
+    const limited = await enforceRateLimit(env.APP_SOS_LIMIT, request, 'public-sos');
+    if (!limited) return json({ error: 'SOS receiver request limit reached. Wait before trying again.' }, 429);
+    return forwardSos(request, env, receiverActions[url.pathname]);
+  }
+
+  const authAllowed = await enforceRateLimit(env.APP_AUTH_LIMIT, request, 'auth');
+  if (!authAllowed) return json({ error: 'Too many access attempts. Wait one minute and try again.' }, 429);
+  if (!appTokenConfigured(env)) return json({ error: 'Private app access is not configured. Set APP_ACCESS_TOKEN as a Worker secret.' }, 503);
   if (!hasValidAppToken(request, env)) return json({ error: 'Unlock this private app at /access/ before using its API.' }, 401);
 
   if (request.method === 'GET' && url.pathname === '/api/session') {
@@ -186,10 +200,7 @@ export async function handleApi(request, env = {}) {
 
   const sosActions = {
     '/api/sos/invite': 'invite',
-    '/api/sos/pair': 'pair',
-    '/api/sos/trigger': 'trigger',
-    '/api/sos/poll': 'poll',
-    '/api/sos/ack': 'ack'
+    '/api/sos/trigger': 'trigger'
   };
   if (request.method === 'POST' && sosActions[url.pathname]) {
     return forwardSos(request, env, sosActions[url.pathname]);
