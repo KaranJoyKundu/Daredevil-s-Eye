@@ -1,5 +1,5 @@
-import { getSettings } from './settings.js?v=20261116-voice1';
-import { apiFetch } from './api.js?v=20261116-voice1';
+import { getSettings } from './settings.js?v=20261116-access2';
+import { apiFetch } from './api.js?v=20261116-access2';
 
 export const VOICE_PRESETS = Object.freeze({
   gentle: { label: 'Gentle · soft and slightly higher', rate: 0.94, pitch: 1.14 },
@@ -37,6 +37,16 @@ export function getAvailableVoices() {
   if (!('speechSynthesis' in window)) return [];
   return window.speechSynthesis.getVoices();
 }
+export function selectVoiceForText(voices, { lang = 'en-US', voiceURI = '', text = '' } = {}) {
+  const available = Array.isArray(voices) ? voices : [];
+  const wantsBangla = /^bn(?:-|$)/i.test(lang) || detectSpokenLanguage(text) === 'bn-BD';
+  if (wantsBangla) return available.find(v => v.voiceURI === voiceURI && /^bn(?:-|$)/i.test(v.lang || '')) ||
+    available.find(v => /^bn-BD$/i.test(v.lang || '')) || available.find(v => /^bn(?:-|$)/i.test(v.lang || '')) || null;
+  const languageMatches = voice => (voice.lang || '').toLowerCase() === String(lang).toLowerCase() ||
+    (voice.lang || '').toLowerCase().startsWith(String(lang).slice(0,2).toLowerCase());
+  return available.find(v => v.voiceURI === voiceURI && languageMatches(v)) ||
+    available.find(languageMatches) || available.find(v => v.default && languageMatches(v)) || null;
+}
 
 export function speak(text, options = {}) {
   if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
@@ -48,12 +58,14 @@ export function speak(text, options = {}) {
     if(currentAudio){currentAudio.pause();currentAudio=null;}
     if(currentAudioUrl){URL.revokeObjectURL(currentAudioUrl);currentAudioUrl=null;}
     const utterance = new SpeechSynthesisUtterance(String(text)), settings = getSettings();
-    utterance.lang = options.lang || settings.speechLanguage;
+    const requestedLang = detectSpokenLanguage(text) === 'bn-BD' ? 'bn-BD' : (options.lang || settings.speechLanguage);
+    utterance.lang = requestedLang;
     utterance.rate = options.rate ?? settings.speechRate;
     utterance.pitch = options.pitch ?? settings.speechPitch;
     const voices = getAvailableVoices();
     const voiceURI = options.voiceURI ?? settings.speechVoiceURI;
-    if (voiceURI) utterance.voice = voices.find(voice => voice.voiceURI === voiceURI) || null;
+    const selectedVoice = selectVoiceForText(voices, { lang: requestedLang, voiceURI, text: String(text) });
+    if (selectedVoice) { utterance.voice = selectedVoice; utterance.lang = selectedVoice.lang || requestedLang; }
     if (options.onEnd) utterance.onend = options.onEnd;
     if (options.onError) utterance.onerror = options.onError;
     window.speechSynthesis.speak(utterance);
@@ -121,7 +133,7 @@ function blobToDataUrl(blob) {
   });
 }
 
-async function recordWithGemini({ onResult, onError, onFallback, onEnd, onStatus, cancelled = () => false } = {}) {
+async function recordWithGemini({ onResult, onError, onFallback, onEnd, onStatus, onPermission, cancelled = () => false } = {}) {
   if (!('MediaRecorder' in window)) {
     onError?.('This browser cannot record audio for Gemini transcription. Type your question instead.');
     onEnd?.();
@@ -137,6 +149,7 @@ async function recordWithGemini({ onResult, onError, onFallback, onEnd, onStatus
     onEnd?.();
     return null;
   }
+  onPermission?.();
 
   const mimeType = [
     'audio/webm;codecs=opus','audio/ogg;codecs=opus','audio/webm','audio/mp4'
@@ -228,84 +241,69 @@ async function recordWithGemini({ onResult, onError, onFallback, onEnd, onStatus
  * service reports a network/service error, automatically record a short clip
  * and ask Gemini's low-cost model to transcribe and language-normalise it.
  */
-export async function listenOnce({ lang = getSettings().speechLanguage, onResult, onInterim, onError, onEnd, onPermission, onStart, onFallback, onStatus } = {}) {
-  if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia){
+export async function listenOnce({
+  lang = getSettings().speechInputLanguage || 'bn-BD', preferGemini = true,
+  onResult, onInterim, onError, onEnd, onPermission, onStart, onFallback, onStatus
+} = {}) {
+  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
     onError?.('Microphone access requires HTTPS or localhost. This HTTP LAN address is not a secure context.');
     return null;
   }
+  let fallbackController = null, stopped = false;
+  const stop = () => { stopped = true; fallbackController?.stop?.(); };
+  if (preferGemini) {
+    onFallback?.('Listening in multilingual mode. Bangla, English and mixed speech are supported.');
+    fallbackController = await recordWithGemini({ onResult, onError, onEnd, onStatus, onPermission, cancelled: () => stopped });
+    return { stop };
+  }
   let permissionStream;
   try {
-    permissionStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
-    permissionStream.getTracks().forEach(track=>track.stop());
-    permissionStream=null;
+    permissionStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    permissionStream.getTracks().forEach(track => track.stop());
     onPermission?.();
-  } catch(error) {
-    const reason=error.name==='NotAllowedError'?'Microphone permission was denied. Allow microphone access in browser site settings.':
-      error.name==='NotFoundError'?'No microphone was found on this device.':
-      error.name==='NotReadableError'?'The microphone is busy or unavailable in another app.':
-      error.message||'Unknown microphone error.';
-    onError?.(reason);
-    return null;
+  } catch (error) {
+    const reason = error.name === 'NotAllowedError' ? 'Microphone permission was denied. Allow microphone access in browser site settings.' :
+      error.name === 'NotFoundError' ? 'No microphone was found on this device.' :
+      error.name === 'NotReadableError' ? 'The microphone is busy or unavailable in another app.' :
+      error.message || 'Unknown microphone error.';
+    onError?.(reason); return null;
   }
-
-  const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-  let fallbackController=null, stopped=false, fallbackNeeded=false, fallbackStarted=false;
-  const startFallback=async()=>{
-    if(fallbackStarted||stopped)return;
-    fallbackStarted=true;
-    onFallback?.('The browser speech service is unavailable. Switching to Gemini voice transcription.');
-    fallbackController=await recordWithGemini({
-      onResult,onError,onEnd,onStatus,
-      cancelled:()=>stopped
-    });
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let fallbackNeeded = false, fallbackStarted = false;
+  const startFallback = async () => {
+    if (fallbackStarted || stopped) return;
+    fallbackStarted = true;
+    onFallback?.('Browser recognition did not return speech. Switching to Gemini multilingual transcription.');
+    fallbackController = await recordWithGemini({ onResult, onError, onEnd, onStatus, cancelled: () => stopped });
   };
-  if(!Recognition){
-    await startFallback();
-    return {stop:()=>{stopped=true;fallbackController?.stop?.();}};
-  }
-
+  if (!Recognition) { await startFallback(); return { stop }; }
   try {
-    const recognition=new Recognition();
-    recognition.lang=lang;
-    recognition.continuous=false;
-    recognition.interimResults=true;
-    recognition.maxAlternatives=1;
-    let finalReceived=false;
-    recognition.onresult=event=>{
-      let interim='',finalText='';
-      for(let i=event.resultIndex;i<event.results.length;i+=1){
-        const result=event.results[i],transcript=result[0]?.transcript||'';
-        if(result.isFinal)finalText+=transcript;else interim+=transcript;
+    const recognition = new Recognition();
+    recognition.lang = lang; recognition.continuous = false; recognition.interimResults = true; recognition.maxAlternatives = 1;
+    let finalReceived = false;
+    recognition.onresult = event => {
+      let interim = '', finalText = '';
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const result = event.results[i], transcript = result[0]?.transcript || '';
+        if (result.isFinal) finalText += transcript; else interim += transcript;
       }
-      if(interim)onInterim?.(interim);
-      if(finalText){finalReceived=true;onResult?.(finalText.trim());}
+      if (interim) onInterim?.(interim);
+      if (finalText) { finalReceived = true; onResult?.(finalText.trim()); }
     };
-    recognition.onstart=()=>onStart?.();
-    recognition.onerror=event=>{
-      if(['network','service-not-allowed','language-not-supported'].includes(event.error)){
-        fallbackNeeded=true;
-        onFallback?.('The browser speech service could not connect. Switching to Gemini voice transcription.');
-        try{recognition.stop();}catch{}
-      }else{
-        const reasons={
-          'not-allowed':'Speech recognition permission was denied.',
-          'no-speech':'No speech was recognised. Speak clearly and try again.',
-          'audio-capture':'The browser could not access the microphone.'
-        };
-        onError?.(reasons[event.error]||('Speech input failed: '+(event.error||'unknown error')+'.'));
+    recognition.onstart = () => onStart?.();
+    recognition.onerror = event => {
+      if (['network','service-not-allowed','language-not-supported','no-speech'].includes(event.error)) {
+        fallbackNeeded = true; try { recognition.stop(); } catch {}
+      } else {
+        const reasons = { 'not-allowed':'Speech recognition permission was denied.','audio-capture':'The browser could not access the microphone.' };
+        onError?.(reasons[event.error] || ('Speech input failed: '+(event.error || 'unknown error')+'.'));
       }
     };
-    recognition.onend=()=>{
-      if(fallbackNeeded&&!finalReceived){startFallback();return;}
-      if(!finalReceived&&!stopped)onEnd?.();
+    recognition.onend = () => {
+      if (fallbackNeeded && !finalReceived) { startFallback(); return; }
+      if (!finalReceived && !stopped) onEnd?.();
     };
-    recognition.start();
-    return {stop:()=>{stopped=true;try{recognition.stop();}catch{}fallbackController?.stop?.();},recognition};
-  } catch(error) {
-    onFallback?.('Native voice recognition could not start. Switching to Gemini voice transcription.');
-    await startFallback();
-    return {stop:()=>{stopped=true;fallbackController?.stop?.();}};
-  }
+    recognition.start(); return { stop, recognition };
+  } catch { await startFallback(); return { stop }; }
 }
-
 export function vibrate(pattern = 80) { try { navigator.vibrate?.(pattern); } catch {} }

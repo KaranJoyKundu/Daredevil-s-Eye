@@ -1,28 +1,33 @@
 # Changelog
 
-## Deployment address update
+## Unreleased — optional hands-free SOS triggers
 
-- Updated the documented public Workers URL to https://daredevils-eye.karanjoykundu.workers.dev/ after changing the Cloudflare account-level `workers.dev` subdomain.
+- Added opt-in three-shake SOS detection with distinct motion peaks and an eight-second cancellation countdown.
+- Added opt-in continuous voice SOS monitoring in visible Blind mode, with a distinctive wake phrase, a separate spoken confirmation and a cancellation phrase.
+- Added Admin permission/setup controls, Bengali/English recognition-language selection, privacy disclosures and trigger-detection tests.
+- Both triggers are disabled by default; phone sensor and speech recognition behavior still require physical testing.
 
-## Unreleased — blind-first accessibility and voice resilience
+## Previous unreleased — voice-first blind controls and multilingual input
 
-- Added a dedicated `/blind/` 2×2 action screen without a brand header, navigation menu or on-screen exit control.
-- Added shared top navigation with a Daredevil's Eye home link on standard pages.
-- Added six Admin quick-jump tiles to reduce scrolling.
-- Expanded Help with setup, voice fallback, language handling, privacy, quota, diagnostics and SOS instructions.
-- Added the project phone and WhatsApp contact supplied by the maintainer.
-- Added a short-recording Gemini fallback when native browser speech recognition is unavailable or reports a service/network failure.
-- Added language-aware transcription rules: Bengali speech is translated to English; English speech remains English irrespective of accent.
-- Added ranked compatible image-understanding models and best-effort fallback when a selected model is unavailable, overloaded or over its model quota.
-- Added optional session-only personal Gemini API key support (BYOK).
-- Added progressive word-by-word written response display while speech playback runs.
-- Updated README, privacy, status, architecture, setup, testing, security and roadmap documentation.
-- Email OTP accounts, ten free guest detections, account/profile usage records and admin usage dashboard are documented as a future phase; not implemented.
+- Replaced the Blind mode Help tile with Repeat; moved Help to a separate spoken-help button outside the four main actions.
+- Added a spoken first-use safety notice, concise spoken failure messages, haptic cues, and screen wake lock during active camera/AI/SOS actions where supported.
+- Added double-tap SOS confirmation. URL shortcuts can pre-arm SOS but never dispatch an alert merely by opening a URL.
+- Made Gemini audio transcription the default microphone mode for Bangla, English and mixed speech; retained browser recognition as an Admin option and now falls back to Gemini after a no-speech result.
+- Strengthened transcription instructions for Bangladeshi Bengali and code-switching.
+- Prefer an installed Bengali speech-synthesis voice when the response contains Bengali script; Admin reports whether a Bengali voice is installed and previews Bengali when selected.
+- Capture up to three camera frames 250 ms apart and choose the sharpest using a Laplacian-variance heuristic.
+- Added URL actions and Android home-screen shortcuts for Describe, Ask and confirmation-only SOS.
+- Updated documentation and added a ten-scene scorecard template. No real test results are pre-filled.
+
+## Previous unreleased — blind-first and voice resilience
+
+- Added the Blind mode foundation, shared navigation, Admin quick-jump cards, BYOK, Gemini transcription fallback, ranked vision-model failover, and progressive response reveal.
+- Updated project documentation, deployment address and privacy disclosures.
 
 ## Previous prototype work
 
 - Cloudflare Worker serves static assets and the public API.
-- Gemini photo-analysis integration and a configurable model catalogue.
+- Gemini photo-analysis integration and configurable model catalogue.
 - ESP32-CAM still capture helper and phone image upload fallback.
 - Versioned local privacy consent.
 - Six Diagnostics checks including Check all at once.
@@ -30,4 +35,4 @@
 - GitHub Actions tests and conditional Cloudflare production deployment.
 - Removed the app login/access-token gate and Cloudflare-wide API rate-limit bindings; Google provider quotas still apply.
 
-All unreleased items are branch source changes until CI passes and a pull request is reviewed. Real-device verification remains a separate requirement.
+Automated checks do not replace real-device testing or supervised usability evaluation with blind and low-vision participants.

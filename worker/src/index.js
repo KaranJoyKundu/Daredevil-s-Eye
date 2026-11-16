@@ -225,12 +225,14 @@ async function transcribeGemini(audio, apiKey) {
   if (typeof audio !== 'string' || audio.length > 2_800_000) throw new Error('Voice recording is too large. Please speak a shorter question.');
   const part = audioParts(audio);
   const prompt = [
-    'Transcribe the spoken question and return only the final question in English.',
-    'Detect the language from the words that were actually spoken, not from the speaker’s accent.',
-    'If the speaker uses Bengali/Bangla, translate it faithfully into natural English.',
-    'If the speaker uses English, including English spoken with a Bangladeshi accent, preserve the English meaning and do not translate it.',
-    'For mixed Bengali and English, translate Bengali portions and return one clear English question.',
-    'Do not add explanations, labels, quotation marks, or commentary. Do not invent words that are unclear.'
+    'Transcribe the spoken question and return only the final question in natural English.',
+    'The speaker may use Bangladeshi Bengali (Bangla), English, or natural Bangla-English code-switching in the same sentence.',
+    'Recognise Bengali spoken in Bangladesh; do not mistake Bengali for Hindi or Urdu, and do not write Bengali words in Latin transliteration.',
+    'Detect language from the words that were spoken, not the speaker’s accent or pronunciation of English.',
+    'If the words are Bengali, translate their meaning faithfully into clear everyday English without adding details.',
+    'If the words are English, including English spoken with a Bangladeshi accent, preserve the English meaning and do not translate it.',
+    'For mixed Bangla and English, translate only the Bangla portions and preserve English technical words, names, units and model numbers.',
+    'Return one clear English question. Do not add explanations, labels, quotation marks, guesses or commentary. Omit unclear words rather than inventing them.'
   ].join(' ');
   const candidates = getTranscriptionModelOrder();
   const attempted = [];

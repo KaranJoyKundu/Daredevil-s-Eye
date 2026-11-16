@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {handleApi,rankVisionModels,getTranscriptionModelOrder} from '../worker/src/index.js';
-import {detectSpokenLanguage} from '../web/shared/speech.js';
+import {detectSpokenLanguage,selectVoiceForText} from '../web/shared/speech.js';
+import {createShakeSequenceTracker,getShakeMagnitude,matchSosVoiceCommand} from '../web/shared/sos-triggers.js';
 
 const req=(path,body,headers={})=>new Request('https://local.test'+path,{
  method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(body)
@@ -9,6 +11,71 @@ const req=(path,body,headers={})=>new Request('https://local.test'+path,{
 const get=(path,headers={})=>new Request('https://local.test'+path,{headers});
 const health=()=>new Request('https://local.test/api/health');
 const image='data:image/jpeg;base64,AAAA';
+
+test('Blind mode keeps Help outside the four main action buttons and declares phone shortcuts',()=>{
+ const html=readFileSync(new URL('../web/blind/index.html',import.meta.url),'utf8');
+ const mainStart=html.indexOf('<main');
+ const mainEnd=html.indexOf('</main>',mainStart);
+ assert.ok(mainStart>=0&&mainEnd>mainStart,'Blind mode main action grid exists');
+ const main=html.slice(mainStart,mainEnd);
+ for(const action of ['describe','ask','sos','repeat']) assert.ok(main.includes('data-action="'+action+'"'));
+ assert.ok(!main.includes('data-action="help"'),'Spoken Help is outside the four-action grid');
+ const helpAction=html.indexOf('data-action="help"');
+ assert.ok(helpAction>mainEnd,'Spoken Help follows the main action grid');
+ const manifest=JSON.parse(readFileSync(new URL('../web/manifest.webmanifest',import.meta.url),'utf8'));
+ assert.equal(manifest.start_url,'/blind/');
+ assert.deepEqual(manifest.shortcuts.map(item=>item.url),[
+  '/blind/?action=describe','/blind/?action=ask','/blind/?action=sos'
+ ]);
+});
+
+test('blind-mode action colours meet 4.5:1 white-text contrast target',()=>{
+ const css=readFileSync(new URL('../web/shared/style.css',import.meta.url),'utf8');
+ const backgrounds=[['blind-describe','#07509b'],['blind-ask','#00665f'],['blind-sos','#8a3700'],['blind-repeat','#4b3292'],['blind-help-button','#132b45']];
+ const linear=value=>{const channel=value/255;return channel<=0.04045?channel/12.92:((channel+0.055)/1.055)**2.4;};
+ const luminance=hex=>.2126*linear(parseInt(hex.slice(1,3),16))+.7152*linear(parseInt(hex.slice(3,5),16))+.0722*linear(parseInt(hex.slice(5,7),16));
+ for(const [selector,background] of backgrounds){
+  assert.ok(css.includes(background),selector+' background remains defined');
+  const ratio=1.05/(luminance(background)+0.05);
+  assert.ok(ratio>=4.5,selector+' white-text contrast '+ratio.toFixed(2));
+ }
+});
+
+test('three-shake SOS requires three strong, separated peaks inside the detection window',()=>{
+ const tracker=createShakeSequenceTracker();
+ assert.equal(tracker.push(4,1000),false);
+ assert.equal(tracker.push(15,1100),false);
+ assert.equal(tracker.push(15,1500),false);
+ assert.equal(tracker.push(15,1900),true);
+ assert.equal(tracker.count,0);
+});
+test('shake detector rejects closely spaced repeated peaks and stale sequences',()=>{
+ const tracker=createShakeSequenceTracker();
+ assert.equal(tracker.push(15,1000),false);
+ assert.equal(tracker.push(15,1200),false);
+ assert.equal(tracker.push(15,1500),false);
+ assert.equal(tracker.push(15,5000),false);
+ assert.equal(tracker.push(15,5400),false);
+ assert.equal(tracker.count,2);
+});
+test('shake magnitude supports linear acceleration and gravity-inclusive fallback',()=>{
+ assert.equal(getShakeMagnitude({acceleration:{x:3,y:4,z:0}}),5);
+ assert.ok(Math.abs(getShakeMagnitude({accelerationIncludingGravity:{x:0,y:0,z:22.31}})-12.5)<0.02);
+ assert.equal(getShakeMagnitude({}),0);
+});
+test('voice SOS requires a distinctive wake phrase and a separate confirmation',()=>{
+ assert.equal(matchSosVoiceCommand('SOS'),null);
+ assert.equal(matchSosVoiceCommand('Daredevil SOS'),'wake');
+ assert.equal(matchSosVoiceCommand('ডেয়ারডেভিল এসওএস'),'wake');
+ assert.equal(matchSosVoiceCommand('Confirm SOS','confirm'),'confirm');
+ assert.equal(matchSosVoiceCommand('এসওএস পাঠান','confirm'),'confirm');
+ assert.equal(matchSosVoiceCommand('confirm SOS'),null);
+});
+test('voice SOS cancellation is recognised in both languages and cannot confirm',()=>{
+ assert.equal(matchSosVoiceCommand('Cancel SOS','cancel'),'cancel');
+ assert.equal(matchSosVoiceCommand('এসওএস বাতিল','cancel'),'cancel');
+ assert.equal(matchSosVoiceCommand('Daredevil SOS','cancel'),null);
+});
 
 test('health is public and reports provider configuration without exposing secrets',async()=>{
  const r=await handleApi(health(),{GEMINI_API_KEY:'test-secret',SOS_ROOM:{},SOS_DIRECTORY:{}});
@@ -151,6 +218,24 @@ test('transcription endpoint rejects a missing audio data URL',async()=>{
  assert.equal(r.status,400);
  assert.match(d.error,/audio data URL/i);
 });
+test('Gemini transcription prompt explicitly supports Bangladeshi Bangla and mixed speech',async t=>{
+ const originalFetch=globalThis.fetch;let requestBody;
+ t.after(()=>{globalThis.fetch=originalFetch;});
+ globalThis.fetch=async (input,options)=>{
+  requestBody=JSON.parse(options.body);
+  return new Response(JSON.stringify({candidates:[{content:{parts:[{text:'Where is my phone?'}]}}]}),{status:200,headers:{'content-type':'application/json'}});
+ };
+ const r=await handleApi(req('/api/transcribe',{audio:'data:audio/webm;base64,AAAA'}),{GEMINI_API_KEY:'test-transcription-key'});
+ const data=await r.json();
+ assert.equal(r.status,200);
+ assert.equal(data.transcript,'Where is my phone?');
+ const prompt=requestBody.contents[0].parts[0].text;
+ assert.match(prompt,/Bangladeshi Bengali/);
+ assert.match(prompt,/Bangla-English code-switching/);
+ assert.match(prompt,/do not mistake Bengali for Hindi or Urdu/);
+ assert.match(prompt,/translate only the Bangla portions/);
+});
+
 test('transcription endpoint reports missing provider key without storing audio',async()=>{
  const r=await handleApi(req('/api/transcribe',{audio:'data:audio/webm;base64,AAAA'}),{});
  const d=await r.json();
@@ -164,15 +249,29 @@ test('spoken language detection uses script content rather than the speaker acce
  assert.equal(detectSpokenLanguage('A Bangladeshi accent speaking English'),'en-US');
 });
 
-test('voice transcription rotates its two low-cost first-choice models before higher-cost fallbacks',()=>{
+test('Bengali text selects a Bengali device voice even when an English voice was saved',()=>{
+ const voices=[
+  {voiceURI:'english-default',lang:'en-US',default:true},
+  {voiceURI:'bengali',lang:'bn-BD',default:false}
+ ];
+ assert.equal(selectVoiceForText(voices,{lang:'en-US',voiceURI:'english-default',text:'আমার ফোন কোথায়?'}).voiceURI,'bengali');
+ assert.equal(selectVoiceForText(voices,{lang:'en-US',voiceURI:'english-default',text:'Where is my phone?'}).voiceURI,'english-default');
+ assert.equal(selectVoiceForText(voices.slice(0,1),{lang:'bn-BD',text:'বাংলা উত্তর'}),null);
+});
+
+test('voice transcription alternates its two low-cost first-choice models before higher-cost fallbacks',()=>{
  const first=getTranscriptionModelOrder();
  const second=getTranscriptionModelOrder();
- assert.equal(first[0],'gemini-3.1-flash-lite');
- assert.equal(second[0],'gemini-3.5-flash-lite');
- assert.equal(first[1],'gemini-3.5-flash-lite');
- assert.equal(second[1],'gemini-3.1-flash-lite');
- assert.equal(first[2],'gemini-3.8-flash');
- assert.equal(first[3],'gemini-3.5-transcribe');
+ const third=getTranscriptionModelOrder();
+ const lowCost=new Set(['gemini-3.1-flash-lite','gemini-3.5-flash-lite']);
+ assert.ok(lowCost.has(first[0]));
+ assert.ok(lowCost.has(second[0]));
+ assert.notEqual(first[0],second[0]);
+ assert.equal(third[0],first[0]);
+ for(const order of [first,second,third]){
+  assert.deepEqual(new Set(order.slice(0,2)),lowCost);
+  assert.deepEqual(order.slice(2),['gemini-3.8-flash','gemini-3.5-transcribe']);
+ }
 });
 
 test('vision fallback tries the next ranked model after a model-specific 429',async t=>{

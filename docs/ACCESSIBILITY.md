@@ -1,37 +1,47 @@
 # Accessibility notes
 
-Daredevil's Eye is an experimental audio-first interface. It is not accessibility-certified. It must not be used as a substitute for established mobility aids.
+Daredevil's Eye is an experimental audio-first interface. It is not accessibility-certified and must not replace a white cane, guide dog, orientation and mobility training, or human assistance.
 
-## Interface decisions
+## Blind mode
 
-- Standard Home provides four large labelled actions.
-- Blind mode is served at `/blind/` and uses four full-screen tiles in a 2×2 grid: DESCRIBE, ASK AI, SOS and HELP.
-- Blind mode omits the shared brand bar, hamburger menu and any on-screen exit control. Leaving it requires editing the URL to remove `/blind/` or opening `/action/`.
-- The Help tile opens an overlay with a return-to-four-actions link.
-- Standard pages use a shared keyboard-accessible navigation menu; the Daredevil's Eye brand link returns to Home.
-- Native buttons, links, labels, form controls and live regions are used for key interactions.
-- The written answer is revealed progressively while speech starts, rather than appearing as a single block.
-- Typed-question fallback remains on the standard Home page.
+- The four main touch targets are DESCRIBE, ASK AI, SOS and REPEAT.
+- SPOKEN HELP is a separate full-width control below the four-action grid. It reads the basic instructions aloud; it is not a text-based Help overlay or one of the four primary actions.
+- Blind mode has no brand header, navigation menu or on-screen exit control. Leaving it requires editing the URL to remove /blind/ or opening /action/.
+- All primary actions are native buttons with accessible names. Status and response regions use live-region semantics.
+- Current white-on-solid-background colour pairs are approximately 6.85:1 or higher by WCAG relative-luminance calculation, exceeding the 4.5:1 normal-text target. This is a source-colour calculation, not a full rendered-screen audit.
+- Manual SOS requires two taps within five seconds. Optional shake SOS requires three strong, separate motion peaks and an eight-second cancellation countdown. Optional voice SOS requires “Daredevil SOS” followed by “Confirm SOS”; a five-second countdown then allows “Cancel SOS” or the visible cancellation control. Both triggers are disabled by default, configured in Admin and operate only while Blind mode is visible.
+- Voice SOS uses continuous browser speech recognition only after explicit opt-in and microphone permission. The browser's recognition provider may process audio externally. Shake readings are processed locally.
+- Repeat speaks the most recent answer held in the current page session.
 
-## Voice input
+## Voice input and output
 
 - Microphone access requires HTTPS or localhost.
-- Native browser speech recognition is attempted first.
-- If it is missing or reports network/service/language availability errors, the app records a short clip and sends it to Gemini for language-aware transcription.
-- Bengali-language speech is instructed to translate into English; English speech is preserved even with a Bangladeshi accent. This is not guaranteed until tested with speakers.
-- Audio recording is a privacy-relevant fallback; users must be informed before use.
+- Recommended Automatic mode records a short clip and sends it to the Worker/Gemini transcription path for language identification and transcription. It is intended to support Bangladeshi Bengali, English and mixed Bangla-English.
+- Browser-first mode is optional. It uses a separately selected locale and switches to Gemini if the service fails, language support is missing, or no speech is returned.
+- Audio is externally processed in Automatic mode and may be externally processed in browser-first fallback mode. Do not speak passwords or confidential information.
+- For Bengali answers, the speech layer prefers an installed bn-BD or other bn-* device voice. If none is installed, device speech synthesis may pronounce Bengali incorrectly or fail; install Bengali TTS data on the phone.
+- Speech input quality, Bengali translation, mixed-language recognition, voice-SOS phrase accuracy and pronunciation have not yet been confirmed on the target Android device.
+- Three-shake sensitivity, false-positive resistance and voice-SOS reliability require real-phone evaluation. Do not rely on either automatic trigger as the only way to call for help.
+
+## Additional support
+
+- Haptic patterns distinguish Describe, Ask, SOS, Repeat and Help where vibration is supported.
+- The page requests a screen wake lock while camera/AI/SOS actions run, when the browser supports it. It releases the lock when the action completes; the operating system may still suspend the page.
+- Camera capture can take up to three frames spaced 250 ms apart and selects the sharpest frame using a small-image Laplacian-variance estimate.
+- Spoken error messages identify common camera, connection, timeout, quota and microphone failures.
+- The first-use safety disclaimer is spoken once after the user accepts consent, when device speech is available.
 
 ## Required evaluation
 
 - Test TalkBack on Android and NVDA on Windows; VoiceOver is also desirable.
-- Verify heading order, focus order, visible focus, names/roles/values and live-region announcements.
-- Confirm all four Blind mode controls can be activated by keyboard and assistive technology.
-- Ensure the Help overlay can be opened/closed with keyboard and focus is sensible.
-- Test touch targets, one-handed use, zoom, large text and screen orientation.
-- Test the SOS control with deliberate confirmation and clear status announcements.
-- Test English, Bangla and mixed-language voice input, transcript timing and pronunciation.
-- Run supervised formative testing with blind/low-vision participants before claiming usability.
+- Verify focus order, visible focus, names/roles/values and live-region announcements.
+- Confirm every control is reachable and usable with TalkBack, keyboard and switch access.
+- Test haptic patterns, SOS confirmation timing, repeat behavior and Spoken Help.
+- Test Bengali, English and code-switching with Bangladeshi speakers on the actual target phone.
+- Confirm an installed Bengali voice is used for Bengali answers and inspect pronunciation.
+- Measure three-frame capture latency and verify the sharpest-frame heuristic across sharp, blurred, dark and low-texture scenes.
+- Run supervised formative testing with blind and low-vision participants before claiming usability.
 
 ## Limitations
 
-Browser speech recognition, audio recording, synthesis, microphone permission and background playback depend on the browser, device and operating system. A browser tab may be suspended or stopped when the phone is locked.
+Browser speech recognition, microphone permission, synthesis, vibration, wake lock and background execution depend on the device and operating system. A browser tab may be suspended or stopped when the phone is locked. Android volume-key interception is not provided by ordinary web pages; automation apps and device-specific setup are required and must be tested on the actual phone.

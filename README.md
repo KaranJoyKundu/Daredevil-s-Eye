@@ -13,7 +13,7 @@ Daredevil's Eye explores how a camera, a phone browser and vision-language AI ca
 | Page | Address | Purpose |
 |---|---|---|
 | Home | `/` or `/action/` | Standard action screen |
-| Blind mode | `/blind/` | Dedicated full-screen 2×2 action layout |
+| Blind mode | `/blind/` | Four large actions (Describe, Ask AI, SOS, Repeat) plus separate spoken Help |
 | Admin | `/admin/` | Camera, SOS, AI, voice, API key and image test settings |
 | Diagnostics | `/diagnostics/` | Six device and backend checks |
 | Help | `/help/` | Detailed usage and troubleshooting |
@@ -21,27 +21,33 @@ Daredevil's Eye explores how a camera, a phone browser and vision-language AI ca
 | Privacy | `/privacy/` | Data processing and storage explanation |
 | Contact | `/contact/` | Project contact details |
 
-Blind mode deliberately has no header, menu or on-screen exit control. To leave it, edit the browser address and remove `/blind/`, or go directly to `/action/`.
+Blind mode has no header, menu or on-screen exit control. Its four main tiles are Describe, Ask AI, SOS and Repeat; a separate Spoken Help button reads instructions aloud. To leave Blind mode, edit the browser address and remove /blind/, or go directly to /action/.
 
 ## Current implementation
 
 | Feature | In source / branch | Verification still required |
 |---|---|---|
-| Four main actions | DESCRIBE, ASK AI, SOS, HELP | Blind/low-vision usability testing |
-| Blind mode | Four full-screen tiles; Help overlay; no visible exit link | TalkBack and real-device testing |
+| Four main actions | DESCRIBE, ASK AI, SOS, REPEAT; separate spoken Help | Blind/low-vision usability testing |
+| Blind mode | Four main action tiles, separate spoken Help, no visible exit link | TalkBack and real-device testing |
 | Camera input | ESP32-CAM `/capture`; phone photo/upload fallback | Target phone, CORS and LAN tests |
 | Vision | Gemini image understanding through Worker | Live-key end-to-end tests |
-| Voice input | Native recognition with MediaRecorder + Gemini transcription fallback | Android Chrome, different microphones and network conditions |
+| Voice input | Gemini multilingual audio transcription by default; optional browser-first mode with Gemini fallback | Bangla, English and code-switching on the target Android phone |
 | Language handling | Bengali script detected/transcribed and translated to English; English speech preserved independent of accent | Real Bangla/English code-switch testing |
-| Output | Device speech; progressive text reveal while answer is spoken | Timing and voice-quality tests |
+| Output | Device speech with language-matched voice selection; progressive text reveal | Bengali voice availability and pronunciation tests |
 | Model handling | Ranked photo-understanding models; per-request fallback/rotation on model errors | Actual quota exhaustion and provider error testing |
 | Personal key | Optional Gemini key in current tab's session storage | Key lifecycle and security review |
 | Admin | Six quick-jump shortcuts to main setting areas | Usability feedback |
 | Diagnostics | Six checks, including Check all at once | Physical camera/mic/speaker checks |
-| SOS | One-time invitation, receiver token and manual alert relay | Two-phone and network-change testing |
+| SOS | Paired receiver relay, two-tap control, optional three-shake trigger and optional spoken wake phrase with confirmation | Sensor false-positive, voice phrase and two-phone testing |
 | Consent | Versioned local consent record | Privacy review and participant testing |
 
-**What the voice fallback does:** the app first tries the browser's own speech-recognition service. If it reports a network/service failure or is unavailable, the browser records a short clip and sends it to the Worker, which uses a low-cost Gemini audio/transcription model. Bengali words are translated to English for the question; English is kept as English, including English spoken with a Bangladeshi accent. Microphone access requires HTTPS or localhost. Do not speak confidential information.
+**What voice input does:** the default Automatic multilingual mode records a short microphone clip and sends it to the Worker/Gemini transcription path. It is instructed to recognise Bangladeshi Bengali, English and mixed Bangla-English, translating only Bengali portions into English. This deliberately avoids starting Android's browser recogniser in English-only mode. Admin also offers Browser speech recognition first; that option uses a separately selected recognition locale and falls back to Gemini on network, language, service or no-speech errors. Audio is externally processed, so do not speak passwords or confidential information. Bengali speech is translated into English for the AI question; AI response language is a separate Admin setting and defaults to English. Select Bangla (Bangladesh) there for Bengali AI replies. Bengali spoken output also needs an installed Bengali device TTS voice. Real Bangla input/output accuracy still needs testing on the target phone.
+
+**Bengali spoken answers:** device speech synthesis selects an installed Bengali voice when the answer contains Bengali script. If the phone has no Bengali text-to-speech voice installed, the app cannot provide reliable Bengali pronunciation; install Bengali speech data in Android's text-to-speech settings and check Admin's voice status.
+
+**Camera frame selection:** the ESP32-CAM path captures up to three frames, 250 ms apart, scores their sharpness on a small canvas, and sends the sharpest scored frame. If canvas scoring is unavailable, it uses the newest frame. This is a simple sharpness heuristic, not a guarantee of blur-free capture.
+
+**Hands-free SOS:** optional shake and voice triggers can be enabled in Admin. Three strong shakes start an eight-second cancellation countdown. Voice SOS requires “Daredevil SOS” and a separate “Confirm SOS” phrase, then provides a five-second cancellation countdown. Both are off by default and only run while the Blind mode page is visible. Voice recognition may process microphone audio through the browser's speech provider; shake readings stay local. These triggers are experimental and must not replace a phone call or other emergency plan.
 
 **What automatic model fallback does:** the Worker ranks models that accept camera images and can generate text. If one model returns a model-specific quota, overload or availability error, it tries another compatible Gemini vision model. Rotating models does not bypass a project-wide Google quota. The rotation state is opportunistic per Worker isolate, not a globally coordinated scheduler. A personal API key from a separate Gemini project may help when the demo project's quota is exhausted.
 
@@ -61,14 +67,14 @@ Main flow:
 2. It sends the image and task to the same-origin Worker.
 3. The Worker selects the configured or session-only user Gemini key, validates the request and tries compatible image-understanding models.
 4. The browser reveals the answer progressively while it is spoken.
-5. If browser speech recognition cannot connect, the browser records a short clip for Gemini language-aware transcription.
+5. In the default Automatic microphone mode, the browser records a short clip and sends it to Gemini for multilingual transcription. Browser-first recognition is optional in Admin and falls back to Gemini when the recogniser returns no speech or a service/language error.
 
 ## Important limits
 
 1. **Google quotas still apply.** The public demo does not require an app login and does not add a Cloudflare-wide API request limiter. Google applies its own model/project quotas. Public visitors share the configured project quota and may receive 429 errors.
 2. **Model rotation has limits.** It can recover from a model-specific cap when another model still has quota. It cannot defeat a project-wide daily or account-level cap.
 3. **BYOK is optional.** An entered Gemini key is stored in the current browser tab's session storage, sent to this site's Worker in a request header and not saved by this app in its database or local preferences. Use a key you own. Closing the tab clears it.
-4. **Voice recording is external processing.** Native browser recognition may use the browser vendor's service. When that service fails, a short browser-recorded clip may be forwarded to Google Gemini for transcription. Avoid private speech.
+4. **Voice recording is external processing.** Default Automatic mode sends a short browser-recorded clip to Google Gemini for transcription. Optional Browser-first mode may use the browser vendor's speech service, then falls back to Gemini. Avoid private speech.
 5. **Camera reachability is local.** An ESP32-CAM address such as `192.168.0.104` is a private LAN address. A hosted HTTPS site cannot reach it from anywhere on the Internet. Phone camera/upload is the portable hosted fallback.
 6. **SOS is manual and best effort.** It is not fall detection, ambulance dispatch or guaranteed delivery. The receiver must be paired, online, open and able to play audio. A locked or suspended phone may miss an alert.
 7. **No accounts yet.** Email OTP registration, 10 free trial detections, individual quotas, profile usage history and an admin usage dashboard are future work, not current features.
@@ -114,6 +120,7 @@ The Gemini key is uploaded as a Cloudflare Worker secret. Do not put secret valu
 - [Deployment](docs/DEPLOYMENT.md)
 - [Testing](docs/TESTING.md)
 - [Accessibility](docs/ACCESSIBILITY.md)
+- [Phone controls and Android shortcuts](docs/PHONE-CONTROLS.md)
 - [Safety and privacy](docs/SAFETY.md)
 - [Threat model](docs/THREAT-MODEL.md)
 - [Security policy](SECURITY.md)

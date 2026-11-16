@@ -17,24 +17,38 @@ This roadmap replaces the old token/rate-limit checklist, which no longer descri
 - [x] GitHub Actions test/syntax workflow and conditional Cloudflare deployment.
 - [x] Public Cloudflare URL deployed: https://daredevils-eye.karanjoykundu.workers.dev/
 
-## Phase 1 — blind-first and voice-resilience improvements (current feature branch)
+## Phase 1 — blind-first and voice-resilience improvements (feature branch)
 
-- [x] Dedicated Blind mode at `/blind/` with four full-screen touch targets and no visible exit button.
+- [x] Dedicated Blind mode at /blind/ with four main actions (Describe, Ask AI, SOS, Repeat), separate spoken Help and no visible exit button.
 - [x] Shared navigation menu and brand link on standard pages.
 - [x] Six Admin quick-jump shortcuts.
 - [x] Expanded Help and privacy text.
 - [x] Optional personal Gemini key kept only in tab session storage.
 - [x] Vision model ranking and best-effort rotation/fallback on model-specific errors.
-- [x] Gemini audio transcription fallback for unavailable browser speech recognition.
-- [x] Bengali-to-English transcription instruction while preserving English regardless of accent.
+- [x] Gemini-first multilingual audio transcription for Bangladeshi Bengali, English and mixed-language speech; browser-first mode remains optional.
+- [x] Browser recognition falls back after service, language and no-speech failures.
+- [x] Bengali-specific speech synthesis voice selection when a Bengali device voice is installed.
 - [x] Progressive written answer reveal while speech is playing.
+- [x] Spoken Help, spoken errors, first-use spoken safety notice, haptic action patterns and wake lock where supported.
+- [x] SOS tap-to-confirm and URL actions / Android shortcut definitions.
+- [x] Up to three camera frames and sharpness-based best-frame selection.
+- [x] Phone-control setup documentation and empty real-scene scorecard template.
 - [x] Project phone/WhatsApp contact link.
-- [x] PR CI passes on the current code branch (46 tests, 0 failures; JavaScript syntax check passed). Production deployment was skipped for the PR.
+- [x] Optional three-shake SOS and opt-in spoken wake phrase with a separate confirmation and cancellation countdown.
+- [x] PR CI passed on commit 9c68fcf: 55 tests, 0 failures; JavaScript syntax check passed. Production deployment was skipped for the PR.
 - [ ] Android Chrome hands-on voice test with English, Bangla and mixed-language speech.
+- [ ] Confirm Bengali voice installation and pronunciation; source code cannot install phone TTS language data.
 - [ ] TalkBack test of Blind mode, focus order, touch targets and spoken status.
 - [ ] Verify model fallback with controlled test responses and no quota-spending experiment.
+- [ ] Evaluate three-frame sharpness selection for latency, low-texture images and dark scenes.
 - [ ] Security review of BYOK flow and tab session lifecycle.
 - [ ] Usability review and colour/visual refinement after functional acceptance.
+- [ ] Test MacroDroid/Tasker volume triggers and Android home-screen shortcuts on the target device.
+- [ ] Measure three-shake false-positive/false-negative rates and test Bangla/English voice-SOS wake and confirmation phrases on the target phone.
+
+## Device-control notes
+
+The web app cannot reliably intercept Android hardware volume keys. MacroDroid/Tasker URL triggers and manifest shortcuts are integration paths; event delivery, lock-screen behavior and permissions must be checked on the actual phone. A native Android wrapper with a volume-key handler remains deferred.
 
 ## Phase 2 — physical prototype verification
 
