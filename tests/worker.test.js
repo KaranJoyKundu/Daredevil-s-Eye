@@ -192,19 +192,15 @@ test('Bengali text selects a Bengali device voice even when an English voice was
  assert.equal(selectVoiceForText(voices.slice(0,1),{lang:'bn-BD',text:'বাংলা উত্তর'}),null);
 });
 
-test('voice transcription alternates its two low-cost first-choice models before higher-cost fallbacks',()=>{
+test('voice transcription rotates its two low-cost first-choice models before higher-cost fallbacks',()=>{
  const first=getTranscriptionModelOrder();
  const second=getTranscriptionModelOrder();
- const third=getTranscriptionModelOrder();
- const lowCost=new Set(['gemini-3.1-flash-lite','gemini-3.5-flash-lite']);
- assert.ok(lowCost.has(first[0]));
- assert.ok(lowCost.has(second[0]));
- assert.notEqual(first[0],second[0]);
- assert.equal(third[0],first[0]);
- for(const order of [first,second,third]){
-  assert.deepEqual(new Set(order.slice(0,2)),lowCost);
-  assert.deepEqual(order.slice(2),['gemini-3.8-flash','gemini-3.5-transcribe']);
- }
+ assert.equal(first[0],'gemini-3.1-flash-lite');
+ assert.equal(second[0],'gemini-3.5-flash-lite');
+ assert.equal(first[1],'gemini-3.5-flash-lite');
+ assert.equal(second[1],'gemini-3.1-flash-lite');
+ assert.equal(first[2],'gemini-3.8-flash');
+ assert.equal(first[3],'gemini-3.5-transcribe');
 });
 
 test('vision fallback tries the next ranked model after a model-specific 429',async t=>{

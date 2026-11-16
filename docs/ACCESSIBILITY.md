@@ -8,6 +8,7 @@ Daredevil's Eye is an experimental audio-first interface. It is not accessibilit
 - SPOKEN HELP is a separate full-width control below the four-action grid. It reads the basic instructions aloud; it is not a text-based Help overlay or one of the four primary actions.
 - Blind mode has no brand header, navigation menu or on-screen exit control. Leaving it requires editing the URL to remove /blind/ or opening /action/.
 - All primary actions are native buttons with accessible names. Status and response regions use live-region semantics.
+- Current white-on-solid-background colour pairs are approximately 6.85:1 or higher by WCAG relative-luminance calculation, exceeding the 4.5:1 normal-text target. This is a source-colour calculation, not a full rendered-screen audit.
 - SOS requires two taps within five seconds in the normal interface. A URL shortcut only pre-arms SOS for a confirmation tap and never sends an alert automatically.
 - Repeat speaks the most recent answer held in the current page session.
 

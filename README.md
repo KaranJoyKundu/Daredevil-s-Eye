@@ -41,7 +41,7 @@ Blind mode has no header, menu or on-screen exit control. Its four main tiles ar
 | SOS | One-time invitation, receiver token and manual alert relay | Two-phone and network-change testing |
 | Consent | Versioned local consent record | Privacy review and participant testing |
 
-**What voice input does:** the default Automatic multilingual mode records a short microphone clip and sends it to the Worker/Gemini transcription path. It is instructed to recognise Bangladeshi Bengali, English and mixed Bangla-English, translating only Bengali portions into English. This deliberately avoids starting Android's browser recogniser in English-only mode. Admin also offers Browser speech recognition first; that option uses a separately selected recognition locale and falls back to Gemini on network, language, service or no-speech errors. Audio is externally processed, so do not speak passwords or confidential information. Real Bangla accuracy still needs testing on the target phone.
+**What voice input does:** the default Automatic multilingual mode records a short microphone clip and sends it to the Worker/Gemini transcription path. It is instructed to recognise Bangladeshi Bengali, English and mixed Bangla-English, translating only Bengali portions into English. This deliberately avoids starting Android's browser recogniser in English-only mode. Admin also offers Browser speech recognition first; that option uses a separately selected recognition locale and falls back to Gemini on network, language, service or no-speech errors. Audio is externally processed, so do not speak passwords or confidential information. Bengali speech is translated into English for the AI question; AI response language is a separate Admin setting and defaults to English. Select Bangla (Bangladesh) there for Bengali AI replies. Bengali spoken output also needs an installed Bengali device TTS voice. Real Bangla input/output accuracy still needs testing on the target phone.
 
 **Bengali spoken answers:** device speech synthesis selects an installed Bengali voice when the answer contains Bengali script. If the phone has no Bengali text-to-speech voice installed, the app cannot provide reliable Bengali pronunciation; install Bengali speech data in Android's text-to-speech settings and check Admin's voice status.
 
@@ -65,14 +65,14 @@ Main flow:
 2. It sends the image and task to the same-origin Worker.
 3. The Worker selects the configured or session-only user Gemini key, validates the request and tries compatible image-understanding models.
 4. The browser reveals the answer progressively while it is spoken.
-5. If browser speech recognition cannot connect, the browser records a short clip for Gemini language-aware transcription.
+5. In the default Automatic microphone mode, the browser records a short clip and sends it to Gemini for multilingual transcription. Browser-first recognition is optional in Admin and falls back to Gemini when the recogniser returns no speech or a service/language error.
 
 ## Important limits
 
 1. **Google quotas still apply.** The public demo does not require an app login and does not add a Cloudflare-wide API request limiter. Google applies its own model/project quotas. Public visitors share the configured project quota and may receive 429 errors.
 2. **Model rotation has limits.** It can recover from a model-specific cap when another model still has quota. It cannot defeat a project-wide daily or account-level cap.
 3. **BYOK is optional.** An entered Gemini key is stored in the current browser tab's session storage, sent to this site's Worker in a request header and not saved by this app in its database or local preferences. Use a key you own. Closing the tab clears it.
-4. **Voice recording is external processing.** Native browser recognition may use the browser vendor's service. When that service fails, a short browser-recorded clip may be forwarded to Google Gemini for transcription. Avoid private speech.
+4. **Voice recording is external processing.** Default Automatic mode sends a short browser-recorded clip to Google Gemini for transcription. Optional Browser-first mode may use the browser vendor's speech service, then falls back to Gemini. Avoid private speech.
 5. **Camera reachability is local.** An ESP32-CAM address such as `192.168.0.104` is a private LAN address. A hosted HTTPS site cannot reach it from anywhere on the Internet. Phone camera/upload is the portable hosted fallback.
 6. **SOS is manual and best effort.** It is not fall detection, ambulance dispatch or guaranteed delivery. The receiver must be paired, online, open and able to play audio. A locked or suspended phone may miss an alert.
 7. **No accounts yet.** Email OTP registration, 10 free trial detections, individual quotas, profile usage history and an admin usage dashboard are future work, not current features.
