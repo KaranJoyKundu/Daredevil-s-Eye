@@ -11,6 +11,8 @@ const DEFAULTS = Object.freeze({
   cameraBaseUrl: 'http://192.168.0.104',
   captureCount: 3,
   speechLanguage: 'en-US',
+  speechInputMode: 'auto',
+  speechInputLanguage: 'bn-BD',
   speechRate: 0.96,
   speechPitch: 1.08,
   speechPreset: 'gentle',
