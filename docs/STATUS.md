@@ -1,20 +1,43 @@
 # Implementation status
 
-## In this branch
-- Worker API with mock-only `/api/health`, `/api/config`, `/api/describe`, and `/api/ask` routes.
-- Immutable safety prompt core.
-- Wrangler static asset configuration.
-- Browser-side API, local settings, and speech helper modules.
+This file distinguishes source implementation from real-device verification.
 
-## Explicitly not enabled
-- No live vision provider or external AI calls.
-- No API keys or provider secrets.
-- No firmware changes.
-- No public deployment.
-- No claim that mock responses describe an image.
+## Implemented in source
 
-## Important integration note
-The ESP32-CAM capture endpoint is fetched directly by the phone browser. A hosted HTTPS origin may be blocked from fetching a local HTTP camera endpoint by browser mixed-content, CORS, or private-network restrictions. Validate this on the target phone/network before selecting a proxy or changing firmware.
+- Cloudflare Worker serves static assets from web/ and API routes.
+- Gemini vision calls use server-side GEMINI_API_KEY and selectable generateContent models.
+- Payload validation, response styles, wait limits and bn-BD prompt instructions.
+- Owner-only API token, same-origin checks and approximate Cloudflare rate limits.
+- Gemini TTS and browser speech helpers.
+- Explicit getUserMedia permission request followed by browser SpeechRecognition.
+- Versioned privacy consent, legacy migration and reset.
+- ESP32-CAM /capture helper and phone-photo fallback.
+- Diagnostics page has six cards, including Check all at once.
+- Per-install SOS rooms, one-time six-character invitations, 10-minute expiry, attempt limiting, receiver tokens and replacement.
+- GitHub Actions CI and optional Cloudflare deployment workflow.
 
-## Safety
-This prototype is not a navigation system and cannot guarantee hazard detection. It must not replace a cane, guide dog, or mobility training.
+## Automated verification
+
+GitHub Actions runs npm test and npm run check. Always refer to the latest run for the current result; previous test counts are not a release guarantee.
+
+## Not verified
+
+- Production Gemini vision and TTS with Cloudflare secrets.
+- Bengali transcription, response quality and TTS on target phones.
+- Android Chrome microphone behaviour.
+- ESP32-CAM capture from a hosted HTTPS origin.
+- Camera access outside the local network.
+- SOS delivery and replacement between physical phones on different networks.
+- Alarm reliability when a phone is locked, suspended or offline.
+- Screen-reader evaluation, usability tests, load tests, penetration tests and independent safety assessment.
+
+## Deployment status
+
+The repository is configured for Cloudflare Workers, Static Assets and Durable Objects. A deployment workflow can publish after CI when the owner has configured GitHub Actions secrets. Workflow presence alone does not mean that a live Worker exists.
+
+## Known limits
+
+- App access token is a single-owner beta gate, not multi-user identity.
+- ESP32-CAM private IP is not globally reachable; phone photo/upload is the portable fallback.
+- Browser speech recognition may use a browser vendor's cloud service.
+- SOS is a manual best-effort alert, not fall detection or emergency dispatch.
