@@ -1,4 +1,4 @@
-import { buildPrompt, DEFAULT_MODES, SAFETY_CORE } from './prompts.js';
+import { buildPrompt, DEFAULT_MODES, RESPONSE_STYLES, SAFETY_CORE, SCENE_RULES } from './prompts.js';
 
 const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status,
@@ -12,6 +12,9 @@ function validPayload(body) {
   if (body.image && body.image.length > 5_500_000) return 'Image is too large (maximum about 4 MB encoded).';
   if (body.question && (typeof body.question !== 'string' || body.question.length > 1000)) return 'Question must be text up to 1,000 characters.';
   if (body.customPrompt && (typeof body.customPrompt !== 'string' || body.customPrompt.length > 4000)) return 'Custom prompt must be text up to 4,000 characters.';
+  if (body.model && (typeof body.model !== 'string' || !/^[a-zA-Z0-9._-]{3,100}$/.test(body.model.replace(/^models\//, '')))) return 'Invalid model identifier.';
+  if (body.responseStyle && !Object.hasOwn(RESPONSE_STYLES, body.responseStyle)) return 'Unsupported response style.';
+  if (body.waitSeconds !== undefined && (!Number.isInteger(body.waitSeconds) || body.waitSeconds < 15 || body.waitSeconds > 180)) return 'Wait time must be between 15 and 180 seconds.';
   return null;
 }
 
@@ -28,23 +31,46 @@ function getMode(env) {
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-async function askGemini({ image, prompt }, env) {
-  if (!env.GEMINI_API_KEY) throw new Error('Gemini is selected but GEMINI_API_KEY is not configured in .dev.vars. Add the key, stop Wrangler, and restart it.');
-  const model = String(env.GEMINI_MODEL || 'gemini-3.8-flash').replace(/^models\//, '');
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+async function listGeminiModels(env) {
+  if (!env.GEMINI_API_KEY) throw new Error('Gemini API key is missing from .dev.vars.');
+  const models = [];
+  let pageToken = '';
+  for (let page = 0; page < 3; page += 1) {
+    const url = new URL('https://generativelanguage.googleapis.com/v1beta/models');
+    url.searchParams.set('pageSize', '1000');
+    if (pageToken) url.searchParams.set('pageToken', pageToken);
+    const response = await fetch(url, { headers: { 'x-goog-api-key': env.GEMINI_API_KEY } });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data?.error?.message || 'Could not retrieve Gemini models.');
+    models.push(...(data.models || []));
+    pageToken = data.nextPageToken || '';
+    if (!pageToken) break;
+  }
+  return models
+    .filter(model => model.name && model.supportedGenerationMethods?.includes('generateContent'))
+    .filter(model => !/(embedding|tts|live|imagen|veo|lyria|transcrib|audio|robotics)/i.test(model.name))
+    .map(model => ({
+      id: String(model.name).replace(/^models\//, ''),
+      name: model.displayName || String(model.name).replace(/^models\//, ''),
+      description: model.description || '',
+      inputTokenLimit: model.inputTokenLimit || null,
+      outputTokenLimit: model.outputTokenLimit || null,
+      supportsThinking: Boolean(model.thinking)
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function askGemini({ image, prompt, model, waitSeconds }, env) {
+  if (!env.GEMINI_API_KEY) throw new Error('Gemini is selected but GEMINI_API_KEY is not configured in .dev.vars.');
+  const selectedModel = String(model || env.GEMINI_MODEL || 'gemini-3.8-flash').replace(/^models\//, '');
+  const timeoutSeconds = Math.max(15, Math.min(180, Number(waitSeconds) || 120));
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(selectedModel)}:generateContent`;
   const requestBody = {
     system_instruction: { parts: [{ text: SAFETY_CORE }] },
     contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: imageParts(image) }] }],
-    generationConfig: {
-      maxOutputTokens: 220,
-      // Low thinking is supported by Gemini 3.8 Flash and reduces latency for
-      // short, factual scene descriptions.
-      thinkingConfig: { thinkingLevel: 'low' }
-    }
+    generationConfig: { maxOutputTokens: 260 }
   };
 
-  // Gemini can be temporarily overloaded. Retry one 503 with a short backoff;
-  // don't retry 429 because that may represent an exhausted quota.
   for (let attempt = 0; attempt < 2; attempt += 1) {
     let response;
     try {
@@ -52,36 +78,29 @@ async function askGemini({ image, prompt }, env) {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
         body: JSON.stringify(requestBody),
-        // Direct PowerShell vision test needed up to 90 seconds. The previous
-        // 45-second Worker deadline could abort a valid but slow Gemini reply.
-        signal: AbortSignal.timeout(120000)
+        signal: AbortSignal.timeout(timeoutSeconds * 1000)
       });
     } catch (error) {
       if (error.name === 'TimeoutError' || error.name === 'AbortError') {
-        throw new Error('Gemini did not respond within 120 seconds. The camera photo was captured, but the AI provider took too long. Try again once; repeated timeouts may indicate temporary Gemini congestion.');
+        throw new Error(`Gemini did not respond within ${timeoutSeconds} seconds. The image was captured, but the model took too long. Try a faster Flash-Lite model or increase the wait setting.`);
       }
-      throw new Error('Could not reach the Gemini API: ' + (error.message || 'network error'));
+      throw new Error('Could not reach Gemini: ' + (error.message || 'network error'));
     }
-
     const data = await response.json().catch(() => ({}));
     if (response.ok) {
       const answer = (data?.candidates?.[0]?.content?.parts || []).map(part => part.text || '').join('').trim();
       if (!answer) throw new Error('Gemini returned no readable answer. Please try another photo.');
       return answer;
     }
-
     const message = data?.error?.message || 'Gemini request failed.';
     if (response.status === 429) throw new Error('Gemini rate limit or quota reached. Check AI Studio usage and billing.');
     if (response.status === 401 || response.status === 403) throw new Error('Gemini rejected the API key. Check the local GEMINI_API_KEY setting.');
-    if (response.status === 404) throw new Error(`Gemini model "${model}" was not found or is unavailable for this key.`);
-
+    if (response.status === 404) throw new Error(`Gemini model "${selectedModel}" was not found or is unavailable for this API key.`);
     if (response.status === 503 && attempt === 0) {
       await wait(1500);
       continue;
     }
-    if (response.status === 503 || response.status === 504) {
-      throw new Error(`Gemini is temporarily overloaded or exceeded its processing deadline (HTTP ${response.status}). Please retry shortly.`);
-    }
+    if (response.status === 503 || response.status === 504) throw new Error(`Gemini is temporarily overloaded (HTTP ${response.status}). Please retry shortly.`);
     throw new Error(message.slice(0, 300));
   }
   throw new Error('Gemini request failed after retry.');
@@ -96,8 +115,7 @@ export async function handleApi(request, env = {}) {
     const apiKeyConfigured = Boolean(env.GEMINI_API_KEY);
     const supportedMode = mode === 'gemini' || mode === 'mock';
     return json({
-      ok: supportedMode,
-      mode,
+      ok: supportedMode, mode,
       model: mode === 'gemini' ? model : null,
       apiKeyConfigured,
       providerConnected: mode === 'gemini' && apiKeyConfigured,
@@ -110,10 +128,19 @@ export async function handleApi(request, env = {}) {
     }, supportedMode ? 200 : 503);
   }
 
+  if (request.method === 'GET' && url.pathname === '/api/models') {
+    try {
+      return json({ ok: true, models: await listGeminiModels(env), configuredModel: model });
+    } catch (error) {
+      return json({ ok: false, error: error.message || 'Could not load models.' }, 502);
+    }
+  }
+
   if (request.method === 'GET' && url.pathname === '/api/config') {
     return json({
-      aiMode: mode,
-      liveAIEnabled: mode === 'gemini',
+      aiMode: mode, liveAIEnabled: mode === 'gemini',
+      model, responseStyles: Object.keys(RESPONSE_STYLES),
+      basePrompt: SCENE_RULES,
       availableModes: Object.entries(DEFAULT_MODES).map(([id, m]) => ({ id, label: m.label, usesCamera: m.usesCamera }))
     });
   }
@@ -126,16 +153,21 @@ export async function handleApi(request, env = {}) {
     const action = url.pathname.endsWith('/ask') ? 'ask' : 'describe';
     if (!body.image) return json({ error: 'A camera image is required for this endpoint.' }, 400);
     if (action === 'ask' && !body.question?.trim()) return json({ error: 'Please provide a question.' }, 400);
-    if (mode !== 'gemini' && mode !== 'mock') {
-      return json({ error: `Unsupported AI_MODE "${mode}". Set AI_MODE=gemini in .dev.vars or wrangler.toml.` }, 503);
-    }
-    const prompt = buildPrompt({ mode: action, question: body.question || '', customPrompt: body.customPrompt || '' });
+    if (mode !== 'gemini' && mode !== 'mock') return json({ error: `Unsupported AI_MODE "${mode}".` }, 503);
+    const selectedModel = body.model || model;
+    const waitSeconds = body.waitSeconds || 120;
+    const prompt = buildPrompt({
+      mode: action,
+      question: body.question || '',
+      customPrompt: body.customPrompt || '',
+      responseStyle: body.responseStyle || 'concise'
+    });
     if (mode === 'gemini') {
       try {
-        const answer = await askGemini({ image: body.image, prompt }, env);
+        const answer = await askGemini({ image: body.image, prompt, model: selectedModel, waitSeconds }, env);
         return json({
           ok: true, mock: false, provider: 'Gemini',
-          answer,
+          model: selectedModel, answer,
           disclaimer: 'AI can miss objects and hazards. Do not rely on this description alone for mobility or safety decisions.'
         });
       } catch (error) {
