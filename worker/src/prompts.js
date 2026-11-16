@@ -35,7 +35,7 @@ export const DEFAULT_MODES = Object.freeze({
 export const RESPONSE_LANGUAGES = Object.freeze({
   'en-US': 'Answer in natural, plain English.',
   'en-GB': 'Answer in natural, plain English using UK spelling where appropriate.',
-  'bn-BD': 'Answer in natural Bangladeshi Bengali (বাংলা), using Bengali script. Use everyday spoken Bangladeshi wording, not transliterated Bengali. Keep the answer concise and easy to understand when spoken aloud.'
+  'bn-BD': 'Answer entirely in natural Bangladeshi Bengali (বাংলা), using Bengali script from the first word to the last. This is the full Bangla mode: never switch to English for headings, status phrases, instructions, camera guidance, labels or explanations. Use everyday spoken Bangladeshi wording, not Latin transliteration. Keep technical product names/model numbers only when translating them would make them unrecognisable; explain them in Bangla. Keep the answer concise and easy to understand when spoken aloud.'
 });
 
 export function buildPrompt({ mode = 'describe', question = '', customPrompt = '', responseStyle = 'concise', responseLanguage = 'en-US' } = {}) {
