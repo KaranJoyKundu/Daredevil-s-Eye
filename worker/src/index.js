@@ -145,7 +145,8 @@ export async function handleApi(request, env = {}) {
       mode,
       model: mode === 'gemini' ? model : null,
       apiKeyConfigured: Boolean(env.GEMINI_API_KEY),
-      providerConnected: mode === 'gemini' && Boolean(env.GEMINI_API_KEY),
+      // Configuration is observable; actual provider reachability is only established by a real request.
+      providerConfigured: mode === 'gemini' && Boolean(env.GEMINI_API_KEY),
       appAccessConfigured: appTokenConfigured(env),
       sosRelayConfigured: Boolean(env.SOS_ROOM && env.SOS_DIRECTORY),
       mockModeExplicitlyEnabled: mode === 'mock',
