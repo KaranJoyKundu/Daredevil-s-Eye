@@ -29,7 +29,7 @@ This roadmap replaces the old token/rate-limit checklist, which no longer descri
 - [x] Bengali-to-English transcription instruction while preserving English regardless of accent.
 - [x] Progressive written answer reveal while speech is playing.
 - [x] Project phone/WhatsApp contact link.
-- [ ] CI tests pass on this feature branch.
+- [x] PR CI passes on the current code branch (44 tests, 0 failures; JavaScript syntax check passed). Production deployment was skipped for the PR.
 - [ ] Android Chrome hands-on voice test with English, Bangla and mixed-language speech.
 - [ ] TalkBack test of Blind mode, focus order, touch targets and spoken status.
 - [ ] Verify model fallback with controlled test responses and no quota-spending experiment.

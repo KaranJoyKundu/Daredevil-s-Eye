@@ -27,7 +27,7 @@ Updated for the current feature branch. This page separates implemented source f
 - Progressive word reveal concurrent with speech output.
 - Contact phone and WhatsApp links.
 - Updated README and project roadmap.
-- Branch tests and CI still must be run before calling this feature set verified.
+- Latest feature-branch CI passed: 44 tests, 0 failures, and the JavaScript syntax check succeeded. Run: https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/43810546175. The production deploy job was skipped because this is a pull request.
 
 ## Automated verification
 
