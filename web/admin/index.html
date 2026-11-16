@@ -15,6 +15,8 @@
 <label for="camera">ESP32-CAM address</label>
 <input id="camera" type="text" inputmode="url" required placeholder="192.168.0.104 or http://192.168.0.104">
 <small>Current camera address: http://192.168.0.104. The app adds http:// when you enter a plain IP.</small>
+<label class="inline-checkbox" for="require-photo-confirmation"><input id="require-photo-confirmation" type="checkbox" checked> Preview every phone photo before sending (recommended)</label>
+<small>When enabled, the selected camera/upload photo stays on this device until the user reviews it and presses Ask AI. Turn this off to automatically describe a selected photo.</small>
 <div class="field-grid">
 <div><label for="contact-name">Trusted contact name</label><input id="contact-name" maxlength="80" placeholder="Name"></div>
 <div><label for="contact-phone">Trusted contact phone</label><input id="contact-phone" type="tel" maxlength="30" placeholder="+880..."></div>
