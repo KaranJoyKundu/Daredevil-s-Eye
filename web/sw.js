@@ -18,7 +18,7 @@ self.addEventListener('notificationclick',event=>{
   const url=new URL(event.notification.data?.url||'/sos-receiver/?push=1',self.location.origin).href;
   const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
   for(const client of windows){
-   if(new URL(client.url).origin===self.location.origin){
+   if(new URL(client.url).origin===self.location.origin&&new URL(client.url).pathname.startsWith('/sos-receiver/')){
     await client.focus();
     client.postMessage({type:'DAREDEVILS_EYE_SOS_PUSH'});
     return;
