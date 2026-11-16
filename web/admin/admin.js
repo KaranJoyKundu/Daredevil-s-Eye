@@ -20,6 +20,7 @@ function normalizeCameraAddress(value){
 function formSettings(){
  return {
   cameraBaseUrl:normalizeCameraAddress($('#camera').value),
+  requirePhotoConfirmation:$('#require-photo-confirmation').checked,
   emergencyName:$('#contact-name').value.trim(),
   emergencyPhone:$('#contact-phone').value.trim(),
   speechLanguage:$('#language').value,
@@ -49,6 +50,7 @@ $('#save-personal-key').addEventListener('click',()=>{
 });
 $('#remove-personal-key').addEventListener('click',()=>{clearSessionGeminiApiKey();$('#personal-api-key').value='';$('#personal-key-status').textContent='Personal key removed from this tab. Using the project key if configured.';loadModels();});
 $('#camera').value=saved.cameraBaseUrl;
+$('#require-photo-confirmation').checked=saved.requirePhotoConfirmation!==false;
 $('#contact-name').value=saved.emergencyName;
 $('#contact-phone').value=saved.emergencyPhone;
 $('#sos-code').value=saved.sosPairingCode;
