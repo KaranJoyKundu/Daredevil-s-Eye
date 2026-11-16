@@ -12,7 +12,6 @@ not_found_handling = "single-page-application"
 APP_ENV = "development"
 AI_MODE = "gemini"
 GEMINI_MODEL = "gemini-3.8-flash"
-GEMINI_ALLOWED_MODELS = "gemini-3.8-flash"
 
 [[durable_objects.bindings]]
 name = "SOS_ROOM"
