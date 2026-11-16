@@ -12,7 +12,7 @@ Include the affected file or route, impact, reproduction steps and suggested mit
 
 ## Secret handling
 
-- Never commit .dev.vars, .env, provider keys, Cloudflare tokens, app access tokens or receiver tokens.
+- Never commit .dev.vars, .env, provider keys, Cloudflare tokens or receiver tokens. The public demo does not use an app access token.
 - Rotate credentials that have been exposed.
 - Use GitHub Actions Secrets for deployment credentials and Cloudflare Worker secrets for runtime credentials.
 - Never put production secrets in browser code.
