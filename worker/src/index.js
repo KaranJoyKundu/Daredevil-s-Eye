@@ -134,7 +134,7 @@ export async function listGeminiModels(apiKey) {
     .filter(model => model.name && model.supportedGenerationMethods?.includes('generateContent'))
     // This application analyses camera photos. Image-output, TTS, audio-only,
     // video, embedding and robotics models are not compatible with that task.
-    .filter(model => !/(embedding|tts|live|image|imagen|veo|lyria|transcrib|audio|robotics)/i.test(model.name))
+    .filter(model => !/(embedding|tts|live|image|imagen|veo|lyria|transcrib|audio|robotics)/i.test(model.name) && !/gemini-3\\.6-flash/i.test(model.name))
     .map(model => ({
       id: String(model.name).replace(/^models\//, ''),
       name: model.displayName || String(model.name).replace(/^models\//, ''),
