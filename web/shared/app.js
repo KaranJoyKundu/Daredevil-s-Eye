@@ -88,6 +88,7 @@ function localizeSpeech(message){
   'I could not complete that action.':'দুঃখিত, কাজটি সম্পন্ন করা যায়নি। আবার চেষ্টা করুন।'
  };
  if(exact[message])return exact[message];
+ if(/no bengali speech voice|no bengali speech voices/i.test(message))return 'এই ফোনে বাংলা বলার কণ্ঠস্বর পাওয়া যায়নি। অ্যান্ড্রয়েডের টেক্সট-টু-স্পিচ সেটিংসে বাংলা ভয়েস ডেটা ইনস্টল করুন।';
  if(/quota|429|resource.exhausted/i.test(message))return 'এআই সেবার ব্যবহারের সীমা আপাতত পূর্ণ হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন অথবা অ্যাডমিন সেটিংসে নিজের জেমিনি এপিআই কী ব্যবহার করুন।';
  if(/camera|capture|cors|network isolation/i.test(message))return 'ক্যামেরার সঙ্গে সংযোগ করা যায়নি। ক্যামেরা চালু আছে কি না এবং একই ওয়াই-ফাই নেটওয়ার্কে আছে কি না পরীক্ষা করুন।';
  if(/timed? ?out|timeout|abort/i.test(message))return 'অনুরোধটি সম্পন্ন হতে বেশি সময় লেগেছে। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।';
@@ -100,7 +101,7 @@ function speakSosStatus(message){
  const settings=getSettings();
  const resume=()=>{if(isBlindMode&&settings.sosVoiceEnabled&&!document.hidden&&!sosVoiceBlocked&&!sosDispatching)startSosVoiceListener();};
  stopSosVoiceListener();
- const utterance=speak(localizeSpeech(message),{lang:settings.speechLanguage||'en-US',onEnd:resume,onError:resume});
+ const utterance=speak(localizeSpeech(message),{lang:settings.speechLanguage||'en-US',onEnd:resume,onError:error=>{if(status)status.textContent=settings.speechLanguage==='bn-BD'?localizeSpeech(error):String(error);resume();}});
  if(!utterance)resume();
 }
 function setSosCancelVisibility(visible){
@@ -209,7 +210,7 @@ async function announceAnswer(message,disclaimer=''){
  const settings=getSettings(),spokenLanguage=settings.speechLanguage==='bn-BD'?'bn-BD':detectSpokenLanguage(answer),output=$('#result'),runId=++revealRun;
  if(output)output.textContent=disclaimer?disclaimer+'\n\n':'';
  const displayPromise=revealWords(output,answer,runId);
- const speechPromise=speakResponse(answer,{lang:spokenLanguage,engine:settings.speechEngine==='gemini'?'device':settings.speechEngine,onFallback:error=>{if(status)status.textContent=settings.speechLanguage==='bn-BD'?'নির্বাচিত ভয়েস চালু হয়নি। ফোনের ভয়েস ব্যবহার করা হচ্ছে।':'Using the device voice because the selected speech service failed: '+error.message;},onEnd:()=>startSosVoiceListener()});
+ const speechPromise=speakResponse(answer,{lang:spokenLanguage,engine:settings.speechEngine==='gemini'?'device':settings.speechEngine,onFallback:error=>{if(status)status.textContent=settings.speechLanguage==='bn-BD'?'নির্বাচিত ভয়েস চালু হয়নি। ফোনের ভয়েস ব্যবহার করা হচ্ছে।':'Using the device voice because the selected speech service failed: '+error.message;},onError:error=>{if(status)status.textContent=settings.speechLanguage==='bn-BD'?localizeSpeech(error):String(error);startSosVoiceListener();},onEnd:()=>startSosVoiceListener()});
  await Promise.allSettled([displayPromise,speechPromise]);
 }
 async function run(mode,question='',imageOverride=null){
@@ -354,7 +355,7 @@ $('#question-form')?.addEventListener('submit',event=>{
  run('describe');
 });
 $('#consent-accept')?.addEventListener('click',()=>{
- if(!acceptConsent()){$('#consent-status').textContent='Could not save your consent in this browser. Enable site storage and try again.';speak('Could not save your consent. Please enable site storage and try again.',{lang:'en-US'});return;}
+ if(!acceptConsent()){$('#consent-status').textContent='Could not save your consent in this browser. Enable site storage and try again.';const settings=getSettings();speak(settings.speechLanguage==='bn-BD'?'এই ব্রাউজারে সম্মতি সংরক্ষণ করা যায়নি। সাইটের স্টোরেজ চালু করে আবার চেষ্টা করুন।':'Could not save your consent. Please enable site storage and try again.',{lang:settings.speechLanguage||'en-US'});return;}
  $('#consent-panel').remove();const settings=getSettings();
  if(!settings.firstRunDisclaimerSpoken){
   const disclaimer=settings.speechLanguage==='bn-BD'?'প্রথমবার ব্যবহারের আগে জানুন: ডেয়ারডেভিলস আই একটি পরীক্ষামূলক সহায়ক। এটি ভুল করতে পারে এবং বিপদ শনাক্ত করতে ব্যর্থ হতে পারে। এটি সাদা ছড়ি বা গাইড কুকুরের বিকল্প নয় এবং কোনো রাস্তা বা পথ নিরাপদ কি না নিশ্চিত করতে পারে না। আপনার স্বাভাবিক চলাচলের সহায়তা ব্যবহার করতে থাকুন।':'Before first use: Daredevil’s Eye is experimental. It can make mistakes and miss hazards. It is not a cane or guide dog and cannot confirm that a path or road is safe. Keep using your usual mobility aids and mobility support.';
