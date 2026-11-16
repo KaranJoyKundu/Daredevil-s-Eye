@@ -1,22 +1,63 @@
-# Local setup (Windows 11)
+# Local setup (Windows 11 / PowerShell)
 
-1. Install Node.js LTS.
-2. Open PowerShell in the project directory.
-3. Run `npm install`.
-4. Run `npm test` and `npm run check`.
-5. Run `npx wrangler dev` to start the local Worker and static assets.
-6. Open the local URL printed by Wrangler.
+## Requirements
 
-Mock mode is the only supported mode in this phase. No API key is required. Do not add provider credentials to browser code.
+- Node.js 24 or supported current LTS.
+- npm and Wrangler.
+- Gemini API key for live AI tests.
+- ESP32-CAM and a phone/PC on the same LAN for local camera tests.
+
+## Install and configure
+
+~~~powershell
+cd "C:\path\to\Daredevil-s-Eye"
+npm install
+Copy-Item .dev.vars.example .dev.vars
+~~~
+
+Edit .dev.vars locally:
+- GEMINI_API_KEY: current Gemini key; never paste into chat, commit, or frontend.
+- APP_ACCESS_TOKEN: random private token, at least 32 characters.
+- AI_MODE=gemini for live requests; AI_MODE=mock only for deliberate mock tests.
+
+Generate a strong app token without displaying it:
+
+~~~powershell
+$bytes = New-Object byte[] 48
+$rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($bytes)
+$token = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+','-').Replace('/','_')
+$token | Set-Clipboard
+Write-Host "Random app token copied to clipboard. Paste it into .dev.vars as APP_ACCESS_TOKEN=..."
+~~~
+
+Run tests and syntax checks:
+
+~~~powershell
+npm test
+npm run check
+~~~
+
+Start the Worker:
+
+~~~powershell
+npx wrangler dev --ip 0.0.0.0 --port 8791
+~~~
+
+Open the URL Wrangler prints, visit /access/, and enter the app token.
 
 ## Camera
-Configure the camera base URL in device settings. It should be the ESP32-CAM address only, for example `http://192.168.4.1`; the app appends `/capture`.
 
-The browser must be able to reach the camera from the same network. If browser security blocks the request, record the exact browser error before changing architecture.
+Admin defaults to http://192.168.0.104 and the app appends /capture. Browser and ESP32-CAM must be on a network that allows the browser fetch, including CORS/private-network permissions. A hosted HTTPS page cannot directly fetch a private HTTP camera IP. Use phone camera/photo upload on the hosted app. Never expose the camera web server directly to the Internet.
 
-## Manual tests
-- Confirm the mock backend health endpoint.
-- Confirm the UI clearly labels replies as simulated.
-- Test camera access on the actual phone and hotspot.
-- Test speech output and speech input separately.
-- Test SOS only with a test contact; the app opens the dialler and does not place a call automatically.
+## Microphone
+
+Use http://localhost:8791 on the same PC for local mic permission testing. Phone mic requires the deployed HTTPS origin. SpeechRecognition language availability depends on the browser and device.
+
+## SOS
+
+The sender must be unlocked. Generate a fresh invitation in Admin. The receiver opens /sos-receiver/, enters the six-character code, pairs, then the page refreshes. Tap Enable alarm & start listening. Receiver does not need the owner's app token; it receives a scoped receiver token. Test only with consenting contacts; keep the page foregrounded and online.
+
+## Secrets
+
+.dev.vars, .env and Wrangler state are ignored. Check staged files before every commit.
