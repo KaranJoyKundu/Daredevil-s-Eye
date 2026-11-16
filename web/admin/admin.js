@@ -163,15 +163,21 @@ $('#preview-voice').addEventListener('click',async()=>{
  }catch(error){$('#voice-status').textContent='Voice preview failed: '+error.message;}
 });
 
-form.addEventListener('submit',event=>{
+form.addEventListener('submit',async event=>{
  event.preventDefault();
+ const submitButton=form.querySelector('button[type="submit"]');
+ submitButton.disabled=true;
  try{
   const next=formSettings();
   if(next.sosPairingCode&&!/^[A-Z0-9]{8,20}$/.test(next.sosPairingCode))throw new Error('SOS pairing code must be 8–20 letters or numbers.');
+  if(saved.sosPairingCode&&next.sosPairingCode&&saved.sosPairingCode!==next.sosPairingCode){
+   await requestAI('/api/sos/reset',{code:saved.sosPairingCode,newCode:next.sosPairingCode});
+  }
   saveSettings(next);
   $('#camera').value=next.cameraBaseUrl;
   $('#message').textContent='All settings saved on this device. Share the SOS pairing code only with your receiver phone.';
  }catch(error){$('#message').textContent=error.message;}
+ finally{submitButton.disabled=false;}
 });
 
 let selectedFile=null,previewUrl=null;
