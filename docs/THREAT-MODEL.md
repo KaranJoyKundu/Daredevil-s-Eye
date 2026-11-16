@@ -18,8 +18,8 @@
 ## Controls present
 
 - Provider and owner secrets are server-side.
-- Public API routes apply same-origin request checks and weighted per-IP rate-limit checks.
-- AI and SOS routes use Cloudflare approximate rate-limit bindings.
+- Public API routes apply same-origin request checks and input validation; there is no additional Cloudflare rate limiter.
+- Gemini request quotas are enforced by Google according to the API project's usage tier and selected model.
 - Six-character SOS invitations are hashed, single-use and expire after ten minutes.
 - Pairing attempts are limited per source IP in SOSDirectory.
 - Receiver receives a random 256-bit token; only its hash is stored in the device room.
@@ -28,8 +28,8 @@
 
 ## Residual risks
 
-- AI endpoints are public. Anyone can use the Gemini-backed endpoints and consume quota within the configured limits; the app has no login or per-user identity.
-- Cloudflare simple rate limits are approximate and local to each Cloudflare location, not strict global quotas.
+- AI endpoints are public. Anyone can use Gemini-backed endpoints and consume the project's quota; the app has no login or per-user identity.
+- Public visitors share the same Gemini project quota; no per-user quota isolation is implemented.
 - Six-character invitations have limited entropy; expiry, single use and attempt limiting reduce but do not eliminate guessing risk.
 - A compromised receiver browser can expose its receiver token.
 - Public pairing can be abused to consume attempts; rate limits are best effort.
