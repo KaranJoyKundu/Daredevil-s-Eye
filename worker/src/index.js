@@ -332,6 +332,7 @@ export async function handleApi(request, env = {}) {
       usingPersonalKey: hasPersonalKey(request),
       providerConfigured: mode === 'gemini' && Boolean(apiKey),
       sosRelayConfigured: Boolean(env.SOS_ROOM && env.SOS_DIRECTORY),
+      sosPushAvailable: Boolean(env.SOS_ROOM && env.SOS_DIRECTORY),
       mockModeExplicitlyEnabled: mode === 'mock',
       message: !supportedMode
         ? 'Unsupported AI_MODE "' + mode + '". Use "gemini" or explicitly "mock".'
@@ -352,7 +353,8 @@ export async function handleApi(request, env = {}) {
   const receiverActions = {
     '/api/sos/pair': 'pair',
     '/api/sos/poll': 'poll',
-    '/api/sos/ack': 'ack'
+    '/api/sos/ack': 'ack',
+    '/api/sos/subscribe': 'subscribe'
   };
   if (request.method === 'POST' && receiverActions[url.pathname]) {
     return forwardSos(request, env, receiverActions[url.pathname]);
@@ -360,7 +362,8 @@ export async function handleApi(request, env = {}) {
 
   const sosActions = {
     '/api/sos/invite': 'invite',
-    '/api/sos/trigger': 'trigger'
+    '/api/sos/trigger': 'trigger',
+    '/api/sos/push-key': 'push-key'
   };
   if (request.method === 'POST' && sosActions[url.pathname]) {
     return forwardSos(request, env, sosActions[url.pathname]);
