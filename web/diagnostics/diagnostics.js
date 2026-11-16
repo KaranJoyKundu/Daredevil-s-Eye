@@ -1,7 +1,7 @@
-import {getSettings} from '/shared/settings.js?v=20261116-sosmictts1';
-import {captureImage,blobToDataUrl} from '/shared/camera.js?v=20261116-sosmictts1';
-import {requestAI} from '/shared/api.js';
-import {listenOnce,speak,speakResponse,stopSpeaking} from '/shared/speech.js?v=20261116-sosmictts1';
+import {getSettings} from '/shared/settings.js?v=20261116-auth1';
+import {captureImage,blobToDataUrl} from '/shared/camera.js?v=20261116-auth1';
+import {requestAI,apiFetch} from '/shared/api.js?v=20261116-auth1';
+import {listenOnce,speak,speakResponse,stopSpeaking} from '/shared/speech.js?v=20261116-auth1';
 
 const $=selector=>document.querySelector(selector);
 let latestCameraBlob=null,latestCameraUrl=null,selectedAiFile=null,micController=null;
@@ -80,7 +80,7 @@ async function runAiTest(){
   const question=$('#diag-ai-question').value.trim();
   const result=await requestAI(question?'/api/ask':'/api/describe',{
    image,question,model:settings.aiModel,waitSeconds:settings.waitSeconds,
-   responseStyle:settings.responseStyle,customPrompt:settings.customPrompt
+   responseStyle:settings.responseStyle,customPrompt:settings.customPrompt,responseLanguage:settings.speechLanguage
   });
   if(result.mock)throw new Error('Mock mode returned no real image analysis.');
   $('#ai-output').textContent=(result.disclaimer||'')+'\n\n'+result.answer;
@@ -115,7 +115,7 @@ async function systemCheck(){
  try{
   const [healthResponse,modelsResponse]=await Promise.all([
    fetch('/api/health',{cache:'no-store'}),
-   fetch('/api/models',{cache:'no-store'})
+   apiFetch('/api/models')
   ]);
   const health=await healthResponse.json(),models=await modelsResponse.json().catch(()=>({}));
   const lines=[
