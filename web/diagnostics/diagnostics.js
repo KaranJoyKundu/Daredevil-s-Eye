@@ -46,6 +46,8 @@ async function startMic(){
   lang:getSettings().speechLanguage,
   onPermission:()=>{micState.hardware=true;micState.permission=true;$('#mic-status').textContent='Microphone found and permission granted. Starting recognition…';},
   onStart:()=>{micState.recognition=true;$('#mic-status').textContent='Speech recognition started. Say a sentence…';},
+  onFallback:message=>{$('#mic-status').textContent=message;},
+  onStatus:message=>{$('#mic-status').textContent=message;},
   onInterim:text=>{$('#mic-transcript').value=text;$('#mic-status').textContent='Listening: '+text;},
   onResult:text=>{micState.transcript=text;$('#mic-transcript').value=text;$('#mic-status').textContent='Speech recognised.';},
   onError:error=>{micState.error=error;$('#mic-status').textContent=error;},

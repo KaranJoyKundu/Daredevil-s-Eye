@@ -2,42 +2,47 @@
 
 ## Assets
 
-- Gemini provider key.
-- Camera image content and AI response text.
+- Server-side Gemini project key and optional visitor-supplied Gemini key.
+- Camera image content, audio recordings sent for fallback transcription and returned AI text.
 - SOS invitation codes, receiver tokens and alert state.
-- Device preferences and consent record.
+- Local device settings, user-provided camera address and emergency contact.
+- Future (not-yet-collected) account identity and usage data.
 
 ## Trust boundaries
 
-- Browser to Worker API.
-- Worker to Gemini.
+- Browser to same-origin Worker API.
+- Worker to Google Gemini.
 - Worker to Cloudflare Durable Objects.
-- Owner browser to receiver browser via invitation and scoped token.
-- Browser to ESP32-CAM on a local network.
+- Sender browser to receiver browser via invitation/token.
+- Browser to ESP32-CAM over a local network.
+- User-supplied API key from Admin to Worker request header.
 
 ## Controls present
 
-- Provider and owner secrets are server-side.
-- Public API routes apply same-origin request checks and input validation; there is no additional Cloudflare rate limiter.
-- Gemini request quotas are enforced by Google according to the API project's usage tier and selected model.
-- Six-character SOS invitations are hashed, single-use and expire after ten minutes.
-- Pairing attempts are limited per source IP in SOSDirectory.
-- Receiver receives a random 256-bit token; only its hash is stored in the device room.
-- Pairing a new receiver revokes the old receiver token.
-- Application code does not intentionally persist images or audio.
+- Production project key remains a Worker secret, not in frontend source.
+- BYOK requests send a custom key only to same-origin AI endpoints and do not persist it server-side; the browser holds it in tab sessionStorage.
+- Worker validates image type/size, question, model ID and request options.
+- Same-origin request checks reject cross-origin browser requests with a foreign Origin header.
+- SOS invitations are hashed, single use and expire after ten minutes.
+- Pairing attempts are limited in SOSDirectory.
+- Receiver receives a random 256-bit token; only its hash is stored in the room.
+- Pairing a replacement receiver revokes the old receiver token.
+- App code does not intentionally persist camera/audio payloads.
 
 ## Residual risks
 
-- AI endpoints are public. Anyone can use Gemini-backed endpoints and consume the project's quota; the app has no login or per-user identity.
-- Public visitors share the same Gemini project quota; no per-user quota isolation is implemented.
-- Six-character invitations have limited entropy; expiry, single use and attempt limiting reduce but do not eliminate guessing risk.
-- A compromised receiver browser can expose its receiver token.
-- Public SOS pairing can be abused to consume code-guess attempts; the SOS directory has its own per-IP attempt handling, but there is no API-wide Cloudflare request limit.
-- Browser storage can be cleared or copied by a local user.
-- ESP32-CAM local HTTP may be unauthenticated and must not be exposed directly to the Internet.
-- Browser SOS does not guarantee delivery or audible output.
+- Public AI routes can consume the shared Gemini project quota. There is no account login, per-user usage quota or general Cloudflare API rate limiter in the current prototype.
+- A user-supplied API key is visible to the user in browser developer tools and sent to this site's Worker. Users must only enter keys they own and should remove them after a demo.
+- SessionStorage limits persistence but does not make a key a secure account vault.
+- Model rotation is per Worker isolate and best-effort; concurrent isolates do not share a rotation counter.
+- Different models may all share the same project-level quota. Rotation cannot evade project-wide caps.
+- Microphone fallback records a short clip and forwards it to Google Gemini. Users may accidentally speak personal information.
+- Native SpeechRecognition may send audio through the browser vendor's service.
+- Browser storage may be copied or cleared by a local user.
+- ESP32-CAM local HTTP may be unauthenticated; do not expose the camera directly to the Internet.
+- SOS delivery/audio is not guaranteed on a suspended, locked or offline device.
 - No independent penetration test, privacy impact assessment or formal safety certification has been performed.
 
-## Before a broader public service release
+## Before public multi-user launch
 
-Add real user/device registration, per-user quotas, stronger pairing recovery, monitoring/abuse response, strict quota accounting, operational alerting, privacy review and independent security testing.
+Add server-side OTP and quota controls, robust email delivery throttling, account authorisation, admin audit protections, privacy notice and retention/deletion tooling. Use IP only as one abuse signal; shared mobile carrier NAT, campus Wi-Fi, VPNs and dynamic addresses can group innocent visitors or evade simplistic counters. Minimise raw IP retention; consider keyed hashes and a documented expiry period. Never expose the usage dashboard publicly.

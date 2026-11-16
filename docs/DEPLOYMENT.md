@@ -1,63 +1,58 @@
 # Deployment
 
-## Hosting model
+## Hosting
 
-Use **Cloudflare Workers with Static Assets and Durable Objects**. Wrangler serves web/, routes /api/* through the Worker, and binds the SOS Durable Objects. GitHub remains the source repository.
+Use Cloudflare Workers with Static Assets and Durable Objects. GitHub remains the source repository. GitHub Pages alone cannot host the Worker API and SOS Durable Objects required by this app.
 
-GitHub Pages is static hosting and cannot run this Worker or Durable Objects. It is not the correct host for this complete application.
-
-The deployed Worker uses a public HTTPS workers.dev address. Anyone can open the website and call its public AI features without an app access token or login.
+Live main deployment (current baseline): https://daredevils-eye.kjkundu2006.workers.dev/
 
 ## GitHub Actions secrets
 
-In GitHub, open **Settings → Secrets and variables → Actions** and add these repository secrets:
+In GitHub, open Settings → Secrets and variables → Actions and add:
 
 | Secret | Value |
 |---|---|
 | CLOUDFLARE_API_TOKEN | Scoped Cloudflare API token for Workers deployment |
 | CLOUDFLARE_ACCOUNT_ID | Cloudflare account ID |
-| GEMINI_API_KEY | Current Gemini key |
+| GEMINI_API_KEY | Gemini API key for the server-side demo project |
 
-The deploy workflow passes only the Gemini key to Wrangler as a Worker secret. Never put secret values in workflow source, frontend code, commits or logs.
-
-Cloudflare's official guidance uses an API token with the **Edit Cloudflare Workers** permission policy. Scope it to the intended account and review the permissions.
+The workflow uploads only `GEMINI_API_KEY` as a Worker secret. Never place values in workflow source, frontend code, commits or logs. Follow Cloudflare's current least-privilege guidance for API tokens.
 
 ## Release flow
 
-1. Merge an approved PR into main.
-2. GitHub Actions runs CI.
-3. After CI succeeds, the deploy job runs only if all three repository secrets exist.
-4. Wrangler deploys the Worker and static assets to the Cloudflare account.
-5. Obtain the workers.dev URL from the GitHub Actions deployment output or Cloudflare Dashboard.
-6. Open the website directly. No app access token or login is required.
+1. Push feature work to a branch and create a pull request to `main`.
+2. GitHub Actions runs `npm test` and `npm run check` for the PR.
+3. Review the diff and test results.
+4. Merge only after the candidate is accepted.
+5. A successful push to `main` deploys the Worker if all three secrets exist.
+6. Confirm the Worker deployment job succeeds and test the live site.
 
-If secrets are absent, the workflow deliberately skips deployment. A green CI check alone does not prove a production Worker is live.
+A green test job on a feature branch does not update production. Do not treat CI as physical device verification.
 
-## Public API and Google free-tier quota
+## API keys and quotas
 
-This project does not add Cloudflare API rate limits or a server-side model allowlist. Admin displays generateContent models available to the configured Gemini API key. Google's own model-specific free-tier request and token quotas still apply; public visitors share the same project quota. If the quota is exhausted, Gemini returns a quota/rate-limit error until it resets. This project does not add a paid billing route or separate per-user quota.
+The production Gemini project key remains a Worker secret. A visitor may optionally supply their own key in Admin; it is held in tab sessionStorage and sent to same-origin API endpoints in a header. The Worker does not store that custom key. Public demo visitors otherwise share the configured project's Google quota.
 
-## Manual alternative
+The Worker tries other compatible Gemini vision models on model-specific quota/overload/unavailability errors. Google's project-level quota still applies; model rotation cannot bypass it. A key from the same project will not create a separate project quota.
+
+## Manual deploy
 
 After authenticating Wrangler and selecting the correct Cloudflare account:
 
-~~~powershell
+```powershell
 npx wrangler secret put GEMINI_API_KEY
 npx wrangler deploy
-~~~
+```
 
-Wrangler prompts for the key. Do not put secret values directly into shell commands/history.
+Wrangler prompts for the key. Do not put secret values directly into command history.
 
-## Production verification
+## Production checks
 
-- GET /api/health reports configuration status without exposing secrets.
-- Open / and confirm the app loads without an unlock screen.
-- Test a phone-photo upload and Gemini vision response.
-- Test Bengali input/output separately.
-- Pair two physical phones; verify replacement, alert and acknowledgement.
-- Confirm HTTPS and microphone permission.
-- Do not test the SOS system with anyone depending on it for safety.
-
-## Camera limitation
-
-The camera IP 192.168.0.104 is private to the local network. The hosted app can be used worldwide with phone-photo input, but the ESP32-CAM cannot be accessed remotely until an authenticated gateway or outbound camera relay is designed and tested.
+- GET `/api/health` reports configuration state without exposing secret values.
+- Open Home and Blind mode.
+- Test a phone photo and a real Gemini response.
+- Use Admin BYOK only with a key under your control.
+- Test microphone transcription on HTTPS; record the exact browser/device and language.
+- Pair two physical phones for SOS and test replacement and acknowledgement.
+- Review privacy notice and consent text.
+- Verify that no API key, audio recording or private image appears in logs or commits.

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#07111f"><title>Blind mode · Daredevil's Eye</title>
+<link rel="stylesheet" href="/shared/style.css">
+</head>
+<body class="blind-page">
+<main id="blind-grid" class="blind-grid" aria-label="Four main actions">
+<button class="blind-tile blind-describe" data-action="describe"><span aria-hidden="true">◉</span><strong>DESCRIBE</strong><small>What is around me?</small></button>
+<button class="blind-tile blind-ask" data-action="ask"><span aria-hidden="true">🎙</span><strong>ASK AI</strong><small>Ask a question by voice</small></button>
+<button class="blind-tile blind-sos" data-action="sos"><span aria-hidden="true">☎</span><strong>SOS</strong><small>Alert my trusted contact</small></button>
+<a class="blind-tile blind-help" href="#blind-help"><span aria-hidden="true">ⓘ</span><strong>HELP</strong><small>How to use this screen</small></a>
+</main>
+<section id="blind-help" class="blind-help-overlay" aria-labelledby="blind-help-title">
+<div class="blind-help-card">
+<h1 id="blind-help-title">Using Daredevil's Eye</h1>
+<p><strong>DESCRIBE:</strong> Capture a photo from the configured camera and hear a description.</p>
+<p><strong>ASK AI:</strong> Ask a question aloud. Pause when you finish speaking. If browser voice recognition is unavailable, the app records a short clip and uses Gemini to transcribe it. Bengali speech is translated into English; English remains English, including a Bangladeshi accent.</p>
+<p><strong>SOS:</strong> Send a best-effort alert to your paired receiver. It does not contact emergency services.</p>
+<p><strong>Help:</strong> Use this screen's four large actions. To leave Blind mode, edit the browser address and remove <code>/blind/</code> (or navigate directly to <code>/action/</code>). There is deliberately no exit button here.</p>
+<p>AI can miss hazards. Never use this experimental tool to decide whether a path or road crossing is safe. Continue using your cane, guide dog and mobility support.</p>
+<a class="blind-return" href="#blind-grid">Return to the four actions</a>
+</div>
+</section>
+<div class="sr-only" aria-live="polite" role="status" id="status">Ready. Choose one of the four actions.</div>
+<a id="sos-call-link" class="sr-only" href="#" hidden>Call trusted contact</a>
+<input id="phone-photo" class="sr-only" type="file" accept="image/*" capture="environment">
+<form id="question-form" class="sr-only"><label for="question">Type a question</label><input id="question" maxlength="1000"><button type="submit">Ask AI</button></form>
+<pre id="result" class="sr-only" aria-live="polite"></pre>
+<section id="consent-panel" class="blind-consent" aria-labelledby="blind-consent-title">
+<div class="blind-consent-card">
+<h2 id="blind-consent-title">Before first use</h2>
+<p>Photos are sent to the selected AI service. If browser speech recognition is unavailable, a short voice recording may also be sent to Gemini for transcription. Do not submit sensitive images. AI may miss hazards and is not a navigation or emergency service.</p>
+<p id="consent-status" class="hint" role="status" aria-live="polite"></p>
+<button id="consent-accept" type="button">I understand — continue</button>
+<a href="/privacy/">Read privacy details</a>
+</div>
+</section>
+<script type="module" src="/shared/app.js?v=20261116-voice1"></script>
+</body></html>

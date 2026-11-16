@@ -8,8 +8,9 @@
 <body><main>
 <header><p class="eyebrow">DEVICE SETTINGS</p><h1>Admin / Settings</h1><p class="subtitle">Tune the camera, AI behaviour and spoken voice. Settings stay in this browser on this device.</p></header>
 
+<nav class="quick-jump" aria-label="Admin shortcuts"><a href="#camera-settings">📷 <span>Camera & SOS</span></a><a href="#ai-settings">✨ <span>AI models</span></a><a href="#voice-settings">🎙 <span>Voice</span></a><a href="#image-lab">🧪 <span>Image tester</span></a><a href="/diagnostics/">✅ <span>Diagnostics</span></a><a href="/action/">⌂ <span>Home</span></a></nav>
 <form id="settings-form">
-<section class="panel settings-section">
+<section id="camera-settings" class="panel settings-section">
 <h2>Camera & trusted contact</h2>
 <label for="camera">ESP32-CAM address</label>
 <input id="camera" type="text" inputmode="url" required placeholder="192.168.0.104 or http://192.168.0.104">
@@ -29,13 +30,14 @@
 <select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
 </section>
 
-<section class="panel settings-section">
+<section id="ai-settings" class="panel settings-section">
 <h2>AI model & response</h2>
-<label for="model">Gemini model</label>
+<label for="model">Vision / photo-analysis model</label>
 <select id="model"><option value="gemini-3.8-flash">Gemini 3.8 Flash (configured default)</option></select>
 <div class="inline-actions"><button id="refresh-models" type="button" class="secondary">Refresh available models</button></div>
 <p id="model-status" class="hint" role="status" aria-live="polite">Loading models enabled for this public demo…</p>
-<small>The model list is retrieved from Google's Models API for your Gemini key. Google controls which models are available to your API project and applies its free-tier request/token quotas.</small>
+<small>Models are ranked for camera-photo understanding, not image generation. Image-generation-only models cannot analyse your camera photo. Compatible models rotate automatically after model-specific quota or availability errors; Google project-wide limits still apply.</small>
+<section class="key-panel" aria-labelledby="own-key-title"><h3 id="own-key-title">Use your own Gemini API key (optional)</h3><p>Useful during a showcase if the shared demo key reaches a limit. Your key stays in this browser tab only and is sent in a same-site request header. It is not saved in Admin settings or stored by this app on the server.</p><label for="personal-api-key">Your Gemini API key</label><input id="personal-api-key" type="password" autocomplete="off" placeholder="Paste your own Gemini API key"><div class="inline-actions"><button id="save-personal-key" type="button" class="secondary">Use key for this tab</button><button id="remove-personal-key" type="button" class="secondary">Remove my key</button></div><p id="personal-key-status" class="hint" role="status" aria-live="polite">No personal key is set in this tab.</p></section>
 <div class="field-grid">
 <div><label for="wait-seconds">Maximum wait for Gemini</label>
 <select id="wait-seconds">
@@ -53,7 +55,7 @@
 <textarea id="prompt" maxlength="4000" placeholder="Example: Use everyday words. Mention the most important thing first. Keep the response natural and easy to listen to."></textarea>
 </section>
 
-<section class="panel settings-section">
+<section id="voice-settings" class="panel settings-section">
 <h2>Voice & speech</h2>
 <label for="voice-preset">Voice style</label>
 <select id="voice-preset">
@@ -88,7 +90,7 @@
 </form>
 <p id="message" role="status" aria-live="polite"></p>
 
-<section class="panel settings-section" aria-labelledby="image-test-title">
+<section id="image-lab" class="panel settings-section" aria-labelledby="image-test-title">
 <h2 id="image-test-title">Image & AI tester</h2>
 <p>Try a local photo, direct image URL, or a still frame from the ESP32-CAM. Preview it before sending the exact image to your selected Gemini model.</p>
 <label for="test-image-url">Manual image URL</label>
@@ -111,4 +113,5 @@
 <nav class="navlinks"><a href="/action/">Home</a><a href="/diagnostics/">Diagnostics</a><a href="/contact/">Contact</a><a href="/privacy/">Privacy</a></nav>
 </main>
 <script type="module" src="/admin/admin.js?v=20261116-public1"></script>
+<script type="module" src="/shared/site-nav.js?v=20261116-nav1"></script>
 </body></html>

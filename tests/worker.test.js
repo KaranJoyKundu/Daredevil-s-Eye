@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {handleApi} from '../worker/src/index.js';
+import {handleApi,rankVisionModels} from '../worker/src/index.js';
 
 const req=(path,body,headers={})=>new Request('https://local.test'+path,{
  method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(body)
@@ -58,7 +58,7 @@ test('describe with missing Gemini key never produces a fake mock description',a
  const r=await handleApi(req('/api/describe',{image}),{});
  const d=await r.json();
  assert.equal(r.status,502);
- assert.match(d.error,/GEMINI_API_KEY/);
+ assert.match(d.error,/no API key is available/i);
 });
 test('explicit mock response is clearly simulated with public API access',async()=>{
  const r=await handleApi(req('/api/describe',{image}),{AI_MODE:'mock'});
@@ -123,4 +123,36 @@ test('SOS endpoints do not require Cloudflare rate-limit bindings but still requ
  const d=await r.json();
  assert.equal(r.status,503);
  assert.match(d.error,/SOS relay is not configured/);
+});
+
+test('personal Gemini key header is recognised but never echoed by health',async()=>{
+ const r=await handleApi(get('/api/health',{'x-user-gemini-api-key':'user-secret-key'}),{});
+ const d=await r.json();
+ assert.equal(d.apiKeyConfigured,true);
+ assert.equal(d.usingPersonalKey,true);
+ assert.equal(JSON.stringify(d).includes('user-secret-key'),false);
+});
+test('vision models are ranked with advanced photo understanding first and lite tiers lower',()=>{
+ const ranked=rankVisionModels([
+  {id:'gemini-3.1-flash-lite',name:'Flash Lite'},
+  {id:'gemini-3.8-flash',name:'Flash'},
+  {id:'gemini-3.1-pro-preview',name:'Pro Preview'},
+  {id:'gemini-3.7-flash',name:'Flash 3.7'}
+ ]);
+ assert.deepEqual(ranked.map(item=>item.id),[
+  'gemini-3.1-pro-preview','gemini-3.8-flash','gemini-3.7-flash','gemini-3.1-flash-lite'
+ ]);
+ assert.deepEqual(ranked.map(item=>item.rank),[1,2,3,4]);
+});
+test('transcription endpoint rejects a missing audio data URL',async()=>{
+ const r=await handleApi(req('/api/transcribe',{audio:'not-audio'}),{});
+ const d=await r.json();
+ assert.equal(r.status,400);
+ assert.match(d.error,/audio data URL/i);
+});
+test('transcription endpoint reports missing provider key without storing audio',async()=>{
+ const r=await handleApi(req('/api/transcribe',{audio:'data:audio/webm;base64,AAAA'}),{});
+ const d=await r.json();
+ assert.equal(r.status,502);
+ assert.match(d.error,/No Gemini API key is available/i);
 });
