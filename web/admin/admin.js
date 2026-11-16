@@ -138,7 +138,7 @@ async function loadModels(){
   const response=await apiFetch('/api/models');
   const data=await response.json();
   if(!response.ok||!data.ok)throw new Error(data.error||'Could not load models.');
-  const select=$('#model'),selected=select.value||saved.aiModel||data.configuredModel||'gemini-3.8-flash';
+  const select=$('#model'),savedModel=saved.aiModel==='gemini-3.6-flash'?'gemini-3.8-flash':saved.aiModel,selected=select.value==='gemini-3.6-flash'?'gemini-3.8-flash':(select.value||savedModel||data.configuredModel||'gemini-3.8-flash');
   select.replaceChildren();
   for(const model of data.models){
    const option=document.createElement('option');option.value=model.id;
