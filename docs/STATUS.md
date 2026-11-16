@@ -1,6 +1,6 @@
 # Implementation status
 
-Updated for branch feat/blind-spoken-help-bangla-controls. Items described as implemented are source changes; they are not proof of physical-device usability.
+Updated for branch feat/m1-speech-and-diagnostics. Items described as implemented are source changes; they are not proof of physical-device usability.
 
 ## Production baseline on main
 
@@ -46,3 +46,11 @@ Latest GitHub Actions run on commit 9c68fcf: 55 tests passed, 0 failed, and the 
 - Email OTP, guest trial counter, profiles, per-user usage database and admin usage dashboard (future roadmap phase).
 - Read Text / Find Object specialist modes, local low-light warnings, admin prompt history and second AI provider.
 - Formal accessibility audit, safety certification or independent security review.
+
+
+## Android 16 / Samsung work in progress
+
+- Target baseline: Android 16 / One UI 8 Samsung Galaxy phones; first reference handset: Galaxy A55 5G.
+- Added a Diagnostics phone profile for browser-reported model/OS, browser, secure context, microphone/MediaRecorder, recording MIME types, speech recognition/synthesis, installed Bengali voices, wake lock, vibration, motion, service worker and standalone display.
+- Added an opt-in five-second motion sensor check that requests permission where the browser requires it and reports whether sensor events reach the page.
+- This is capability detection, not a compatibility certification. Samsung A55 hardware, Bangla recognition/TTS quality, SOS sensitivity and background behavior still require physical-device testing.
