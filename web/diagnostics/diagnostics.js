@@ -1,9 +1,15 @@
 import {getSettings} from '/shared/settings.js?v=20261116-auth1';
 import {captureImage,blobToDataUrl} from '/shared/camera.js?v=20261116-auth1';
-import {requestAI,apiFetch} from '/shared/api.js?v=20261116-auth1';
+import {requestAI,apiFetch,getAccessToken,verifyAccessToken} from '/shared/api.js?v=20261116-auth1';
 import {listenOnce,speak,speakResponse,stopSpeaking} from '/shared/speech.js?v=20261116-auth1';
 
 const $=selector=>document.querySelector(selector);
+if(!getAccessToken()){
+ location.replace('/access/?next='+encodeURIComponent(location.pathname));
+ throw new Error('Redirecting to private app access.');
+}
+try{await verifyAccessToken(getAccessToken());}
+catch{location.replace('/access/?next='+encodeURIComponent(location.pathname));throw new Error('Private app access required.');}
 let latestCameraBlob=null,latestCameraUrl=null,selectedAiFile=null,micController=null;
 
 async function runCamera(){
