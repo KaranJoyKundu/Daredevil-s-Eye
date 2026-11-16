@@ -200,6 +200,7 @@ async function recordWithGemini({ onResult, onError, onFallback, onEnd, onStatus
     const AudioContextClass=window.AudioContext||window.webkitAudioContext;
     if(AudioContextClass){
       audioContext=new AudioContextClass();
+      await audioContext.resume().catch(()=>{});
       const source=audioContext.createMediaStreamSource(stream);
       analyser=audioContext.createAnalyser();analyser.fftSize=512;
       source.connect(analyser);sampleBuffer=new Float32Array(analyser.fftSize);
