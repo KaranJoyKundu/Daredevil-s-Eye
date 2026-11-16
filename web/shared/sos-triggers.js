@@ -35,15 +35,16 @@ function normaliseTranscript(value) {
 export function matchSosVoiceCommand(transcript, phase = 'wake') {
   const text = normaliseTranscript(transcript);
   if (!text) return null;
-  const cancel = ['cancel sos','stop sos','cancel emergency','এসওএস বাতিল','বাতিল করুন'];
-  if (cancel.some(phrase => text.includes(phrase))) return 'cancel';
+  const hasSos = text.includes('sos') || text.includes('এসওএস');
+  const hasCancel = text.includes('cancel') || text.includes('stop') || text.includes('বাতিল');
+  if (hasCancel && (hasSos || text.includes('emergency') || text.includes('করুন'))) return 'cancel';
   if (phase === 'cancel') return null;
   if (phase === 'confirm') {
-    const confirm = ['confirm sos','send sos','yes send sos','confirm emergency',
-      'এসওএস নিশ্চিত করুন','নিশ্চিত করুন','এসওএস পাঠান','হ্যাঁ পাঠান'];
-    return confirm.some(phrase => text.includes(phrase)) ? 'confirm' : null;
+    const englishConfirm = /\\b(confirm|send|yes)\\b/.test(text) && (hasSos || text.includes('emergency'));
+    const banglaConfirm = text.includes('নিশ্চিত') || (hasSos && (text.includes('পাঠান') || text.includes('হ্যাঁ')));
+    return englishConfirm || banglaConfirm ? 'confirm' : null;
   }
-  const wake = ['daredevil sos','dare devil sos','daredevil s sos','sos sos',
-    'ডেয়ারডেভিল এসওএস','ডেয়ার ডেভিল এসওএস','দেয়ারডেভিল এসওএস','ডেয়ারডেভিল সাহায্য'];
-  return wake.some(phrase => text.includes(phrase)) ? 'wake' : null;
+  const englishWake = /\\b(daredevil|dare devil)\\b/.test(text) && hasSos;
+  const banglaWake = hasSos && (text.includes('ডেয়ার') || text.includes('দেয়ার') || text.includes('সাহায্য'));
+  return englishWake || banglaWake ? 'wake' : null;
 }
