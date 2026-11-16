@@ -9,9 +9,10 @@
 <button class="action-card sos" data-action="sos" aria-label="SOS. Contact trusted person"><span class="symbol" aria-hidden="true">☎</span><strong>SOS</strong><span>Contact trusted person</span></button>
 <a class="action-card help" href="/help/" aria-label="Help. Instructions and support"><span class="symbol" aria-hidden="true">ⓘ</span><strong>HELP</strong><span>Instructions and support</span></a>
 </section>
+<a id="sos-call-link" class="button" href="#" hidden style="display:none">Call trusted contact</a>
 <form id="question-form"><label for="question">Or type a question</label><input id="question" maxlength="1000" autocomplete="off"><button type="submit">Ask AI</button></form>
 <section><h2>Response</h2><pre id="result">Your response will appear here and be spoken aloud.</pre></section>
-<nav class="navlinks"><a href="/admin/">Admin / Settings</a><a href="/diagnostics/">Diagnostics</a><a href="/contact/">Contact</a><a href="/privacy/">Privacy</a></nav>
+<nav class="navlinks"><a href="/admin/">Admin / Settings</a><a href="/diagnostics/">Diagnostics</a><a href="/contact/">Contact</a><a href="/sos-receiver/">SOS Receiver</a><a href="/privacy/">Privacy</a></nav>
 <section id="consent-panel"><p><strong>Before using:</strong> a photo from your ESP32-CAM is sent to the configured AI provider for analysis. Do not use descriptions as a guarantee of safety. Photos are not intentionally stored by this app.</p><button id="consent-accept" type="button">I understand — continue</button></section>
 <button data-action="repeat">Repeat response</button><button data-action="stop">Stop speech</button>
-</main><script type="module" src="/shared/app.js?v=20261116-controls1"></script></body></html>
+</main><script type="module" src="/shared/app.js?v=20261116-sosmictts1"></script></body></html>
