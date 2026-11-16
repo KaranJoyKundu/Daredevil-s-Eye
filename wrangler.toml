@@ -32,7 +32,7 @@ new_sqlite_classes = ["SOSDirectory"]
 [[ratelimits]]
 name = "APP_AUTH_LIMIT"
 namespace_id = "2001"
-simple = { limit = 10, period = 60 }
+simple = { limit = 90, period = 60 }
 
 [[ratelimits]]
 name = "APP_AI_LIMIT"
@@ -42,4 +42,4 @@ simple = { limit = 12, period = 60 }
 [[ratelimits]]
 name = "APP_SOS_LIMIT"
 namespace_id = "2003"
-simple = { limit = 8, period = 60 }
+simple = { limit = 90, period = 60 }
