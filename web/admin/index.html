@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#07111f"><title>Admin / Settings · Daredevil's Eye</title>
-<link rel="stylesheet" href="/shared/style.css?v=20261116-access2">
+<link rel="stylesheet" href="/shared/style.css?v=20261116-sos3">
 </head>
 <body><main>
 <header><p class="eyebrow">DEVICE SETTINGS</p><h1>Admin / Settings</h1><p class="subtitle">Tune the camera, AI behaviour and spoken voice. Settings stay in this browser on this device.</p></header>
@@ -26,6 +26,23 @@
 <div><label>&nbsp;</label><button id="generate-sos-code" type="button" class="secondary">Generate pairing code</button></div>
 </div>
 <small>Share this one-time code privately. It is not stored permanently. Generating another code disconnects the previous receiver.</small>
+<h3>Optional hands-free SOS triggers</h3>
+<p>These are disabled by default. They work only while Blind mode is open and visible on a supported phone. Shake sensing stays on the device; voice wake-word recognition may send audio to the browser's speech provider. Each automatic trigger has a cancellation window.</p>
+<div class="field-grid">
+ <div>
+  <label class="inline-checkbox" for="sos-shake-enabled"><input id="sos-shake-enabled" type="checkbox"> Enable three-shake SOS</label>
+  <button id="enable-shake-sos" type="button" class="secondary">Request motion access & enable</button>
+  <p id="sos-shake-status" class="hint" role="status" aria-live="polite">Disabled. Three strong, separate shakes within a short window are required.</p>
+ </div>
+ <div>
+  <label class="inline-checkbox" for="sos-voice-enabled"><input id="sos-voice-enabled" type="checkbox"> Enable voice SOS phrase</label>
+  <button id="enable-voice-sos" type="button" class="secondary">Grant microphone access & enable</button>
+  <p id="sos-voice-status" class="hint" role="status" aria-live="polite">Disabled. Say “Daredevil SOS”, then “Confirm SOS”.</p>
+ </div>
+</div>
+<label for="sos-voice-language">Voice SOS recognition language</label>
+<select id="sos-voice-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
+<small>Voice SOS uses the browser's continuous speech-recognition API, not Gemini. The microphone is monitored only in the visible Blind mode page. Say “Cancel SOS” during the countdown to stop it. Recognition availability depends on Android/Chrome and installed speech services.</small>
 <label for="language">AI response language</label>
 <select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
 <label for="speech-input-mode">Voice input mode</label>
@@ -117,6 +134,6 @@
 
 <nav class="navlinks"><a href="/action/">Home</a><a href="/diagnostics/">Diagnostics</a><a href="/contact/">Contact</a><a href="/privacy/">Privacy</a></nav>
 </main>
-<script type="module" src="/admin/admin.js?v=20261116-access2"></script>
+<script type="module" src="/admin/admin.js?v=20261116-sos3"></script>
 <script type="module" src="/shared/site-nav.js?v=20261116-nav1"></script>
 </body></html>

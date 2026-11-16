@@ -1,13 +1,150 @@
-import { captureImage, blobToDataUrl } from './camera.js?v=20261116-access2';
-import { requestAI } from './api.js?v=20261116-access2';
-import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261116-access2';
-import { getSettings, saveSettings } from './settings.js?v=20261116-access2';
-import { hasCurrentConsent, acceptConsent } from './consent.js?v=20261116-access2';
+import { captureImage, blobToDataUrl } from './camera.js?v=20261116-sos3';
+import { requestAI } from './api.js?v=20261116-sos3';
+import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261116-sos3';
+import { getSettings, saveSettings } from './settings.js?v=20261116-sos3';
+import { hasCurrentConsent, acceptConsent } from './consent.js?v=20261116-sos3';
+import { createShakeSequenceTracker, getShakeMagnitude, matchSosVoiceCommand } from './sos-triggers.js?v=20261116-sos3';
 const $=selector=>document.querySelector(selector),status=$('#status');
 let activeRecognition=null,voiceStarting=false,phonePhoto=null,revealRun=0,lastAnswer='';
 let sosArmedUntil=0,sosArmTimer=null,deepLinkHandled=false;
 const requestedAction=new URLSearchParams(location.search).get('action');
-function announce(message){if(status)status.textContent=message;speak(message,{lang:'en-US'});}
+const isBlindMode=location.pathname.replace(/\\/+$/,'')==='/blind';
+const shakeTracker=createShakeSequenceTracker();
+let motionListenerAttached=false,sosVoiceRecognition=null,sosVoiceRestartTimer=null;
+let sosVoiceMode='wake',sosVoiceModeTimer=null,sosVoiceBlocked=false,sosVoiceFailures=0;
+let sosCountdownTimer=null,sosCountdownWakeLock=null,sosDispatching=false;
+
+function stopSosVoiceListener(){
+ if(sosVoiceRestartTimer){clearTimeout(sosVoiceRestartTimer);sosVoiceRestartTimer=null;}
+ const recognition=sosVoiceRecognition;sosVoiceRecognition=null;
+ if(recognition){recognition.onend=null;recognition.onerror=null;try{recognition.stop();}catch{}}
+}
+function shouldRunSosVoiceListener(){
+ const settings=getSettings();
+ return isBlindMode&&settings.sosVoiceEnabled&&hasCurrentConsent()&&!document.hidden&&!sosVoiceBlocked&&!sosVoiceRecognition&&!sosVoiceRestartTimer;
+}
+function startSosVoiceListener(){
+ if(!shouldRunSosVoiceListener())return;
+ const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!Recognition){sosVoiceBlocked=true;if(status)status.textContent='Voice SOS is enabled, but this browser does not support continuous speech recognition.';return;}
+ let recognition;
+ try{
+  recognition=new Recognition();recognition.lang=getSettings().sosVoiceLanguage||'bn-BD';
+  recognition.continuous=true;recognition.interimResults=false;recognition.maxAlternatives=1;
+  sosVoiceRecognition=recognition;
+  recognition.onresult=event=>{
+   for(let i=event.resultIndex;i<event.results.length;i++){
+    const result=event.results[i];
+    if(result?.isFinal&&result[0]?.transcript){sosVoiceFailures=0;handleSosVoiceCommand(result[0].transcript);}
+   }
+  };
+  recognition.onerror=event=>{
+   if(['not-allowed','service-not-allowed','audio-capture'].includes(event.error)){
+    sosVoiceBlocked=true;
+    if(status)status.textContent='Voice SOS monitoring stopped. Check microphone permission and re-enable it in Admin.';
+   }else if(event.error==='network'){
+    sosVoiceFailures++;
+    if(sosVoiceFailures>=3){sosVoiceBlocked=true;if(status)status.textContent='Voice SOS could not maintain a recognition connection. Re-enable it in Admin when the connection is stable.';}
+   }
+  };
+  recognition.onend=()=>{
+   if(sosVoiceRecognition===recognition)sosVoiceRecognition=null;
+   if(isBlindMode&&getSettings().sosVoiceEnabled&&hasCurrentConsent()&&!document.hidden&&!sosVoiceBlocked&&!sosVoiceRestartTimer){
+    sosVoiceRestartTimer=setTimeout(()=>{sosVoiceRestartTimer=null;startSosVoiceListener();},1200);
+   }
+  };
+  recognition.start();
+ }catch{
+  if(sosVoiceRecognition===recognition)sosVoiceRecognition=null;
+  if(!sosVoiceBlocked&&!sosVoiceRestartTimer)sosVoiceRestartTimer=setTimeout(()=>{sosVoiceRestartTimer=null;startSosVoiceListener();},1800);
+ }
+}
+function speakSosStatus(message){
+ const resume=()=>{if(isBlindMode&&getSettings().sosVoiceEnabled&&!document.hidden&&!sosVoiceBlocked)startSosVoiceListener();};
+ stopSosVoiceListener();
+ const utterance=speak(message,{lang:'en-US',onEnd:resume,onError:resume});
+ if(!utterance)resume();
+}
+function setSosCancelVisibility(visible){
+ const cancel=$('#sos-trigger-cancel'),help=$('#spoken-help-button');
+ if(cancel)cancel.hidden=!visible;
+ if(help)help.hidden=!!visible;
+}
+async function cancelSosCountdown(){
+ if(!sosCountdownTimer)return false;
+ clearTimeout(sosCountdownTimer);sosCountdownTimer=null;setSosCancelVisibility(false);sosVoiceMode='wake';
+ if(sosVoiceModeTimer){clearTimeout(sosVoiceModeTimer);sosVoiceModeTimer=null;}
+ const lock=sosCountdownWakeLock;sosCountdownWakeLock=null;await releaseWakeLock(lock);
+ if(status)status.textContent='SOS countdown cancelled. No alert was sent.';
+ speakSosStatus('SOS cancelled. No alert was sent.');return true;
+}
+async function finishSosCountdown(){
+ if(!sosCountdownTimer||sosDispatching)return;
+ clearTimeout(sosCountdownTimer);sosCountdownTimer=null;setSosCancelVisibility(false);sosVoiceMode='wake';
+ if(sosVoiceModeTimer){clearTimeout(sosVoiceModeTimer);sosVoiceModeTimer=null;}
+ const lock=sosCountdownWakeLock;sosCountdownWakeLock=null;await releaseWakeLock(lock);
+ await deliverSos();
+}
+async function startSosCountdown(source){
+ if(sosCountdownTimer||sosDispatching)return;
+ const seconds=source==='shake'?8:5;
+ sosVoiceMode='cancel';setSosCancelVisibility(true);
+ sosCountdownTimer=setTimeout(()=>{finishSosCountdown();},seconds*1000);
+ acquireWakeLock().then(lock=>{if(sosCountdownTimer)sosCountdownWakeLock=lock;else releaseWakeLock(lock);});
+ const message=source==='shake'
+  ?'Three deliberate shakes detected. The SOS alert will be sent in eight seconds. Say cancel SOS or tap Cancel SOS now to stop it.'
+  :'Voice SOS confirmed. The alert will be sent in five seconds. Say cancel SOS or tap Cancel SOS now to stop it.';
+ if(status)status.textContent=message;speakSosStatus(message);
+}
+function handleSosVoiceCommand(transcript){
+ const phase=sosCountdownTimer?'cancel':sosVoiceMode;
+ const command=matchSosVoiceCommand(transcript,phase);
+ if(command==='cancel'){
+  if(sosCountdownTimer)cancelSosCountdown();
+  else if(sosVoiceMode==='confirm'){
+   sosVoiceMode='wake';if(sosVoiceModeTimer){clearTimeout(sosVoiceModeTimer);sosVoiceModeTimer=null;}
+   speakSosStatus('SOS request cancelled. No alert was sent.');
+  }
+  return;
+ }
+ if(sosCountdownTimer)return;
+ if(sosVoiceMode==='confirm'&&command==='confirm'){
+  if(sosVoiceModeTimer){clearTimeout(sosVoiceModeTimer);sosVoiceModeTimer=null;}
+  sosVoiceMode='cancel';startSosCountdown('voice');return;
+ }
+ if(sosVoiceMode==='wake'&&command==='wake'){
+  sosVoiceMode='confirm';
+  if(sosVoiceModeTimer)clearTimeout(sosVoiceModeTimer);
+  sosVoiceModeTimer=setTimeout(()=>{
+   sosVoiceModeTimer=null;
+   if(sosVoiceMode==='confirm'){sosVoiceMode='wake';speakSosStatus('Voice SOS confirmation timed out. No alert was sent.');}
+  },12000);
+  speakSosStatus('SOS wake phrase heard. To send an alert, say confirm SOS within twelve seconds. Say cancel SOS to cancel.');
+ }
+}
+function handleDeviceMotion(event){
+ if(!isBlindMode||document.hidden||!getSettings().sosShakeEnabled||sosCountdownTimer||sosDispatching)return;
+ if(shakeTracker.push(getShakeMagnitude(event),Date.now())){shakeTracker.reset();startSosCountdown('shake');}
+}
+function syncSosAutomation(){
+ if(!isBlindMode||!hasCurrentConsent())return;
+ const settings=getSettings();
+ if(settings.sosShakeEnabled&&!document.hidden&&!motionListenerAttached&&'DeviceMotionEvent'in window){
+  window.addEventListener('devicemotion',handleDeviceMotion,{passive:true});motionListenerAttached=true;
+ }else if((!settings.sosShakeEnabled||document.hidden)&&motionListenerAttached){
+  window.removeEventListener('devicemotion',handleDeviceMotion);motionListenerAttached=false;shakeTracker.reset();
+ }
+ if(settings.sosVoiceEnabled)startSosVoiceListener();
+ else{stopSosVoiceListener();sosVoiceBlocked=false;}
+}
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden){
+  stopSosVoiceListener();
+  if(motionListenerAttached){window.removeEventListener('devicemotion',handleDeviceMotion);motionListenerAttached=false;}
+  shakeTracker.reset();
+ }else syncSosAutomation();
+});
+function announce(message){if(status)status.textContent=message;speakSosStatus(message);}
 function actionVibration(action){const patterns={describe:[65],ask:[55,90,55],sos:[260],repeat:[45,65,45,65,45],help:[35,65,35]};vibrate(patterns[action]||60);}
 async function acquireWakeLock(){if(!navigator.wakeLock?.request)return null;try{return await navigator.wakeLock.request('screen');}catch{return null;}}
 async function releaseWakeLock(lock){try{if(lock&&!lock.released)await lock.release();}catch{}}
@@ -27,12 +164,13 @@ function revealWords(element,message,runId){
  return new Promise(resolve=>{let index=0;const tick=()=>{if(runId!==revealRun){resolve();return;}if(index>=words.length){resolve();return;}element.textContent+=words[index++];if(index<words.length)setTimeout(tick,interval);else resolve();};tick();});
 }
 async function announceAnswer(message,disclaimer=''){
+ stopSosVoiceListener();
  const answer=String(message||'').trim();if(!answer){announce('There is no answer to repeat yet.');return;}lastAnswer=answer;
  if(status)status.textContent='Speaking the answer. The written response is appearing as I speak…';
  const settings=getSettings(),spokenLanguage=detectSpokenLanguage(answer),output=$('#result'),runId=++revealRun;
  if(output)output.textContent=disclaimer?disclaimer+'\n\n':'';
  const displayPromise=revealWords(output,answer,runId);
- const speechPromise=speakResponse(answer,{lang:spokenLanguage,engine:settings.speechEngine==='gemini'?'device':settings.speechEngine,onFallback:error=>{if(status)status.textContent='Using the device voice because the selected speech service failed: '+error.message;}});
+ const speechPromise=speakResponse(answer,{lang:spokenLanguage,engine:settings.speechEngine==='gemini'?'device':settings.speechEngine,onFallback:error=>{if(status)status.textContent='Using the device voice because the selected speech service failed: '+error.message;},onEnd:()=>startSosVoiceListener()});
  await Promise.allSettled([displayPromise,speechPromise]);
 }
 async function run(mode,question='',imageOverride=null){
@@ -52,10 +190,13 @@ async function run(mode,question='',imageOverride=null){
  }catch(error){
   const message=error.message||'Something went wrong.';revealRun++;if($('#result'))$('#result').textContent=message;if(status)status.textContent=message;
   speak(spokenError(error),{lang:'en-US'});
- }finally{await releaseWakeLock(wakeLock);}
+ }finally{await releaseWakeLock(wakeLock);startSosVoiceListener();}
 }
 async function startVoiceQuestion(){
- if(voiceStarting)return;voiceStarting=true;actionVibration('ask');
+ if(voiceStarting)return;
+ voiceStarting=true;actionVibration('ask');stopSosVoiceListener();
+ let resultHandled=false,resumed=false;
+ const resume=()=>{if(resumed)return;resumed=true;startSosVoiceListener();};
  try{
   try{activeRecognition?.stop();}catch{}activeRecognition=null;if(status)status.textContent='Requesting microphone permission…';
   const settings=getSettings();
@@ -64,25 +205,28 @@ async function startVoiceQuestion(){
    onStart:()=>{if(status)status.textContent='Browser recognition connected. Speak Bangla, English or mixed speech.';},
    onInterim:text=>{if(status)status.textContent='I heard: '+text;},
    onFallback:message=>{if(status)status.textContent=message;},onStatus:message=>{if(status)status.textContent=message;},
-   onResult:question=>run('ask',question),
-   onError:message=>{if(status)status.textContent=message;speak(spokenError(message),{lang:'en-US'});},
-   onEnd:()=>{if(status?.textContent.startsWith('Listening')||status?.textContent.startsWith('The browser'))announce('No speech was recognised. Please try again.');}
+   onResult:question=>{resultHandled=true;run('ask',question).finally(resume);},
+   onError:message=>{if(status)status.textContent=message;speakSosStatus(spokenError(message));},
+   onEnd:()=>{if(!resultHandled){if(status?.textContent.startsWith('Listening')||status?.textContent.startsWith('The browser'))announce('No speech was recognised. Please try again.');resume();}}
   });
+  if(!activeRecognition&&!resultHandled)resume();
  }finally{voiceStarting=false;}
 }
 function speakHelp(){
  actionVibration('help');
- const message='Spoken help for Daredevil’s Eye. The four main buttons are Describe, Ask AI, SOS and Repeat. Tap Describe to hear what the camera can see. Tap Ask AI, ask a question in Bangla, English or a mixture, then pause. Tap SOS once to arm it. Tap SOS again within five seconds to confirm and send an alert to your paired receiver. Tap Repeat to hear the last answer again. Spoken Help is the separate button below the four main actions. This is an experimental tool, not a cane or guide dog. Continue using your normal mobility aid. To leave Blind mode, edit the browser address and remove the word blind between the slashes.';
- if(status)status.textContent='Playing spoken help.';speak(message,{lang:'en-US',rate:.92});
+ const message='Spoken help for Daredevil’s Eye. The four main buttons are Describe, Ask AI, SOS and Repeat. Tap Describe to hear what the camera can see. Tap Ask AI, ask a question in Bangla, English or a mixture, then pause. Tap SOS once to arm it. Tap SOS again within five seconds to confirm and send an alert to your paired receiver. Tap Repeat to hear the last answer again. Spoken Help is the separate button below the four main actions. If you enable the optional SOS triggers in Admin, three deliberate shakes start an eight-second SOS countdown. The optional voice trigger listens only while Blind mode is visible: say Daredevil SOS, then say Confirm SOS; say Cancel SOS to stop a pending alert. This is an experimental tool, not a cane or guide dog. Continue using your normal mobility aid. To leave Blind mode, edit the browser address and remove the word blind between the slashes.';
+ if(status)status.textContent='Playing spoken help.';speakSosStatus(message);
 }
 async function deliverSos(){
+ if(sosDispatching)return;
+ sosDispatching=true;stopSosVoiceListener();
  const settings=getSettings(),button=document.querySelector('[data-action="sos"]');if(button)button.disabled=true;let wakeLock=null;
  try{
   wakeLock=await acquireWakeLock();actionVibration('sos');await requestAI('/api/sos/trigger',{deviceId:settings.deviceId});
   announce('Emergency alert sent to the paired receiver. This does not call emergency services.');
   const callLink=$('#sos-call-link');if(settings.emergencyPhone&&callLink){callLink.href='tel:'+settings.emergencyPhone.replace(/[^+0-9]/g,'');callLink.hidden=false;callLink.style.display='block';callLink.textContent='Call '+(settings.emergencyName||'trusted contact')+' now';}
  }catch(error){const message=error.message||'SOS alert could not be sent. Pair a receiver in Admin first.';if(status)status.textContent=message;speak(spokenError(error),{lang:'en-US'});}
- finally{if(button)button.disabled=false;await releaseWakeLock(wakeLock);}
+ finally{if(button)button.disabled=false;await releaseWakeLock(wakeLock);sosDispatching=false;startSosVoiceListener();}
 }
 function armSos({shortcut=false}={}){
  const now=Date.now();
@@ -93,11 +237,15 @@ function armSos({shortcut=false}={}){
 }
 function repeatAnswer(){actionVibration('repeat');if(lastAnswer)announceAnswer(lastAnswer);else announce('There is no answer to repeat yet.');}
 function handleDeepLinkAction(){
- if(deepLinkHandled||!hasCurrentConsent()||!['describe','ask','sos','repeat','help'].includes(requestedAction))return;deepLinkHandled=true;
+ if(!hasCurrentConsent())return;
+ if(deepLinkHandled){syncSosAutomation();return;}
+ if(!['describe','ask','sos','repeat','help'].includes(requestedAction)){syncSosAutomation();return;}
+ deepLinkHandled=true;
  if(requestedAction==='describe')run('describe');
  else if(requestedAction==='ask')startVoiceQuestion();
  else if(requestedAction==='sos')armSos({shortcut:true});
  else if(requestedAction==='repeat')repeatAnswer();else speakHelp();
+ syncSosAutomation();
 }
 function updateConsentPanel(){const panel=$('#consent-panel');if(panel&&hasCurrentConsent())panel.remove();}
 updateConsentPanel();
@@ -106,6 +254,7 @@ document.addEventListener('click',event=>{
  if(button.dataset.action==='describe')run('describe');
  if(button.dataset.action==='ask'){const utterance=speak('What would you like to know? Speak Bangla, English or both, then pause.',{lang:'en-US',onEnd:startVoiceQuestion,onError:startVoiceQuestion});if(!utterance)startVoiceQuestion();}
  if(button.dataset.action==='sos')armSos();if(button.dataset.action==='repeat')repeatAnswer();if(button.dataset.action==='help')speakHelp();
+ if(button.dataset.action==='cancel-sos-trigger')cancelSosCountdown();
  if(button.dataset.action==='phone-photo')$('#phone-photo')?.click();
  if(button.dataset.action==='stop'){stopSpeaking();try{activeRecognition?.stop();}catch{}revealRun++;if(status)status.textContent='Speech stopped.';}
 });

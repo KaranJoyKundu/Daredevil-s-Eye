@@ -1,7 +1,7 @@
-import {getSettings,saveSettings} from '/shared/settings.js?v=20261116-access2';
-import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261116-access2';
-import {captureImage} from '/shared/camera.js?v=20261116-access2';
-import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261116-access2';
+import {getSettings,saveSettings} from '/shared/settings.js?v=20261116-sos3';
+import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261116-sos3';
+import {captureImage} from '/shared/camera.js?v=20261116-sos3';
+import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261116-sos3';
 
 const $=s=>document.querySelector(s);
 const form=$('#settings-form');
@@ -25,6 +25,9 @@ function formSettings(){
   speechLanguage:$('#language').value,
   speechInputMode:$('#speech-input-mode').value,
   speechInputLanguage:$('#input-language').value,
+  sosShakeEnabled:$('#sos-shake-enabled').checked,
+  sosVoiceEnabled:$('#sos-voice-enabled').checked,
+  sosVoiceLanguage:$('#sos-voice-language').value,
   speechPreset:$('#voice-preset').value,
   speechVoiceURI:$('#voice-select').value,
   speechEngine:$('#speech-engine').value,
@@ -52,6 +55,9 @@ $('#sos-code').value=saved.sosPairingCode;
 $('#language').value=saved.speechLanguage;
 $('#speech-input-mode').value=saved.speechInputMode||'auto';
 $('#input-language').value=saved.speechInputLanguage||'bn-BD';
+$('#sos-shake-enabled').checked=!!saved.sosShakeEnabled;
+$('#sos-voice-enabled').checked=!!saved.sosVoiceEnabled;
+$('#sos-voice-language').value=saved.sosVoiceLanguage||'bn-BD';
 $('#voice-preset').value=saved.speechPreset;
 $('#speech-engine').value=saved.speechEngine==='gemini'?'device':saved.speechEngine;
 $('#gemini-voice-style').value=saved.geminiTtsStyle;
@@ -78,6 +84,40 @@ function populateGeminiVoices(){
  select.value=saved.geminiTtsVoice||'Kore';
 }
 populateGeminiVoices();
+
+$('#enable-shake-sos').addEventListener('click',async()=>{
+ const button=$('#enable-shake-sos');button.disabled=true;
+ try{
+  if(!$('#sos-shake-enabled').checked)throw new Error('Tick “Enable three-shake SOS” first, then press this button.');
+  if(!('DeviceMotionEvent'in window))throw new Error('This browser does not expose the phone motion sensor.');
+  if(typeof DeviceMotionEvent.requestPermission==='function'){
+   const permission=await DeviceMotionEvent.requestPermission();
+   if(permission!=='granted')throw new Error('Motion sensor permission was not granted.');
+  }
+  saveSettings({sosShakeEnabled:true});
+  $('#sos-shake-status').textContent='Enabled. In Blind mode, three strong, separate shakes start an eight-second SOS countdown.';
+ }catch(error){
+  $('#sos-shake-enabled').checked=false;saveSettings({sosShakeEnabled:false});
+  $('#sos-shake-status').textContent='Could not enable shake SOS: '+error.message;
+ }finally{button.disabled=false;}
+});
+$('#enable-voice-sos').addEventListener('click',async()=>{
+ const button=$('#enable-voice-sos');button.disabled=true;let stream=null;
+ try{
+  if(!$('#sos-voice-enabled').checked)throw new Error('Tick “Enable voice SOS phrase” first, then press this button.');
+  if(!(window.SpeechRecognition||window.webkitSpeechRecognition))throw new Error('This browser does not support continuous speech recognition.');
+  if(!navigator.mediaDevices?.getUserMedia)throw new Error('Microphone access is unavailable. Open the HTTPS site in a supported browser.');
+  stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+  stream.getTracks().forEach(track=>track.stop());stream=null;
+  const language=$('#sos-voice-language').value;
+  saveSettings({sosVoiceEnabled:true,sosVoiceLanguage:language});
+  $('#sos-voice-status').textContent='Enabled. In visible Blind mode say “Daredevil SOS”, then “Confirm SOS”. Say “Cancel SOS” during the five-second countdown to stop it.';
+ }catch(error){
+  if(stream)stream.getTracks().forEach(track=>track.stop());
+  $('#sos-voice-enabled').checked=false;saveSettings({sosVoiceEnabled:false});
+  $('#sos-voice-status').textContent='Could not enable voice SOS: '+error.message;
+ }finally{button.disabled=false;}
+});
 
 $('#generate-sos-code').addEventListener('click',async()=>{
  const button=$('#generate-sos-code');button.disabled=true;

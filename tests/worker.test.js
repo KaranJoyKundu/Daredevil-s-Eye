@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {handleApi,rankVisionModels,getTranscriptionModelOrder} from '../worker/src/index.js';
 import {detectSpokenLanguage,selectVoiceForText} from '../web/shared/speech.js';
+import {createShakeSequenceTracker,getShakeMagnitude,matchSosVoiceCommand} from '../web/shared/sos-triggers.js';
 
 const req=(path,body,headers={})=>new Request('https://local.test'+path,{
  method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(body)
@@ -38,6 +39,42 @@ test('blind-mode action colours meet 4.5:1 white-text contrast target',()=>{
   const ratio=1.05/(luminance(background)+0.05);
   assert.ok(ratio>=4.5,selector+' white-text contrast '+ratio.toFixed(2));
  }
+});
+
+test('three-shake SOS requires three strong, separated peaks inside the detection window',()=>{
+ const tracker=createShakeSequenceTracker();
+ assert.equal(tracker.push(4,1000),false);
+ assert.equal(tracker.push(15,1100),false);
+ assert.equal(tracker.push(15,1500),false);
+ assert.equal(tracker.push(15,1900),true);
+ assert.equal(tracker.count,0);
+});
+test('shake detector rejects closely spaced repeated peaks and stale sequences',()=>{
+ const tracker=createShakeSequenceTracker();
+ assert.equal(tracker.push(15,1000),false);
+ assert.equal(tracker.push(15,1200),false);
+ assert.equal(tracker.push(15,1500),false);
+ assert.equal(tracker.push(15,5000),false);
+ assert.equal(tracker.push(15,5400),false);
+ assert.equal(tracker.count,2);
+});
+test('shake magnitude supports linear acceleration and gravity-inclusive fallback',()=>{
+ assert.equal(getShakeMagnitude({acceleration:{x:3,y:4,z:0}}),5);
+ assert.ok(Math.abs(getShakeMagnitude({accelerationIncludingGravity:{x:0,y:0,z:22.31}})-12.5)<0.02);
+ assert.equal(getShakeMagnitude({}),0);
+});
+test('voice SOS requires a distinctive wake phrase and a separate confirmation',()=>{
+ assert.equal(matchSosVoiceCommand('SOS'),null);
+ assert.equal(matchSosVoiceCommand('Daredevil SOS'),'wake');
+ assert.equal(matchSosVoiceCommand('ডেয়ারডেভিল এসওএস'),'wake');
+ assert.equal(matchSosVoiceCommand('Confirm SOS','confirm'),'confirm');
+ assert.equal(matchSosVoiceCommand('এসওএস পাঠান','confirm'),'confirm');
+ assert.equal(matchSosVoiceCommand('confirm SOS'),null);
+});
+test('voice SOS cancellation is recognised in both languages and cannot confirm',()=>{
+ assert.equal(matchSosVoiceCommand('Cancel SOS','cancel'),'cancel');
+ assert.equal(matchSosVoiceCommand('এসওএস বাতিল','cancel'),'cancel');
+ assert.equal(matchSosVoiceCommand('Daredevil SOS','cancel'),null);
 });
 
 test('health is public and reports provider configuration without exposing secrets',async()=>{

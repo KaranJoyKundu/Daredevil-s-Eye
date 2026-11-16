@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#07111f"><meta name="description" content="Audio-first camera assistant with large accessible controls.">
 <link rel="manifest" href="/manifest.webmanifest"><title>Blind mode · Daredevil's Eye</title>
-<link rel="stylesheet" href="/shared/style.css?v=20261116-access2">
+<link rel="stylesheet" href="/shared/style.css?v=20261116-sos3">
 </head>
 <body class="blind-page">
 <main id="blind-grid" class="blind-grid" aria-label="Four main actions">
@@ -13,7 +13,7 @@
 <button class="blind-tile blind-sos" type="button" data-action="sos" aria-label="SOS. Tap once to arm, tap again to confirm"><span aria-hidden="true">☎</span><strong>SOS</strong><small>Tap twice to confirm</small></button>
 <button class="blind-tile blind-repeat" type="button" data-action="repeat" aria-label="Repeat the last spoken answer"><span aria-hidden="true">↻</span><strong>REPEAT</strong><small>Hear the last answer again</small></button>
 </main>
-<div class="blind-utility" role="group" aria-label="Additional spoken help"><button class="blind-help-button" type="button" data-action="help" aria-label="Spoken help. Hear how to use Daredevil's Eye">🔊 SPOKEN HELP</button></div>
+<div class="blind-utility" role="group" aria-label="Additional controls"><button id="spoken-help-button" class="blind-help-button" type="button" data-action="help" aria-label="Spoken help. Hear how to use Daredevil's Eye">🔊 SPOKEN HELP</button><button id="sos-trigger-cancel" type="button" data-action="cancel-sos-trigger" hidden>Cancel SOS countdown</button></div>
 <div class="sr-only" aria-live="polite" role="status" id="status">Ready. Four main actions: Describe, Ask AI, SOS and Repeat. Spoken Help is separate.</div>
 <a id="sos-call-link" class="sr-only" href="#" hidden>Call trusted contact</a>
 <input id="phone-photo" class="sr-only" type="file" accept="image/*" capture="environment">
@@ -21,8 +21,8 @@
 <pre id="result" class="sr-only" aria-live="polite"></pre>
 <section id="consent-panel" class="blind-consent" aria-labelledby="blind-consent-title"><div class="blind-consent-card">
 <h2 id="blind-consent-title">Before first use</h2>
-<p>Photos are sent to the selected AI service. In recommended multilingual voice mode, your short microphone recording is sent to Gemini to recognise Bangla, English or mixed speech. Browser speech mode may use the browser's recognition service and can fall back to Gemini. Do not speak passwords or private information. AI may miss hazards and is not a navigation or emergency service.</p>
+<p>Photos are sent to the selected AI service. In recommended multilingual voice mode, your short microphone recording is sent to Gemini to recognise Bangla, English or mixed speech. Optional voice-SOS monitoring keeps the microphone active while Blind mode is visible and uses the browser's speech-recognition provider; audio may be processed by that provider. Shake detection is processed locally. Both triggers are off until enabled in Admin. Do not speak passwords or private information. AI may miss hazards and is not a navigation or emergency service.</p>
 <p id="consent-status" class="hint" role="status" aria-live="polite"></p><button id="consent-accept" type="button">I understand — continue</button><a href="/privacy/">Read privacy details</a>
 </div></section>
-<script type="module" src="/shared/app.js?v=20261116-access2"></script>
+<script type="module" src="/shared/app.js?v=20261116-sos3"></script>
 </body></html>
