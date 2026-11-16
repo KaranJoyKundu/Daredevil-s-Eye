@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#641313"><title>SOS Receiver · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css"></head>
+<body><main>
+<header><p class="eyebrow">EMERGENCY RECEIVER</p><h1>SOS Receiver</h1><p class="subtitle">Keep this page open on the trusted person's phone.</p></header>
+<section class="panel settings-section">
+<h2>Connect this phone</h2>
+<p>Enter the same pairing code generated in Admin / Settings on the sender phone. Tap Connect & enable alarm so the browser can start sound after an alert arrives.</p>
+<label for="pairing-code">SOS pairing code</label>
+<input id="pairing-code" type="password" inputmode="text" autocomplete="off" maxlength="20" placeholder="Enter 8–20 character code">
+<button id="connect-receiver" type="button">Connect & enable alarm</button>
+<p id="receiver-status" class="hint" role="status" aria-live="polite">Not connected.</p>
+</section>
+<section id="emergency-alert" class="sos-alert" hidden>
+<p class="eyebrow">URGENT SOS</p>
+<h2>EMERGENCY ALERT</h2>
+<p id="alert-message">Someone may be in danger. Please check immediately.</p>
+<p id="alert-time"></p>
+<button id="acknowledge-alert" type="button" class="acknowledge-button">I have seen this alert — stop alarm</button>
+</section>
+<section class="panel settings-section">
+<h2>Receiver status</h2>
+<p id="receiver-detail">No active alert.</p>
+<p class="hint">Keep this page open and the phone charged, with sound enabled. If the browser is closed, the phone is locked, the tab is suspended, or Wi-Fi disconnects, the alert may not arrive or make sound. This is a local-network prototype, not a guaranteed emergency dispatch system.</p>
+</section>
+<nav class="navlinks"><a href="/action/">Home</a><a href="/admin/">Admin / Settings</a><a href="/diagnostics/">Diagnostics</a></nav>
+</main><script type="module" src="/sos-receiver/receiver.js?v=20261116-receiver1"></script></body></html>
