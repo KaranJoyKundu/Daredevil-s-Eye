@@ -32,6 +32,11 @@ export class SOSRoom {
     return task;
   }
 
+  async alarm() {
+    const event = await this.state.storage.get('activeEvent');
+    if (event?.active && event.expiresAt <= Date.now()) await this.state.storage.delete('activeEvent');
+  }
+
   async handle(request) {
     if (request.method !== 'POST') return json({ ok: false, error: 'POST required.' }, 405);
     const action = new URL(request.url).pathname.replace(/^\/+/, '');
@@ -65,6 +70,7 @@ export class SOSRoom {
         message: 'Emergency alert. Someone may be in danger. Please check immediately.'
       };
       await this.state.storage.put('activeEvent', event);
+      await this.state.storage.setAlarm(event.expiresAt);
       return json({ ok: true, sent: true, eventId: event.id, message: 'Emergency alert sent to the paired receiver.' });
     }
 
