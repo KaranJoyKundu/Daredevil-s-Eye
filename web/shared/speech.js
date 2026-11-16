@@ -1,5 +1,5 @@
-import { getSettings } from './settings.js?v=20261116-auth1';
-import { apiFetch } from './api.js?v=20261116-auth1';
+import { getSettings } from './settings.js?v=20261116-public1';
+import { apiFetch } from './api.js?v=20261116-public1';
 
 export const VOICE_PRESETS = Object.freeze({
   gentle: { label: 'Gentle · soft and slightly higher', rate: 0.94, pitch: 1.14 },
