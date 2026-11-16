@@ -4,3 +4,7 @@ AI_MODE=gemini
 APP_ENV=development
 GEMINI_MODEL=gemini-3.8-flash
 GEMINI_API_KEY=PASTE_YOUR_NEW_KEY_HERE
+
+# Required for non-public API routes. Generate a random token of at least 32 characters.
+# Keep this local value separate from the production Cloudflare Worker secret.
+APP_ACCESS_TOKEN=REPLACE_WITH_A_RANDOM_48_BYTE_TOKEN
