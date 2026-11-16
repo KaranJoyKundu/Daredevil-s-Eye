@@ -46,7 +46,7 @@ export function cleanTextForSpeech(value) {
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/https?:\/\/\S+/gi, ' ')
     .replace(/<[^>]*>/g, ' ')
-    .replace(/![([^]]*)]([^)]+)/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
     .replace(/`([^`]+)`/g, '$1')
     .replace(/[*_~#>|]/g, ' ')
     .replace(/^[\s•\-–—]+/gm, '')
