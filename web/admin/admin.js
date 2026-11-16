@@ -1,31 +1,153 @@
-import {getSettings,saveSettings} from '/shared/settings.js?v=20261116-urlfix4';
+import {getSettings,saveSettings} from '/shared/settings.js?v=20261116-admin-controls1';
 import {requestAI} from '/shared/api.js';
-import {captureImage} from '/shared/camera.js?v=20261116-urlfix4';
+import {captureImage} from '/shared/camera.js?v=20261116-admin-controls1';
+import {speak,getAvailableVoices,VOICE_PRESETS,stopSpeaking} from '/shared/speech.js?v=20261116-admin-controls1';
+
 const $=s=>document.querySelector(s);
-const form=$('#settings-form'),s=getSettings();
+const form=$('#settings-form');
+const saved=getSettings();
+const presetValues=VOICE_PRESETS;
+
 function normalizeCameraAddress(value){
  let address=String(value||'').trim();
- if(address && !/^https?:\/\//i.test(address)) address='http://'+address;
+ if(address&&!/^https?:\/\//i.test(address))address='http://'+address;
  address=address.replace(/\/+$/,'');
  let parsed;try{parsed=new URL(address);}catch{throw new Error('Enter a valid camera IP or URL, for example 192.168.0.104');}
- if(!['http:','https:'].includes(parsed.protocol)||!parsed.hostname) throw new Error('Enter a valid camera IP or URL, for example 192.168.0.104');
+ if(!['http:','https:'].includes(parsed.protocol)||!parsed.hostname)throw new Error('Enter a valid camera IP or URL, for example 192.168.0.104');
  return address;
 }
-$('#camera').value=s.cameraBaseUrl;
-$('#contact-name').value=s.emergencyName;
-$('#contact-phone').value=s.emergencyPhone;
-$('#language').value=s.speechLanguage;
-$('#rate').value=s.speechRate;
-$('#prompt').value=s.customPrompt;
-form.addEventListener('submit',e=>{
- e.preventDefault();
+
+function formSettings(){
+ return {
+  cameraBaseUrl:normalizeCameraAddress($('#camera').value),
+  emergencyName:$('#contact-name').value.trim(),
+  emergencyPhone:$('#contact-phone').value.trim(),
+  speechLanguage:$('#language').value,
+  speechPreset:$('#voice-preset').value,
+  speechVoiceURI:$('#voice-select').value,
+  speechRate:Number($('#speech-rate').value),
+  speechPitch:Number($('#speech-pitch').value),
+  aiModel:$('#model').value||'gemini-3.8-flash',
+  waitSeconds:Number($('#wait-seconds').value),
+  responseStyle:$('#response-style').value,
+  customPrompt:$('#prompt').value.trim()
+ };
+}
+
+$('#camera').value=saved.cameraBaseUrl;
+$('#contact-name').value=saved.emergencyName;
+$('#contact-phone').value=saved.emergencyPhone;
+$('#language').value=saved.speechLanguage;
+$('#voice-preset').value=saved.speechPreset;
+$('#speech-rate').value=saved.speechRate;
+$('#speech-pitch').value=saved.speechPitch;
+$('#rate-value').textContent=Number(saved.speechRate).toFixed(2);
+$('#pitch-value').textContent=Number(saved.speechPitch).toFixed(2);
+$('#wait-seconds').value=String(saved.waitSeconds);
+$('#response-style').value=saved.responseStyle;
+$('#prompt').value=saved.customPrompt;
+
+async function loadModels(){
+ const button=$('#refresh-models');button.disabled=true;
+ $('#model-status').textContent='Checking models available to your Gemini API key…';
  try{
-  const cameraBaseUrl=normalizeCameraAddress($('#camera').value);
-  saveSettings({cameraBaseUrl,emergencyName:$('#contact-name').value.trim(),emergencyPhone:$('#contact-phone').value.trim(),speechLanguage:$('#language').value,speechRate:Number($('#rate').value),customPrompt:$('#prompt').value.trim()});
-  $('#camera').value=cameraBaseUrl;
-  $('#message').textContent='Settings saved on this device. Camera address: '+cameraBaseUrl;
+  const response=await fetch('/api/models',{cache:'no-store'});
+  const data=await response.json();
+  if(!response.ok||!data.ok)throw new Error(data.error||'Could not load models.');
+  const select=$('#model');
+  const selected=saved.aiModel||data.configuredModel||'gemini-3.8-flash';
+  select.replaceChildren();
+  for(const model of data.models){
+   const option=document.createElement('option');
+   option.value=model.id;
+   option.textContent=model.name+' · '+model.id;
+   option.title=model.description||model.id;
+   select.append(option);
+  }
+  if(!data.models.some(model=>model.id===selected)){
+   const option=document.createElement('option');
+   option.value=selected;option.textContent=selected+' · saved selection (not in current list)';
+   select.append(option);
+  }
+  select.value=selected;
+  $('#model-status').textContent=data.models.length+' models available for generateContent. Selected: '+selected+'.';
+ }catch(error){
+  $('#model-status').textContent='Model list unavailable: '+error.message+'. The saved model remains selected.';
+  const select=$('#model');
+  if(![...select.options].some(option=>option.value===(saved.aiModel||'gemini-3.8-flash'))){
+   const option=document.createElement('option');option.value=saved.aiModel||'gemini-3.8-flash';option.textContent=option.value;select.append(option);
+  }
+  select.value=saved.aiModel||'gemini-3.8-flash';
+ }finally{button.disabled=false;}
+}
+$('#refresh-models').addEventListener('click',loadModels);
+loadModels();
+
+async function loadBasePrompt(){
+ try{
+  const response=await fetch('/api/config',{cache:'no-store'});
+  const data=await response.json();
+  if(response.ok&&data.basePrompt)$('#base-prompt').value=data.basePrompt;
+  else $('#base-prompt').value='The built-in camera scene prompt could not be loaded.';
+ }catch{$('#base-prompt').value='The built-in camera scene prompt could not be loaded.';}
+}
+loadBasePrompt();
+
+function populateVoices(){
+ const select=$('#voice-select');
+ const current=select.value||saved.speechVoiceURI||'';
+ const voices=getAvailableVoices().slice().sort((a,b)=>a.lang.localeCompare(b.lang)||a.name.localeCompare(b.name));
+ select.replaceChildren();
+ const auto=document.createElement('option');auto.value='';auto.textContent='Automatic device voice';select.append(auto);
+ for(const voice of voices){
+  const option=document.createElement('option');
+  option.value=voice.voiceURI;
+  option.textContent=voice.name+' · '+voice.lang+(voice.default?' · system default':'');
+  select.append(option);
+ }
+ select.value=current;
+ $('#voice-status').textContent=voices.length
+  ? voices.length+' installed voices found on this device. The list can differ between phone and PC.'
+  : 'No system voices are available yet. Wait a moment or check the device speech settings.';
+}
+if('speechSynthesis' in window){
+ populateVoices();
+ window.speechSynthesis.addEventListener?.('voiceschanged',populateVoices);
+}
+$('#voice-preset').addEventListener('change',()=>{
+ const preset=presetValues[$('#voice-preset').value]||presetValues.gentle;
+ if($('#voice-preset').value!=='custom'){
+  $('#speech-rate').value=preset.rate;
+  $('#speech-pitch').value=preset.pitch;
+  $('#rate-value').textContent=preset.rate.toFixed(2);
+  $('#pitch-value').textContent=preset.pitch.toFixed(2);
+ }
+});
+$('#speech-rate').addEventListener('input',()=>{
+ $('#rate-value').textContent=Number($('#speech-rate').value).toFixed(2);
+ if($('#voice-preset').value!=='custom')$('#voice-preset').value='custom';
+});
+$('#speech-pitch').addEventListener('input',()=>{
+ $('#pitch-value').textContent=Number($('#speech-pitch').value).toFixed(2);
+ if($('#voice-preset').value!=='custom')$('#voice-preset').value='custom';
+});
+$('#preview-voice').addEventListener('click',()=>{
+ const options=formSettings();
+ speak('Hello. I am your Daredevil’s Eye assistant. I will describe what is visible clearly and calmly.',{
+  lang:options.speechLanguage,rate:options.speechRate,pitch:options.speechPitch,voiceURI:options.speechVoiceURI
+ });
+});
+
+form.addEventListener('submit',event=>{
+ event.preventDefault();
+ try{
+  const next=formSettings();
+  saveSettings(next);
+  $('#camera').value=next.cameraBaseUrl;
+  $('#message').textContent='All settings saved on this device.';
  }catch(error){$('#message').textContent=error.message;}
 });
+
 let selectedFile=null,previewUrl=null;
 function showSelectedImage(file,origin='Selected file'){
  if(!file)return;
@@ -40,7 +162,7 @@ function showSelectedImage(file,origin='Selected file'){
  $('#test-result').textContent='';
  $('#test-status').textContent='';
 }
-$('#test-image').addEventListener('change',()=>showSelectedImage($('#test-image').files?.[0], 'Selected from device'));
+$('#test-image').addEventListener('change',()=>showSelectedImage($('#test-image').files?.[0],'Selected from device'));
 $('#load-image-url').addEventListener('click',async()=>{
  const button=$('#load-image-url');button.disabled=true;
  try{
@@ -48,40 +170,46 @@ $('#load-image-url').addEventListener('click',async()=>{
   if(!value)throw new Error('Paste a direct image URL first.');
   if(!/^https?:\/\//i.test(value))value='http://'+value;
   const url=new URL(value);
-  if(!['http:','https:'].includes(url.protocol))throw new Error('Image URL must use http:// or https://.');
   $('#test-status').textContent='Loading image from URL for preview…';
   const response=await fetch(url.href,{cache:'no-store',mode:'cors',signal:AbortSignal.timeout(15000)});
   if(!response.ok)throw new Error('Image URL returned HTTP '+response.status+'.');
   const blob=await response.blob();
   const type=blob.type.split(';')[0].toLowerCase();
-  if(!['image/jpeg','image/png','image/webp'].includes(type))throw new Error('URL did not return a JPEG, PNG, or WebP image (received '+(type||'unknown content type')+').');
-  const file=new File([blob],'manual-url-image.'+(type==='image/png'?'png':type==='image/webp'?'webp':'jpg'),{type});
-  showSelectedImage(file,'Loaded from URL '+url.origin);
-  $('#test-status').textContent='Image URL loaded. Inspect the preview, then send this exact image to Gemini.';
+  if(!['image/jpeg','image/png','image/webp'].includes(type))throw new Error('URL did not return JPEG, PNG or WebP.');
+  showSelectedImage(new File([blob],'manual-url-image.'+(type==='image/png'?'png':type==='image/webp'?'webp':'jpg'),{type}),'Loaded from URL '+url.origin);
+  $('#test-status').textContent='Image loaded. Check the preview, then send it to AI.';
  }catch(error){
-  const detail=error.name==='AbortError'?'Image URL request timed out.':error instanceof TypeError?'Browser could not fetch this URL. The image host may block cross-origin (CORS) requests; try downloading the image and using Choose image file.':(error.message||'Could not load image URL.');
-  $('#test-status').textContent='URL image test failed: '+detail;
+  $('#test-status').textContent=error.name==='AbortError'?'Image URL timed out.':error instanceof TypeError?'Browser could not read this URL, possibly because its host blocks CORS. Download it and choose the file instead.':error.message;
  }finally{button.disabled=false;}
 });
 $('#capture-camera-button').addEventListener('click',async()=>{
- const button=$('#capture-camera-button');button.disabled=true;$('#test-status').textContent='Requesting still photo from ESP32-CAM /capture…';
+ const button=$('#capture-camera-button');button.disabled=true;
+ $('#test-status').textContent='Capturing a still photo from ESP32-CAM…';
  try{
   const blob=await captureImage();
-  const file=new File([blob],'esp32-camera-capture.jpg',{type:blob.type||'image/jpeg'});
-  showSelectedImage(file,'Captured from ESP32-CAM');
-  $('#test-status').textContent='Camera capture succeeded. Inspect the preview, then send this exact frame to AI.';
- }catch(error){$('#test-status').textContent='Camera capture failed: '+(error.message||'Unknown error');}
+  showSelectedImage(new File([blob],'esp32-camera-capture.jpg',{type:blob.type||'image/jpeg'}),'Captured from ESP32-CAM');
+  $('#test-status').textContent='Camera photo captured. Check the preview before sending.';
+ }catch(error){$('#test-status').textContent='Camera capture failed: '+error.message;}
  finally{button.disabled=false;}
 });
 $('#test-image-button').addEventListener('click',async()=>{
  if(!selectedFile)return;
- const button=$('#test-image-button');button.disabled=true;$('#test-status').textContent='Sending the previewed image to AI…';$('#test-result').textContent='';
+ const button=$('#test-image-button');button.disabled=true;
+ const selected=formSettings();
+ $('#test-status').textContent='Sending to '+selected.aiModel+'. Waiting up to '+selected.waitSeconds+' seconds…';
+ $('#test-result').textContent='';
  try{
-  const dataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Could not read selected image.'));reader.readAsDataURL(selectedFile);});
+  const dataUrl=await new Promise((resolve,reject)=>{
+   const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Could not read selected image.'));reader.readAsDataURL(selectedFile);
+  });
   const question=$('#test-question').value.trim();
-  const result=await requestAI(question?'/api/ask':'/api/describe',{image:dataUrl,question,customPrompt:getSettings().customPrompt});
+  const result=await requestAI(question?'/api/ask':'/api/describe',{
+   image:dataUrl,question,customPrompt:selected.customPrompt,model:selected.aiModel,
+   waitSeconds:selected.waitSeconds,responseStyle:selected.responseStyle
+  });
+  if(result.mock)throw new Error('Mock mode is enabled. No image analysis was performed.');
   $('#test-result').textContent=(result.disclaimer||'')+'\n\n'+result.answer;
-  $('#test-status').textContent='AI request completed. Review the response below.';
+  $('#test-status').textContent='Completed using '+(result.model||selected.aiModel)+'.';
  }catch(error){$('#test-status').textContent='AI test failed: '+(error.message||'Unknown error');}
  finally{button.disabled=!selectedFile;}
 });
