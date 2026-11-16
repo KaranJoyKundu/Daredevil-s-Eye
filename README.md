@@ -13,7 +13,7 @@ Daredevil's Eye explores how a camera, a phone browser and vision-language AI ca
 | Page | Address | Purpose |
 |---|---|---|
 | Home | `/` or `/action/` | Standard action screen |
-| Blind mode | `/blind/` | Dedicated full-screen 2×2 action layout |
+| Blind mode | `/blind/` | Four large actions (Describe, Ask AI, SOS, Repeat) plus separate spoken Help |
 | Admin | `/admin/` | Camera, SOS, AI, voice, API key and image test settings |
 | Diagnostics | `/diagnostics/` | Six device and backend checks |
 | Help | `/help/` | Detailed usage and troubleshooting |
@@ -21,19 +21,19 @@ Daredevil's Eye explores how a camera, a phone browser and vision-language AI ca
 | Privacy | `/privacy/` | Data processing and storage explanation |
 | Contact | `/contact/` | Project contact details |
 
-Blind mode deliberately has no header, menu or on-screen exit control. To leave it, edit the browser address and remove `/blind/`, or go directly to `/action/`.
+Blind mode has no header, menu or on-screen exit control. Its four main tiles are Describe, Ask AI, SOS and Repeat; a separate Spoken Help button reads instructions aloud. To leave Blind mode, edit the browser address and remove /blind/, or go directly to /action/.
 
 ## Current implementation
 
 | Feature | In source / branch | Verification still required |
 |---|---|---|
-| Four main actions | DESCRIBE, ASK AI, SOS, HELP | Blind/low-vision usability testing |
-| Blind mode | Four full-screen tiles; Help overlay; no visible exit link | TalkBack and real-device testing |
+| Four main actions | DESCRIBE, ASK AI, SOS, REPEAT; separate spoken Help | Blind/low-vision usability testing |
+| Blind mode | Four main action tiles, separate spoken Help, no visible exit link | TalkBack and real-device testing |
 | Camera input | ESP32-CAM `/capture`; phone photo/upload fallback | Target phone, CORS and LAN tests |
 | Vision | Gemini image understanding through Worker | Live-key end-to-end tests |
-| Voice input | Native recognition with MediaRecorder + Gemini transcription fallback | Android Chrome, different microphones and network conditions |
+| Voice input | Gemini multilingual audio transcription by default; optional browser-first mode with Gemini fallback | Bangla, English and code-switching on the target Android phone |
 | Language handling | Bengali script detected/transcribed and translated to English; English speech preserved independent of accent | Real Bangla/English code-switch testing |
-| Output | Device speech; progressive text reveal while answer is spoken | Timing and voice-quality tests |
+| Output | Device speech with language-matched voice selection; progressive text reveal | Bengali voice availability and pronunciation tests |
 | Model handling | Ranked photo-understanding models; per-request fallback/rotation on model errors | Actual quota exhaustion and provider error testing |
 | Personal key | Optional Gemini key in current tab's session storage | Key lifecycle and security review |
 | Admin | Six quick-jump shortcuts to main setting areas | Usability feedback |
@@ -41,7 +41,11 @@ Blind mode deliberately has no header, menu or on-screen exit control. To leave 
 | SOS | One-time invitation, receiver token and manual alert relay | Two-phone and network-change testing |
 | Consent | Versioned local consent record | Privacy review and participant testing |
 
-**What the voice fallback does:** the app first tries the browser's own speech-recognition service. If it reports a network/service failure or is unavailable, the browser records a short clip and sends it to the Worker, which uses a low-cost Gemini audio/transcription model. Bengali words are translated to English for the question; English is kept as English, including English spoken with a Bangladeshi accent. Microphone access requires HTTPS or localhost. Do not speak confidential information.
+**What voice input does:** the default Automatic multilingual mode records a short microphone clip and sends it to the Worker/Gemini transcription path. It is instructed to recognise Bangladeshi Bengali, English and mixed Bangla-English, translating only Bengali portions into English. This deliberately avoids starting Android's browser recogniser in English-only mode. Admin also offers Browser speech recognition first; that option uses a separately selected recognition locale and falls back to Gemini on network, language, service or no-speech errors. Audio is externally processed, so do not speak passwords or confidential information. Real Bangla accuracy still needs testing on the target phone.
+
+**Bengali spoken answers:** device speech synthesis selects an installed Bengali voice when the answer contains Bengali script. If the phone has no Bengali text-to-speech voice installed, the app cannot provide reliable Bengali pronunciation; install Bengali speech data in Android's text-to-speech settings and check Admin's voice status.
+
+**Camera frame selection:** the ESP32-CAM path captures up to three frames, 250 ms apart, scores their sharpness on a small canvas, and sends the sharpest scored frame. If canvas scoring is unavailable, it uses the newest frame. This is a simple sharpness heuristic, not a guarantee of blur-free capture.
 
 **What automatic model fallback does:** the Worker ranks models that accept camera images and can generate text. If one model returns a model-specific quota, overload or availability error, it tries another compatible Gemini vision model. Rotating models does not bypass a project-wide Google quota. The rotation state is opportunistic per Worker isolate, not a globally coordinated scheduler. A personal API key from a separate Gemini project may help when the demo project's quota is exhausted.
 
@@ -114,6 +118,7 @@ The Gemini key is uploaded as a Cloudflare Worker secret. Do not put secret valu
 - [Deployment](docs/DEPLOYMENT.md)
 - [Testing](docs/TESTING.md)
 - [Accessibility](docs/ACCESSIBILITY.md)
+- [Phone controls and Android shortcuts](docs/PHONE-CONTROLS.md)
 - [Safety and privacy](docs/SAFETY.md)
 - [Threat model](docs/THREAT-MODEL.md)
 - [Security policy](SECURITY.md)
