@@ -31,7 +31,7 @@ let currentAudio=null,currentAudioUrl=null;
 let speechRun=0;
 
 export function detectSpokenLanguage(text) {
-  return /[\\u0980-\\u09ff]/u.test(String(text || '')) ? 'bn-BD' : 'en-US';
+  return /[\u0980-\u09ff]/u.test(String(text || '')) ? 'bn-BD' : 'en-US';
 }
 
 export function resolveSpeechLanguage(text, requestedLanguage = 'en-US') {
@@ -42,17 +42,17 @@ export function resolveSpeechLanguage(text, requestedLanguage = 'en-US') {
 
 export function cleanTextForSpeech(value) {
   return String(value ?? '')
-    .replace(/```[\\s\\S]*?```/g, ' ')
-    .replace(/\\[([^\\]]+)\\]\\([^)]+\\)/g, '$1')
-    .replace(/https?:\\/\\/\\S+/gi, ' ')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/https?:\/\/\S+/gi, ' ')
     .replace(/<[^>]*>/g, ' ')
     .replace(/![([^]]*)]([^)]+)/g, '$1')
     .replace(/`([^`]+)`/g, '$1')
     .replace(/[*_~#>|]/g, ' ')
-    .replace(/^[\\s•\\-–—]+/gm, '')
+    .replace(/^[\s•\-–—]+/gm, '')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, ' and ')
-    .replace(/\\s+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -60,7 +60,7 @@ export function splitSpeechText(value, maxLength = 420) {
   const text = cleanTextForSpeech(value);
   if (!text) return [];
   const limit = Math.max(80, Math.min(900, Number(maxLength) || 420));
-  const sentences = text.split(/(?<=[.!?।॥])\\s+/u).filter(Boolean);
+  const sentences = text.split(/(?<=[.!?।॥])\s+/u).filter(Boolean);
   const chunks = [];
   let current = '';
   const push = part => { if (part.trim()) chunks.push(part.trim()); };
@@ -72,7 +72,7 @@ export function splitSpeechText(value, maxLength = 420) {
       continue;
     }
     if (current) { push(current); current = ''; }
-    const clauses = sentence.split(/(?<=[,;:])\\s+/u);
+    const clauses = sentence.split(/(?<=[,;:])\s+/u);
     for (const clause of clauses) {
       if (clause.length <= limit) {
         if (!current) current = clause;
@@ -80,7 +80,7 @@ export function splitSpeechText(value, maxLength = 420) {
         else { push(current); current = clause; }
       } else {
         if (current) { push(current); current = ''; }
-        const words = clause.split(/\\s+/u);
+        const words = clause.split(/\s+/u);
         for (const word of words) {
           if (!current) current = word;
           else if ((current + ' ' + word).length <= limit) current += ' ' + word;
