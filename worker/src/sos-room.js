@@ -111,6 +111,7 @@ export class SOSRoom {
     if (action === 'revoke') {
       await this.state.storage.delete('receiverTokenHash');
       await this.state.storage.delete('activeEvent');
+      await this.state.storage.delete('pushSubscription');
       await this.state.storage.put('pairedAt', null);
       return json({ ok: true, revoked: true });
     }
@@ -120,6 +121,7 @@ export class SOSRoom {
       await this.state.storage.put('receiverTokenHash', await hashSecret(receiverToken));
       await this.state.storage.put('pairedAt', Date.now());
       await this.state.storage.delete('activeEvent');
+      await this.state.storage.delete('pushSubscription');
       return json({ ok: true, paired: true, receiverToken, message: 'Receiver paired. The previous receiver session has been replaced.' });
     }
 
