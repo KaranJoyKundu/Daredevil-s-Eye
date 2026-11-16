@@ -134,7 +134,7 @@ export async function listGeminiModels(apiKey) {
     .filter(model => model.name && model.supportedGenerationMethods?.includes('generateContent'))
     // This application analyses camera photos. Image-output, TTS, audio-only,
     // video, embedding and robotics models are not compatible with that task.
-    .filter(model => !/(embedding|tts|live|image|imagen|veo|lyria|transcrib|audio|robotics)/i.test(model.name) && !/gemini-3\\.6-flash/i.test(model.name))
+    .filter(model => !/(embedding|tts|live|image|imagen|veo|lyria|transcrib|audio|robotics)/i.test(model.name) && !/gemini-3\.6-flash/i.test(model.name))
     .map(model => ({
       id: String(model.name).replace(/^models\//, ''),
       name: model.displayName || String(model.name).replace(/^models\//, ''),
@@ -161,7 +161,8 @@ async function modelCandidates(apiKey, selectedModel) {
 
 async function askGemini({ image, prompt, model, waitSeconds }, apiKey) {
   if (!apiKey) throw new Error('Gemini is selected but no API key is available. Add your own key in Admin or configure the Worker secret.');
-  const selectedModel = String(model || 'gemini-3.8-flash').replace(/^models\//, '');
+  const requestedModel = String(model || 'gemini-3.8-flash').replace(/^models\//, '');
+  const selectedModel = /^gemini-3\.6-flash$/i.test(requestedModel) ? 'gemini-3.8-flash' : requestedModel;
   const timeoutSeconds = Math.max(15, Math.min(180, Number(waitSeconds) || 120));
   const candidates = (await modelCandidates(apiKey, selectedModel)).slice(0, 6);
   const attempted = [];
