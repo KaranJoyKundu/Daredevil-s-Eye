@@ -1,5 +1,7 @@
-import { buildPrompt, DEFAULT_MODES, RESPONSE_STYLES, SAFETY_CORE, SCENE_RULES } from './prompts.js';
+import { buildPrompt, DEFAULT_MODES, RESPONSE_STYLES, RESPONSE_LANGUAGES, SAFETY_CORE, SCENE_RULES } from './prompts.js';
+import { appTokenConfigured, hasValidAppToken, enforceRateLimit } from './auth.js';
 export { SOSRoom } from './sos-room.js';
+export { SOSDirectory } from './sos-directory.js';
 
 const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status,
@@ -16,6 +18,7 @@ function validPayload(body) {
   if (body.model && (typeof body.model !== 'string' || !/^[a-zA-Z0-9._-]{3,100}$/.test(body.model.replace(/^models\//, '')))) return 'Invalid model identifier.';
   if (body.responseStyle && !Object.hasOwn(RESPONSE_STYLES, body.responseStyle)) return 'Unsupported response style.';
   if (body.waitSeconds !== undefined && (!Number.isInteger(body.waitSeconds) || body.waitSeconds < 15 || body.waitSeconds > 180)) return 'Wait time must be between 15 and 180 seconds.';
+  if (body.responseLanguage && !Object.hasOwn(RESPONSE_LANGUAGES, body.responseLanguage)) return 'Unsupported response language.';
   return null;
 }
 
@@ -108,14 +111,24 @@ async function askGemini({ image, prompt, model, waitSeconds }, env) {
 }
 
 async function forwardSos(request, env, action) {
-  if (!env.SOS_ROOM) return json({ ok: false, error: 'SOS relay is not configured. Update wrangler.toml and restart Wrangler.' }, 503);
   let body;
   try { body = await request.json(); } catch { return json({ ok: false, error: 'Invalid SOS request.' }, 400); }
-  const id = env.SOS_ROOM.idFromName('home-receiver');
-  const room = env.SOS_ROOM.get(id);
+  const ip = request.headers.get('cf-connecting-ip') || 'local-development';
+  if (!env.SOS_ROOM || !env.SOS_DIRECTORY) return json({ ok: false, error: 'SOS relay is not configured.' }, 503);
+
+  const directory = env.SOS_DIRECTORY.get(env.SOS_DIRECTORY.idFromName('invitation-directory'));
+  if (action === 'invite' || action === 'pair') {
+    return directory.fetch(new Request('https://sos-directory.internal/' + action, {
+      method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': ip },
+      body: JSON.stringify(body)
+    }));
+  }
+
+  const deviceId = String(body.deviceId || '').toLowerCase();
+  if (!/^[a-f0-9]{32}$/.test(deviceId)) return json({ ok: false, error: 'Invalid sender device identity.' }, 400);
+  const room = env.SOS_ROOM.get(env.SOS_ROOM.idFromName(deviceId));
   return room.fetch(new Request('https://sos-room.internal/' + action, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body)
   }));
 }
@@ -125,84 +138,61 @@ export async function handleApi(request, env = {}) {
   const mode = getMode(env);
   const model = String(env.GEMINI_MODEL || 'gemini-3.8-flash');
 
+  if (request.method === 'GET' && url.pathname === '/api/health') {
+    const supportedMode = mode === 'gemini' || mode === 'mock';
+    return json({
+      ok: supportedMode,
+      mode,
+      model: mode === 'gemini' ? model : null,
+      apiKeyConfigured: Boolean(env.GEMINI_API_KEY),
+      providerConnected: mode === 'gemini' && Boolean(env.GEMINI_API_KEY),
+      appAccessConfigured: appTokenConfigured(env),
+      sosRelayConfigured: Boolean(env.SOS_ROOM && env.SOS_DIRECTORY),
+      mockModeExplicitlyEnabled: mode === 'mock',
+      message: !supportedMode
+        ? `Unsupported AI_MODE "${mode}". Use "gemini" or explicitly "mock".`
+        : !appTokenConfigured(env)
+          ? 'Backend is not ready: APP_ACCESS_TOKEN is missing or too short.'
+          : mode === 'gemini'
+            ? (env.GEMINI_API_KEY ? 'Gemini mode selected; provider key is loaded.' : 'Gemini mode selected, but GEMINI_API_KEY is missing.')
+            : 'Mock mode explicitly enabled; no live image analysis.'
+    }, supportedMode ? 200 : 503);
+  }
+
+  if (!url.pathname.startsWith('/api/')) return null;
+
+  const authAllowed = await enforceRateLimit(env.APP_AUTH_LIMIT, request, 'auth');
+  if (!authAllowed) return json({ error: 'Too many access attempts. Wait one minute and try again.' }, 429);
+  if (!appTokenConfigured(env)) return json({ error: 'Private app access is not configured. Set APP_ACCESS_TOKEN as a Worker secret.' }, 503);
+  const origin = request.headers.get('origin');
+  if (origin) {
+    try { if (new URL(origin).origin !== url.origin) return json({ error: 'Cross-origin API requests are not allowed.' }, 403); }
+    catch { return json({ error: 'Invalid request origin.' }, 403); }
+  }
+  if (!hasValidAppToken(request, env)) return json({ error: 'Unlock this private app at /access/ before using its API.' }, 401);
+
+  if (request.method === 'GET' && url.pathname === '/api/session') {
+    return json({ authenticated: true });
+  }
+
+  if (url.pathname === '/api/models' || url.pathname === '/api/describe' || url.pathname === '/api/ask' || url.pathname === '/api/speech') {
+    const limited = await enforceRateLimit(env.APP_AI_LIMIT, request, 'ai');
+    if (!limited) return json({ error: 'AI request limit reached. Wait one minute before trying again.' }, 429);
+  }
+  if (url.pathname.startsWith('/api/sos/')) {
+    const limited = await enforceRateLimit(env.APP_SOS_LIMIT, request, 'sos');
+    if (!limited) return json({ error: 'SOS request limit reached. Wait before trying again.' }, 429);
+  }
+
   const sosActions = {
+    '/api/sos/invite': 'invite',
     '/api/sos/pair': 'pair',
-    '/api/sos/reset': 'reset',
     '/api/sos/trigger': 'trigger',
     '/api/sos/poll': 'poll',
     '/api/sos/ack': 'ack'
   };
   if (request.method === 'POST' && sosActions[url.pathname]) {
     return forwardSos(request, env, sosActions[url.pathname]);
-  }
-
-  if (request.method === 'POST' && url.pathname === '/api/speech') {
-    let body;
-    try { body = await request.json(); } catch { return json({ ok: false, error: 'Invalid speech request.' }, 400); }
-    const text = String(body?.text || '').trim();
-    const voice = String(body?.voice || 'Kore');
-    const allowedVoices = new Set(['Achernar','Achird','Algenib','Algieba','Alnilam','Aoede','Autonoe','Callirrhoe','Charon','Despina','Enceladus','Erinome','Fenrir','Gacrux','Iapetus','Kore','Laomedeia','Leda','Orus','Pulcherrima','Puck','Rasalgethi','Sadachbia','Sadaltager','Schedar','Sulafat','Umbriel','Vindemiatrix','Zephyr','Zubenelgenubi']);
-    if (!env.GEMINI_API_KEY) return json({ ok: false, error: 'Gemini API key is missing.' }, 503);
-    if (!text || text.length > 3500) return json({ ok: false, error: 'Speech text must be between 1 and 3,500 characters.' }, 400);
-    if (!allowedVoices.has(voice)) return json({ ok: false, error: 'Unsupported Gemini voice.' }, 400);
-    const style = String(body.style || 'Warm, calm, gentle, clear and friendly. Natural adult feminine-presenting voice.').slice(0, 300);
-    const language = String(body.language || 'en-US').slice(0, 20);
-    try {
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-lite-tts:generateContent', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text, speechMetadata: { style } }] }],
-          generationConfig: {
-            responseModalities: ['AUDIO'],
-            speechConfig: {
-              languageCode: language,
-              voiceConfig: { voice }
-            }
-          }
-        }),
-        signal: AbortSignal.timeout(60000)
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        const detail = data?.error?.message || 'Gemini speech generation failed.';
-        return json({ ok: false, error: detail.slice(0, 300) }, response.status === 429 ? 429 : 502);
-      }
-      const audioPart = (data?.candidates?.[0]?.content?.parts || []).find(part => part.inlineData?.data || part.inline_data?.data);
-      const encoded = audioPart?.inlineData?.data || audioPart?.inline_data?.data;
-      if (!encoded) return json({ ok: false, error: 'Gemini returned no audio data.' }, 502);
-      const binary = atob(encoded);
-      const bytes = new Uint8Array(binary.length);
-      for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-      return new Response(bytes, {
-        status: 200,
-        headers: {
-          'content-type': audioPart.inlineData?.mimeType || audioPart.inline_data?.mime_type || 'audio/wav',
-          'cache-control': 'no-store',
-          'x-speech-voice': voice
-        }
-      });
-    } catch (error) {
-      return json({ ok: false, error: error.name === 'TimeoutError' ? 'Gemini voice generation timed out.' : (error.message || 'Gemini voice generation failed.') }, 502);
-    }
-  }
-
-  if (request.method === 'GET' && url.pathname === '/api/health') {
-    const apiKeyConfigured = Boolean(env.GEMINI_API_KEY);
-    const supportedMode = mode === 'gemini' || mode === 'mock';
-    return json({
-      ok: supportedMode, mode,
-      model: mode === 'gemini' ? model : null,
-      apiKeyConfigured,
-      providerConnected: mode === 'gemini' && apiKeyConfigured,
-      sosRelayConfigured: Boolean(env.SOS_ROOM),
-      mockModeExplicitlyEnabled: mode === 'mock',
-      message: !supportedMode
-        ? `Unsupported AI_MODE "${mode}". Use "gemini" or explicitly "mock".`
-        : mode === 'gemini'
-          ? (apiKeyConfigured ? 'Gemini mode selected; API key is loaded.' : 'Gemini mode selected, but GEMINI_API_KEY is missing.')
-          : 'Mock mode explicitly enabled; no live image analysis.'
-    }, supportedMode ? 200 : 503);
   }
 
   if (request.method === 'GET' && url.pathname === '/api/models') {
@@ -237,7 +227,8 @@ export async function handleApi(request, env = {}) {
       mode: action,
       question: body.question || '',
       customPrompt: body.customPrompt || '',
-      responseStyle: body.responseStyle || 'concise'
+      responseStyle: body.responseStyle || 'concise',
+      responseLanguage: body.responseLanguage || 'en-US'
     });
     if (mode === 'gemini') {
       try {
@@ -260,6 +251,7 @@ export async function handleApi(request, env = {}) {
       disclaimer: 'SIMULATED RESPONSE — do not use this output to make mobility or safety decisions.'
     });
   }
+  if (url.pathname.startsWith('/api/')) return json({ error: 'API route not found.' }, 404);
   return null;
 }
 
