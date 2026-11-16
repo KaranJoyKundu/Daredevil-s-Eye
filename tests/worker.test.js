@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {handleApi,rankVisionModels,getTranscriptionModelOrder} from '../worker/src/index.js';
 import {detectSpokenLanguage,selectVoiceForText} from '../web/shared/speech.js';
 
@@ -9,6 +10,32 @@ const req=(path,body,headers={})=>new Request('https://local.test'+path,{
 const get=(path,headers={})=>new Request('https://local.test'+path,{headers});
 const health=()=>new Request('https://local.test/api/health');
 const image='data:image/jpeg;base64,AAAA';
+
+test('Blind mode keeps Help outside the four main action buttons and declares phone shortcuts',()=>{
+ const html=readFileSync(new URL('../web/blind/index.html',import.meta.url),'utf8');
+ const main=/<main\\b[^>]*>([\\s\\S]*?)<\\/main>/i.exec(html);
+ assert.ok(main,'Blind mode main action grid exists');
+ for(const action of ['describe','ask','sos','repeat']) assert.match(main[1],new RegExp('data-action="' + action + '"'));
+ assert.doesNotMatch(main[1],/data-action="help"/);
+ assert.match(html,/<div class="blind-utility"[\\s\\S]*?data-action="help"/);
+ const manifest=JSON.parse(readFileSync(new URL('../web/manifest.webmanifest',import.meta.url),'utf8'));
+ assert.equal(manifest.start_url,'/blind/');
+ assert.deepEqual(manifest.shortcuts.map(item=>item.url),[
+  '/blind/?action=describe','/blind/?action=ask','/blind/?action=sos'
+ ]);
+});
+
+test('blind-mode action colours meet 4.5:1 white-text contrast target',()=>{
+ const css=readFileSync(new URL('../web/shared/style.css',import.meta.url),'utf8');
+ const backgrounds=[['blind-describe','#07509b'],['blind-ask','#00665f'],['blind-sos','#8a3700'],['blind-repeat','#4b3292'],['blind-help-button','#132b45']];
+ const linear=value=>{const channel=value/255;return channel<=0.04045?channel/12.92:((channel+0.055)/1.055)**2.4;};
+ const luminance=hex=>.2126*linear(parseInt(hex.slice(1,3),16))+.7152*linear(parseInt(hex.slice(3,5),16))+.0722*linear(parseInt(hex.slice(5,7),16));
+ for(const [selector,background] of backgrounds){
+  assert.ok(css.includes(background),selector+' background remains defined');
+  const ratio=1.05/(luminance(background)+0.05);
+  assert.ok(ratio>=4.5,selector+' white-text contrast '+ratio.toFixed(2));
+ }
+});
 
 test('health is public and reports provider configuration without exposing secrets',async()=>{
  const r=await handleApi(health(),{GEMINI_API_KEY:'test-secret',SOS_ROOM:{},SOS_DIRECTORY:{}});
