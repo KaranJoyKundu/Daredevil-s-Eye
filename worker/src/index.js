@@ -430,6 +430,7 @@ export async function handleApi(request, env = {}) {
         return json({
           ok: true, mock: false, provider: 'Gemini',
           model: result.model, attemptedModels: result.attempted,
+          finishReason: result.finishReason, usageMetadata: result.usage || null,
           answer: result.answer,
           disclaimer: 'AI can miss objects and hazards. Do not rely on this description alone for mobility or safety decisions.'
         });
