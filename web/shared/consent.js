@@ -10,9 +10,12 @@ export function getConsentRecord() {
 }
 
 export function hasCurrentConsent() {
-  const current = getConsentRecord();
-  if (current) return true;
-  // One-time migration: preserve the previous prototype's accepted boolean.
+  let raw;
+  try { raw = localStorage.getItem(CONSENT_KEY); } catch { return false; }
+  // A prior versioned record exists: do not silently migrate an old boolean
+  // after the privacy policy version changes. Require fresh acceptance.
+  if (raw !== null) return Boolean(getConsentRecord());
+  // One-time migration of the first prototype's legacy accepted boolean.
   try {
     const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
     if (settings.consentAccepted === true) return acceptConsent({ migrated: true });
