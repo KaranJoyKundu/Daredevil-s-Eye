@@ -17,19 +17,7 @@ Copy-Item .dev.vars.example .dev.vars
 
 Edit .dev.vars locally:
 - GEMINI_API_KEY: current Gemini key; never paste into chat, commit, or frontend.
-- APP_ACCESS_TOKEN: random private token, at least 32 characters.
 - AI_MODE=gemini for live requests; AI_MODE=mock only for deliberate mock tests.
-
-Generate a strong app token without displaying it:
-
-~~~powershell
-$bytes = New-Object byte[] 48
-$rng = [Security.Cryptography.RandomNumberGenerator]::Create()
-$rng.GetBytes($bytes)
-$token = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+','-').Replace('/','_')
-$token | Set-Clipboard
-Write-Host "Random app token copied to clipboard. Paste it into .dev.vars as APP_ACCESS_TOKEN=..."
-~~~
 
 Run tests and syntax checks:
 
@@ -44,7 +32,7 @@ Start the Worker:
 npx wrangler dev --ip 0.0.0.0 --port 8791
 ~~~
 
-Open the URL Wrangler prints, visit /access/, and enter the app token.
+Open the URL Wrangler prints. The public app opens directly; no login token is required.
 
 ## Camera
 
@@ -56,7 +44,7 @@ Use http://localhost:8791 on the same PC for local mic permission testing. Phone
 
 ## SOS
 
-The sender must be unlocked. Generate a fresh invitation in Admin. The receiver opens /sos-receiver/, enters the six-character code, pairs, then the page refreshes. Tap Enable alarm & start listening. Receiver does not need the owner's app token; it receives a scoped receiver token. Test only with consenting contacts; keep the page foregrounded and online.
+Generate a fresh invitation in Admin. The receiver opens /sos-receiver/, enters the six-character code, pairs, then the page refreshes. Tap Enable alarm & start listening. The receiver gets a scoped receiver token after pairing. Test only with consenting contacts; keep the page foregrounded and online.
 
 ## Secrets
 
