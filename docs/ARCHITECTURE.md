@@ -7,7 +7,7 @@ One Cloudflare Worker serves static files from web/ and API routes from worker/s
 ~~~mermaid
 flowchart TD
   Browser[Public browser] --> Static[Worker static assets]
-  Browser --> API[Weighted rate-limited Worker API]
+  Browser --> API[Public Worker API]
   API --> Gemini[Gemini Vision and TTS]
   API --> Directory[SOSDirectory Durable Object]
   Directory --> Room[Per-device SOSRoom]
@@ -22,7 +22,7 @@ flowchart TD
 1. Browser captures a frame from ESP32-CAM or obtains a phone/file image.
 2. Browser converts it to a data URL and sends it with preferences to the Worker.
 3. Worker validates image format, encoded size, question, model, wait limit and response language.
-4. Worker applies a weighted per-IP rate limit and verifies that the selected model is on the server-configured public allowlist.
+4. Worker validates the request and sends it to the requested Gemini model available to the API key. Google's own free-tier quotas apply.
 5. Worker sends the image and safety prompt to Gemini using the server-side API key.
 6. Worker returns the answer; browser displays and speaks it.
 
