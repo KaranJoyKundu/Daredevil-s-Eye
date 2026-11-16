@@ -8,7 +8,7 @@ const $=selector=>document.querySelector(selector),status=$('#status');
 let activeRecognition=null,voiceStarting=false,phonePhoto=null,revealRun=0,lastAnswer='';
 let sosArmedUntil=0,sosArmTimer=null,deepLinkHandled=false;
 const requestedAction=new URLSearchParams(location.search).get('action');
-const isBlindMode=location.pathname.replace(/\\/+$/,'')==='/blind';
+const isBlindMode=location.pathname.replace(/\/+$/,'')==='/blind';
 const shakeTracker=createShakeSequenceTracker();
 let motionListenerAttached=false,sosVoiceRecognition=null,sosVoiceRestartTimer=null;
 let sosVoiceMode='wake',sosVoiceModeTimer=null,sosVoiceBlocked=false,sosVoiceFailures=0;
@@ -21,7 +21,7 @@ function stopSosVoiceListener(){
 }
 function shouldRunSosVoiceListener(){
  const settings=getSettings();
- return isBlindMode&&settings.sosVoiceEnabled&&hasCurrentConsent()&&!document.hidden&&!sosVoiceBlocked&&!sosVoiceRecognition&&!sosVoiceRestartTimer;
+ return isBlindMode&&settings.sosVoiceEnabled&&hasCurrentConsent()&&!document.hidden&&!sosVoiceBlocked&&!sosDispatching&&!sosVoiceRecognition&&!sosVoiceRestartTimer;
 }
 function startSosVoiceListener(){
  if(!shouldRunSosVoiceListener())return;
@@ -49,7 +49,7 @@ function startSosVoiceListener(){
   };
   recognition.onend=()=>{
    if(sosVoiceRecognition===recognition)sosVoiceRecognition=null;
-   if(isBlindMode&&getSettings().sosVoiceEnabled&&hasCurrentConsent()&&!document.hidden&&!sosVoiceBlocked&&!sosVoiceRestartTimer){
+   if(isBlindMode&&getSettings().sosVoiceEnabled&&hasCurrentConsent()&&!document.hidden&&!sosVoiceBlocked&&!sosDispatching&&!sosVoiceRestartTimer){
     sosVoiceRestartTimer=setTimeout(()=>{sosVoiceRestartTimer=null;startSosVoiceListener();},1200);
    }
   };
@@ -60,7 +60,7 @@ function startSosVoiceListener(){
  }
 }
 function speakSosStatus(message){
- const resume=()=>{if(isBlindMode&&getSettings().sosVoiceEnabled&&!document.hidden&&!sosVoiceBlocked)startSosVoiceListener();};
+ const resume=()=>{if(isBlindMode&&getSettings().sosVoiceEnabled&&!document.hidden&&!sosVoiceBlocked&&!sosDispatching)startSosVoiceListener();};
  stopSosVoiceListener();
  const utterance=speak(message,{lang:'en-US',onEnd:resume,onError:resume});
  if(!utterance)resume();
@@ -252,7 +252,7 @@ updateConsentPanel();
 document.addEventListener('click',event=>{
  const button=event.target.closest('[data-action]');if(!button)return;
  if(button.dataset.action==='describe')run('describe');
- if(button.dataset.action==='ask'){const utterance=speak('What would you like to know? Speak Bangla, English or both, then pause.',{lang:'en-US',onEnd:startVoiceQuestion,onError:startVoiceQuestion});if(!utterance)startVoiceQuestion();}
+ if(button.dataset.action==='ask'){stopSosVoiceListener();const utterance=speak('What would you like to know? Speak Bangla, English or both, then pause.',{lang:'en-US',onEnd:startVoiceQuestion,onError:startVoiceQuestion});if(!utterance)startVoiceQuestion();}
  if(button.dataset.action==='sos')armSos();if(button.dataset.action==='repeat')repeatAnswer();if(button.dataset.action==='help')speakHelp();
  if(button.dataset.action==='cancel-sos-trigger')cancelSosCountdown();
  if(button.dataset.action==='phone-photo')$('#phone-photo')?.click();
