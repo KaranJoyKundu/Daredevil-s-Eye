@@ -2,7 +2,7 @@
 
 ## Assets
 
-- Gemini provider key and owner app access token.
+- Gemini provider key.
 - Camera image content and AI response text.
 - SOS invitation codes, receiver tokens and alert state.
 - Device preferences and consent record.
@@ -18,8 +18,8 @@
 ## Controls present
 
 - Provider and owner secrets are server-side.
-- Owner-only APIs require a Bearer app token and same-origin check.
-- AI, owner-auth and SOS routes use Cloudflare approximate rate-limit bindings.
+- Public API routes apply same-origin request checks and weighted per-IP rate-limit checks.
+- AI and SOS routes use Cloudflare approximate rate-limit bindings.
 - Six-character SOS invitations are hashed, single-use and expire after ten minutes.
 - Pairing attempts are limited per source IP in SOSDirectory.
 - Receiver receives a random 256-bit token; only its hash is stored in the device room.
@@ -28,7 +28,7 @@
 
 ## Residual risks
 
-- Owner token is a shared single-owner secret, not an identity system. Anyone who obtains it can use the owner's AI quota.
+- AI endpoints are public. Anyone can use the Gemini-backed endpoints and consume quota within the configured limits; the app has no login or per-user identity.
 - Cloudflare simple rate limits are approximate and local to each Cloudflare location, not strict global quotas.
 - Six-character invitations have limited entropy; expiry, single use and attempt limiting reduce but do not eliminate guessing risk.
 - A compromised receiver browser can expose its receiver token.
@@ -38,6 +38,6 @@
 - Browser SOS does not guarantee delivery or audible output.
 - No independent penetration test, privacy impact assessment or formal safety certification has been performed.
 
-## Before a multi-user release
+## Before a broader public service release
 
 Add real user/device registration, per-user quotas, stronger pairing recovery, monitoring/abuse response, strict quota accounting, operational alerting, privacy review and independent security testing.
