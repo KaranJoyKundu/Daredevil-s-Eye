@@ -1,7 +1,7 @@
 import { captureImage, blobToDataUrl, compressImageToJpeg } from './camera.js?v=20261117-photo-buffer';
 import { requestAI } from './api.js?v=20261116-sos3';
-import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261116-sos3';
-import { getSettings, saveSettings } from './settings.js?v=20261116-sos3';
+import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-bangla';
+import { getSettings, saveSettings } from './settings.js?v=20261117-photo-buffer';
 import { hasCurrentConsent, acceptConsent } from './consent.js?v=20261116-sos3';
 import { createShakeSequenceTracker, getShakeMagnitude, matchSosVoiceCommand } from './sos-triggers.js?v=20261116-sos3';
 const $=selector=>document.querySelector(selector),status=$('#status');
