@@ -85,7 +85,7 @@ function showAlert(event){
 }
 function clearReceiverSession(message){
  stopAlarm();isConnected=false;
- sessionStorage.removeItem(DEVICE_KEY);sessionStorage.removeItem(TOKEN_KEY);
+ localStorage.removeItem(DEVICE_KEY);localStorage.removeItem(TOKEN_KEY);sessionStorage.removeItem(LEGACY_TOKEN_KEY);
  deviceId='';receiverToken='';
  if(pollTimer)clearTimeout(pollTimer);pollTimer=null;
  setConnected(false);$('#emergency-alert').hidden=true;
