@@ -31,6 +31,15 @@ async function registerPushNotifications(){
  if(!keyData.applicationServerKey)throw new Error('The server did not provide a push application key.');
  const applicationServerKey=base64UrlToBytes(keyData.applicationServerKey);
  let subscription=await registration.pushManager.getSubscription();
+ if(subscription){
+  const savedKey=subscription.options?.applicationServerKey;
+  const savedBytes=savedKey?Array.from(new Uint8Array(savedKey)):null;
+  const expectedBytes=Array.from(applicationServerKey);
+  if(!savedBytes||savedBytes.length!==expectedBytes.length||savedBytes.some((byte,index)=>byte!==expectedBytes[index])){
+   await subscription.unsubscribe();
+   subscription=null;
+  }
+ }
  if(!subscription){
   subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey});
  }
