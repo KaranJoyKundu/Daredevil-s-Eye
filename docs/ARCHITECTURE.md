@@ -6,8 +6,8 @@ One Cloudflare Worker serves static files from web/ and API routes from worker/s
 
 ~~~mermaid
 flowchart TD
-  Browser[Owner browser] --> Static[Worker static assets]
-  Browser -->|Bearer app token| API[Worker API]
+  Browser[Public browser] --> Static[Worker static assets]
+  Browser --> API[Weighted rate-limited Worker API]
   API --> Gemini[Gemini Vision and TTS]
   API --> Directory[SOSDirectory Durable Object]
   Directory --> Room[Per-device SOSRoom]
@@ -21,9 +21,20 @@ flowchart TD
 
 1. Browser captures a frame from ESP32-CAM or obtains a phone/file image.
 2. Browser converts it to a data URL and sends it with preferences to the Worker.
-3. Worker authenticates the owner and validates image format, encoded size, question, model, wait limit and response language.
-4. Worker sends the image and safety prompt to Gemini.
-5. Worker returns the answer; browser displays and speaks it.
+3. Worker validates image format, encoded size, question, model, wait limit and response language.
+4. Worker applies a weighted per-IP rate limit and verifies that the selected model is on the server-configured public allowlist.
+5. Worker sends the image and safety prompt to Gemini using the server-side API key.
+6. Worker returns the answer; browser displays and speaks it.
+
+## Public API and quota limits
+
+- No app access token or login is required to use the website.
+- The browser sends same-origin requests to the Worker.
+- The Gemini API key is held only in the Worker environment; it is never sent to the browser.
+- Image-analysis calls consume four rate-limit units, Gemini TTS calls two, and model catalogue requests one.
+- The public model list is restricted by the server-side GEMINI_ALLOWED_MODELS setting.
+- Cloudflare rate-limit bindings are approximate and scoped by Cloudflare location. They do not provide a strict global quota or complete protection against distributed abuse.
+- The app is a public single-demo deployment, not a multi-user account or billing system.
 
 ## Speech
 
@@ -32,19 +43,15 @@ flowchart TD
 - Device TTS uses operating-system/browser voices.
 - Gemini TTS sends answer text through the Worker to Google's TTS model.
 
-## Owner API access
-
-Owner enters a high-entropy app token at /access/. It is stored in sessionStorage for that browser tab. Private API requests send it as a Bearer token. This is a single-owner beta gate, not a multi-user account system.
-
 ## SOS flow
 
-1. The owner browser creates a per-install 128-bit device identifier.
+1. The sender browser creates a per-install 128-bit device identifier.
 2. SOSDirectory generates a six-character code and stores only its SHA-256 hash with a ten-minute expiry.
 3. Creating another invitation deletes the previous invitation and revokes the current receiver token.
-4. Receiver submits the code without receiving the owner's Gemini/app token.
+4. Receiver submits the code without needing an owner access token.
 5. SOSRoom issues a random 256-bit receiver token and stores only its hash. Invitation is consumed.
 6. Receiver holds the token in tab sessionStorage and polls its sender's room.
-7. Owner can trigger a ten-minute alert; receiver token authorises polling and acknowledgement.
+7. Sender can trigger a ten-minute alert; receiver token authorises polling and acknowledgement.
 8. Re-pairing invalidates the previous token.
 
 The prototype uses polling rather than push. Browser tabs can be suspended by mobile operating systems; delivery is not guaranteed.
