@@ -1,7 +1,7 @@
-import {getSettings,saveSettings} from '/shared/settings.js?v=20261116-public1';
-import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261116-key1';
-import {captureImage} from '/shared/camera.js?v=20261116-public1';
-import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261116-public1';
+import {getSettings,saveSettings} from '/shared/settings.js?v=20261116-access2';
+import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261116-access2';
+import {captureImage} from '/shared/camera.js?v=20261116-access2';
+import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261116-access2';
 
 const $=s=>document.querySelector(s);
 const form=$('#settings-form');
@@ -23,6 +23,8 @@ function formSettings(){
   emergencyName:$('#contact-name').value.trim(),
   emergencyPhone:$('#contact-phone').value.trim(),
   speechLanguage:$('#language').value,
+  speechInputMode:$('#speech-input-mode').value,
+  speechInputLanguage:$('#input-language').value,
   speechPreset:$('#voice-preset').value,
   speechVoiceURI:$('#voice-select').value,
   speechEngine:$('#speech-engine').value,
@@ -48,6 +50,8 @@ $('#contact-name').value=saved.emergencyName;
 $('#contact-phone').value=saved.emergencyPhone;
 $('#sos-code').value=saved.sosPairingCode;
 $('#language').value=saved.speechLanguage;
+$('#speech-input-mode').value=saved.speechInputMode||'auto';
+$('#input-language').value=saved.speechInputLanguage||'bn-BD';
 $('#voice-preset').value=saved.speechPreset;
 $('#speech-engine').value=saved.speechEngine==='gemini'?'device':saved.speechEngine;
 $('#gemini-voice-style').value=saved.geminiTtsStyle;
@@ -133,9 +137,10 @@ function populateVoices(){
   option.textContent=voice.name+' · '+voice.lang+(voice.default?' · system default':'');select.append(option);
  }
  select.value=current;
+ const hasBangla=voices.some(voice=>/^bn(?:-|$)/i.test(voice.lang||''));
  $('#voice-status').textContent=voices.length
-  ? voices.length+' installed voices found on this device.'
-  : 'No system voices found. Use the Gemini voice library above or check device speech settings.';
+  ? voices.length+' installed voices found on this device. '+(hasBangla?'A Bengali voice is available.':'No Bengali voice was found; install Bengali speech data in Android settings for Bengali spoken answers.')
+  : 'No system voices found. Check device speech settings and install Bengali speech data if Bangla output is needed.';
 }
 if('speechSynthesis' in window){
  populateVoices();
@@ -165,9 +170,8 @@ $('#preview-voice').addEventListener('click',async()=>{
     engine:'gemini',voice:options.geminiTtsVoice,style:options.geminiTtsStyle,lang:options.speechLanguage,fallback:false
    });
   }else{
-   speak('Hello. I am your Daredevil’s Eye assistant. I will describe what is visible clearly and calmly.',{
-    lang:options.speechLanguage,rate:options.speechRate,pitch:options.speechPitch,voiceURI:options.speechVoiceURI
-   });
+   const previewText=options.speechLanguage==='bn-BD'?'হ্যালো। আমি ডেয়ারডেভিলস আই। আমি যা দেখতে পাচ্ছি, তা স্পষ্টভাবে বর্ণনা করব।':'Hello. I am your Daredevil’s Eye assistant. I will describe what is visible clearly and calmly.';
+   speak(previewText,{lang:options.speechLanguage,rate:options.speechRate,pitch:options.speechPitch,voiceURI:options.speechVoiceURI});
   }
   $('#voice-status').textContent='Voice preview playing.';
  }catch(error){$('#voice-status').textContent='Voice preview failed: '+error.message;}

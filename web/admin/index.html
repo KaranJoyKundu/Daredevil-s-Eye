@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#07111f"><title>Admin / Settings · Daredevil's Eye</title>
-<link rel="stylesheet" href="/shared/style.css">
+<link rel="stylesheet" href="/shared/style.css?v=20261116-access2">
 </head>
 <body><main>
 <header><p class="eyebrow">DEVICE SETTINGS</p><h1>Admin / Settings</h1><p class="subtitle">Tune the camera, AI behaviour and spoken voice. Settings stay in this browser on this device.</p></header>
@@ -26,8 +26,13 @@
 <div><label>&nbsp;</label><button id="generate-sos-code" type="button" class="secondary">Generate pairing code</button></div>
 </div>
 <small>Share this one-time code privately. It is not stored permanently. Generating another code disconnects the previous receiver.</small>
-<label for="language">Speech input and AI response language</label>
+<label for="language">AI response language</label>
 <select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
+<label for="speech-input-mode">Voice input mode</label>
+<select id="speech-input-mode"><option value="auto">Automatic multilingual detection (recommended — Gemini)</option><option value="browser">Browser speech recognition first</option></select>
+<label for="input-language">Browser recognition language</label>
+<select id="input-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
+<small>Automatic mode records a short clip and sends it to Gemini to detect Bangla, English or mixed speech. Browser mode uses the selected language first and switches to Gemini if it fails. Audio is processed externally; do not speak confidential information.</small>
 </section>
 
 <section id="ai-settings" class="panel settings-section">
@@ -112,6 +117,6 @@
 
 <nav class="navlinks"><a href="/action/">Home</a><a href="/diagnostics/">Diagnostics</a><a href="/contact/">Contact</a><a href="/privacy/">Privacy</a></nav>
 </main>
-<script type="module" src="/admin/admin.js?v=20261116-public1"></script>
+<script type="module" src="/admin/admin.js?v=20261116-access2"></script>
 <script type="module" src="/shared/site-nav.js?v=20261116-nav1"></script>
 </body></html>
