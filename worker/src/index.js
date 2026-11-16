@@ -127,6 +127,7 @@ export async function handleApi(request, env = {}) {
 
   const sosActions = {
     '/api/sos/pair': 'pair',
+    '/api/sos/reset': 'reset',
     '/api/sos/trigger': 'trigger',
     '/api/sos/poll': 'poll',
     '/api/sos/ack': 'ack'
@@ -194,6 +195,7 @@ export async function handleApi(request, env = {}) {
       model: mode === 'gemini' ? model : null,
       apiKeyConfigured,
       providerConnected: mode === 'gemini' && apiKeyConfigured,
+      sosRelayConfigured: Boolean(env.SOS_ROOM),
       mockModeExplicitlyEnabled: mode === 'mock',
       message: !supportedMode
         ? `Unsupported AI_MODE "${mode}". Use "gemini" or explicitly "mock".`
