@@ -138,3 +138,15 @@ test('approximate rate limit binding rejects excess AI requests',async()=>{
  const r=await handleApi(req('/api/describe',{image}),{...limitedEnv,AI_MODE:'mock'});
  assert.equal(r.status,429);
 });
+
+test('receiver pairing endpoint is separate from owner app-token authentication',async()=>{
+ const r=await handleApi(req('/api/sos/pair',{code:'ABC234'}),{});
+ assert.equal(r.status,503);
+ const d=await r.json();
+ assert.match(d.error,/SOS relay is not configured/);
+});
+test('sender SOS invitation endpoint still requires owner authentication',async()=>{
+ const noToken=new Request('https://local.test/api/sos/invite',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({deviceId:'0123456789abcdef0123456789abcdef'})});
+ const r=await handleApi(noToken,{APP_ACCESS_TOKEN:TOKEN});
+ assert.equal(r.status,401);
+});
