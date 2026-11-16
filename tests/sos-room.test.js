@@ -10,7 +10,7 @@ class MemoryStorage {
 }
 function state(){return {storage:new MemoryStorage()};}
 function post(path,body){
- return new Request('https://sos.test/'+path.replace(/^\\/+/,''),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+ return new Request('https://sos.test/'+(path.startsWith('/') ? path.slice(1) : path),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
 }
 const code='A1B2C3D4E5F6G7H8';
 
