@@ -2,7 +2,7 @@
 
 ## Runtime
 
-One Cloudflare Worker serves static files from web/ and API routes from worker/src/index.js. Provider credentials remain server-side. Durable Objects store SOS invitation and alert state.
+One Cloudflare Worker serves static files from web/ and API routes from worker/src/index.js. The Gemini API key remains server-side. Durable Objects store SOS invitation and alert state.
 
 ~~~mermaid
 flowchart TD
@@ -22,19 +22,18 @@ flowchart TD
 1. Browser captures a frame from ESP32-CAM or obtains a phone/file image.
 2. Browser converts it to a data URL and sends it with preferences to the Worker.
 3. Worker validates image format, encoded size, question, model, wait limit and response language.
-4. Worker validates the request and sends it to the requested Gemini model available to the API key. Google's own free-tier quotas apply.
-5. Worker sends the image and safety prompt to Gemini using the server-side API key.
+4. Worker sends the image and safety prompt to the requested Gemini generateContent model using the server-side API key.
+5. The available model catalogue is retrieved from Google's Models API for this API key.
 6. Worker returns the answer; browser displays and speaks it.
 
-## Public API and quota limits
+## Public API and Google free-tier quota
 
-- No app access token or login is required to use the website.
+- No app access token or login is required.
 - The browser sends same-origin requests to the Worker.
 - The Gemini API key is held only in the Worker environment; it is never sent to the browser.
-- Image-analysis calls consume four rate-limit units, Gemini TTS calls two, and model catalogue requests one.
-- The public model list is restricted by the server-side GEMINI_ALLOWED_MODELS setting.
-- Cloudflare rate-limit bindings are approximate and scoped by Cloudflare location. They do not provide a strict global quota or complete protection against distributed abuse.
-- The app is a public single-demo deployment, not a multi-user account or billing system.
+- This project adds no Cloudflare API rate limiter and no server-side model allowlist.
+- Google's model-specific request and token quotas continue to apply according to the Gemini API project's tier. Public visitors share the same project quota; Google can return 429 when it is exhausted.
+- The app is a public single-demo deployment, not a multi-user account or per-user quota system.
 
 ## Speech
 
@@ -54,7 +53,7 @@ flowchart TD
 7. Sender can trigger a ten-minute alert; receiver token authorises polling and acknowledgement.
 8. Re-pairing invalidates the previous token.
 
-The prototype uses polling rather than push. Browser tabs can be suspended by mobile operating systems; delivery is not guaranteed.
+The SOS directory includes invitation-guess attempt handling. This is separate from API-wide request throttling. The prototype uses polling rather than push. Browser tabs can be suspended by mobile operating systems; delivery is not guaranteed.
 
 ## Camera boundary
 
