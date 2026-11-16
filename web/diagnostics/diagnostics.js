@@ -136,7 +136,7 @@ async function systemCheck(){
    'AI mode: '+(health.mode||'unknown'),
    'Model: '+(getSettings().aiModel||health.model||'not selected'),
    'API key loaded: '+(health.apiKeyConfigured?'yes':'no'),
-   'Provider ready: '+(health.providerConnected?'yes':'no'),
+   'Gemini API key configured: '+(health.providerConfigured?'yes':'no'),
    'Mock mode: '+(health.mockModeExplicitlyEnabled?'enabled':'disabled'),
    'Available generateContent models: '+(models.models?.length??'could not load'),
    'Microphone secure context: '+(window.isSecureContext?'yes':'no'),
