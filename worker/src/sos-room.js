@@ -53,6 +53,21 @@ export class SOSRoom {
       return json({ ok: true, paired: true, receiverToken, message: 'Receiver paired. The previous receiver session has been replaced.' });
     }
 
+    if (action === 'trigger') {
+      const receiverTokenHash = await this.state.storage.get('receiverTokenHash');
+      if (!receiverTokenHash) return json({ ok: false, error: 'No receiver is paired. Generate an invitation and pair a phone first.' }, 409);
+      const now = Date.now();
+      const event = {
+        id: crypto.randomUUID(),
+        createdAt: now,
+        expiresAt: now + 10 * 60 * 1000,
+        active: true,
+        message: 'Emergency alert. Someone may be in danger. Please check immediately.'
+      };
+      await this.state.storage.put('activeEvent', event);
+      return json({ ok: true, sent: true, eventId: event.id, message: 'Emergency alert sent to the paired receiver.' });
+    }
+
     const token = String(body.receiverToken || '');
     const expectedHash = await this.state.storage.get('receiverTokenHash');
     if (!expectedHash || !safeEqual(await hashSecret(token), expectedHash)) {
@@ -74,19 +89,6 @@ export class SOSRoom {
       if (body.eventId && body.eventId !== event.id) return json({ ok: false, error: 'This alert has changed. Refresh the receiver.' }, 409);
       await this.state.storage.put('activeEvent', { ...event, active: false, acknowledgedAt: Date.now() });
       return json({ ok: true, acknowledged: true, message: 'Emergency alert acknowledged.' });
-    }
-
-    if (action === 'trigger') {
-      const now = Date.now();
-      const event = {
-        id: crypto.randomUUID(),
-        createdAt: now,
-        expiresAt: now + 10 * 60 * 1000,
-        active: true,
-        message: 'Emergency alert. Someone may be in danger. Please check immediately.'
-      };
-      await this.state.storage.put('activeEvent', event);
-      return json({ ok: true, sent: true, eventId: event.id, message: 'Emergency alert sent to the paired receiver.' });
     }
 
     return json({ ok: false, error: 'Unknown SOS action.' }, 404);
