@@ -26,6 +26,15 @@ export class SOSRoom {
     if (!validCode(code)) return json({ ok: false, error: 'Pairing code must be 8–20 letters or numbers.' }, 400);
 
     const existingCode = await this.state.storage.get('pairingCode');
+    if (action === 'reset') {
+      const newCode = String(body.newCode || '').trim().toUpperCase();
+      if (!validCode(newCode)) return json({ ok: false, error: 'New pairing code must be 8–20 letters or numbers.' }, 400);
+      if (existingCode && existingCode !== code) return json({ ok: false, error: 'Current SOS pairing code did not match.' }, 403);
+      await this.state.storage.put('pairingCode', newCode);
+      await this.state.storage.delete('activeEvent');
+      return json({ ok: true, paired: true, reset: true, message: 'SOS pairing code updated. Pair the receiver again with the new code.' });
+    }
+
     if (action === 'pair') {
       if (existingCode && existingCode !== code) return json({ ok: false, error: 'This SOS room is already paired with a different code. Use the original code or reset the local SOS room.' }, 403);
       if (!existingCode) await this.state.storage.put('pairingCode', code);
