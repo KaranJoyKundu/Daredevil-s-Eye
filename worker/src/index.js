@@ -119,8 +119,8 @@ async function forwardSos(request, env, action) {
   const directory = env.SOS_DIRECTORY.get(env.SOS_DIRECTORY.idFromName('invitation-directory'));
   if (action === 'invite' || action === 'pair') {
     return directory.fetch(new Request('https://sos-directory.internal/' + action, {
-      method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': ip },
-      body: JSON.stringify(body)
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ...body, clientIp: ip })
     }));
   }
 
