@@ -18,6 +18,13 @@
 <div><label for="contact-name">Trusted contact name</label><input id="contact-name" maxlength="80" placeholder="Name"></div>
 <div><label for="contact-phone">Trusted contact phone</label><input id="contact-phone" type="tel" maxlength="30" placeholder="+880..."></div>
 </div>
+<h3>SOS receiver pairing</h3>
+<p>Generate a private code, then enter the same code on the second phone at <a href="/sos-receiver/">SOS Receiver</a>. That phone must keep the receiver page open and its screen awake.</p>
+<div class="field-grid">
+<div><label for="sos-code">Receiver pairing code</label><input id="sos-code" maxlength="20" autocomplete="off" placeholder="Generate a code"></div>
+<div><label>&nbsp;</label><button id="generate-sos-code" type="button" class="secondary">Generate pairing code</button></div>
+</div>
+<small>Keep this code private. It is stored only in this browser's settings and is required to trigger your paired receiver.</small>
 <label for="language">Speech / microphone language</label>
 <select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
 </section>
@@ -57,6 +64,13 @@
 <option value="clear">Clear · steady and neutral</option>
 <option value="custom">Custom · use the sliders</option>
 </select>
+<label for="speech-engine">Speech engine</label>
+<select id="speech-engine"><option value="device">Device voices (no extra AI request)</option><option value="gemini">Gemini studio voices (additional API usage)</option></select>
+<label for="gemini-voice">Gemini voice library</label>
+<select id="gemini-voice"></select>
+<label for="gemini-voice-style">Gemini voice delivery</label>
+<input id="gemini-voice-style" type="text" maxlength="300" placeholder="Warm, gentle, calm, friendly, natural adult feminine-presenting voice">
+<p class="hint">Gemini offers 14 prebuilt female voices, along with other voices. Choose a voice and preview it. Generating previews and speaking answers uses additional Gemini API requests.</p>
 <label for="voice-select">Installed voice on this device</label>
 <select id="voice-select"><option value="">Automatic device voice</option></select>
 <p id="voice-status" class="hint">Voice options depend on the voices installed in your browser or operating system.</p>
@@ -85,6 +99,7 @@
 <div><label>&nbsp;</label><button id="capture-camera-button" type="button" class="secondary">Capture from camera</button></div>
 </div>
 <img id="test-preview" alt="Preview of exact image selected for AI analysis" hidden style="display:none;max-width:100%;max-height:360px;object-fit:contain;border-radius:12px;margin-top:12px">
+<button id="download-selected-image" type="button" class="secondary" disabled>Download captured / selected image</button>
 <p id="image-details" class="hint" aria-live="polite">No image selected.</p>
 <label for="test-question">Question (optional)</label>
 <input id="test-question" type="text" maxlength="1000" placeholder="What can you see?">
@@ -95,5 +110,5 @@
 
 <nav class="navlinks"><a href="/action/">Home</a><a href="/diagnostics/">Diagnostics</a><a href="/contact/">Contact</a><a href="/privacy/">Privacy</a></nav>
 </main>
-<script type="module" src="/admin/admin.js?v=20261116-admin-controls1"></script>
+<script type="module" src="/admin/admin.js?v=20261116-sosmictts1"></script>
 </body></html>
