@@ -25,7 +25,7 @@ Updated for branch feat/blind-spoken-help-bangla-controls. Items described as im
 
 ## Automated verification
 
-GitHub Actions passed on source/test commit c4a9895: 50 tests passed, 0 failed, and the JavaScript syntax check passed. The production deployment job was skipped for this pull request. These automated and mocked tests do not verify real Gemini quota, Bangla accuracy or phone TTS behavior.
+Latest GitHub Actions run on commit 9c68fcf: 55 tests passed, 0 failed, and the JavaScript syntax check passed. The production deployment job was skipped for this pull request. These automated tests do not verify real phone sensor thresholds, voice recognition accuracy, Gemini quota or Bengali TTS behavior.
 
 ## Requires physical testing
 

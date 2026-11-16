@@ -35,7 +35,7 @@ This roadmap replaces the old token/rate-limit checklist, which no longer descri
 - [x] Phone-control setup documentation and empty real-scene scorecard template.
 - [x] Project phone/WhatsApp contact link.
 - [x] Optional three-shake SOS and opt-in spoken wake phrase with a separate confirmation and cancellation countdown.
-- [x] PR CI passed on commit c4a9895: 50 tests, 0 failures; JavaScript syntax check passed. Production deployment was skipped for the PR.
+- [x] PR CI passed on commit 9c68fcf: 55 tests, 0 failures; JavaScript syntax check passed. Production deployment was skipped for the PR.
 - [ ] Android Chrome hands-on voice test with English, Bangla and mixed-language speech.
 - [ ] Confirm Bengali voice installation and pronunciation; source code cannot install phone TTS language data.
 - [ ] TalkBack test of Blind mode, focus order, touch targets and spoken status.
