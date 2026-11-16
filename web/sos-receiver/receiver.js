@@ -133,6 +133,7 @@ $('#enable-alarm').addEventListener('click',async()=>{
   $('#receiver-detail').textContent=pushReady
    ? 'Push notifications are registered. Android may show an alert while the screen is off; notification permission, connectivity and battery settings still apply.'
    : 'Foreground polling is active, but this receiver may miss alerts while the screen is off or the browser is suspended.';
+  if(pollTimer)clearTimeout(pollTimer);pollTimer=null;
   poll();
  }catch(error){updateStatus('Could not enable the receiver: '+error.message);}
  finally{button.disabled=false;}
@@ -157,8 +158,18 @@ document.addEventListener('visibilitychange',async()=>{
 });
 if(deviceId&&receiverToken){
  setConnected(true);
- updateStatus('Receiver pairing is saved on this device. Tap Enable alarm to enable sound and screen-off notifications.');
+ isConnected=true;
+ updateStatus('Receiver pairing is saved on this device. Checking for SOS alerts. Tap Enable alarm to unlock sound and enable screen-off notifications.');
+ poll();
 } else {
  setConnected(false);
  updateStatus('Enter the six-character invitation code from the sender phone.');
+}
+
+if('serviceWorker'in navigator){
+ navigator.serviceWorker.addEventListener('message',event=>{
+  if(event.data?.type==='DAREDEVILS_EYE_SOS_PUSH'){
+   if(deviceId&&receiverToken){isConnected=true;setConnected(true);if(pollTimer)clearTimeout(pollTimer);pollTimer=null;poll();}
+  }
+ });
 }
