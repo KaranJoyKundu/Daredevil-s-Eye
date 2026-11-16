@@ -40,11 +40,11 @@ export function matchSosVoiceCommand(transcript, phase = 'wake') {
   if (hasCancel && (hasSos || text.includes('emergency') || text.includes('করুন'))) return 'cancel';
   if (phase === 'cancel') return null;
   if (phase === 'confirm') {
-    const englishConfirm = /\\b(confirm|send|yes)\\b/.test(text) && (hasSos || text.includes('emergency'));
+    const englishConfirm = text.split(' ').some(word => ['confirm','send','yes'].includes(word)) && (hasSos || text.includes('emergency'));
     const banglaConfirm = text.includes('নিশ্চিত') || (hasSos && (text.includes('পাঠান') || text.includes('হ্যাঁ')));
     return englishConfirm || banglaConfirm ? 'confirm' : null;
   }
-  const englishWake = /\\b(daredevil|dare devil)\\b/.test(text) && hasSos;
+  const englishWake = (text.includes('daredevil') || text.includes('dare devil')) && hasSos;
   const banglaWake = hasSos && (text.includes('ডেয়ার') || text.includes('দেয়ার') || text.includes('সাহায্য'));
   return englishWake || banglaWake ? 'wake' : null;
 }
