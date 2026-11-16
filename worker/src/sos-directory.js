@@ -73,8 +73,15 @@ export class SOSDirectory {
       if (previousHash) await this.state.storage.delete('invite:' + previousHash);
       // A new invite immediately revokes the previously paired receiver.
       await this.room(deviceId, 'revoke');
-      const code = randomCode();
-      const codeHash = await hash(code);
+      let code = '';
+      let codeHash = '';
+      for (let attempt = 0; attempt < 16; attempt += 1) {
+        code = randomCode();
+        codeHash = await hash(code);
+        if (!(await this.state.storage.get('invite:' + codeHash))) break;
+        code = '';
+      }
+      if (!code) return json({ ok: false, error: 'Could not create a unique SOS invitation. Try again.' }, 503);
       const expiresAt = Date.now() + 10 * 60 * 1000;
       await this.state.storage.put('invite:' + codeHash, { deviceId, expiresAt, attempts: 0 });
       await this.state.storage.put('current:' + deviceId, codeHash);
