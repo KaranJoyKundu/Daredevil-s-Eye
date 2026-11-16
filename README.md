@@ -69,6 +69,7 @@ See docs/SETUP.md and docs/DEPLOYMENT.md.
 - AI endpoints are public and have no app login or Cloudflare rate limit. The Gemini key remains server-side. Google's own free-tier quota is the only provider usage limit; public visitors share the same project quota.
 - Receiver pairing codes are six characters, single-use and expire after ten minutes. A new pairing invalidates the previous receiver token.
 - Images and audio are not intentionally persisted by the application. Browser speech recognition may process audio through the browser vendor's service; Gemini TTS sends response text to Google.
+- Google marks Gemini API free-tier content as potentially used to improve its products. Do not submit sensitive images unless you are comfortable with Google's free-tier data-use terms.
 - Read web/privacy/index.html, docs/SAFETY.md and SECURITY.md.
 
 ## Documentation
