@@ -35,6 +35,31 @@ export class SOSDirectory {
     }));
   }
 
+  async alarm() {
+    const now = Date.now();
+    const invites = await this.state.storage.list({ prefix: 'invite:' });
+    let nextAlarm = null;
+    for (const [key, invite] of invites) {
+      if (invite.expiresAt <= now) {
+        await this.state.storage.delete(key);
+        const codeHash = key.slice('invite:'.length);
+        const currentKey = 'current:' + invite.deviceId;
+        if (await this.state.storage.get(currentKey) === codeHash) await this.state.storage.delete(currentKey);
+      } else if (nextAlarm === null || invite.expiresAt < nextAlarm) {
+        nextAlarm = invite.expiresAt;
+      }
+    }
+    const attempts = await this.state.storage.list({ prefix: 'attempts:' });
+    for (const [key, record] of attempts) {
+      if (now - record.windowStartedAt > 120000) await this.state.storage.delete(key);
+      else {
+        const expiry = record.windowStartedAt + 120000;
+        if (nextAlarm === null || expiry < nextAlarm) nextAlarm = expiry;
+      }
+    }
+    if (nextAlarm !== null) await this.state.storage.setAlarm(nextAlarm);
+  }
+
   async handle(request) {
     if (request.method !== 'POST') return json({ ok: false, error: 'POST required.' }, 405);
     const action = new URL(request.url).pathname.replace(/^\/+/, '');
@@ -53,6 +78,7 @@ export class SOSDirectory {
       const expiresAt = Date.now() + 10 * 60 * 1000;
       await this.state.storage.put('invite:' + codeHash, { deviceId, expiresAt, attempts: 0 });
       await this.state.storage.put('current:' + deviceId, codeHash);
+      await this.state.storage.setAlarm(expiresAt);
       return json({ ok: true, code, expiresAt, expiresInSeconds: 600, message: 'New six-character invitation created. Any previous receiver has been disconnected.' });
     }
 
