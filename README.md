@@ -116,6 +116,7 @@ The Gemini key is uploaded as a Cloudflare Worker secret. Do not put secret valu
 - [Accessibility](docs/ACCESSIBILITY.md)
 - [Safety and privacy](docs/SAFETY.md)
 - [Threat model](docs/THREAT-MODEL.md)
+- [Security policy](SECURITY.md)
 - [Changelog](CHANGELOG.md)
 
 The feature branch contains work that is not live until it is reviewed and merged to `main`. Automated checks do not replace hands-on device verification or supervised testing with blind and low-vision participants.
