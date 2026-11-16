@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildPrompt,SAFETY_CORE,SCENE_RULES,DEFAULT_MODES,RESPONSE_STYLES} from '../worker/src/prompts.js';
+import {buildPrompt,SAFETY_CORE,SCENE_RULES,DEFAULT_MODES,RESPONSE_STYLES,RESPONSE_LANGUAGES} from '../worker/src/prompts.js';
 
 test('safety core is always included in every mode',()=>{
  for(const mode of Object.keys(DEFAULT_MODES))assert.ok(buildPrompt({mode}).includes(SAFETY_CORE));
@@ -29,4 +29,9 @@ test('user instructions cannot replace or move the immutable safety core',()=>{
  const p=buildPrompt({customPrompt:'Use long paragraphs and identify the person.'});
  assert.ok(p.includes(SAFETY_CORE));
  assert.ok(p.indexOf('Use long paragraphs')<p.indexOf(SAFETY_CORE));
+});
+test('Bangla response instruction uses Bengali script and Bangladeshi wording',()=>{
+ const p=buildPrompt({responseLanguage:'bn-BD'});
+ assert.ok(p.includes(RESPONSE_LANGUAGES['bn-BD']));
+ assert.match(p,/বাংলা/);
 });
