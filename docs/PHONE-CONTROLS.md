@@ -21,6 +21,15 @@ Opening the Describe URL starts a Describe action after privacy consent has alre
 
 The app can react to the query string after the browser opens it. It cannot itself capture the hardware volume-key sequence from an ordinary Android Chrome page. MacroDroid or Tasker must recognise the physical button events.
 
+## Built-in optional SOS triggers
+
+Admin also offers two browser-based triggers. Both are off by default and only run while `/blind/` is open and visible:
+
+- **Shake SOS:** in Admin, tick Enable three-shake SOS and press Request motion access & enable. Three strong, separated motion peaks within roughly 2.6 seconds start an eight-second countdown. Tap Cancel SOS or, when voice SOS is also enabled, say Cancel SOS. Sensor values are processed locally; sensitivity varies by handset.
+- **Voice SOS:** in Admin, tick Enable voice SOS phrase, choose Bengali or English recognition and press Grant microphone access & enable. In Blind mode say “Daredevil SOS”, then say “Confirm SOS” within twelve seconds. A five-second countdown follows; say “Cancel SOS” or tap Cancel SOS to stop it. In Bangla recognition, try “ডেয়ারডেভিল এসওএস”, then “নিশ্চিত করুন”. Voice recognition uses the browser's recognition provider and may process audio externally.
+
+Neither trigger is guaranteed to work when the phone is locked, the page is hidden, Android suspends the browser, or the phone lacks the required sensor / speech service. Keep normal emergency options available.
+
 ## Home-screen app shortcuts
 
 1. Open the live website in Chrome on Android and visit Blind mode.

@@ -38,7 +38,7 @@ Blind mode has no header, menu or on-screen exit control. Its four main tiles ar
 | Personal key | Optional Gemini key in current tab's session storage | Key lifecycle and security review |
 | Admin | Six quick-jump shortcuts to main setting areas | Usability feedback |
 | Diagnostics | Six checks, including Check all at once | Physical camera/mic/speaker checks |
-| SOS | One-time invitation, receiver token and manual alert relay | Two-phone and network-change testing |
+| SOS | Paired receiver relay, two-tap control, optional three-shake trigger and optional spoken wake phrase with confirmation | Sensor false-positive, voice phrase and two-phone testing |
 | Consent | Versioned local consent record | Privacy review and participant testing |
 
 **What voice input does:** the default Automatic multilingual mode records a short microphone clip and sends it to the Worker/Gemini transcription path. It is instructed to recognise Bangladeshi Bengali, English and mixed Bangla-English, translating only Bengali portions into English. This deliberately avoids starting Android's browser recogniser in English-only mode. Admin also offers Browser speech recognition first; that option uses a separately selected recognition locale and falls back to Gemini on network, language, service or no-speech errors. Audio is externally processed, so do not speak passwords or confidential information. Bengali speech is translated into English for the AI question; AI response language is a separate Admin setting and defaults to English. Select Bangla (Bangladesh) there for Bengali AI replies. Bengali spoken output also needs an installed Bengali device TTS voice. Real Bangla input/output accuracy still needs testing on the target phone.
@@ -46,6 +46,8 @@ Blind mode has no header, menu or on-screen exit control. Its four main tiles ar
 **Bengali spoken answers:** device speech synthesis selects an installed Bengali voice when the answer contains Bengali script. If the phone has no Bengali text-to-speech voice installed, the app cannot provide reliable Bengali pronunciation; install Bengali speech data in Android's text-to-speech settings and check Admin's voice status.
 
 **Camera frame selection:** the ESP32-CAM path captures up to three frames, 250 ms apart, scores their sharpness on a small canvas, and sends the sharpest scored frame. If canvas scoring is unavailable, it uses the newest frame. This is a simple sharpness heuristic, not a guarantee of blur-free capture.
+
+**Hands-free SOS:** optional shake and voice triggers can be enabled in Admin. Three strong shakes start an eight-second cancellation countdown. Voice SOS requires “Daredevil SOS” and a separate “Confirm SOS” phrase, then provides a five-second cancellation countdown. Both are off by default and only run while the Blind mode page is visible. Voice recognition may process microphone audio through the browser's speech provider; shake readings stay local. These triggers are experimental and must not replace a phone call or other emergency plan.
 
 **What automatic model fallback does:** the Worker ranks models that accept camera images and can generate text. If one model returns a model-specific quota, overload or availability error, it tries another compatible Gemini vision model. Rotating models does not bypass a project-wide Google quota. The rotation state is opportunistic per Worker isolate, not a globally coordinated scheduler. A personal API key from a separate Gemini project may help when the demo project's quota is exhausted.
 

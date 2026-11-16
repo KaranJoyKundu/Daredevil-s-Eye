@@ -9,7 +9,8 @@ Daredevil's Eye is an experimental audio-first interface. It is not accessibilit
 - Blind mode has no brand header, navigation menu or on-screen exit control. Leaving it requires editing the URL to remove /blind/ or opening /action/.
 - All primary actions are native buttons with accessible names. Status and response regions use live-region semantics.
 - Current white-on-solid-background colour pairs are approximately 6.85:1 or higher by WCAG relative-luminance calculation, exceeding the 4.5:1 normal-text target. This is a source-colour calculation, not a full rendered-screen audit.
-- SOS requires two taps within five seconds in the normal interface. A URL shortcut only pre-arms SOS for a confirmation tap and never sends an alert automatically.
+- Manual SOS requires two taps within five seconds. Optional shake SOS requires three strong, separate motion peaks and an eight-second cancellation countdown. Optional voice SOS requires “Daredevil SOS” followed by “Confirm SOS”; a five-second countdown then allows “Cancel SOS” or the visible cancellation control. Both triggers are disabled by default, configured in Admin and operate only while Blind mode is visible.
+- Voice SOS uses continuous browser speech recognition only after explicit opt-in and microphone permission. The browser's recognition provider may process audio externally. Shake readings are processed locally.
 - Repeat speaks the most recent answer held in the current page session.
 
 ## Voice input and output
@@ -19,7 +20,8 @@ Daredevil's Eye is an experimental audio-first interface. It is not accessibilit
 - Browser-first mode is optional. It uses a separately selected locale and switches to Gemini if the service fails, language support is missing, or no speech is returned.
 - Audio is externally processed in Automatic mode and may be externally processed in browser-first fallback mode. Do not speak passwords or confidential information.
 - For Bengali answers, the speech layer prefers an installed bn-BD or other bn-* device voice. If none is installed, device speech synthesis may pronounce Bengali incorrectly or fail; install Bengali TTS data on the phone.
-- Speech input quality, Bengali translation, mixed-language recognition and pronunciation have not yet been confirmed on the target Android device.
+- Speech input quality, Bengali translation, mixed-language recognition, voice-SOS phrase accuracy and pronunciation have not yet been confirmed on the target Android device.
+- Three-shake sensitivity, false-positive resistance and voice-SOS reliability require real-phone evaluation. Do not rely on either automatic trigger as the only way to call for help.
 
 ## Additional support
 

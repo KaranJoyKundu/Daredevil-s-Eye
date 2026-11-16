@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased — voice-first blind controls and multilingual input
+## Unreleased — optional hands-free SOS triggers
+
+- Added opt-in three-shake SOS detection with distinct motion peaks and an eight-second cancellation countdown.
+- Added opt-in continuous voice SOS monitoring in visible Blind mode, with a distinctive wake phrase, a separate spoken confirmation and a cancellation phrase.
+- Added Admin permission/setup controls, Bengali/English recognition-language selection, privacy disclosures and trigger-detection tests.
+- Both triggers are disabled by default; phone sensor and speech recognition behavior still require physical testing.
+
+## Previous unreleased — voice-first blind controls and multilingual input
 
 - Replaced the Blind mode Help tile with Repeat; moved Help to a separate spoken-help button outside the four main actions.
 - Added a spoken first-use safety notice, concise spoken failure messages, haptic cues, and screen wake lock during active camera/AI/SOS actions where supported.

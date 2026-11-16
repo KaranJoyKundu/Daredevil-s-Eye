@@ -17,7 +17,7 @@ Updated for branch feat/blind-spoken-help-bangla-controls. Items described as im
 - Admin separates AI response language from browser recognition language and input mode.
 - Speech synthesis prefers an installed Bengali voice for Bengali-script answers and reports whether a Bengali voice is installed.
 - Spoken error feedback, one-time first-use safety disclaimer, distinct vibration patterns and action-scoped screen wake lock where supported.
-- SOS uses a two-step confirmation; deep-link SOS only pre-arms an explicit confirmation.
+- Manual SOS uses two-step confirmation; deep-link SOS only pre-arms an explicit confirmation. Optional three-shake SOS and opt-in voice SOS (wake phrase + confirmation + cancellation countdown) are implemented for visible Blind mode only.
 - URL actions for Describe, Ask, SOS, Repeat and Help; Android home-screen shortcuts.
 - Up to three camera frames are captured 250 ms apart and the sharpest scored frame is selected.
 - Updated Help, README, accessibility notes, roadmap and phone-control instructions.
@@ -32,6 +32,7 @@ GitHub Actions passed on source/test commit c4a9895: 50 tests passed, 0 failed, 
 - Bangla, English and mixed-language recognition on the actual Android phone.
 - Bengali text-to-speech voice availability and pronunciation on the actual phone.
 - TalkBack navigation, haptic feedback and large-target usability.
+- Shake sensor thresholds, false-positive rate and Bangla/English voice wake and confirmation phrase accuracy on the target Android phone.
 - Camera LAN reachability, three-frame selection, latency and motion-blur quality on the actual ESP32-CAM.
 - Volume-key macros with the screen on and locked; Bluetooth headset controls.
 - Two-device SOS and locked-screen delivery behavior.
@@ -39,7 +40,7 @@ GitHub Actions passed on source/test commit c4a9895: 50 tests passed, 0 failed, 
 
 ## Not implemented / deferred
 
-- Native Android wrapper or Accessibility Service for direct volume-key interception.
+- Native Android wrapper or Accessibility Service for direct volume-key interception. Browser shake and voice triggers are not reliable when the phone is locked or the page is backgrounded.
 - Bluetooth Media Session button mapping; browser behavior is device-specific and not reliable enough to claim.
 - Cloudflare Durable Object rate limiting. There is no server-side per-device 10-requests/minute throttle yet; an in-isolate counter would not be a dependable security boundary.
 - Email OTP, guest trial counter, profiles, per-user usage database and admin usage dashboard (future roadmap phase).
