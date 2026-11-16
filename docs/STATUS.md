@@ -7,7 +7,7 @@ This file distinguishes source implementation from real-device verification.
 - Cloudflare Worker serves static assets from web/ and API routes.
 - Gemini vision calls use server-side GEMINI_API_KEY and selectable generateContent models.
 - Payload validation, response styles, wait limits and bn-BD prompt instructions.
-- Owner-only API token, same-origin checks and approximate Cloudflare rate limits.
+- Public same-origin API with weighted per-IP Cloudflare rate limits and a server-side Gemini model allowlist.
 - Gemini TTS and browser speech helpers.
 - Explicit getUserMedia permission request followed by browser SpeechRecognition.
 - Versioned privacy consent, legacy migration and reset.
@@ -37,7 +37,7 @@ The repository is configured for Cloudflare Workers, Static Assets and Durable O
 
 ## Known limits
 
-- App access token is a single-owner beta gate, not multi-user identity.
+- No login or app access token is required. Public users share the deployed Gemini quota; rate limits are approximate.
 - ESP32-CAM private IP is not globally reachable; phone photo/upload is the portable fallback.
 - Browser speech recognition may use a browser vendor's cloud service.
 - SOS is a manual best-effort alert, not fall detection or emergency dispatch.
