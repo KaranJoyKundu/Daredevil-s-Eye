@@ -24,15 +24,15 @@ Daredevil's Eye explores how a camera, a phone browser, vision-language models a
 ## Architecture
 
 - web/ contains the browser interface and shared client modules.
-- worker/src/ contains the Worker API, validation, weighted public rate-limit checks and Durable Objects.
+- worker/src/ contains the Worker API, validation and Durable Objects.
 - sos-directory issues short-lived one-time pairing codes; sos-room stores one sender's receiver session and active alert.
-- tests/ contains Node.js tests for prompts, API validation, consent, public rate limits, pairing and alert state.
+- tests/ contains Node.js tests for prompts, API validation, consent, pairing and alert state.
 - .github/workflows/ contains CI and Cloudflare production deployment.
 
 ~~~mermaid
 flowchart TD
   Browser[Public browser] --> Static[Cloudflare Worker static assets]
-  Browser --> API[Weighted rate-limited Worker API]
+  Browser --> API[Public Worker API]
   API --> Gemini[Gemini Vision / TTS]
   API --> Directory[SOSDirectory Durable Object]
   Directory --> Room[Per-device SOSRoom Durable Object]
@@ -44,7 +44,7 @@ flowchart TD
 
 ## Important limitations
 
-1. **Public AI usage consumes your Gemini quota.** No app access token or login is required. Public endpoints use weighted per-IP Cloudflare rate limits and a server-side model allowlist. Cloudflare describes these limits as approximate and separate per Cloudflare location; they are not a strict global spend cap. Anyone can consume some of your Gemini quota.
+1. **Google's free tier still has Google-enforced quotas.** No app access token or login is required, and this project adds no Cloudflare API rate limit or model allowlist. Eligible free-tier models have no token charge within Google's free tier, but Google still applies model-specific request/token quotas. Visitors can exhaust the project's available quota, resulting in 429 errors until it resets.
 2. **Worldwide website does not mean worldwide ESP32-CAM access.** The camera address is a private LAN address. A hosted HTTPS page cannot directly fetch a private HTTP camera URL from anywhere on the Internet. The app includes a phone-photo fallback. A remote camera gateway or outbound ESP32 relay needs a separate secured design and firmware/network testing.
 3. **Microphone input requires a secure browser context.** Use HTTPS in production or localhost during desktop development. An ordinary http://192.168.x.x address is not a secure context for getUserMedia().
 4. **SOS is manual.** It does not detect falls, call emergency services or guarantee delivery. The receiver must be paired, online, open and able to play audio. Mobile browsers may suspend background pages.
@@ -66,7 +66,7 @@ See docs/SETUP.md and docs/DEPLOYMENT.md.
 ## Security and privacy
 
 - The Gemini API key stays in Cloudflare Worker secrets or local .dev.vars; it is never placed in browser JavaScript or Git.
-- AI endpoints are public. Same-origin checks, a server-side model allowlist, image/prompt validation and weighted Cloudflare per-IP rate limits provide basic abuse friction, not strict global quota enforcement.
+- AI endpoints are public and have no app login or Cloudflare rate limit. The Gemini key remains server-side. Google's own free-tier quota is the only provider usage limit; public visitors share the same project quota.
 - Receiver pairing codes are six characters, single-use and expire after ten minutes. A new pairing invalidates the previous receiver token.
 - Images and audio are not intentionally persisted by the application. Browser speech recognition may process audio through the browser vendor's service; Gemini TTS sends response text to Google.
 - Read web/privacy/index.html, docs/SAFETY.md and SECURITY.md.
