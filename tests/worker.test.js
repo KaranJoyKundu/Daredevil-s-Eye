@@ -20,6 +20,7 @@ test('public health reports safe readiness fields without exposing secrets',asyn
  assert.equal(d.mode,'gemini');
  assert.equal(d.appAccessConfigured,true);
  assert.equal(d.apiKeyConfigured,true);
+ assert.equal(d.providerConfigured,true);
  assert.equal(d.sosRelayConfigured,true);
  assert.equal(JSON.stringify(d).includes('test-secret'),false);
 });
@@ -29,7 +30,7 @@ test('health defaults to Gemini and never silently to mock',async()=>{
  assert.equal(d.mode,'gemini');
  assert.equal(d.ok,true);
  assert.equal(d.apiKeyConfigured,false);
- assert.equal(d.providerConnected,false);
+ assert.equal(d.providerConfigured,false);
  assert.equal(d.appAccessConfigured,false);
 });
 test('health identifies explicit mock mode',async()=>{
@@ -37,7 +38,7 @@ test('health identifies explicit mock mode',async()=>{
  const d=await r.json();
  assert.equal(d.ok,true);
  assert.equal(d.mode,'mock');
- assert.equal(d.providerConnected,false);
+ assert.equal(d.providerConfigured,false);
  assert.equal(d.mockModeExplicitlyEnabled,true);
 });
 test('private APIs reject requests without a bearer token',async()=>{
