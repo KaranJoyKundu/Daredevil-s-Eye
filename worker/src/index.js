@@ -8,11 +8,12 @@ const json = (data, status = 200) => new Response(JSON.stringify(data), {
 });
 
 const USER_KEY_HEADER = 'x-user-gemini-api-key';
+// Prefer Flash models for the free-tier demo. 3.6 Flash is deliberately
+// de-prioritised after the reported mid-answer truncation; Pro is not an
+// automatic fallback because it may not be available on a free key.
 const VISION_MODEL_PRIORITY = [
-  'gemini-3.1-pro-preview',
   'gemini-3.8-flash',
   'gemini-3.7-flash',
-  'gemini-3.6-flash',
   'gemini-3.5-flash',
   'gemini-3.5-flash-lite',
   'gemini-3.1-flash-lite'
@@ -85,7 +86,8 @@ async function fingerprint(value) {
 function modelPriority(id) {
   const index = VISION_MODEL_PRIORITY.indexOf(id);
   if (index >= 0) return index;
-  if (/-pro(?:-|$)/i.test(id)) return 20;
+  if (/-pro(?:-|$)/i.test(id)) return 120;
+  if (/3\.6-flash/i.test(id)) return 90;
   if (/flash-lite/i.test(id)) return 80;
   if (/flash/i.test(id)) return 50;
   return 100;
@@ -161,7 +163,7 @@ async function askGemini({ image, prompt, model, waitSeconds }, apiKey) {
   if (!apiKey) throw new Error('Gemini is selected but no API key is available. Add your own key in Admin or configure the Worker secret.');
   const selectedModel = String(model || 'gemini-3.8-flash').replace(/^models\//, '');
   const timeoutSeconds = Math.max(15, Math.min(180, Number(waitSeconds) || 120));
-  const candidates = (await modelCandidates(apiKey, selectedModel)).slice(0, 5);
+  const candidates = (await modelCandidates(apiKey, selectedModel)).slice(0, 6);
   const attempted = [];
   let lastFailure = '';
   for (const candidate of candidates) {
@@ -170,16 +172,23 @@ async function askGemini({ image, prompt, model, waitSeconds }, apiKey) {
     const requestBody = {
       system_instruction: { parts: [{ text: SAFETY_CORE }] },
       contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: imageParts(image) }] }],
-      generationConfig: { maxOutputTokens: 260 }
+      generationConfig: {
+        // The old 260-token ceiling was too small for detailed answers and
+        // also counted internal thinking tokens on Gemini 3.x.
+        maxOutputTokens: 2048,
+        temperature: 0.2,
+        ...(candidate.startsWith('gemini-3.') ? { thinkingConfig: { thinkingLevel: 'LOW' } } : {})
+      }
     };
     for (let attempt = 0; attempt < 2; attempt += 1) {
+      if (attempt === 1) requestBody.generationConfig.maxOutputTokens = 4096;
       let response;
       try {
         response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
           body: JSON.stringify(requestBody),
-          signal: AbortSignal.timeout(Math.min(timeoutSeconds, 45) * 1000)
+          signal: AbortSignal.timeout(Math.min(timeoutSeconds, 60) * 1000)
         });
       } catch (error) {
         if (error.name === 'TimeoutError' || error.name === 'AbortError') {
@@ -191,40 +200,53 @@ async function askGemini({ image, prompt, model, waitSeconds }, apiKey) {
       }
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
-        const answer = (data?.candidates?.[0]?.content?.parts || []).map(part => part.text || '').join('').trim();
-        if (!answer) {
-          lastFailure = 'Gemini model ' + candidate + ' returned no readable answer.';
+        const candidateData = data?.candidates?.[0] || {};
+        const answer = (candidateData?.content?.parts || []).map(part => part.text || '').join('').trim();
+        const finishReason = String(candidateData.finishReason || '');
+        if (finishReason === 'MAX_TOKENS') {
+          lastFailure = candidate + ' hit MAX_TOKENS at ' + requestBody.generationConfig.maxOutputTokens + '.';
+          if (attempt === 0) continue;
           break;
         }
-        return { answer, model: candidate, attempted };
+        if (!answer) {
+          lastFailure = 'Gemini model ' + candidate + ' returned no readable answer (' + (finishReason || 'unknown finish reason') + ').';
+          break;
+        }
+        if (finishReason && !['STOP', 'FINISH_REASON_UNSPECIFIED'].includes(finishReason)) {
+          lastFailure = candidate + ' ended with ' + finishReason + '.';
+          break;
+        }
+        return { answer, model: candidate, attempted, finishReason: finishReason || 'unspecified', usage: data.usageMetadata || null };
       }
       const message = data?.error?.message || 'Gemini request failed.';
       if (response.status === 503 && attempt === 0) {
         await wait(900);
         continue;
       }
-      if (response.status === 429 || response.status === 404 || response.status === 503 || response.status === 504) {
+      if ([400, 403, 404, 429, 503, 504].includes(response.status)) {
         lastFailure = candidate + ': ' + message;
         break;
       }
-      if ((response.status === 400 || response.status === 403) && /model|not available|not supported|permission|billing|access/i.test(message)) {
-        lastFailure = candidate + ': ' + message;
-        break;
-      }
-      if (response.status === 401 || response.status === 403) throw new Error('Gemini rejected this API key. Check that the key is valid and its API access is enabled.');
+      if (response.status === 401) throw new Error('Gemini rejected this API key. Check that the key is valid and its API access is enabled.');
       throw new Error(message.slice(0, 300));
     }
   }
-  throw new Error('Automatic model fallback tried ' + attempted.join(', ') + '. ' +
+  throw new Error('No complete answer was returned. Automatic model fallback tried ' + attempted.join(', ') + '. ' +
     (lastFailure || 'No compatible model completed the request.') +
-    ' Google may have exhausted the project-wide quota; changing models cannot bypass a project-wide daily limit. Try your own Gemini key in Admin or wait for Google quota reset.');
+    ' A project-wide Google quota limit cannot be bypassed by switching models. Try a different available Flash model or wait for the quota reset.');
 }
 
-async function transcribeGemini(audio, apiKey) {
+async function transcribeGemini(audio, apiKey, outputLanguage = 'en-US') {
   if (!apiKey) throw new Error('No Gemini API key is available for voice transcription. Add one in Admin.');
   if (typeof audio !== 'string' || audio.length > 2_800_000) throw new Error('Voice recording is too large. Please speak a shorter question.');
   const part = audioParts(audio);
-  const prompt = [
+  const prompt = outputLanguage === 'bn-BD' ? [
+    'Transcribe the spoken question into natural Bangladeshi Bengali, using Bengali script.',
+    'For Bangla-English mixed speech, keep the meaning intact and preserve only unavoidable product names, model numbers and standard technical terms in their usual form.',
+    'Do not translate the whole question into English. Do not write Bengali using Latin letters.',
+    'Recognise Bangladeshi Bengali; do not mistake it for Hindi or Urdu.',
+    'Return only one clean question in Bengali. No labels, explanations, quotation marks or commentary. Omit unclear words rather than inventing them.'
+  ].join(' ') : [
     'Transcribe the spoken question and return only the final question in natural English.',
     'The speaker may use Bangladeshi Bengali (Bangla), English, or natural Bangla-English code-switching in the same sentence.',
     'Recognise Bengali spoken in Bangladesh; do not mistake Bengali for Hindi or Urdu, and do not write Bengali words in Latin transliteration.',
@@ -246,7 +268,7 @@ async function transcribeGemini(audio, apiKey) {
         headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: part }] }],
-          generationConfig: { maxOutputTokens: 300, temperature: 0 }
+          generationConfig: { maxOutputTokens: 512, temperature: 0, ...(candidate.startsWith('gemini-3.') ? { thinkingConfig: { thinkingLevel: 'LOW' } } : {}) }
         }),
         signal: AbortSignal.timeout(35_000)
       });
@@ -373,8 +395,8 @@ export async function handleApi(request, env = {}) {
     if (typeof body.audio !== 'string' || !/^data:audio\//i.test(body.audio)) return json({ error: 'A recorded audio data URL is required.' }, 400);
     if (body.audio.length > 2_800_000) return json({ error: 'Voice recording is too long. Please speak a shorter question.' }, 413);
     try {
-      const result = await transcribeGemini(body.audio, apiKey);
-      return json({ ok: true, transcript: result.transcript, model: result.model, attemptedModels: result.attempted });
+      const result = await transcribeGemini(body.audio, apiKey, Object.hasOwn(RESPONSE_LANGUAGES, body.responseLanguage) ? body.responseLanguage : 'en-US');
+      return json({ ok: true, transcript: result.transcript, model: result.model, attemptedModels: result.attempted, outputLanguage: Object.hasOwn(RESPONSE_LANGUAGES, body.responseLanguage) ? body.responseLanguage : 'en-US' });
     } catch (error) {
       return json({ error: error.message || 'Voice transcription failed.' }, 502);
     }
