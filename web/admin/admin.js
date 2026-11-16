@@ -1,7 +1,7 @@
-import {getSettings,saveSettings} from '/shared/settings.js?v=20261116-sos3';
+import {getSettings,saveSettings} from '/shared/settings.js?v=20261117-photo-buffer';
 import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261116-sos3';
-import {captureImage} from '/shared/camera.js?v=20261116-sos3';
-import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261116-sos3';
+import {captureImage} from '/shared/camera.js?v=20261117-photo-buffer';
+import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261117-bangla';
 
 const $=s=>document.querySelector(s);
 const form=$('#settings-form');
