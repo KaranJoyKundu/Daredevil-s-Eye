@@ -1,7 +1,7 @@
-import {getSettings,saveSettings} from '/shared/settings.js?v=20261116-sosmictts1';
-import {requestAI} from '/shared/api.js';
-import {captureImage} from '/shared/camera.js?v=20261116-sosmictts1';
-import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261116-sosmictts1';
+import {getSettings,saveSettings} from '/shared/settings.js?v=20261116-auth1';
+import {requestAI,apiFetch} from '/shared/api.js?v=20261116-auth1';
+import {captureImage} from '/shared/camera.js?v=20261116-auth1';
+import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261116-auth1';
 
 const $=s=>document.querySelector(s);
 const form=$('#settings-form');
@@ -21,7 +21,6 @@ function formSettings(){
   cameraBaseUrl:normalizeCameraAddress($('#camera').value),
   emergencyName:$('#contact-name').value.trim(),
   emergencyPhone:$('#contact-phone').value.trim(),
-  sosPairingCode:$('#sos-code').value.trim().toUpperCase(),
   speechLanguage:$('#language').value,
   speechPreset:$('#voice-preset').value,
   speechVoiceURI:$('#voice-select').value,
@@ -68,18 +67,21 @@ function populateGeminiVoices(){
 }
 populateGeminiVoices();
 
-$('#generate-sos-code').addEventListener('click',()=>{
- const bytes=new Uint8Array(8);
- crypto.getRandomValues(bytes);
- $('#sos-code').value=Array.from(bytes,value=>value.toString(16).padStart(2,'0')).join('').toUpperCase();
- $('#message').textContent='New SOS pairing code generated. Save settings, then enter this code on the receiver phone.';
+$('#generate-sos-code').addEventListener('click',async()=>{
+ const button=$('#generate-sos-code');button.disabled=true;
+ try{
+  const result=await requestAI('/api/sos/invite',{deviceId:saved.deviceId});
+  $('#sos-code').value=result.code;
+  $('#message').textContent='New six-character code generated. It expires in 10 minutes and immediately disconnects the previous receiver. Give it to the receiver phone now.';
+ }catch(error){$('#message').textContent='Could not create SOS invitation: '+error.message;}
+ finally{button.disabled=false;}
 });
 
 async function loadModels(){
  const button=$('#refresh-models');button.disabled=true;
  $('#model-status').textContent='Checking models available to your Gemini API key…';
  try{
-  const response=await fetch('/api/models',{cache:'no-store'});
+  const response=await apiFetch('/api/models');
   const data=await response.json();
   if(!response.ok||!data.ok)throw new Error(data.error||'Could not load models.');
   const select=$('#model'),selected=select.value||saved.aiModel||data.configuredModel||'gemini-3.8-flash';
@@ -107,7 +109,7 @@ loadModels();
 
 async function loadBasePrompt(){
  try{
-  const response=await fetch('/api/config',{cache:'no-store'}),data=await response.json();
+  const response=await apiFetch('/api/config'),data=await response.json();
   $('#base-prompt').value=response.ok&&data.basePrompt?data.basePrompt:'The built-in camera scene prompt could not be loaded.';
  }catch{$('#base-prompt').value='The built-in camera scene prompt could not be loaded.';}
 }
@@ -169,14 +171,9 @@ form.addEventListener('submit',async event=>{
  submitButton.disabled=true;
  try{
   const next=formSettings();
-  if(next.sosPairingCode&&!/^[A-Z0-9]{8,20}$/.test(next.sosPairingCode))throw new Error('SOS pairing code must be 8–20 letters or numbers.');
-  const previousCode=getSettings().sosPairingCode;
-  if(previousCode&&next.sosPairingCode&&previousCode!==next.sosPairingCode){
-   await requestAI('/api/sos/reset',{code:previousCode,newCode:next.sosPairingCode});
-  }
   saveSettings(next);
   $('#camera').value=next.cameraBaseUrl;
-  $('#message').textContent='All settings saved on this device. Share the SOS pairing code only with your receiver phone.';
+  $('#message').textContent='All settings saved on this device. Generate a fresh SOS invitation whenever you want to pair or replace the receiver.';
  }catch(error){$('#message').textContent=error.message;}
  finally{submitButton.disabled=false;}
 });
