@@ -204,7 +204,9 @@ async function systemCheck(){
    'Gemini API key configured: '+(health.providerConfigured?'yes':'no'),
    'Mock mode: '+(health.mockModeExplicitlyEnabled?'enabled':'disabled'),
    'Available generateContent models: '+(models.models?.length??'could not load'),
-   'Microphone secure context: '+(window.isSecureContext?'yes':'no'),\n   'Browser: '+(/SamsungBrowser\//i.test(navigator.userAgent)?'Samsung Internet':/Chrome\//i.test(navigator.userAgent)?'Chrome':'other / not identified'),\n   'Android version (if exposed): '+(navigator.userAgent.match(/Android\s([0-9.]+)/i)?.[1]||'not exposed'),
+   'Microphone secure context: '+(window.isSecureContext?'yes':'no'),
+   'Browser: '+(/SamsungBrowser\//i.test(navigator.userAgent)?'Samsung Internet':/Chrome\//i.test(navigator.userAgent)?'Chrome':'other / not identified'),
+   'Android version (if exposed): '+(navigator.userAgent.match(/Android\s([0-9.]+)/i)?.[1]||'not exposed'),
    'SOS receiver relay: '+(health.sosRelayConfigured?'configured':'check Wrangler Durable Object binding')
   ];
   if(models.error)lines.push('Model list error: '+models.error);
