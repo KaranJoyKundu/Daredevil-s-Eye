@@ -6,7 +6,7 @@ Use **Cloudflare Workers with Static Assets and Durable Objects**. Wrangler serv
 
 GitHub Pages is static hosting and cannot run this Worker or Durable Objects. It is not the correct host for this complete application.
 
-A deployed Worker can use a public HTTPS workers.dev address. HTTPS does not solve private-network access to the ESP32-CAM.
+The deployed Worker uses a public HTTPS workers.dev address. Anyone can open the website and call its public AI features without an app access token or login.
 
 ## GitHub Actions secrets
 
@@ -18,7 +18,7 @@ In GitHub, open **Settings → Secrets and variables → Actions** and add these
 | CLOUDFLARE_ACCOUNT_ID | Cloudflare account ID |
 | GEMINI_API_KEY | Current Gemini key |
 
-The deploy workflow passes the Gemini key to Wrangler as a Worker secret. Never put these values in workflow source, frontend code, commits or logs.
+The deploy workflow passes only the Gemini key to Wrangler as a Worker secret. Never put secret values in workflow source, frontend code, commits or logs.
 
 Cloudflare's official guidance uses an API token with the **Edit Cloudflare Workers** permission policy. Scope it to the intended account and review the permissions.
 
@@ -29,9 +29,15 @@ Cloudflare's official guidance uses an API token with the **Edit Cloudflare Work
 3. After CI succeeds, the deploy job runs only if all three repository secrets exist.
 4. Wrangler deploys the Worker and static assets to the Cloudflare account.
 5. Obtain the workers.dev URL from the GitHub Actions deployment output or Cloudflare Dashboard.
-6. Open /access/ and enter the configured APP_ACCESS_TOKEN.
+6. Open the website directly. No app access token or login is required.
 
 If secrets are absent, the workflow deliberately skips deployment. A green CI check alone does not prove a production Worker is live.
+
+## Public API and quota protection
+
+The public demo currently allows only the server-configured Gemini model (Gemini Flash in the committed Wrangler configuration). Expensive API calls use weighted Cloudflare per-IP rate limits: image analysis consumes four units, Gemini speech consumes two units and model-list requests consume one unit.
+
+These limits provide basic abuse friction, not a strict global quota or billing cap. Cloudflare documents that rate-limit decisions are approximate and applied separately per Cloudflare location. Anyone can still consume Gemini quota from multiple IPs or locations. Review Gemini usage and configure provider-side spending/usage controls where available.
 
 ## Manual alternative
 
@@ -42,12 +48,12 @@ npx wrangler secret put GEMINI_API_KEY
 npx wrangler deploy
 ~~~
 
-Wrangler prompts for each value. Do not place secret values directly into shell commands/history.
+Wrangler prompts for the key. Do not put secret values directly into shell commands/history.
 
 ## Production verification
 
-- GET /api/health reports boolean configuration status without exposing secrets.
-- /access/ accepts the app token.
+- GET /api/health reports configuration status without exposing secrets.
+- Open / and confirm the app loads without an unlock screen.
 - Test a phone-photo upload and Gemini vision response.
 - Test Bengali input/output separately.
 - Pair two physical phones; verify replacement, alert and acknowledgement.
