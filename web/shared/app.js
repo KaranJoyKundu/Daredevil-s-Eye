@@ -77,6 +77,8 @@ function localizeSpeech(message){
   'What would you like to know? Speak Bangla, English or both, then pause.':'আপনি কী জানতে চান? বাংলায় প্রশ্ন করুন, তারপর একটু থামুন।',
   'No speech was recognised. Please try again.':'আপনার কথা বোঝা যায়নি। অনুগ্রহ করে আবার বলুন।',
   'Emergency alert sent to the paired receiver. This does not call emergency services.':'জোড়া লাগানো ফোনে জরুরি সতর্কবার্তা পাঠানোর অনুরোধ করা হয়েছে। এটি জরুরি সেবায় ফোন করে না।',
+  'SOS is stored. The push service accepted the notification request, but delivery is not confirmed.':'এসওএস সংরক্ষণ করা হয়েছে। নোটিফিকেশন সেবা বার্তাটি গ্রহণ করেছে, তবে ফোনে পৌঁছেছে কি না নিশ্চিত করা যায়নি।',
+  'SOS is stored, but no push notification was accepted. Keep the receiver connected to the internet and notifications enabled.':'এসওএস সংরক্ষণ করা হয়েছে, কিন্তু পুশ নোটিফিকেশন গ্রহণ করা হয়নি। রিসিভার ফোনে ইন্টারনেট ও নোটিফিকেশন চালু রাখুন।',
   'SOS confirmed. Sending the alert now.':'এসওএস নিশ্চিত হয়েছে। এখন সতর্কবার্তা পাঠানো হচ্ছে।',
   'SOS shortcut opened. Tap the SOS button once within thirty seconds to confirm sending the alert.':'এসওএস শর্টকাট চালু হয়েছে। সতর্কবার্তা পাঠাতে ত্রিশ সেকেন্ডের মধ্যে এসওএস বোতাম চাপুন।',
   'SOS is armed. Tap SOS again within five seconds to confirm and send the alert. No alert has been sent yet.':'এসওএস প্রস্তুত। সতর্কবার্তা পাঠাতে পাঁচ সেকেন্ডের মধ্যে আবার এসওএস বোতাম চাপুন। এখনো কোনো সতর্কবার্তা পাঠানো হয়নি।',
@@ -262,8 +264,10 @@ async function deliverSos(){
  sosDispatching=true;stopSosVoiceListener();
  const settings=getSettings(),button=document.querySelector('[data-action="sos"]');if(button)button.disabled=true;let wakeLock=null;
  try{
-  wakeLock=await acquireWakeLock();actionVibration('sos');await requestAI('/api/sos/trigger',{deviceId:settings.deviceId});
-  announce('Emergency alert sent to the paired receiver. This does not call emergency services.');
+  wakeLock=await acquireWakeLock();actionVibration('sos');
+  const result=await requestAI('/api/sos/trigger',{deviceId:settings.deviceId});
+  if(result.notificationAccepted)announce('SOS is stored. The push service accepted the notification request, but delivery is not confirmed.');
+  else announce('SOS is stored, but no push notification was accepted. Keep the receiver connected to the internet and notifications enabled.');
   const callLink=$('#sos-call-link');if(settings.emergencyPhone&&callLink){callLink.href='tel:'+settings.emergencyPhone.replace(/[^+0-9]/g,'');callLink.hidden=false;callLink.style.display='block';callLink.textContent='Call '+(settings.emergencyName||'trusted contact')+' now';}
  }catch(error){const message=error.message||'SOS alert could not be sent. Pair a receiver in Admin first.';if(status)status.textContent=message;speak(spokenError(error),{lang:'en-US'});}
  finally{if(button)button.disabled=false;await releaseWakeLock(wakeLock);sosDispatching=false;startSosVoiceListener();}
