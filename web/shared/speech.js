@@ -1,4 +1,6 @@
-import { getSettings } from './settings.js';
+import { getSettings } from './settings.js?v=20261116-auth1';
+import { apiFetch } from './api.js?v=20261116-auth1';
+
 export const VOICE_PRESETS = Object.freeze({
   gentle: { label: 'Gentle · soft and slightly higher', rate: 0.94, pitch: 1.14 },
   warm: { label: 'Warm · relaxed and friendly', rate: 0.94, pitch: 1.03 },
@@ -24,42 +26,53 @@ export const GEMINI_TTS_VOICES = Object.freeze([
   {id:'Umbriel',gender:'Male',style:'Easy-going'},{id:'Vindemiatrix',gender:'Female',style:'Gentle'},
   {id:'Zephyr',gender:'Female',style:'Bright'},{id:'Zubenelgenubi',gender:'Male',style:'Casual'}
 ]);
+
 let currentAudio=null,currentAudioUrl=null;
+
 export function getAvailableVoices() {
   if (!('speechSynthesis' in window)) return [];
   return window.speechSynthesis.getVoices();
 }
+
 export function speak(text, options = {}) {
-  if (!('speechSynthesis' in window)) return false;
-  window.speechSynthesis.cancel();
-  if(currentAudio){currentAudio.pause();currentAudio=null;}
-  if(currentAudioUrl){URL.revokeObjectURL(currentAudioUrl);currentAudioUrl=null;}
-  const utterance = new SpeechSynthesisUtterance(String(text)), settings = getSettings();
-  utterance.lang = options.lang || settings.speechLanguage;
-  utterance.rate = options.rate ?? settings.speechRate;
-  utterance.pitch = options.pitch ?? settings.speechPitch;
-  const voices = getAvailableVoices();
-  const voiceURI = options.voiceURI ?? settings.speechVoiceURI;
-  if (voiceURI) utterance.voice = voices.find(voice => voice.voiceURI === voiceURI) || null;
-  if (options.onEnd) utterance.onend = options.onEnd;
-  if (options.onError) utterance.onerror = options.onError;
-  window.speechSynthesis.speak(utterance);
-  return utterance;
+  if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
+    options.onError?.('Device speech synthesis is unavailable in this browser.');
+    return false;
+  }
+  try {
+    window.speechSynthesis.cancel();
+    if(currentAudio){currentAudio.pause();currentAudio=null;}
+    if(currentAudioUrl){URL.revokeObjectURL(currentAudioUrl);currentAudioUrl=null;}
+    const utterance = new SpeechSynthesisUtterance(String(text)), settings = getSettings();
+    utterance.lang = options.lang || settings.speechLanguage;
+    utterance.rate = options.rate ?? settings.speechRate;
+    utterance.pitch = options.pitch ?? settings.speechPitch;
+    const voices = getAvailableVoices();
+    const voiceURI = options.voiceURI ?? settings.speechVoiceURI;
+    if (voiceURI) utterance.voice = voices.find(voice => voice.voiceURI === voiceURI) || null;
+    if (options.onEnd) utterance.onend = options.onEnd;
+    if (options.onError) utterance.onerror = options.onError;
+    window.speechSynthesis.speak(utterance);
+    return utterance;
+  } catch (error) {
+    options.onError?.('Could not start device speech: ' + (error.message || 'unknown error'));
+    return false;
+  }
 }
+
 export async function speakResponse(text, options = {}) {
-  const settings=getSettings();
-  const engine=options.engine||settings.speechEngine;
+  const settings=getSettings(),engine=options.engine||settings.speechEngine;
   if(engine!=='gemini')return speak(text,options);
   stopSpeaking();
   try{
-    const response=await fetch('/api/speech',{
+    const response=await apiFetch('/api/speech',{
       method:'POST',headers:{'content-type':'application/json'},
       body:JSON.stringify({
         text:String(text).slice(0,3500),
         voice:options.voice||settings.geminiTtsVoice,
         style:options.style||settings.geminiTtsStyle,
         language:options.lang||settings.speechLanguage
-      }),cache:'no-store'
+      })
     });
     if(!response.ok){
       const data=await response.json().catch(()=>({}));
@@ -84,33 +97,54 @@ export async function speakResponse(text, options = {}) {
     currentAudio=null;
     if(currentAudioUrl){URL.revokeObjectURL(currentAudioUrl);currentAudioUrl=null;}
     if(options.fallback===false)throw error;
-    if(options.onFallback)options.onFallback(error);
+    options.onFallback?.(error);
     return speak(text,options);
   }
 }
+
 export function stopSpeaking() {
   window.speechSynthesis?.cancel();
   if(currentAudio){currentAudio.pause();currentAudio=null;}
   if(currentAudioUrl){URL.revokeObjectURL(currentAudioUrl);currentAudioUrl=null;}
 }
-export async function listenOnce({ lang = getSettings().speechLanguage, onResult, onInterim, onError, onEnd } = {}) {
+
+/**
+ * Request microphone permission explicitly from a user gesture, immediately
+ * release the temporary stream, then let SpeechRecognition acquire the mic.
+ */
+export async function listenOnce({ lang = getSettings().speechLanguage, onResult, onInterim, onError, onEnd, onPermission } = {}) {
   if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia){
-    onError?.('Microphone permission is blocked on this HTTP address. Open the app on localhost or use an HTTPS address; phones on Wi-Fi cannot request a microphone over plain http://192.168.x.x.');
+    onError?.('Microphone access requires HTTPS or localhost. This HTTP LAN address is not a secure context.');
     return null;
   }
-  const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!Recognition){onError?.('This browser does not support speech recognition. Try Chrome or type your question.');return null;}
   let stream;
-  try{
-    // Explicitly trigger the browser permission prompt from the user's mic action.
+  try {
     stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+    stream.getTracks().forEach(track=>track.stop());
+    stream=null;
+    onPermission?.();
+  } catch(error) {
+    const reason=error.name==='NotAllowedError'?'Microphone permission was denied. Allow microphone access in browser site settings.':
+      error.name==='NotFoundError'?'No microphone was found on this device.':
+      error.name==='NotReadableError'?'The microphone is busy or unavailable in another app.':
+      error.message||'Unknown microphone error.';
+    onError?.(reason);
+    return null;
+  }
+
+  const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!Recognition){
+    onError?.('Microphone permission was granted, but this browser does not support speech recognition. Try a recent Chrome browser or type your question.');
+    return null;
+  }
+
+  try {
     const recognition=new Recognition();
     recognition.lang=lang;
     recognition.continuous=false;
     recognition.interimResults=true;
     recognition.maxAlternatives=1;
-    let closed=false;
-    const stopTracks=()=>{if(closed)return;closed=true;stream?.getTracks().forEach(track=>track.stop());};
+    let finalReceived=false;
     recognition.onresult=event=>{
       let interim='',finalText='';
       for(let i=event.resultIndex;i<event.results.length;i+=1){
@@ -118,20 +152,26 @@ export async function listenOnce({ lang = getSettings().speechLanguage, onResult
         if(result.isFinal)finalText+=transcript;else interim+=transcript;
       }
       if(interim)onInterim?.(interim);
-      if(finalText)onResult?.(finalText.trim());
+      if(finalText){finalReceived=true;onResult?.(finalText.trim());}
     };
-    recognition.onerror=event=>{stopTracks();onError?.('Speech input failed: '+(event.error||'unknown error')+'.');};
-    recognition.onend=()=>{stopTracks();onEnd?.();};
+    recognition.onerror=event=>{
+      const reasons={
+        'not-allowed':'Speech recognition permission was denied.',
+        'service-not-allowed':'The browser speech-recognition service is blocked.',
+        'no-speech':'No speech was recognised. Speak clearly and try again.',
+        'audio-capture':'The browser could not access the microphone.',
+        'language-not-supported':'This browser speech service does not support '+lang+'.',
+        'network':'The browser speech service could not connect to its recognition service.'
+      };
+      onError?.(reasons[event.error]||('Speech input failed: '+(event.error||'unknown error')+'.'));
+    };
+    recognition.onend=()=>{if(!finalReceived)onEnd?.();};
     recognition.start();
-    return {stop:()=>{try{recognition.stop();}catch{}stopTracks();},recognition,stream};
-  }catch(error){
-    stream?.getTracks().forEach(track=>track.stop());
-    const reason=error.name==='NotAllowedError'?'Microphone permission was denied. Allow microphone access in browser site settings.':
-      error.name==='NotFoundError'?'No microphone was found on this device.':
-      error.name==='NotReadableError'?'The microphone is busy in another app.':
-      error.message||'unknown microphone error';
-    onError?.(reason);
+    return {stop:()=>{try{recognition.stop();}catch{}},recognition};
+  } catch(error) {
+    onError?.('Could not start speech recognition: '+(error.message||'unknown error'));
     return null;
   }
 }
+
 export function vibrate(pattern = 80) { try { navigator.vibrate?.(pattern); } catch {} }
