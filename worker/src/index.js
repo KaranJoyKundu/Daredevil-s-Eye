@@ -1,5 +1,4 @@
 import { buildPrompt, DEFAULT_MODES, RESPONSE_STYLES, RESPONSE_LANGUAGES, SAFETY_CORE, SCENE_RULES } from './prompts.js';
-import { enforceRateLimit } from './rate-limit.js';
 export { SOSRoom } from './sos-room.js';
 export { SOSDirectory } from './sos-directory.js';
 
@@ -35,11 +34,6 @@ function getMode(env) {
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-function getAllowedGeminiModels(env) {
-  const configured = String(env.GEMINI_ALLOWED_MODELS || env.GEMINI_MODEL || 'gemini-3.8-flash');
-  return new Set(configured.split(',').map(value => value.trim().replace(/^models\//, '')).filter(value => /^[a-zA-Z0-9._-]{3,100}$/.test(value)));
-}
-
 async function listGeminiModels(env) {
   if (!env.GEMINI_API_KEY) throw new Error('Gemini API key is not configured.');
   const models = [];
@@ -57,7 +51,6 @@ async function listGeminiModels(env) {
   }
   return models
     .filter(model => model.name && model.supportedGenerationMethods?.includes('generateContent'))
-    .filter(model => getAllowedGeminiModels(env).has(String(model.name).replace(/^models\//, '')))
     .filter(model => !/(embedding|tts|live|imagen|veo|lyria|transcrib|audio|robotics)/i.test(model.name))
     .map(model => ({
       id: String(model.name).replace(/^models\//, ''),
@@ -153,7 +146,6 @@ export async function handleApi(request, env = {}) {
       apiKeyConfigured: Boolean(env.GEMINI_API_KEY),
       // Configuration is observable; actual provider reachability is only established by a real request.
       providerConfigured: mode === 'gemini' && Boolean(env.GEMINI_API_KEY),
-      rateLimitsConfigured: Boolean(env.APP_AI_LIMIT && env.APP_SOS_LIMIT),
       sosRelayConfigured: Boolean(env.SOS_ROOM && env.SOS_DIRECTORY),
       mockModeExplicitlyEnabled: mode === 'mock',
       message: !supportedMode
@@ -180,29 +172,7 @@ export async function handleApi(request, env = {}) {
     '/api/sos/ack': 'ack'
   };
   if (request.method === 'POST' && receiverActions[url.pathname]) {
-    const limitResult = await enforceRateLimit(env.APP_SOS_LIMIT, request, 'sos-receiver');
-    if (!limitResult.configured) return json({ error: 'SOS rate limiting is not configured.' }, 503);
-    if (!limitResult.success) return json({ error: 'SOS receiver request limit reached. Please wait before trying again.' }, 429);
     return forwardSos(request, env, receiverActions[url.pathname]);
-  }
-
-  // The browser app is public: expensive routes are protected by per-IP,
-  // weighted Cloudflare limits instead of an owner login token.
-  const isVisionRoute = request.method === 'POST' && ['/api/describe', '/api/ask'].includes(url.pathname);
-  const isSpeechRoute = request.method === 'POST' && url.pathname === '/api/speech';
-  const isModelsRoute = request.method === 'GET' && url.pathname === '/api/models';
-  if (isVisionRoute || isSpeechRoute || isModelsRoute) {
-    const delta = isVisionRoute ? 4 : isSpeechRoute ? 2 : 1;
-    const limitResult = await enforceRateLimit(env.APP_AI_LIMIT, request, 'ai', delta);
-    if (!limitResult.configured) return json({ error: 'AI rate limiting is not configured. Please try again later.' }, 503);
-    if (!limitResult.success) return json({ error: 'Public AI usage limit reached for this network. Please wait a minute and try again.' }, 429);
-  }
-
-  const isSenderSosRoute = request.method === 'POST' && ['/api/sos/invite', '/api/sos/trigger'].includes(url.pathname);
-  if (isSenderSosRoute) {
-    const limitResult = await enforceRateLimit(env.APP_SOS_LIMIT, request, 'sos-sender');
-    if (!limitResult.configured) return json({ error: 'SOS rate limiting is not configured.' }, 503);
-    if (!limitResult.success) return json({ error: 'SOS request limit reached. Please wait before trying again.' }, 429);
   }
 
   const sosActions = {
@@ -240,9 +210,6 @@ export async function handleApi(request, env = {}) {
     if (action === 'ask' && !body.question?.trim()) return json({ error: 'Please provide a question.' }, 400);
     if (mode !== 'gemini' && mode !== 'mock') return json({ error: `Unsupported AI_MODE "${mode}".` }, 503);
     const selectedModel = String(body.model || model).replace(/^models\//, '');
-    if (!getAllowedGeminiModels(env).has(selectedModel)) {
-      return json({ error: 'This public demo currently allows only its configured Gemini model. The model was not enabled for public API use.' }, 400);
-    }
     const waitSeconds = body.waitSeconds || 120;
     const prompt = buildPrompt({
       mode: action,
