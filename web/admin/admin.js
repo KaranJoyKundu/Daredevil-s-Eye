@@ -55,7 +55,7 @@ async function loadModels(){
   const data=await response.json();
   if(!response.ok||!data.ok)throw new Error(data.error||'Could not load models.');
   const select=$('#model');
-  const selected=saved.aiModel||data.configuredModel||'gemini-3.8-flash';
+  const selected=select.value||saved.aiModel||data.configuredModel||'gemini-3.8-flash';
   select.replaceChildren();
   for(const model of data.models){
    const option=document.createElement('option');
@@ -195,7 +195,7 @@ $('#capture-camera-button').addEventListener('click',async()=>{
 $('#test-image-button').addEventListener('click',async()=>{
  if(!selectedFile)return;
  const button=$('#test-image-button');button.disabled=true;
- const selected=formSettings();
+ const selected={aiModel:$('#model').value||'gemini-3.8-flash',waitSeconds:Number($('#wait-seconds').value),responseStyle:$('#response-style').value,customPrompt:$('#prompt').value.trim()};
  $('#test-status').textContent='Sending to '+selected.aiModel+'. Waiting up to '+selected.waitSeconds+' seconds…';
  $('#test-result').textContent='';
  try{
