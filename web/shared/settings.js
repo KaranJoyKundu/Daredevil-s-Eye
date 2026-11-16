@@ -45,6 +45,7 @@ export function getSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
     const merged = { ...DEFAULTS, ...saved };
+    if (merged.aiModel === 'gemini-3.6-flash') merged.aiModel = 'gemini-3.8-flash';
     if (!merged.deviceId) merged.deviceId = createDeviceId();
     if (!merged.cameraBaseUrl || merged.cameraBaseUrl === 'http://192.168.4.1' || merged.cameraBaseUrl === '192.168.0.104') merged.cameraBaseUrl = DEFAULTS.cameraBaseUrl;
     merged.cameraBaseUrl = normalizeCameraAddress(merged.cameraBaseUrl);
