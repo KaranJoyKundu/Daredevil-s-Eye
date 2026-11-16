@@ -7,6 +7,39 @@ const json = (data, status = 200) => new Response(JSON.stringify(data), {
   headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
 });
 
+const USER_KEY_HEADER = 'x-user-gemini-api-key';
+const VISION_MODEL_PRIORITY = [
+  'gemini-3.1-pro-preview',
+  'gemini-3.8-flash',
+  'gemini-3.7-flash',
+  'gemini-3.6-flash',
+  'gemini-3.5-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite'
+];
+const TRANSCRIPTION_MODELS = [
+  'gemini-3.1-flash-lite',
+  'gemini-3.5-flash-lite',
+  'gemini-3.8-flash',
+  'gemini-3.5-transcribe'
+];
+const STATIC_VISION_FALLBACKS = VISION_MODEL_PRIORITY.slice(1);
+const LOW_COST_TRANSCRIPTION_MODELS = TRANSCRIPTION_MODELS.slice(0, 2);
+const HIGHER_COST_TRANSCRIPTION_FALLBACKS = TRANSCRIPTION_MODELS.slice(2);
+let visionRotation = 0;
+let transcriptionRotation = 0;
+let modelCache = { tag: '', expiresAt: 0, models: [] };
+
+function providerKey(request, env) {
+  const personal = String(request.headers.get(USER_KEY_HEADER) || '').trim();
+  if (personal) return personal.slice(0, 256);
+  return String(env.GEMINI_API_KEY || '').trim();
+}
+
+function hasPersonalKey(request) {
+  return Boolean(String(request.headers.get(USER_KEY_HEADER) || '').trim());
+}
+
 function validPayload(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return 'Expected a JSON object.';
   if (body.image && typeof body.image !== 'string') return 'Image must be a base64 data URL string.';
@@ -27,6 +60,12 @@ function imageParts(dataUrl) {
   return { mime_type: match[1].toLowerCase(), data: match[2] };
 }
 
+function audioParts(dataUrl) {
+  const match = /^data:(audio\/(?:webm|ogg|mp4|mpeg|mp3|wav|aac|opus|m4a|flac|aiff))(?:;codecs=[a-z0-9.]+)?;base64,([A-Za-z0-9+/=]+)$/i.exec(dataUrl || '');
+  if (!match) throw new Error('Unsupported audio format. Please use a browser that records WebM, OGG or MP4 audio.');
+  return { mime_type: match[1].toLowerCase(), data: match[2] };
+}
+
 function getMode(env) {
   const raw = String(env.AI_MODE ?? 'gemini').trim().toLowerCase();
   return raw || 'gemini';
@@ -34,24 +73,66 @@ function getMode(env) {
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-async function listGeminiModels(env) {
-  if (!env.GEMINI_API_KEY) throw new Error('Gemini API key is not configured.');
+async function fingerprint(value) {
+  try {
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+    return Array.from(new Uint8Array(digest).slice(0, 10), byte => byte.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return String(value.length) + ':' + value.slice(-8);
+  }
+}
+
+function modelPriority(id) {
+  const index = VISION_MODEL_PRIORITY.indexOf(id);
+  if (index >= 0) return index;
+  if (/-pro(?:-|$)/i.test(id)) return 20;
+  if (/flash-lite/i.test(id)) return 80;
+  if (/flash/i.test(id)) return 50;
+  return 100;
+}
+
+export function rankVisionModels(models) {
+  return (Array.isArray(models) ? models : [])
+    .filter(model => model && model.id && /^gemini-/i.test(model.id))
+    .slice()
+    .sort((a, b) => modelPriority(a.id) - modelPriority(b.id) || a.name.localeCompare(b.name))
+    .map((model, index) => ({
+      ...model,
+      rank: index + 1,
+      tierLabel: index === 0 ? 'Highest capability' :
+        /flash-lite/i.test(model.id) ? 'Economy / low-latency' :
+          /pro/i.test(model.id) ? 'Advanced reasoning' : 'Balanced multimodal'
+    }));
+}
+
+export function getTranscriptionModelOrder() {
+  const first = LOW_COST_TRANSCRIPTION_MODELS[transcriptionRotation % LOW_COST_TRANSCRIPTION_MODELS.length];
+  transcriptionRotation = (transcriptionRotation + 1) % LOW_COST_TRANSCRIPTION_MODELS.length;
+  return [first, ...LOW_COST_TRANSCRIPTION_MODELS.filter(model => model !== first), ...HIGHER_COST_TRANSCRIPTION_FALLBACKS];
+}
+
+export async function listGeminiModels(apiKey) {
+  if (!apiKey) throw new Error('Gemini API key is not configured. Add a key in Admin or configure the Worker secret.');
+  const tag = await fingerprint(apiKey);
+  if (modelCache.tag === tag && modelCache.expiresAt > Date.now() && modelCache.models.length) return modelCache.models;
   const models = [];
   let pageToken = '';
   for (let page = 0; page < 3; page += 1) {
     const url = new URL('https://generativelanguage.googleapis.com/v1beta/models');
     url.searchParams.set('pageSize', '1000');
     if (pageToken) url.searchParams.set('pageToken', pageToken);
-    const response = await fetch(url, { headers: { 'x-goog-api-key': env.GEMINI_API_KEY } });
+    const response = await fetch(url, { headers: { 'x-goog-api-key': apiKey } });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data?.error?.message || 'Could not retrieve Gemini models.');
     models.push(...(data.models || []));
     pageToken = data.nextPageToken || '';
     if (!pageToken) break;
   }
-  return models
+  const ranked = rankVisionModels(models
     .filter(model => model.name && model.supportedGenerationMethods?.includes('generateContent'))
-    .filter(model => !/(embedding|tts|live|imagen|veo|lyria|transcrib|audio|robotics)/i.test(model.name))
+    // This application analyses camera photos. Image-output, TTS, audio-only,
+    // video, embedding and robotics models are not compatible with that task.
+    .filter(model => !/(embedding|tts|live|image|imagen|veo|lyria|transcrib|audio|robotics)/i.test(model.name))
     .map(model => ({
       id: String(model.name).replace(/^models\//, ''),
       name: model.displayName || String(model.name).replace(/^models\//, ''),
@@ -59,54 +140,133 @@ async function listGeminiModels(env) {
       inputTokenLimit: model.inputTokenLimit || null,
       outputTokenLimit: model.outputTokenLimit || null,
       supportsThinking: Boolean(model.thinking)
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    })));
+  modelCache = { tag, expiresAt: Date.now() + 5 * 60 * 1000, models: ranked };
+  return ranked;
 }
 
-async function askGemini({ image, prompt, model, waitSeconds }, env) {
-  if (!env.GEMINI_API_KEY) throw new Error('Gemini is selected but GEMINI_API_KEY is not configured in .dev.vars.');
-  const selectedModel = String(model || env.GEMINI_MODEL || 'gemini-3.8-flash').replace(/^models\//, '');
-  const timeoutSeconds = Math.max(15, Math.min(180, Number(waitSeconds) || 120));
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(selectedModel)}:generateContent`;
-  const requestBody = {
-    system_instruction: { parts: [{ text: SAFETY_CORE }] },
-    contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: imageParts(image) }] }],
-    generationConfig: { maxOutputTokens: 260 }
-  };
+async function modelCandidates(apiKey, selectedModel) {
+  let available = [];
+  try { available = await listGeminiModels(apiKey); } catch { /* Use known fallbacks if catalogue lookup is unavailable. */ }
+  const availableIds = available.map(model => model.id);
+  const base = availableIds.length ? availableIds : [selectedModel, ...STATIC_VISION_FALLBACKS];
+  const unique = [...new Set([selectedModel, ...base].filter(Boolean))];
+  const selectedIndex = Math.max(0, unique.indexOf(selectedModel));
+  const startIndex = (selectedIndex + visionRotation) % unique.length;
+  visionRotation = (visionRotation + 1) % Math.max(1, unique.length);
+  return unique.slice(startIndex).concat(unique.slice(0, startIndex));
+}
 
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    let response;
-    try {
-      response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-        body: JSON.stringify(requestBody),
-        signal: AbortSignal.timeout(timeoutSeconds * 1000)
-      });
-    } catch (error) {
-      if (error.name === 'TimeoutError' || error.name === 'AbortError') {
-        throw new Error(`Gemini did not respond within ${timeoutSeconds} seconds. The image was captured, but the model took too long. Try a faster Flash-Lite model or increase the wait setting.`);
+async function askGemini({ image, prompt, model, waitSeconds }, apiKey) {
+  if (!apiKey) throw new Error('Gemini is selected but no API key is available. Add your own key in Admin or configure the Worker secret.');
+  const selectedModel = String(model || 'gemini-3.8-flash').replace(/^models\//, '');
+  const timeoutSeconds = Math.max(15, Math.min(180, Number(waitSeconds) || 120));
+  const candidates = (await modelCandidates(apiKey, selectedModel)).slice(0, 5);
+  const attempted = [];
+  let lastFailure = '';
+  for (const candidate of candidates) {
+    attempted.push(candidate);
+    const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(candidate) + ':generateContent';
+    const requestBody = {
+      system_instruction: { parts: [{ text: SAFETY_CORE }] },
+      contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: imageParts(image) }] }],
+      generationConfig: { maxOutputTokens: 260 }
+    };
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      let response;
+      try {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
+          body: JSON.stringify(requestBody),
+          signal: AbortSignal.timeout(Math.min(timeoutSeconds, 45) * 1000)
+        });
+      } catch (error) {
+        if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+          lastFailure = 'Model ' + candidate + ' timed out.';
+          break;
+        }
+        lastFailure = 'Could not reach Gemini: ' + (error.message || 'network error');
+        break;
       }
-      throw new Error('Could not reach Gemini: ' + (error.message || 'network error'));
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        const answer = (data?.candidates?.[0]?.content?.parts || []).map(part => part.text || '').join('').trim();
+        if (!answer) {
+          lastFailure = 'Gemini model ' + candidate + ' returned no readable answer.';
+          break;
+        }
+        return { answer, model: candidate, attempted };
+      }
+      const message = data?.error?.message || 'Gemini request failed.';
+      if (response.status === 503 && attempt === 0) {
+        await wait(900);
+        continue;
+      }
+      if (response.status === 429 || response.status === 404 || response.status === 503 || response.status === 504) {
+        lastFailure = candidate + ': ' + message;
+        break;
+      }
+      if ((response.status === 400 || response.status === 403) && /model|not available|not supported|permission|billing|access/i.test(message)) {
+        lastFailure = candidate + ': ' + message;
+        break;
+      }
+      if (response.status === 401 || response.status === 403) throw new Error('Gemini rejected this API key. Check that the key is valid and its API access is enabled.');
+      throw new Error(message.slice(0, 300));
     }
-    const data = await response.json().catch(() => ({}));
-    if (response.ok) {
-      const answer = (data?.candidates?.[0]?.content?.parts || []).map(part => part.text || '').join('').trim();
-      if (!answer) throw new Error('Gemini returned no readable answer. Please try another photo.');
-      return answer;
-    }
-    const message = data?.error?.message || 'Gemini request failed.';
-    if (response.status === 429) throw new Error('Gemini rate limit or quota reached. Check AI Studio usage and billing.');
-    if (response.status === 401 || response.status === 403) throw new Error('Gemini rejected the API key. Check the local GEMINI_API_KEY setting.');
-    if (response.status === 404) throw new Error(`Gemini model "${selectedModel}" was not found or is unavailable for this API key.`);
-    if (response.status === 503 && attempt === 0) {
-      await wait(1500);
-      continue;
-    }
-    if (response.status === 503 || response.status === 504) throw new Error(`Gemini is temporarily overloaded (HTTP ${response.status}). Please retry shortly.`);
-    throw new Error(message.slice(0, 300));
   }
-  throw new Error('Gemini request failed after retry.');
+  throw new Error('Automatic model fallback tried ' + attempted.join(', ') + '. ' +
+    (lastFailure || 'No compatible model completed the request.') +
+    ' Google may have exhausted the project-wide quota; changing models cannot bypass a project-wide daily limit. Try your own Gemini key in Admin or wait for Google quota reset.');
+}
+
+async function transcribeGemini(audio, apiKey) {
+  if (!apiKey) throw new Error('No Gemini API key is available for voice transcription. Add one in Admin.');
+  if (typeof audio !== 'string' || audio.length > 2_800_000) throw new Error('Voice recording is too large. Please speak a shorter question.');
+  const part = audioParts(audio);
+  const prompt = [
+    'Transcribe the spoken question and return only the final question in English.',
+    'Detect the language from the words that were actually spoken, not from the speaker’s accent.',
+    'If the speaker uses Bengali/Bangla, translate it faithfully into natural English.',
+    'If the speaker uses English, including English spoken with a Bangladeshi accent, preserve the English meaning and do not translate it.',
+    'For mixed Bengali and English, translate Bengali portions and return one clear English question.',
+    'Do not add explanations, labels, quotation marks, or commentary. Do not invent words that are unclear.'
+  ].join(' ');
+  const candidates = getTranscriptionModelOrder();
+  const attempted = [];
+  let lastFailure = '';
+  for (const candidate of candidates) {
+    attempted.push(candidate);
+    const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(candidate) + ':generateContent';
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: part }] }],
+          generationConfig: { maxOutputTokens: 300, temperature: 0 }
+        }),
+        signal: AbortSignal.timeout(35_000)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        const transcript = (data?.candidates?.[0]?.content?.parts || []).map(item => item.text || '').join('').trim();
+        if (transcript) return { transcript, model: candidate, attempted };
+        lastFailure = candidate + ' returned an empty transcript.';
+        continue;
+      }
+      const message = data?.error?.message || 'Transcription failed.';
+      if ([400, 403, 404, 429, 503, 504].includes(response.status)) {
+        lastFailure = candidate + ': ' + message;
+        continue;
+      }
+      throw new Error(message.slice(0, 300));
+    } catch (error) {
+      lastFailure = error.message || 'Audio transcription failed.';
+      if (/API key|fetch failed|network/i.test(lastFailure)) throw error;
+    }
+  }
+  throw new Error('Gemini could not transcribe this recording using the low-cost speech model and fallbacks. ' + lastFailure);
 }
 
 async function forwardSos(request, env, action) {
@@ -136,6 +296,7 @@ export async function handleApi(request, env = {}) {
   const url = new URL(request.url);
   const mode = getMode(env);
   const model = String(env.GEMINI_MODEL || 'gemini-3.8-flash');
+  const apiKey = providerKey(request, env);
 
   if (request.method === 'GET' && url.pathname === '/api/health') {
     const supportedMode = mode === 'gemini' || mode === 'mock';
@@ -143,15 +304,15 @@ export async function handleApi(request, env = {}) {
       ok: supportedMode,
       mode,
       model: mode === 'gemini' ? model : null,
-      apiKeyConfigured: Boolean(env.GEMINI_API_KEY),
-      // Configuration is observable; actual provider reachability is only established by a real request.
-      providerConfigured: mode === 'gemini' && Boolean(env.GEMINI_API_KEY),
+      apiKeyConfigured: Boolean(apiKey),
+      usingPersonalKey: hasPersonalKey(request),
+      providerConfigured: mode === 'gemini' && Boolean(apiKey),
       sosRelayConfigured: Boolean(env.SOS_ROOM && env.SOS_DIRECTORY),
       mockModeExplicitlyEnabled: mode === 'mock',
       message: !supportedMode
-        ? `Unsupported AI_MODE "${mode}". Use "gemini" or explicitly "mock".`
+        ? 'Unsupported AI_MODE "' + mode + '". Use "gemini" or explicitly "mock".'
         : mode === 'gemini'
-          ? (env.GEMINI_API_KEY ? 'Gemini mode selected; provider key is loaded.' : 'Gemini mode selected, but GEMINI_API_KEY is missing.')
+          ? (apiKey ? 'Gemini mode selected; a provider key is available.' : 'Gemini mode selected, but no API key is available.')
           : 'Mock mode explicitly enabled; no live image analysis.'
     }, supportedMode ? 200 : 503);
   }
@@ -164,8 +325,6 @@ export async function handleApi(request, env = {}) {
     catch { return json({ error: 'Invalid request origin.' }, 403); }
   }
 
-  // Receiver endpoints are public by design, but each action is protected by
-  // a short-lived invitation or a 256-bit receiver token.
   const receiverActions = {
     '/api/sos/pair': 'pair',
     '/api/sos/poll': 'poll',
@@ -185,7 +344,13 @@ export async function handleApi(request, env = {}) {
 
   if (request.method === 'GET' && url.pathname === '/api/models') {
     try {
-      return json({ ok: true, models: await listGeminiModels(env), configuredModel: model });
+      return json({
+        ok: true,
+        models: await listGeminiModels(apiKey),
+        configuredModel: model,
+        usingPersonalKey: hasPersonalKey(request),
+        rotationEnabled: true
+      });
     } catch (error) {
       return json({ ok: false, error: error.message || 'Could not load models.' }, 502);
     }
@@ -200,6 +365,19 @@ export async function handleApi(request, env = {}) {
     });
   }
 
+  if (request.method === 'POST' && url.pathname === '/api/transcribe') {
+    let body;
+    try { body = await request.json(); } catch { return json({ error: 'Recording data must be valid JSON.' }, 400); }
+    if (typeof body.audio !== 'string' || !/^data:audio\//i.test(body.audio)) return json({ error: 'A recorded audio data URL is required.' }, 400);
+    if (body.audio.length > 2_800_000) return json({ error: 'Voice recording is too long. Please speak a shorter question.' }, 413);
+    try {
+      const result = await transcribeGemini(body.audio, apiKey);
+      return json({ ok: true, transcript: result.transcript, model: result.model, attemptedModels: result.attempted });
+    } catch (error) {
+      return json({ error: error.message || 'Voice transcription failed.' }, 502);
+    }
+  }
+
   if (request.method === 'POST' && ['/api/describe', '/api/ask'].includes(url.pathname)) {
     let body;
     try { body = await request.json(); } catch { return json({ error: 'Request body must be valid JSON.' }, 400); }
@@ -208,7 +386,7 @@ export async function handleApi(request, env = {}) {
     const action = url.pathname.endsWith('/ask') ? 'ask' : 'describe';
     if (!body.image) return json({ error: 'A camera image is required for this endpoint.' }, 400);
     if (action === 'ask' && !body.question?.trim()) return json({ error: 'Please provide a question.' }, 400);
-    if (mode !== 'gemini' && mode !== 'mock') return json({ error: `Unsupported AI_MODE "${mode}".` }, 503);
+    if (mode !== 'gemini' && mode !== 'mock') return json({ error: 'Unsupported AI_MODE "' + mode + '".' }, 503);
     const selectedModel = String(body.model || model).replace(/^models\//, '');
     const waitSeconds = body.waitSeconds || 120;
     const prompt = buildPrompt({
@@ -220,10 +398,11 @@ export async function handleApi(request, env = {}) {
     });
     if (mode === 'gemini') {
       try {
-        const answer = await askGemini({ image: body.image, prompt, model: selectedModel, waitSeconds }, env);
+        const result = await askGemini({ image: body.image, prompt, model: selectedModel, waitSeconds }, apiKey);
         return json({
           ok: true, mock: false, provider: 'Gemini',
-          model: selectedModel, answer,
+          model: result.model, attemptedModels: result.attempted,
+          answer: result.answer,
           disclaimer: 'AI can miss objects and hazards. Do not rely on this description alone for mobility or safety decisions.'
         });
       } catch (error) {
@@ -233,7 +412,7 @@ export async function handleApi(request, env = {}) {
     return json({
       ok: true, mock: true,
       answer: action === 'ask'
-        ? `Mock mode: I received your question: “${body.question.trim()}”. No image analysis was performed.`
+        ? 'Mock mode: I received your question: "' + body.question.trim() + '". No image analysis was performed.'
         : 'Mock mode is explicitly enabled. No objects or hazards were identified.',
       receivedImage: Boolean(body.image),
       disclaimer: 'SIMULATED RESPONSE — do not use this output to make mobility or safety decisions.'

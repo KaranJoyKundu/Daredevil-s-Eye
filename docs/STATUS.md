@@ -1,43 +1,52 @@
 # Implementation status
 
-This file distinguishes source implementation from real-device verification.
+Updated for the current feature branch. This page separates implemented source from automated and physical verification.
 
-## Implemented in source
+## Baseline already on main and deployed
 
-- Cloudflare Worker serves static assets from web/ and API routes.
-- Gemini vision calls use server-side GEMINI_API_KEY and selectable generateContent models.
-- Payload validation, response styles, wait limits and bn-BD prompt instructions.
-- Public same-origin API without Cloudflare rate limits or a server-side model allowlist; Google enforces its own model-specific usage quotas.
-- Gemini TTS and browser speech helpers.
-- Explicit getUserMedia permission request followed by browser SpeechRecognition.
-- Versioned privacy consent, legacy migration and reset.
-- ESP32-CAM /capture helper and phone-photo fallback.
-- Diagnostics page has six cards, including Check all at once.
-- Per-install SOS rooms, one-time six-character invitations, 10-minute expiry, attempt limiting, receiver tokens and replacement.
-- GitHub Actions CI and optional Cloudflare deployment workflow.
+- Cloudflare Worker static assets, API and SOS Durable Objects.
+- Public Gemini photo-analysis API; no app access-token gate.
+- No project-level Cloudflare API throttling binding. Google's model/project quotas still apply.
+- Admin model listing from the configured Gemini API key.
+- Four primary home actions and a standard responsive interface.
+- ESP32-CAM `/capture` path and phone photo/upload fallback.
+- Six Diagnostics cards, consent persistence and one-time SOS receiver pairing.
+- GitHub Actions tests/syntax checks and conditional Cloudflare deploy.
+- Prior confirmed production workflow: 39 tests passed, 0 failed; deployment succeeded; Worker version `92233e30-579f-4cb4-a2bd-6aaee6025530`. Live URL: https://daredevils-eye.karanjoykundu.workers.dev/
+
+## Added in this feature branch (not production yet)
+
+- `/blind/` full-screen 2×2 mode without brand/menu/exit control.
+- Shared hamburger navigation and Daredevil's Eye home link on standard pages.
+- Admin quick-jump cards.
+- Expanded Help and privacy documentation.
+- Session-only BYOK Gemini key support.
+- Ranked vision models and best-effort fallback/rotation for model-specific quota/overload/unavailable responses.
+- MediaRecorder + Gemini audio transcription fallback when native browser speech recognition fails.
+- Language instructions that translate Bengali to English and preserve English words regardless of accent.
+- Progressive word reveal concurrent with speech output.
+- Contact phone and WhatsApp links.
+- Updated README and project roadmap.
+- Latest feature-branch CI passed: 44 tests, 0 failures, and the JavaScript syntax check succeeded. Run: https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/43810964808. The production deploy job was skipped because this is a pull request.
 
 ## Automated verification
 
-GitHub Actions runs npm test and npm run check. Always refer to the latest run for the current result; previous test counts are not a release guarantee.
+The baseline main run above passed. Do not carry that result forward as proof for the feature branch. Check the latest pull-request Actions run for the exact current SHA and test count.
 
-## Not verified
+## Still unverified on physical devices
 
-- Production Gemini vision and TTS with Cloudflare secrets.
-- Bengali transcription, response quality and TTS on target phones.
-- Android Chrome microphone behaviour.
-- ESP32-CAM capture from a hosted HTTPS origin.
-- Camera access outside the local network.
-- SOS delivery and replacement between physical phones on different networks.
-- Alarm reliability when a phone is locked, suspended or offline.
-- Screen-reader evaluation, usability tests, load tests, penetration tests and independent safety assessment.
+- ESP32-CAM capture via browser on the target phone.
+- Android Chrome native recognition and Gemini recording fallback.
+- Bengali speech detection, English translation and mixed-language accuracy.
+- Speech synthesis sound, interruption and word-reveal timing.
+- Blind mode with TalkBack and actual blind/low-vision participants.
+- Two-phone SOS on separate networks and with screen locked/backgrounded.
+- Real provider fallback under controlled model-specific errors.
+- BYOK privacy lifecycle and security review.
 
-## Deployment status
+## Not implemented
 
-The repository is configured for Cloudflare Workers, Static Assets and Durable Objects. A deployment workflow can publish after CI when the owner has configured GitHub Actions secrets. Workflow presence alone does not mean that a live Worker exists.
-
-## Known limits
-
-- No login or app access token is required. Public users share the project's Gemini free-tier quota; Google may return 429 when its request or token limits are reached.
-- ESP32-CAM private IP is not globally reachable; phone photo/upload is the portable fallback.
-- Browser speech recognition may use a browser vendor's cloud service.
-- SOS is a manual best-effort alert, not fall detection or emergency dispatch.
+- Gemini TTS Worker endpoint (Admin's legacy Gemini TTS selector is not a completed end-to-end path).
+- Remote/global ESP32 camera gateway or outbound relay.
+- Email OTP login/signup, profiles, 10 free guest detections, per-user quotas, email/phone/name collection, database usage tracking or admin usage dashboard.
+- Formal security audit, privacy impact assessment or safety certification.

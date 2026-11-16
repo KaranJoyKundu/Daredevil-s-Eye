@@ -1,0 +1,19 @@
+const links = [
+  ['Home','/action/'],['Blind mode','/blind/'],['Admin / Settings','/admin/'],
+  ['Diagnostics','/diagnostics/'],['Help','/help/'],['SOS Receiver','/sos-receiver/'],
+  ['Contact','/contact/'],['Privacy','/privacy/']
+];
+const bar=document.createElement('div');
+bar.className='site-nav';
+bar.innerHTML='<details class="site-menu"><summary aria-label="Open site menu"><span aria-hidden="true">☰</span><span class="menu-label">Menu</span></summary><nav aria-label="Main navigation"></nav></details><a class="site-brand" href="/action/" aria-label="Daredevil’s Eye — return to home">Daredevil’s Eye</a>';
+const menu=bar.querySelector('nav');
+for(const [label,href] of links){
+  const link=document.createElement('a');
+  link.href=href;link.textContent=label;
+  if(location.pathname.replace(/\/?$/,'/')===href)link.setAttribute('aria-current','page');
+  menu.append(link);
+}
+document.body.prepend(bar);
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape')bar.querySelector('details')?.removeAttribute('open');
+});

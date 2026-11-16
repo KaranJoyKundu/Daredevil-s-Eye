@@ -1,5 +1,5 @@
 import {getSettings,saveSettings} from '/shared/settings.js?v=20261116-public1';
-import {requestAI,apiFetch} from '/shared/api.js?v=20261116-public1';
+import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261116-key1';
 import {captureImage} from '/shared/camera.js?v=20261116-public1';
 import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261116-public1';
 
@@ -36,13 +36,20 @@ function formSettings(){
   customPrompt:$('#prompt').value.trim()
  };
 }
+$('#personal-api-key').value=getSessionGeminiApiKey();
+$('#personal-key-status').textContent=getSessionGeminiApiKey()?'A personal key is active for this tab.':'No personal key is set in this tab.';
+$('#save-personal-key').addEventListener('click',()=>{
+ try{setSessionGeminiApiKey($('#personal-api-key').value);$('#personal-api-key').value='';$('#personal-key-status').textContent='Personal key active in this tab. Refreshing ranked models…';loadModels();}
+ catch(error){$('#personal-key-status').textContent=error.message;}
+});
+$('#remove-personal-key').addEventListener('click',()=>{clearSessionGeminiApiKey();$('#personal-api-key').value='';$('#personal-key-status').textContent='Personal key removed from this tab. Using the project key if configured.';loadModels();});
 $('#camera').value=saved.cameraBaseUrl;
 $('#contact-name').value=saved.emergencyName;
 $('#contact-phone').value=saved.emergencyPhone;
 $('#sos-code').value=saved.sosPairingCode;
 $('#language').value=saved.speechLanguage;
 $('#voice-preset').value=saved.speechPreset;
-$('#speech-engine').value=saved.speechEngine;
+$('#speech-engine').value=saved.speechEngine==='gemini'?'device':saved.speechEngine;
 $('#gemini-voice-style').value=saved.geminiTtsStyle;
 $('#speech-rate').value=saved.speechRate;
 $('#speech-pitch').value=saved.speechPitch;
@@ -89,13 +96,13 @@ async function loadModels(){
   select.replaceChildren();
   for(const model of data.models){
    const option=document.createElement('option');option.value=model.id;
-   option.textContent=model.name+' · '+model.id;option.title=model.description||model.id;select.append(option);
+   option.textContent='#'+(model.rank||select.options.length+1)+' · '+(model.tierLabel||'Vision model')+' · '+model.name+' · '+model.id;option.title=model.description||model.id;select.append(option);
   }
   if(!data.models.some(model=>model.id===selected)){
    const option=document.createElement('option');option.value=selected;option.textContent=selected+' · saved selection (not in current list)';select.append(option);
   }
   select.value=selected;
-  $('#model-status').textContent=data.models.length+' models available for generateContent. Selected: '+selected+'.';
+  $('#model-status').textContent=data.models.length+' ranked vision models available. Automatic fallback is enabled. Selected: '+selected+'.';
  }catch(error){
   $('#model-status').textContent='Model list unavailable: '+error.message+'. The saved model remains selected.';
   const select=$('#model');

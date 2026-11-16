@@ -2,59 +2,70 @@
 
 ## Runtime
 
-One Cloudflare Worker serves static files from web/ and API routes from worker/src/index.js. The Gemini API key remains server-side. Durable Objects store SOS invitation and alert state.
+A Cloudflare Worker serves static files from `web/` and API routes from `worker/src/index.js`. The project's Gemini API key remains a Worker secret. Optional personal keys are sent by the browser in a same-origin request header and are not persisted by the Worker. Durable Objects store SOS invitations and alert state.
 
-~~~mermaid
-flowchart TD
-  Browser[Public browser] --> Static[Worker static assets]
-  Browser --> API[Public Worker API]
-  API --> Gemini[Gemini Vision and TTS]
-  API --> Directory[SOSDirectory Durable Object]
-  Directory --> Room[Per-device SOSRoom]
-  Receiver[Trusted receiver browser] -->|Single-use code| Directory
-  Receiver -->|Scoped receiver token| Room
-  ESP[ESP32-CAM /capture] -. local network only .-> Browser
-  Phone[Phone photo upload] --> Browser
-~~~
+## Browser and route layout
+
+- `/action/`: normal four-action interface.
+- `/blind/`: four-tile accessible mode; no shared header or navigation script.
+- `/admin/`: local settings, model catalogue, BYOK and image tester.
+- `/diagnostics/`: camera, microphone, AI, speaker and backend checks.
+- `/help/`, `/privacy/`, `/contact/`, `/sos-receiver/`: supporting pages.
+- `web/shared/site-nav.js`: shared menu and brand home link for standard pages.
 
 ## Vision flow
 
-1. Browser captures a frame from ESP32-CAM or obtains a phone/file image.
-2. Browser converts it to a data URL and sends it with preferences to the Worker.
-3. Worker validates image format, encoded size, question, model, wait limit and response language.
-4. Worker sends the image and safety prompt to the requested Gemini generateContent model using the server-side API key.
-5. The available model catalogue is retrieved from Google's Models API for this API key.
-6. Worker returns the answer; browser displays and speaks it.
+1. The browser captures a still image from ESP32-CAM or obtains a phone/file image.
+2. The browser sends the image and user options to the same-origin Worker.
+3. The Worker validates MIME type, payload size, question, model, wait limit, response style and language.
+4. The Worker uses the session personal Gemini key in `x-user-gemini-api-key` if supplied; otherwise it uses `GEMINI_API_KEY`.
+5. `/api/models` lists available `generateContent` Gemini models that can be used for image understanding. Models are ranked using a maintained quality/cost priority order and response metadata.
+6. If a selected model returns a model-specific 429, overload, not-found or availability error, the Worker tries other compatible models.
+7. The Worker returns the actual model name used. The browser progressively reveals the answer while device speech begins.
 
-## Public API and Google free-tier quota
+Model rotation state is a module-level counter within each Worker isolate. It is best-effort distribution, not a durable globally coordinated scheduler. All models may still share a Google API project's quota. Image-generation-only models are excluded because this product needs image-input understanding, not image creation.
 
-- No app access token or login is required.
-- The browser sends same-origin requests to the Worker.
-- The Gemini API key is held only in the Worker environment; it is never sent to the browser.
-- This project adds no Cloudflare API rate limiter and no server-side model allowlist.
-- Google's model-specific request and token quotas continue to apply according to the Gemini API project's tier. Public visitors share the same project quota; Google can return 429 when it is exhausted.
-- The app is a public single-demo deployment, not a multi-user account or per-user quota system.
+## Voice flow
 
-## Speech
+1. The user explicitly taps ASK AI and grants mic permission.
+2. The client tries the browser's native `SpeechRecognition` API.
+3. If unsupported or unavailable due to network/service/language errors, the browser uses `MediaRecorder` to collect a short clip.
+4. `POST /api/transcribe` sends audio data to the Worker.
+5. The Worker calls a low-cost Gemini audio model first and falls back through configured transcription-capable candidates.
+6. The model is instructed to detect language from actual words: translate Bengali speech into English, preserve English even when spoken with a Bangladeshi accent, and handle mixed speech faithfully.
+7. The resulting English question is sent with the camera image to the vision endpoint.
 
-- Mic permission is requested after a user action. The temporary getUserMedia stream is released before SpeechRecognition is started.
-- Browser recognition may process audio through the browser vendor's service.
-- Device TTS uses operating-system/browser voices.
-- Gemini TTS sends answer text through the Worker to Google's TTS model.
+The audio is processed transiently by the Worker and forwarded to Google. App code does not intentionally persist the clip or transcript. Provider terms apply.
+
+## BYOK key flow
+
+- Browser Admin stores the user's key in `sessionStorage` for the current tab.
+- `apiFetch` attaches it only to relevant same-origin API requests, not SOS endpoints or arbitrary external requests.
+- Worker reads the custom request header or the project secret.
+- The Worker does not write the personal key to the database or durable storage.
+- Closing the tab clears the browser session key.
+- This is not an account-level key vault or an encrypted saved-key feature.
+
+## Public API and provider quotas
+
+- No app sign-in is required in the present prototype.
+- This project adds no general Cloudflare API rate limiter.
+- Google model-specific and project-level request/token quotas continue to apply. Public visitors share the configured project quota.
+- A different model may recover from a model-specific cap, but not a project-wide daily/request cap.
+- A personal API key from another Google API project may use its own project's quota.
 
 ## SOS flow
 
-1. The sender browser creates a per-install 128-bit device identifier.
-2. SOSDirectory generates a six-character code and stores only its SHA-256 hash with a ten-minute expiry.
-3. Creating another invitation deletes the previous invitation and revokes the current receiver token.
-4. Receiver submits the code without needing an owner access token.
-5. SOSRoom issues a random 256-bit receiver token and stores only its hash. Invitation is consumed.
-6. Receiver holds the token in tab sessionStorage and polls its sender's room.
-7. Sender can trigger a ten-minute alert; receiver token authorises polling and acknowledgement.
-8. Re-pairing invalidates the previous token.
+1. Sender browser generates a per-install 128-bit device identifier.
+2. SOSDirectory generates a six-character invitation and stores only its SHA-256 hash with a ten-minute expiry.
+3. A replacement invitation revokes the previous receiver.
+4. Receiver submits the one-time code and receives a scoped random receiver token.
+5. Receiver holds the token in tab sessionStorage and polls its sender's room.
+6. Sender triggers a ten-minute alert; receiver acknowledges it.
+7. Invitation guess attempts are limited within SOSDirectory.
 
-The SOS directory includes invitation-guess attempt handling. This is separate from API-wide request throttling. The prototype uses polling rather than push. Browser tabs can be suspended by mobile operating systems; delivery is not guaranteed.
+SOS is manual, polling-based and not guaranteed when a mobile browser is suspended.
 
-## Camera boundary
+## Future account-system boundary
 
-http://192.168.0.104 is a private LAN address. Public HTTPS hosting does not route to it. Remote camera use requires a separately designed authenticated gateway or outbound ESP32 relay, plus firmware and TLS testing. The phone camera/photo-upload path is the hosted fallback.
+The planned account/usage service is not implemented. It will require a database, email OTP delivery provider, server-side usage accounting, guest trial enforcement, authentication/authorisation, admin reporting, retention/deletion rules and a privacy review. IP address alone must not be treated as a stable unique person identifier.

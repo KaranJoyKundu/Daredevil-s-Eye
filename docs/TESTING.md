@@ -1,40 +1,53 @@
 # Test plan
 
-## Automated tests
+## Automated checks
 
-Run npm test and npm run check.
+Run:
 
-The Node test suite covers prompt safety and language instructions, API validation, public access, cross-origin rejection, Gemini request/model selection without an app login or Cloudflare rate limit, consent persistence, SOS invitation expiry and consumption, per-device isolation, pairing attempt limits, receiver-token replacement, acknowledgement and revocation.
+```powershell
+npm test
+npm run check
+```
 
-The JavaScript syntax check parses Worker, Durable Object, browser and access-page modules.
+The Node suite covers prompt safety/language instructions, API payload validation, public API behavior, model ranking/fallback helpers, consent persistence and SOS invitation/room state. The syntax check parses Worker, Durable Object and browser modules.
 
-Tests use simulated storage and bindings. They do not emulate a Cloudflare production account or physical devices.
+The feature-branch run must be checked against the exact commit SHA. Baseline main previously passed 39 tests; that result is not proof for this branch.
 
-## Manual release checks
+## Manual acceptance matrix
 
 | Area | Test | Pass condition |
 |---|---|---|
-| Desktop | Open the website and use the app | Home, Admin and Diagnostics open without a login prompt |
-| Camera local | Capture ESP32 /capture on same LAN | JPEG preview and download work |
-| Hosted image | Upload/take a phone photo | Exact image is analysed |
-| Gemini | Describe several known photos | Responses are grounded; no mock output |
-| Bengali text | Set bn-BD and ask a question | Bengali-script response |
-| Bengali speech input | Speak Bengali on Android Chrome | Transcript appears in Bengali; limitations recorded |
-| Bengali speech output | Play Bengali test phrase | Intelligible Bengali speech on target device |
-| Microphone | Test on HTTPS phone browser | Hardware, permission, recognition and transcript separately reported |
-| Consent | Accept, reload, navigate, return | Notice stays dismissed; reset makes it appear again |
-| SOS pair | Generate invite and pair receiver | Six-character code succeeds once; receiver refreshes |
-| SOS one-use | Reuse invitation | Rejected as used |
-| SOS replacement | Generate new invite and pair a second receiver | Old receiver token rejected |
-| SOS alert | Trigger and acknowledge | Foreground receiver shows alert, sounds and stops after acknowledgement |
-| Network change | Sender and receiver on different networks | Relay works without local-IP dependency |
-| Suspended phone | Lock/suspend/close receiver | Delivery/audio may stop; no guaranteed alert is claimed |
+| Home | Open `/` and `/action/` | Standard action page loads |
+| Shared navigation | Open each standard page | Brand returns to Home; menu opens every section |
+| Blind mode | Open `/blind/` on phone | Four large tiles fill screen; no brand/nav/exit button |
+| Blind mode Help | Tap Help then Return | Help overlay opens and returns to the 4-tile grid |
+| Blind mode screen reader | Use TalkBack/NVDA | Every tile has a clear name and action; no focus trap |
+| Camera local | Capture ESP32 `/capture` on same LAN | JPEG preview and image analysis succeed |
+| Hosted photo | Take/upload a phone photo | Exact image is analysed |
+| Mic native | Tap ASK AI on HTTPS | Browser recognises speech where supported |
+| Mic fallback | Block native service or test where unavailable | Short MediaRecorder clip is transcribed via Gemini |
+| English accent | Speak English with Bangladeshi accent | Transcript remains English |
+| Bengali | Speak Bengali | Faithful English translation/question is produced |
+| Mixed speech | Speak Bangla and English together | Meaning is preserved without invented words |
+| BYOK | Set personal key in Admin | /api/models and vision request use it; key not in localStorage |
+| BYOK removal | Remove key / close tab | Project key is used or user-key indicator clears |
+| Model ranking | Refresh models | Vision models ranked; each entry has a rank and tier |
+| Fallback | Mock a 429 / 503 / missing-model response | Next compatible model is tried; final response reports actual model |
+| Progressive text | Ask a question | Words appear sequentially while voice plays; Stop halts both |
+| Diagnostics | Run individual and all checks | Results accurately identify failed component; AI request use is disclosed |
+| SOS | Pair two physical phones | Pairing, alert, acknowledgement and replacement work |
+| SOS suspended | Lock or background receiver | No guaranteed delivery claim; failures documented |
+| Contact | Tap phone and WhatsApp links | Correct project number opens dialler/WhatsApp |
 
-## Release acceptance criteria
+## Important test-cost note
 
-- CI passes on exact merge candidate.
+The AI image test, voice transcription and live model fallback can consume Gemini quota. Use mock/unit tests first. Do not deliberately exhaust a real quota merely to demonstrate automatic fallback.
+
+## Release acceptance
+
+- CI passes on exact PR head SHA.
 - No secret or local environment file is committed.
-- Public Gemini APIs use the configured API key server-side and return Google quota errors when its free-tier allowance is exhausted.
-- Receiver uses single-use invitations and scoped tokens.
-- README and safety/deployment docs match actual code.
-- Real-device camera, Gemini, Bengali, microphone and two-phone SOS tests are recorded with device/browser details.
+- Privacy notice clearly discloses image/audio forwarding.
+- BYOK key is not persisted beyond the browser tab.
+- Real-device results are recorded separately from automated test results.
+- No navigation, medical or SOS reliability claims exceed evidence.
