@@ -2,14 +2,24 @@
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07111f"><title>Diagnostics · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css"></head>
 <body><main>
-<header><p class="eyebrow">DEVICE CHECKUP</p><h1>Diagnostics</h1><p class="subtitle">Six quick checks. Choose a card, run the test and see the result here.</p></header>
+<header><p class="eyebrow">DEVICE CHECKUP</p><h1>Diagnostics</h1><p class="subtitle">Device, camera, microphone, AI, speaker and backend checks. Run the phone check first on Android.</p></header>
 <section class="diagnostic-grid" aria-label="Diagnostic tests">
+<a class="diagnostic-card diag-slate" href="#phone-test"><span class="diag-icon">📱</span><strong>Android phone</strong><small>Samsung and browser compatibility</small></a>
 <a class="diagnostic-card diag-blue" href="#camera-test"><span class="diag-icon">📷</span><strong>Camera</strong><small>Capture a still image</small></a>
 <a class="diagnostic-card diag-teal" href="#mic-test"><span class="diag-icon">🎙️</span><strong>Microphone</strong><small>Show what you say</small></a>
 <a class="diagnostic-card diag-purple" href="#ai-test"><span class="diag-icon">✨</span><strong>AI tester</strong><small>Send an image to Gemini</small></a>
 <a class="diagnostic-card diag-orange" href="#speaker-test"><span class="diag-icon">🔊</span><strong>Speaker</strong><small>Preview the selected voice</small></a>
 <a class="diagnostic-card diag-slate" href="#system-test"><span class="diag-icon">⚙️</span><strong>System</strong><small>Check backend and model</small></a>
 <a class="diagnostic-card diag-blue" href="#all-test"><span class="diag-icon">✅</span><strong>Check all at once</strong><small>Run the complete checkup</small></a>
+</section>
+
+<section id="phone-test" class="panel diagnostic-panel">
+<h2>📱 Android & Samsung phone check</h2>
+<p>Checks browser capabilities used by Daredevil’s Eye on Android. The detected phone model and Android version depend on information the browser exposes; this is a compatibility report, not proof of full device support.</p>
+<button id="run-phone-check" type="button">Check this phone</button>
+<button id="test-motion-sensor" type="button" class="secondary">Test motion sensor (5 seconds)</button>
+<p id="phone-status" class="hint" role="status" aria-live="polite">Not tested yet.</p>
+<pre id="phone-output" class="result-output">Phone and browser details will appear here.</pre>
 </section>
 
 <section id="camera-test" class="panel diagnostic-panel">
@@ -69,4 +79,4 @@
 </section>
 
 <nav class="navlinks"><a href="/action/">Home</a><a href="/admin/">Admin / Settings</a><a href="/contact/">Contact</a><a href="/help/">Help</a></nav>
-</main><script type="module" src="/diagnostics/diagnostics.js?v=20261116-public1"></script><script type="module" src="/shared/site-nav.js?v=20261116-nav1"></script></body></html>
+</main><script type="module" src="/diagnostics/diagnostics.js?v=20261117-android16"></script><script type="module" src="/shared/site-nav.js?v=20261116-nav1"></script></body></html>

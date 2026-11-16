@@ -47,3 +47,19 @@ The web manifest declares these three shortcuts. Launcher and browser support va
 - Bluetooth earbud play/pause/next/previous mappings. Media Session behavior varies and is not dependable enough to enable as an emergency control.
 
 A native Android wrapper can be planned later if these web integrations prove too unreliable. The web app's SOS is a best-effort paired-device alert, not emergency-service dispatch.
+
+
+## Android 16 / Samsung Galaxy validation profile
+
+The first reference handset for this project is the **Samsung Galaxy A55 5G**, with Android 16 / One UI 8 as the baseline target. The implementation remains browser-based and should degrade gracefully on other Android 16 Samsung Galaxy models; it does not assume that every model, carrier firmware or browser exposes identical APIs.
+
+Recommended first-pass setup on the A55:
+
+1. Open the HTTPS site in an up-to-date **Chrome for Android** first. Samsung Internet may be tested separately; do not assume browser speech recognition behaves identically between them.
+2. Open `/diagnostics/`, run **Check this phone**, then **Test motion sensor**. Save or share the report only if you are comfortable sharing the browser user-agent string; the report is generated locally.
+3. When prompted, allow the site's microphone permission. In Chrome, review it under **⋮ → Settings → Site settings → Microphone**. Also confirm Android's system-wide microphone access is not disabled.
+4. In Samsung Settings, open **General management → Text-to-speech output** (labels can vary by One UI version). Check the preferred engine and install/download Bengali voice data if available. Return to Admin, refresh the installed-voice list, and play the Bengali sample.
+5. Keep the browser in the foreground while testing voice SOS and shake SOS. Android restricts background access to microphone and continuous sensor data; a browser page cannot promise reliable locked-screen or background SOS.
+6. Test with the phone unlocked before trying home-screen installation. Install the PWA only after the browser tests pass.
+
+The phone check reports the model and Android version only when the browser exposes them. Samsung firmware and rollout timing vary by exact model code, country and carrier. Confirm the actual OS in **Settings → About phone → Software information**. A successful motion reading is not evidence that shake SOS has safe sensitivity; that requires supervised tuning and false-positive testing.

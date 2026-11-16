@@ -7,6 +7,75 @@ const $=selector=>document.querySelector(selector);
 let latestCameraBlob=null,latestCameraUrl=null,selectedAiFile=null,micController=null;
 let micState={hardware:false,permission:false,recognition:false,transcript:'',error:''};
 
+
+function getPhoneProfile(){
+ const ua=navigator.userAgent||'';
+ const androidMatch=ua.match(/Android\s([0-9.]+)/i);
+ const modelMatch=ua.match(/\b(SM-[A-Z0-9]+)\b/i);
+ const browser=/SamsungBrowser\//i.test(ua)?'Samsung Internet':
+  /EdgA\//i.test(ua)?'Microsoft Edge for Android':
+  /CriOS\//i.test(ua)?'Chrome for iOS':
+  /Chrome\//i.test(ua)?'Chrome':
+  /Firefox\//i.test(ua)?'Firefox':'Other / not identified';
+ const voices=window.speechSynthesis?.getVoices?.()||[];
+ const banglaVoices=voices.filter(voice=>/^bn(?:-|$)/i.test(voice.lang||''));
+ const mimeTypes=['audio/webm;codecs=opus','audio/mp4','audio/ogg;codecs=opus']
+  .filter(type=>window.MediaRecorder?.isTypeSupported?.(type));
+ return [
+  'Device model: '+(modelMatch?.[1]||'Not exposed by browser'),
+  'Android version (browser report): '+(androidMatch?.[1]||'Not exposed / not Android UA'),
+  'Browser: '+browser,
+  'Browser version / user agent: '+ua,
+  'Secure HTTPS context: '+(window.isSecureContext?'yes':'no'),
+  'Microphone API: '+(navigator.mediaDevices?.getUserMedia?'available':'unavailable'),
+  'MediaRecorder: '+('MediaRecorder'in window?'available':'unavailable'),
+  'Supported recording formats: '+(mimeTypes.join(', ')||'browser default only / none detected'),
+  'Speech recognition API: '+(window.SpeechRecognition||window.webkitSpeechRecognition?'available':'not exposed'),
+  'Speech synthesis API: '+('speechSynthesis'in window?'available':'unavailable'),
+  'Installed Bengali device voices: '+(banglaVoices.length?banglaVoices.map(v=>v.name+' ('+v.lang+')').join('; '):'none currently reported'),
+  'Wake Lock API: '+(navigator.wakeLock?.request?'available':'unavailable'),
+  'Vibration API: '+(navigator.vibrate?'available':'unavailable'),
+  'Device motion API: '+('DeviceMotionEvent'in window?'available':'unavailable'),
+  'Service worker: '+('serviceWorker'in navigator?'available':'unavailable'),
+  'Installed / standalone display: '+(window.matchMedia?.('(display-mode: standalone)').matches?'yes':'no'),
+  'Screen: '+screen.width+' × '+screen.height+' CSS pixels; DPR '+(window.devicePixelRatio||1),
+  'Memory hint: '+(navigator.deviceMemory?navigator.deviceMemory+' GB (browser estimate)':'not exposed'),
+  'Logical CPU cores: '+(navigator.hardwareConcurrency||'not exposed'),
+  '',
+  'Target profile: Android 16 Samsung Galaxy (first reference device: Galaxy A55).',
+  'Note: browsers may hide or reduce device details. Confirm the exact model in Android Settings → About phone.'
+ ].join('\n');
+}
+$('#run-phone-check').addEventListener('click',()=>{
+ $('#phone-output').textContent=getPhoneProfile();
+ $('#phone-status').textContent='Phone and browser capability report generated. Review any unavailable APIs below.';
+});
+$('#test-motion-sensor').addEventListener('click',async()=>{
+ const button=$('#test-motion-sensor');button.disabled=true;
+ $('#phone-status').textContent='Requesting motion access if this browser requires it. Move the phone gently for five seconds.';
+ let permission='not required / browser does not expose a permission prompt',count=0,lastMagnitude=null;
+ try{
+  if(typeof DeviceMotionEvent==='undefined')throw new Error('DeviceMotionEvent is not available in this browser.');
+  if(typeof DeviceMotionEvent.requestPermission==='function'){
+   permission=await DeviceMotionEvent.requestPermission();
+   if(permission!=='granted')throw new Error('Motion permission was not granted.');
+  }
+  const listener=event=>{
+   count++;
+   const v=event.accelerationIncludingGravity||event.acceleration;
+   if(v&&[v.x,v.y,v.z].every(Number.isFinite))lastMagnitude=Math.hypot(v.x,v.y,v.z).toFixed(2);
+  };
+  window.addEventListener('devicemotion',listener,{passive:true});
+  await new Promise(resolve=>setTimeout(resolve,5000));
+  window.removeEventListener('devicemotion',listener);
+  $('#phone-output').textContent=getPhoneProfile()+'\n\nMotion permission: '+permission+'\nMotion events received in 5 seconds: '+count+'\nLast sensor magnitude: '+(lastMagnitude??'no usable reading')+'\n\nThis only confirms that readings reached the browser. It does not validate SOS sensitivity or false-trigger safety.';
+  $('#phone-status').textContent=count?'Motion sensor delivered readings. Do not use this result as a safety guarantee.':'No motion readings received. Check browser permissions and device sensor availability.';
+ }catch(error){
+  $('#phone-output').textContent=getPhoneProfile()+'\n\nMotion test failed: '+error.message;
+  $('#phone-status').textContent='Motion test could not complete: '+error.message;
+ }finally{button.disabled=false;}
+});
+
 async function runCamera(){
  const button=$('#run-camera');button.disabled=true;
  $('#camera-status').textContent='Capturing from '+getSettings().cameraBaseUrl+'…';
@@ -136,6 +205,8 @@ async function systemCheck(){
    'Mock mode: '+(health.mockModeExplicitlyEnabled?'enabled':'disabled'),
    'Available generateContent models: '+(models.models?.length??'could not load'),
    'Microphone secure context: '+(window.isSecureContext?'yes':'no'),
+   'Browser: '+(/SamsungBrowser\//i.test(navigator.userAgent)?'Samsung Internet':/Chrome\//i.test(navigator.userAgent)?'Chrome':'other / not identified'),
+   'Android version (if exposed): '+(navigator.userAgent.match(/Android\s([0-9.]+)/i)?.[1]||'not exposed'),
    'SOS receiver relay: '+(health.sosRelayConfigured?'configured':'check Wrangler Durable Object binding')
   ];
   if(models.error)lines.push('Model list error: '+models.error);
