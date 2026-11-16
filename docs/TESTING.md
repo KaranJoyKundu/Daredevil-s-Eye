@@ -4,7 +4,7 @@
 
 Run npm test and npm run check.
 
-The Node test suite covers prompt safety and language instructions, API validation, public access, cross-origin rejection, Gemini request/model selection, consent persistence, SOS invitation expiry and consumption, per-device isolation, pairing attempt limits, receiver-token replacement, acknowledgement and revocation.
+The Node test suite covers prompt safety and language instructions, API validation, public access, cross-origin rejection, Gemini request/model selection without an app login or Cloudflare rate limit, consent persistence, SOS invitation expiry and consumption, per-device isolation, pairing attempt limits, receiver-token replacement, acknowledgement and revocation.
 
 The JavaScript syntax check parses Worker, Durable Object, browser and access-page modules.
 
@@ -14,7 +14,7 @@ Tests use simulated storage and bindings. They do not emulate a Cloudflare produ
 
 | Area | Test | Pass condition |
 |---|---|---|
-| Desktop | Open /access/, enter token and use app | Token accepted; private API without token rejected |
+| Desktop | Open the website and use the app | Home, Admin and Diagnostics open without a login prompt |
 | Camera local | Capture ESP32 /capture on same LAN | JPEG preview and download work |
 | Hosted image | Upload/take a phone photo | Exact image is analysed |
 | Gemini | Describe several known photos | Responses are grounded; no mock output |
@@ -34,7 +34,7 @@ Tests use simulated storage and bindings. They do not emulate a Cloudflare produ
 
 - CI passes on exact merge candidate.
 - No secret or local environment file is committed.
-- Private APIs reject missing/invalid owner token.
+- Public Gemini APIs use the configured API key server-side and return Google quota errors when its free-tier allowance is exhausted.
 - Receiver uses single-use invitations and scoped tokens.
 - README and safety/deployment docs match actual code.
 - Real-device camera, Gemini, Bengali, microphone and two-phone SOS tests are recorded with device/browser details.
