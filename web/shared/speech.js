@@ -33,6 +33,13 @@ export function detectSpokenLanguage(text) {
   return /[\u0980-\u09ff]/u.test(String(text || '')) ? 'bn-BD' : 'en-US';
 }
 
+export function resolveSpeechLanguage(text, requestedLanguage = 'en-US') {
+  // Full Bangla mode applies to all app speech, including prompts and errors,
+  // not only answers that happen to contain Bengali characters.
+  if (requestedLanguage === 'bn-BD') return 'bn-BD';
+  return detectSpokenLanguage(text) === 'bn-BD' ? 'bn-BD' : requestedLanguage;
+}
+
 export function getAvailableVoices() {
   if (!('speechSynthesis' in window)) return [];
   return window.speechSynthesis.getVoices();
@@ -58,7 +65,7 @@ export function speak(text, options = {}) {
     if(currentAudio){currentAudio.pause();currentAudio=null;}
     if(currentAudioUrl){URL.revokeObjectURL(currentAudioUrl);currentAudioUrl=null;}
     const utterance = new SpeechSynthesisUtterance(String(text)), settings = getSettings();
-    const requestedLang = detectSpokenLanguage(text) === 'bn-BD' ? 'bn-BD' : (options.lang || settings.speechLanguage);
+    const requestedLang = resolveSpeechLanguage(text, options.lang || settings.speechLanguage);
     utterance.lang = requestedLang;
     utterance.rate = options.rate ?? settings.speechRate;
     utterance.pitch = options.pitch ?? settings.speechPitch;
@@ -133,7 +140,7 @@ function blobToDataUrl(blob) {
   });
 }
 
-async function recordWithGemini({ onResult, onError, onFallback, onEnd, onStatus, onPermission, cancelled = () => false } = {}) {
+async function recordWithGemini({ onResult, onError, onFallback, onEnd, onStatus, onPermission, outputLanguage = 'en-US', cancelled = () => false } = {}) {
   if (!('MediaRecorder' in window)) {
     onError?.('This browser cannot record audio for Gemini transcription. Type your question instead.');
     onEnd?.();
@@ -197,7 +204,7 @@ async function recordWithGemini({ onResult, onError, onFallback, onEnd, onStatus
       const audio=await blobToDataUrl(blob);
       const response=await apiFetch('/api/transcribe',{
         method:'POST',headers:{'content-type':'application/json'},
-        body:JSON.stringify({audio,mimeType:blob.type})
+        body:JSON.stringify({audio,mimeType:blob.type,responseLanguage:outputLanguage})
       });
       const data=await response.json().catch(()=>({}));
       if(!response.ok)throw new Error(data.error||'Gemini could not transcribe the recording.');
@@ -243,7 +250,8 @@ async function recordWithGemini({ onResult, onError, onFallback, onEnd, onStatus
  */
 export async function listenOnce({
   lang = getSettings().speechInputLanguage || 'bn-BD', preferGemini = true,
-  onResult, onInterim, onError, onEnd, onPermission, onStart, onFallback, onStatus
+  onResult, onInterim, onError, onEnd, onPermission, onStart, onFallback, onStatus,
+  outputLanguage = getSettings().speechLanguage || 'en-US'
 } = {}) {
   if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
     onError?.('Microphone access requires HTTPS or localhost. This HTTP LAN address is not a secure context.');
@@ -253,7 +261,7 @@ export async function listenOnce({
   const stop = () => { stopped = true; fallbackController?.stop?.(); };
   if (preferGemini) {
     onFallback?.('Listening in multilingual mode. Bangla, English and mixed speech are supported.');
-    fallbackController = await recordWithGemini({ onResult, onError, onEnd, onStatus, onPermission, cancelled: () => stopped });
+    fallbackController = await recordWithGemini({ onResult, onError, onEnd, onStatus, onPermission, outputLanguage, cancelled: () => stopped });
     return { stop };
   }
   let permissionStream;
