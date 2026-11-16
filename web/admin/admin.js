@@ -1,19 +1,13 @@
-import {getSettings,saveSettings} from '/shared/settings.js?v=20261116-auth1';
-import {requestAI,apiFetch,getAccessToken,verifyAccessToken} from '/shared/api.js?v=20261116-auth1';
-import {captureImage} from '/shared/camera.js?v=20261116-auth1';
-import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261116-auth1';
+import {getSettings,saveSettings} from '/shared/settings.js?v=20261116-public1';
+import {requestAI,apiFetch} from '/shared/api.js?v=20261116-public1';
+import {captureImage} from '/shared/camera.js?v=20261116-public1';
+import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261116-public1';
 
 const $=s=>document.querySelector(s);
 const form=$('#settings-form');
 const saved=getSettings();
 const presetValues=VOICE_PRESETS;
 
-if(!getAccessToken()){
- location.replace('/access/?next='+encodeURIComponent(location.pathname));
- throw new Error('Redirecting to private app access.');
-}
-try{await verifyAccessToken(getAccessToken());}
-catch{location.replace('/access/?next='+encodeURIComponent(location.pathname));throw new Error('Private app access required.');}
 
 function normalizeCameraAddress(value){
  let address=String(value||'').trim();
