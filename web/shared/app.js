@@ -1,8 +1,8 @@
-import { captureImage, blobToDataUrl } from './camera.js?v=20261116-auth1';
-import { requestAI, getAccessToken } from './api.js?v=20261116-auth1';
-import { speak, speakResponse, stopSpeaking, listenOnce } from './speech.js?v=20261116-auth1';
-import { getSettings, saveSettings } from './settings.js?v=20261116-auth1';
-import { hasCurrentConsent, acceptConsent } from './consent.js?v=20261116-auth1';
+import { captureImage, blobToDataUrl } from './camera.js?v=20261116-public1';
+import { requestAI } from './api.js?v=20261116-public1';
+import { speak, speakResponse, stopSpeaking, listenOnce } from './speech.js?v=20261116-public1';
+import { getSettings, saveSettings } from './settings.js?v=20261116-public1';
+import { hasCurrentConsent, acceptConsent } from './consent.js?v=20261116-public1';
 
 const $ = selector => document.querySelector(selector);
 const status = $('#status');
@@ -30,11 +30,6 @@ updateConsentPanel();
 
 async function run(mode, question = '', imageOverride = null) {
   const settings = getSettings();
-  if (!getAccessToken()) {
-    announce('Unlock the private app at the Access page before using AI.');
-    location.href='/access/?next='+encodeURIComponent(location.pathname);
-    return;
-  }
   if (!hasCurrentConsent()) {
     $('#consent-panel')?.scrollIntoView({behavior:'smooth'});
     announce('Please review and accept the privacy notice before using the camera.');
@@ -78,11 +73,6 @@ async function startVoiceQuestion() {
 
 async function sendSos() {
   const settings=getSettings();
-  if(!getAccessToken()){
-    announce('Unlock the private app before sending SOS.');
-    location.href='/access/?next='+encodeURIComponent(location.pathname);
-    return;
-  }
   const button=document.querySelector('[data-action="sos"]');
   if(button)button.disabled=true;
   try {
