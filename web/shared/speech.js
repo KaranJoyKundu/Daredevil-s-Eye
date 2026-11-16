@@ -177,14 +177,16 @@ export function speak(text, options = {}) {
     let voices = getAvailableVoices();
     if (voices.length) return runSpeechQueue(chunks, options, settings, runId, voices);
 
+    const requestedLanguage = options.lang || settings.speechLanguage || 'en-US';
     let settled = false;
+    let timer = null;
     const finish = list => {
       if (settled || runId !== speechRun) return;
       settled = true;
       clearTimeout(timer);
       window.speechSynthesis.removeEventListener?.('voiceschanged', onVoices);
       const ready = Array.isArray(list) ? list : [];
-      if (!ready.length && settings.speechLanguage === 'bn-BD') {
+      if (!ready.length && requestedLanguage === 'bn-BD') {
         options.onError?.('No Bengali speech voices are available. Install Bengali voice data in Android Text-to-speech settings.');
         return;
       }
@@ -202,7 +204,7 @@ export function speak(text, options = {}) {
       if (list.length) finish(list);
     };
     window.speechSynthesis.addEventListener?.('voiceschanged', onVoices);
-    const timer = setTimeout(() => finish(getAvailableVoices()), 2600);
+    timer = setTimeout(() => finish(getAvailableVoices()), 2600);
     return { queued: true, cancel: stopDeviceSpeech };
   } catch (error) {
     options.onError?.('Could not start device speech: ' + (error.message || 'unknown error'));
@@ -253,7 +255,7 @@ export async function speakResponse(text, options = {}) {
 }
 
 export function stopSpeaking() {
-  window.speechSynthesis?.cancel();
+  stopDeviceSpeech();
   if(currentAudio){currentAudio.pause();currentAudio=null;}
   if(currentAudioUrl){URL.revokeObjectURL(currentAudioUrl);currentAudioUrl=null;}
 }
