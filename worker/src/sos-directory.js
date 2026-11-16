@@ -85,7 +85,7 @@ export class SOSDirectory {
     if (action === 'pair') {
       const code = String(body.code || '').trim().toUpperCase();
       if (!/^[A-Z0-9]{6}$/.test(code)) return json({ ok: false, error: 'Enter the six-character SOS code.' }, 400);
-      const ip = request.headers.get('cf-connecting-ip') || 'local-development';
+      const ip = String(body.clientIp || request.headers.get('cf-connecting-ip') || 'local-development').slice(0, 80);
       const ipHash = await hash(ip);
       const now = Date.now();
       const attemptsKey = 'attempts:' + ipHash;
