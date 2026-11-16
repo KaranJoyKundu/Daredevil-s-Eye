@@ -20,9 +20,8 @@ export function speak(text, options = {}) {
   utterance.rate = options.rate ?? settings.speechRate;
   utterance.pitch = options.pitch ?? settings.speechPitch;
   const voices = getAvailableVoices();
-  if (settings.speechVoiceURI) {
-    utterance.voice = voices.find(voice => voice.voiceURI === settings.speechVoiceURI) || null;
-  }
+  const voiceURI = options.voiceURI ?? settings.speechVoiceURI;
+  if (voiceURI) utterance.voice = voices.find(voice => voice.voiceURI === voiceURI) || null;
   if (options.onEnd) utterance.onend = options.onEnd;
   if (options.onError) utterance.onerror = options.onError;
   window.speechSynthesis.speak(utterance);
