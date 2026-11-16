@@ -4,7 +4,7 @@
 
 Run npm test and npm run check.
 
-The Node test suite covers prompt safety and language instructions, API validation, owner-token enforcement, cross-origin rejection, rate-limit handling, consent persistence, SOS invitation expiry and consumption, per-device isolation, pairing attempt limits, receiver-token replacement, acknowledgement and revocation.
+The Node test suite covers prompt safety and language instructions, API validation, public rate limiting and model allowlist enforcement, cross-origin rejection, rate-limit handling, consent persistence, SOS invitation expiry and consumption, per-device isolation, pairing attempt limits, receiver-token replacement, acknowledgement and revocation.
 
 The JavaScript syntax check parses Worker, Durable Object, browser and access-page modules.
 
