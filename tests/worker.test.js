@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {handleApi,rankVisionModels,getTranscriptionModelOrder} from '../worker/src/index.js';
+import {SOSRoom} from '../worker/src/sos-room.js';
 import {detectSpokenLanguage,selectVoiceForText,resolveSpeechLanguage} from '../web/shared/speech.js';
 import {createShakeSequenceTracker,getShakeMagnitude,matchSosVoiceCommand} from '../web/shared/sos-triggers.js';
 
@@ -399,4 +400,78 @@ test('Bangla transcription returns Bengali script instead of translating the ful
  assert.equal(data.outputLanguage,'bn-BD');
  assert.match(prompt,/natural Bangladeshi Bengali/);
  assert.match(prompt,/Do not translate the whole question into English/);
+});
+
+
+test('SOS receiver gets a persistent VAPID key and subscription, and trigger submits a push notification',async t=>{
+ const originalFetch=globalThis.fetch;
+ const pushRequests=[];
+ t.after(()=>{globalThis.fetch=originalFetch;});
+ globalThis.fetch=async(input,init={})=>{
+  pushRequests.push({url:String(input),headers:init.headers||{}});
+  return new Response('',{status:201});
+ };
+ const values=new Map();
+ const state={storage:{
+  get:async key=>values.get(key),
+  put:async(key,value)=>values.set(key,value),
+  delete:async key=>values.delete(key),
+  setAlarm:async time=>{values.set('alarmAt',time);}
+ }};
+ const room=new SOSRoom(state);
+ const post=async(action,body={})=>room.fetch(new Request('https://sos.internal/'+action,{
+  method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)
+ }));
+ const pushKeyResponse=await (await post('push-key')).json();
+ assert.equal(pushKeyResponse.ok,true);
+ assert.equal(pushKeyResponse.applicationServerKey.length,87);
+ const paired=await (await post('pair')).json();
+ assert.equal(paired.paired,true);
+ const subscription=await (await post('subscribe',{
+  receiverToken:paired.receiverToken,
+  subscription:{
+   endpoint:'https://push.example.test/send/123',
+   expirationTime:null,
+   keys:{p256dh:'public-subscription-key',auth:'auth-secret'}
+  }
+ })).json();
+ assert.equal(subscription.pushSubscribed,true);
+ const triggered=await (await post('trigger')).json();
+ assert.equal(triggered.queued,true);
+ assert.equal(triggered.notificationAttempted,true);
+ assert.equal(triggered.notificationAccepted,true);
+ assert.equal(pushRequests.length,1);
+ assert.match(pushRequests[0].headers.Authorization,/^vapid t=/);
+ assert.equal(pushRequests[0].headers.TTL,'120');
+});
+
+test('re-pairing clears the previous receiver push subscription',async()=>{
+ const values=new Map();
+ const state={storage:{
+  get:async key=>values.get(key),
+  put:async(key,value)=>values.set(key,value),
+  delete:async key=>values.delete(key),
+  setAlarm:async()=>{}
+ }};
+ const room=new SOSRoom(state);
+ const post=async(action,body={})=>room.fetch(new Request('https://sos.internal/'+action,{
+  method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)
+ }));
+ const first=await (await post('pair')).json();
+ await post('subscribe',{receiverToken:first.receiverToken,subscription:{
+  endpoint:'https://push.example.test/old',keys:{p256dh:'x',auth:'y'}
+ }});
+ assert.ok(await state.storage.get('pushSubscription'));
+ await post('pair');
+ assert.equal(await state.storage.get('pushSubscription'),undefined);
+});
+
+test('receiver notification service worker requests a visible high-priority SOS notification',()=>{
+ const worker=readFileSync(new URL('../web/sw.js',import.meta.url),'utf8');
+ const receiver=readFileSync(new URL('../web/sos-receiver/receiver.js',import.meta.url),'utf8');
+ assert.match(worker,/showNotification/);
+ assert.match(worker,/requireInteraction:true/);
+ assert.match(worker,/notificationclick/);
+ assert.match(receiver,/pushManager\.subscribe/);
+ assert.match(receiver,/localStorage\.setItem\(TOKEN_KEY/);
 });
