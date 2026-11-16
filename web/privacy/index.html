@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Privacy · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Privacy · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css?v=20261116-access2"></head>
 <body><main>
 <header><p class="eyebrow">DATA & PERMISSIONS</p><h1>Privacy</h1><p class="subtitle">What the prototype sends, what it stores and what stays on your device.</p></header>
 <section class="panel settings-section">
 <h2>Camera images and AI analysis</h2><p>When you use Describe, Ask AI or the image tester, a still image from the selected source (ESP32-CAM, phone camera or uploaded file) is sent to this app's Worker backend. In Gemini mode, the Worker forwards the image to Google Gemini. Do not submit images unless you are comfortable sharing their contents with Google.</p>
-<h2>Microphone and automatic voice fallback</h2><p>Microphone permission is requested only after you tap a voice action. The app first attempts the browser's native speech-recognition service, which may process audio through the browser vendor under its own terms. If that service is unavailable or reports a network/service error, the app can record a short audio clip in the browser and send it to the Gemini API for transcription and language detection. Bengali words are translated to English for the question; English speech is preserved even when spoken with a Bangladeshi accent.</p><p>The app does not intentionally keep audio recordings or transcripts in its server database. The audio is sent to Google for transcription, so Google's processing and retention terms apply. Do not speak passwords, private details or confidential information.</p>
+<h2>Microphone and automatic voice fallback</h2><p>Microphone permission is requested only after you tap a voice action. Recommended Automatic mode records a short audio clip in the browser and sends it to the Gemini API for transcription and language detection. It is instructed to recognise Bangladeshi Bengali, English and mixed Bangla-English, translating Bengali portions into English while preserving English words. Optional Browser-first mode uses the browser's speech-recognition service, which may process audio through the browser vendor under its own terms; if the service fails, reports an unsupported language or returns no speech, the app switches to Gemini.</p><p>The app does not intentionally keep audio recordings or transcripts in its server database. Automatic multilingual mode uses Gemini for each voice query, so each recording is externally processed. The audio is sent to Google for transcription, so Google's processing and retention terms apply. Do not speak passwords, private details or confidential information.</p>
 <h2>Spoken responses</h2><p>Device speech synthesis uses voices supplied by your operating system or browser. The current Gemini TTS selection in Admin is a legacy option and may not be available on the deployed Worker; device speech is the recommended option for this prototype.</p>
 <h2>Storage on this device</h2><p>Camera images and AI responses are not intentionally saved on this app's server. Device preferences, camera address, emergency contact and a per-install SOS sender identifier are saved in this browser's local storage. The paired SOS receiver token is stored in session storage for the current browser tab. A versioned privacy-consent record is also stored in local storage.</p>
 <h2>Your own Gemini API key (BYOK)</h2><p>If you enter a personal Gemini API key in Admin, it is held in this tab's session storage and sent in a request header only to this site's API routes that need a provider key. It is not added to the app's local preferences, database, repository or Worker secret. Closing the tab clears the session key. You can remove it immediately from Admin. The key is sent to the Worker and used to authenticate with Google; use only a key you own and are comfortable using here.</p>
@@ -17,11 +17,11 @@
 </section>
 <nav class="navlinks"><a href="/action/">Home</a><a href="/blind/">Blind mode</a><a href="/help/">Help</a></nav>
 <script type="module">
-import {resetConsent} from '/shared/consent.js?v=20261116-auth1';
+import {resetConsent} from '/shared/consent.js?v=20261116-access2';
 document.querySelector('#reset-consent').addEventListener('click',()=>{
  const ok=resetConsent();
  document.querySelector('#consent-reset-status').textContent=ok?'Consent reset. The notice will appear the next time you open Home.':'Could not reset consent in this browser.';
 });
 </script>
-<script type="module" src="/shared/site-nav.js?v=20261116-nav1"></script>
+<script type="module" src="/shared/site-nav.js?v=20261116-access2"></script>
 </main></body></html>

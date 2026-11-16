@@ -1,0 +1,38 @@
+{
+  "id": "/blind/",
+  "name": "Daredevil's Eye",
+  "short_name": "Daredevil's Eye",
+  "description": "Audio-first camera assistant with large accessible controls.",
+  "start_url": "/blind/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07111f",
+  "theme_color": "#07111f",
+  "icons": [
+    { "src": "/icons/daredevils-eye.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Describe",
+      "short_name": "Describe",
+      "description": "Start describing the camera view.",
+      "url": "/blind/?action=describe",
+      "icons": [{ "src": "/icons/daredevils-eye.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Ask AI",
+      "short_name": "Ask AI",
+      "description": "Ask a spoken question about the camera view.",
+      "url": "/blind/?action=ask",
+      "icons": [{ "src": "/icons/daredevils-eye.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "SOS",
+      "short_name": "SOS",
+      "description": "Open the SOS confirmation screen.",
+      "url": "/blind/?action=sos",
+      "icons": [{ "src": "/icons/daredevils-eye.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
+}

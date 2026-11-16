@@ -1,0 +1,40 @@
+# Android phone controls
+
+This page describes integrations that can be tried with the Android phone. The website itself does not receive Android volume-key events reliably. Do not assume a macro works while the phone is locked or another app is in the foreground until it is tested on that device.
+
+## Action URLs
+
+- Describe: https://daredevils-eye.karanjoykundu.workers.dev/blind/?action=describe
+- Ask AI: https://daredevils-eye.karanjoykundu.workers.dev/blind/?action=ask
+- SOS (confirmation only): https://daredevils-eye.karanjoykundu.workers.dev/blind/?action=sos
+
+Opening the Describe URL starts a Describe action after privacy consent has already been accepted. Opening Ask requests microphone access and starts the configured voice-input mode; some browsers may require a tap on the Ask AI button instead. Opening the SOS URL only arms a 30-second confirmation window. The user must then tap SOS in the app; opening the URL never sends an alert by itself.
+
+## MacroDroid / Tasker volume-button macros
+
+1. Install MacroDroid or Tasker from the Play Store and grant only the permissions needed for the volume-button trigger and opening a URL.
+2. Create a macro that listens for three Volume Up presses in quick succession. If your version cannot count presses directly, use a short-lived counter or a multi-press trigger.
+3. Set its action to Open Website / Browse URL and paste the Describe URL above.
+4. Create a second macro for three Volume Down presses and use the Ask AI URL.
+5. Test with the screen unlocked first. Confirm the phone launches the page, the correct action starts, the microphone permission prompt works, and no accidental SOS is sent.
+6. Test with the screen locked only after the unlocked flow is reliable. Android versions, device vendors, battery optimisation and macro permissions can prevent or delay locked-screen triggers.
+
+The app can react to the query string after the browser opens it. It cannot itself capture the hardware volume-key sequence from an ordinary Android Chrome page. MacroDroid or Tasker must recognise the physical button events.
+
+## Home-screen app shortcuts
+
+1. Open the live website in Chrome on Android and visit Blind mode.
+2. From Chrome's menu, choose Install app or Add to Home screen (wording depends on the device).
+3. Launch the installed app and long-press its home-screen icon.
+4. When the launcher supports web-app shortcuts, use Describe, Ask AI or SOS.
+5. Use TalkBack to confirm each shortcut's spoken label and the confirmation step.
+
+The web manifest declares these three shortcuts. Launcher and browser support varies. A shortcut opens the matching URL; the SOS shortcut requires a separate in-app confirmation tap.
+
+## Not included yet
+
+- Direct volume-key handling inside a native Android application.
+- A background Accessibility Service for locked-screen shortcuts.
+- Bluetooth earbud play/pause/next/previous mappings. Media Session behavior varies and is not dependable enough to enable as an emergency control.
+
+A native Android wrapper can be planned later if these web integrations prove too unreliable. The web app's SOS is a best-effort paired-device alert, not emergency-service dispatch.

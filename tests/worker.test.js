@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {handleApi,rankVisionModels,getTranscriptionModelOrder} from '../worker/src/index.js';
-import {detectSpokenLanguage} from '../web/shared/speech.js';
+import {detectSpokenLanguage,selectVoiceForText} from '../web/shared/speech.js';
 
 const req=(path,body,headers={})=>new Request('https://local.test'+path,{
  method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(body)
@@ -151,6 +151,24 @@ test('transcription endpoint rejects a missing audio data URL',async()=>{
  assert.equal(r.status,400);
  assert.match(d.error,/audio data URL/i);
 });
+test('Gemini transcription prompt explicitly supports Bangladeshi Bangla and mixed speech',async t=>{
+ const originalFetch=globalThis.fetch;let requestBody;
+ t.after(()=>{globalThis.fetch=originalFetch;});
+ globalThis.fetch=async (input,options)=>{
+  requestBody=JSON.parse(options.body);
+  return new Response(JSON.stringify({candidates:[{content:{parts:[{text:'Where is my phone?'}]}}]}),{status:200,headers:{'content-type':'application/json'}});
+ };
+ const r=await handleApi(req('/api/transcribe',{audio:'data:audio/webm;base64,AAAA'}),{GEMINI_API_KEY:'test-transcription-key'});
+ const data=await r.json();
+ assert.equal(r.status,200);
+ assert.equal(data.transcript,'Where is my phone?');
+ const prompt=requestBody.contents[0].parts[0].text;
+ assert.match(prompt,/Bangladeshi Bengali/);
+ assert.match(prompt,/Bangla-English code-switching/);
+ assert.match(prompt,/do not mistake Bengali for Hindi or Urdu/);
+ assert.match(prompt,/translate only the Bangla portions/);
+});
+
 test('transcription endpoint reports missing provider key without storing audio',async()=>{
  const r=await handleApi(req('/api/transcribe',{audio:'data:audio/webm;base64,AAAA'}),{});
  const d=await r.json();
@@ -162,6 +180,16 @@ test('spoken language detection uses script content rather than the speaker acce
  assert.equal(detectSpokenLanguage('আমি কোথায় যাব?'),'bn-BD');
  assert.equal(detectSpokenLanguage('Where should I go?'),'en-US');
  assert.equal(detectSpokenLanguage('A Bangladeshi accent speaking English'),'en-US');
+});
+
+test('Bengali text selects a Bengali device voice even when an English voice was saved',()=>{
+ const voices=[
+  {voiceURI:'english-default',lang:'en-US',default:true},
+  {voiceURI:'bengali',lang:'bn-BD',default:false}
+ ];
+ assert.equal(selectVoiceForText(voices,{lang:'en-US',voiceURI:'english-default',text:'আমার ফোন কোথায়?'}).voiceURI,'bengali');
+ assert.equal(selectVoiceForText(voices,{lang:'en-US',voiceURI:'english-default',text:'Where is my phone?'}).voiceURI,'english-default');
+ assert.equal(selectVoiceForText(voices.slice(0,1),{lang:'bn-BD',text:'বাংলা উত্তর'}),null);
 });
 
 test('voice transcription rotates its two low-cost first-choice models before higher-cost fallbacks',()=>{
