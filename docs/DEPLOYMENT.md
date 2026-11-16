@@ -33,11 +33,9 @@ Cloudflare's official guidance uses an API token with the **Edit Cloudflare Work
 
 If secrets are absent, the workflow deliberately skips deployment. A green CI check alone does not prove a production Worker is live.
 
-## Public API and quota protection
+## Public API and Google free-tier quota
 
-The public demo currently allows only the server-configured Gemini model (Gemini Flash in the committed Wrangler configuration). Expensive API calls use weighted Cloudflare per-IP rate limits: image analysis consumes four units, Gemini speech consumes two units and model-list requests consume one unit.
-
-These limits provide basic abuse friction, not a strict global quota or billing cap. Cloudflare documents that rate-limit decisions are approximate and applied separately per Cloudflare location. Anyone can still consume Gemini quota from multiple IPs or locations. Review Gemini usage and configure provider-side spending/usage controls where available.
+This project does not add Cloudflare API rate limits or a server-side model allowlist. Admin displays generateContent models available to the configured Gemini API key. Google's own model-specific free-tier request and token quotas still apply; public visitors share the same project quota. If the quota is exhausted, Gemini returns a quota/rate-limit error until it resets. This project does not add a paid billing route or separate per-user quota.
 
 ## Manual alternative
 
