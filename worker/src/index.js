@@ -1,4 +1,5 @@
 import { buildPrompt, DEFAULT_MODES, RESPONSE_STYLES, SAFETY_CORE, SCENE_RULES } from './prompts.js';
+export { SOSRoom } from './sos-room.js';
 
 const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status,
@@ -106,10 +107,33 @@ async function askGemini({ image, prompt, model, waitSeconds }, env) {
   throw new Error('Gemini request failed after retry.');
 }
 
+async function forwardSos(request, env, action) {
+  if (!env.SOS_ROOM) return json({ ok: false, error: 'SOS relay is not configured. Update wrangler.toml and restart Wrangler.' }, 503);
+  let body;
+  try { body = await request.json(); } catch { return json({ ok: false, error: 'Invalid SOS request.' }, 400); }
+  const id = env.SOS_ROOM.idFromName('home-receiver');
+  const room = env.SOS_ROOM.get(id);
+  return room.fetch(new Request('https://sos-room.internal/' + action, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body)
+  }));
+}
+
 export async function handleApi(request, env = {}) {
   const url = new URL(request.url);
   const mode = getMode(env);
   const model = String(env.GEMINI_MODEL || 'gemini-3.8-flash');
+
+  const sosActions = {
+    '/api/sos/pair': 'pair',
+    '/api/sos/trigger': 'trigger',
+    '/api/sos/poll': 'poll',
+    '/api/sos/ack': 'ack'
+  };
+  if (request.method === 'POST' && sosActions[url.pathname]) {
+    return forwardSos(request, env, sosActions[url.pathname]);
+  }
 
   if (request.method === 'GET' && url.pathname === '/api/health') {
     const apiKeyConfigured = Boolean(env.GEMINI_API_KEY);
