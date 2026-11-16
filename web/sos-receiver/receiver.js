@@ -1,6 +1,12 @@
-import {requestAI} from '/shared/api.js?v=20261116-auth1';
+import {requestAI,getAccessToken,verifyAccessToken} from '/shared/api.js?v=20261116-auth1';
 
 const $=selector=>document.querySelector(selector);
+if(!getAccessToken()){
+ location.replace('/access/?next='+encodeURIComponent(location.pathname));
+ throw new Error('Redirecting to private app access.');
+}
+try{await verifyAccessToken(getAccessToken());}
+catch{location.replace('/access/?next='+encodeURIComponent(location.pathname));throw new Error('Private app access required.');}
 const DEVICE_KEY='daredevils-eye.receiver.device.v2';
 const TOKEN_KEY='daredevils-eye.receiver.token.v2';
 let deviceId=sessionStorage.getItem(DEVICE_KEY)||'';
