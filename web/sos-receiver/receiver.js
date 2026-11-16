@@ -1,12 +1,6 @@
-import {requestAI,getAccessToken,verifyAccessToken} from '/shared/api.js?v=20261116-auth1';
+import {requestPublic} from '/shared/api.js?v=20261116-auth1';
 
 const $=selector=>document.querySelector(selector);
-if(!getAccessToken()){
- location.replace('/access/?next='+encodeURIComponent(location.pathname));
- throw new Error('Redirecting to private app access.');
-}
-try{await verifyAccessToken(getAccessToken());}
-catch{location.replace('/access/?next='+encodeURIComponent(location.pathname));throw new Error('Private app access required.');}
 const DEVICE_KEY='daredevils-eye.receiver.device.v2';
 const TOKEN_KEY='daredevils-eye.receiver.token.v2';
 let deviceId=sessionStorage.getItem(DEVICE_KEY)||'';
@@ -71,7 +65,7 @@ async function poll(){
  if(!isConnected||polling)return;
  polling=true;
  try{
-  const data=await requestAI('/api/sos/poll',{deviceId,receiverToken});
+  const data=await requestPublic('/api/sos/poll',{deviceId,receiverToken});
   if(data.active&&data.event)showAlert(data.event);
   else if($('#emergency-alert').hidden)$('#receiver-detail').textContent='Connected. No active SOS alert.';
   updateStatus('Connected · listening for emergency alerts.');
@@ -87,7 +81,7 @@ $('#pair-receiver').addEventListener('click',async()=>{
  if(!/^[A-Z0-9]{6}$/.test(code)){updateStatus('Enter exactly six letters or numbers.');button.disabled=false;return;}
  updateStatus('Checking invitation…');
  try{
-  const result=await requestAI('/api/sos/pair',{code});
+  const result=await requestPublic('/api/sos/pair',{code});
   deviceId=result.deviceId;receiverToken=result.receiverToken;
   sessionStorage.setItem(DEVICE_KEY,deviceId);sessionStorage.setItem(TOKEN_KEY,receiverToken);
   // Refresh so the receiver opens directly into its paired state.
@@ -111,7 +105,7 @@ $('#acknowledge-alert').addEventListener('click',async()=>{
  if(!deviceId||!receiverToken)return;
  const button=$('#acknowledge-alert');button.disabled=true;
  try{
-  await requestAI('/api/sos/ack',{deviceId,receiverToken,eventId:lastEventId});
+  await requestPublic('/api/sos/ack',{deviceId,receiverToken,eventId:lastEventId});
   stopAlarm();$('#emergency-alert').hidden=true;
   $('#receiver-detail').textContent='Alert acknowledged. The sender can send another alert if needed.';
   updateStatus('Alert acknowledged. Still connected.');
