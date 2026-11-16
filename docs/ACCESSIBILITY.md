@@ -45,3 +45,14 @@ Daredevil's Eye is an experimental audio-first interface. It is not accessibilit
 ## Limitations
 
 Browser speech recognition, microphone permission, synthesis, vibration, wake lock and background execution depend on the device and operating system. A browser tab may be suspended or stopped when the phone is locked. Android volume-key interception is not provided by ordinary web pages; automation apps and device-specific setup are required and must be tested on the actual phone.
+
+
+## Android 16 / Samsung Galaxy target
+
+The first handset validation target is Galaxy A55 5G on Android 16 / One UI 8. This is a browser/PWA target, not a native Android application. Use current Chrome for the baseline run, then repeat on Samsung Internet to identify browser-specific differences.
+
+- Microphone, speech recognition and speech synthesis must be tested independently. An API being present does not prove that the device's speech service is installed, reachable or accurate.
+- Bengali TTS is considered available only when the browser reports an installed `bn` voice and a human listener confirms pronunciation. A voice-list entry alone is not acceptance.
+- Device motion must be explicitly tested on the handset. Do not infer sensor reliability from desktop simulation or unit tests.
+- Keep optional automatic SOS triggers foreground-only. Do not claim they work with the screen locked or while Android suspends the browser.
+- Use the Diagnostics phone report to record browser, OS (when exposed), recording formats, Bengali voices and API availability. It does not upload the report.
