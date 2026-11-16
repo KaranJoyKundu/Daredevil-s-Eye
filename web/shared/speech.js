@@ -42,10 +42,10 @@ export function selectVoiceForText(voices, { lang = 'en-US', voiceURI = '', text
   const wantsBangla = /^bn(?:-|$)/i.test(lang) || detectSpokenLanguage(text) === 'bn-BD';
   if (wantsBangla) return available.find(v => v.voiceURI === voiceURI && /^bn(?:-|$)/i.test(v.lang || '')) ||
     available.find(v => /^bn-BD$/i.test(v.lang || '')) || available.find(v => /^bn(?:-|$)/i.test(v.lang || '')) || null;
-  return available.find(v => v.voiceURI === voiceURI) ||
-    available.find(v => (v.lang || '').toLowerCase() === String(lang).toLowerCase()) ||
-    available.find(v => (v.lang || '').toLowerCase().startsWith(String(lang).slice(0,2).toLowerCase())) ||
-    available.find(v => v.default) || null;
+  const languageMatches = voice => (voice.lang || '').toLowerCase() === String(lang).toLowerCase() ||
+    (voice.lang || '').toLowerCase().startsWith(String(lang).slice(0,2).toLowerCase());
+  return available.find(v => v.voiceURI === voiceURI && languageMatches(v)) ||
+    available.find(languageMatches) || available.find(v => v.default && languageMatches(v)) || null;
 }
 
 export function speak(text, options = {}) {
@@ -58,7 +58,7 @@ export function speak(text, options = {}) {
     if(currentAudio){currentAudio.pause();currentAudio=null;}
     if(currentAudioUrl){URL.revokeObjectURL(currentAudioUrl);currentAudioUrl=null;}
     const utterance = new SpeechSynthesisUtterance(String(text)), settings = getSettings();
-    const requestedLang = options.lang || settings.speechLanguage;
+    const requestedLang = detectSpokenLanguage(text) === 'bn-BD' ? 'bn-BD' : (options.lang || settings.speechLanguage);
     utterance.lang = requestedLang;
     utterance.rate = options.rate ?? settings.speechRate;
     utterance.pitch = options.pitch ?? settings.speechPitch;

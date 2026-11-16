@@ -97,8 +97,13 @@ input[type=file]{min-height:48px;padding:8px;font-size:.9rem}
 .blind-sos{background:#8a3700}
 .blind-repeat{background:#4b3292}
 .blind-tile:focus-visible,.blind-help-button:focus-visible{outline:5px solid #ffeb3b;outline-offset:-7px}
-.blind-utility{height:59px;padding:3px 7px 7px;display:flex;align-items:center;justify-content:center}
-.blind-help-button{width:100%;height:52px;margin:0!important;border:2px solid #b7d8ff!important;border-radius:12px!important;background:#132b45!important;color:#fff!important;font:800 1rem system-ui!important;letter-spacing:.04em}
+.blind-utility{height:66px;padding:7px;display:flex;align-items:center;justify-content:center}
+.blind-page .blind-tile{width:100%;height:100%;min-height:0;margin:0;padding:12px 6px;border:0}
+.blind-page .blind-describe{background:#07509b}
+.blind-page .blind-ask{background:#00665f}
+.blind-page .blind-sos{background:#8a3700}
+.blind-page .blind-repeat{background:#4b3292}
+.blind-page .blind-help-button{width:100%;min-height:0!important;height:52px;margin:0!important;border:2px solid #b7d8ff!important;border-radius:12px!important;background:#132b45!important;color:#fff!important;font:800 1rem system-ui!important;letter-spacing:.04em}
 .blind-help-button:active{background:#244d72!important}
 .blind-consent{display:flex;position:fixed;inset:0;z-index:100;align-items:center;justify-content:center;padding:18px;background:#020916ed}
 .blind-consent-card{width:min(620px,100%);padding:22px;border:2px solid #e8ad36;border-radius:18px;background:#13263b}
