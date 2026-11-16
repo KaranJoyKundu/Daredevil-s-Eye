@@ -1,33 +1,99 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin settings · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css"></head>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07111f"><title>Admin / Settings · Daredevil's Eye</title>
+<link rel="stylesheet" href="/shared/style.css">
+</head>
 <body><main>
-<h1>Admin / Settings</h1><p>These settings are saved only in this browser on this device.</p>
+<header><p class="eyebrow">DEVICE CONFIGURATION</p><h1>Admin / Settings</h1><p class="subtitle">Tune the camera, AI behaviour and spoken voice. Settings stay in this browser on this device.</p></header>
+
 <form id="settings-form">
-<label for="camera">ESP32-CAM address</label><input id="camera" type="text" inputmode="url" required placeholder="192.168.0.104 or http://192.168.0.104"><small>Enter an IP address or full URL. The app adds http:// if you omit it.</small>
-<label for="contact-name">Trusted contact name</label><input id="contact-name" maxlength="80">
-<label for="contact-phone">Trusted contact phone</label><input id="contact-phone" type="tel" maxlength="30">
-<label for="language">Speech language</label><select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
-<label for="rate">Speech speed</label><input id="rate" type="range" min="0.7" max="1.3" step="0.1">
-<label for="prompt">Additional AI prompt (optional)</label><textarea id="prompt" maxlength="4000" placeholder="Example: Use simple language and keep answers to two short sentences."></textarea>
-<p>The core safety instructions cannot be changed and are always applied after this additional prompt.</p><button type="submit">Save settings</button>
-</form><p id="message" role="status" aria-live="polite"></p>
-<section class="panel" aria-labelledby="image-test-title">
-<h2 id="image-test-title">Test an image with AI</h2>
-<p>Choose a photo to see exactly what will be sent to Gemini. This test sends the selected image to your configured AI backend.</p>
-<h3>Manual image URL</h3>
-<label for="test-image-url">Paste a direct image URL</label><input id="test-image-url" type="text" inputmode="url" placeholder="https://example.com/photo.jpg">
-<button id="load-image-url" type="button">Load URL and preview image</button>
-<p>Or choose a file from your device, or capture a still photo directly from the ESP32-CAM.</p>
-<label for="test-image">Choose image file</label><input id="test-image" type="file" accept="image/jpeg,image/png,image/webp">
-<button id="capture-camera-button" type="button">Capture a test photo from ESP32-CAM</button>
-<p>The preview below shows the exact image that will be sent to Gemini.</p>
-<img id="test-preview" alt="Preview of the exact image selected for AI analysis" hidden style="display:none;max-width:100%;max-height:360px;object-fit:contain;border-radius:12px;margin-top:12px">
-<p id="image-details" aria-live="polite">No image selected.</p>
-<label for="test-question">Question (optional)</label><input id="test-question" type="text" maxlength="1000" placeholder="What can you see?">
+<section class="panel settings-section">
+<h2>Camera & trusted contact</h2>
+<label for="camera">ESP32-CAM address</label>
+<input id="camera" type="text" inputmode="url" required placeholder="192.168.0.104 or http://192.168.0.104">
+<small>Current camera address: http://192.168.0.104. The app adds http:// when you enter a plain IP.</small>
+<div class="field-grid">
+<div><label for="contact-name">Trusted contact name</label><input id="contact-name" maxlength="80" placeholder="Name"></div>
+<div><label for="contact-phone">Trusted contact phone</label><input id="contact-phone" type="tel" maxlength="30" placeholder="+880..."></div>
+</div>
+<label for="language">Speech / microphone language</label>
+<select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
+</section>
+
+<section class="panel settings-section">
+<h2>AI model & response</h2>
+<label for="model">Gemini model</label>
+<select id="model"><option value="gemini-3.8-flash">Gemini 3.8 Flash (configured default)</option></select>
+<div class="inline-actions"><button id="refresh-models" type="button" class="secondary">Refresh available models</button></div>
+<p id="model-status" class="hint" role="status" aria-live="polite">Loading models available to your API key…</p>
+<small>The list comes from Google's Models API for your key and includes models that expose generateContent. Some models may not accept image input; the AI tester can verify a selection.</small>
+<div class="field-grid">
+<div><label for="wait-seconds">Maximum wait for Gemini</label>
+<select id="wait-seconds">
+<option value="45">45 seconds</option><option value="60">60 seconds</option><option value="90">90 seconds</option><option value="120">120 seconds</option><option value="150">150 seconds</option><option value="180">180 seconds</option>
+</select></div>
+<div><label for="response-style">Description detail</label>
+<select id="response-style">
+<option value="concise">Concise · 2–3 sentences</option><option value="balanced">Balanced · 3–5 sentences</option><option value="detailed">Detailed · fuller description</option>
+</select></div>
+</div>
+<label for="base-prompt">Built-in scene prompt (read-only)</label>
+<textarea id="base-prompt" readonly rows="5">Loading built-in prompt…</textarea>
+<small>This prompt is maintained by the app to keep descriptions useful and safety-aware. Your extra prompt below is added without replacing the safety rules.</small>
+<label for="prompt">Your additional instruction (optional)</label>
+<textarea id="prompt" maxlength="4000" placeholder="Example: Use everyday words. Mention the most important thing first. Keep the response natural and easy to listen to."></textarea>
+</section>
+
+<section class="panel settings-section">
+<h2>Voice & speech</h2>
+<label for="voice-preset">Voice style</label>
+<select id="voice-preset">
+<option value="gentle">Gentle · soft and slightly higher</option>
+<option value="warm">Warm · relaxed and friendly</option>
+<option value="bright">Bright · lively and upbeat</option>
+<option value="calm">Calm · slower and lower</option>
+<option value="clear">Clear · steady and neutral</option>
+<option value="custom">Custom · use the sliders</option>
+</select>
+<label for="voice-select">Installed voice on this device</label>
+<select id="voice-select"><option value="">Automatic device voice</option></select>
+<p id="voice-status" class="hint">Voice options depend on the voices installed in your browser or operating system.</p>
+<div class="field-grid">
+<div><label for="speech-rate">Speaking speed: <output id="rate-value">0.96</output></label><input id="speech-rate" type="range" min="0.75" max="1.25" step="0.05"></div>
+<div><label for="speech-pitch">Voice pitch: <output id="pitch-value">1.08</output></label><input id="speech-pitch" type="range" min="0.75" max="1.5" step="0.05"></div>
+</div>
+<button id="preview-voice" type="button" class="secondary">Preview selected voice</button>
+<small>These styles adjust the selected device voice. They do not guarantee a specific gender or sound; available voices vary by device. You can select a named installed voice above.</small>
+</section>
+
+<div class="inline-actions">
+<button type="submit">Save all settings</button>
+</div>
+</form>
+<p id="message" role="status" aria-live="polite"></p>
+
+<section class="panel settings-section" aria-labelledby="image-test-title">
+<h2 id="image-test-title">Image & AI tester</h2>
+<p>Try a local photo, direct image URL, or a still frame from the ESP32-CAM. Preview it before sending the exact image to your selected Gemini model.</p>
+<label for="test-image-url">Manual image URL</label>
+<input id="test-image-url" type="text" inputmode="url" placeholder="https://example.com/photo.jpg">
+<button id="load-image-url" type="button" class="secondary">Load URL and preview</button>
+<div class="field-grid">
+<div><label for="test-image">Choose image file</label><input id="test-image" type="file" accept="image/jpeg,image/png,image/webp"></div>
+<div><label>&nbsp;</label><button id="capture-camera-button" type="button" class="secondary">Capture from camera</button></div>
+</div>
+<img id="test-preview" alt="Preview of exact image selected for AI analysis" hidden style="display:none;max-width:100%;max-height:360px;object-fit:contain;border-radius:12px;margin-top:12px">
+<p id="image-details" class="hint" aria-live="polite">No image selected.</p>
+<label for="test-question">Question (optional)</label>
+<input id="test-question" type="text" maxlength="1000" placeholder="What can you see?">
 <button id="test-image-button" type="button" disabled>Send this image to AI</button>
 <p id="test-status" role="status" aria-live="polite"></p>
-<div id="test-result" class="panel" aria-live="polite"></div>
+<pre id="test-result" class="result-output" aria-live="polite">The AI response will appear here.</pre>
 </section>
-<nav class="navlinks"><a href="/action/">Home</a><a href="/diagnostics/">Diagnostics</a><a href="/privacy/">Privacy</a></nav>
-</main><script type="module" src="/admin/admin.js?v=20261116-urlfix4"></script></body></html>
+
+<nav class="navlinks"><a href="/action/">Home</a><a href="/diagnostics/">Diagnostics</a><a href="/contact/">Contact</a><a href="/privacy/">Privacy</a></nav>
+</main>
+<script type="module" src="/admin/admin.js?v=20261116-admin-controls1"></script>
+</body></html>
