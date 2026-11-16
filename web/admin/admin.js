@@ -170,8 +170,9 @@ form.addEventListener('submit',async event=>{
  try{
   const next=formSettings();
   if(next.sosPairingCode&&!/^[A-Z0-9]{8,20}$/.test(next.sosPairingCode))throw new Error('SOS pairing code must be 8–20 letters or numbers.');
-  if(saved.sosPairingCode&&next.sosPairingCode&&saved.sosPairingCode!==next.sosPairingCode){
-   await requestAI('/api/sos/reset',{code:saved.sosPairingCode,newCode:next.sosPairingCode});
+  const previousCode=getSettings().sosPairingCode;
+  if(previousCode&&next.sosPairingCode&&previousCode!==next.sosPairingCode){
+   await requestAI('/api/sos/reset',{code:previousCode,newCode:next.sosPairingCode});
   }
   saveSettings(next);
   $('#camera').value=next.cameraBaseUrl;
