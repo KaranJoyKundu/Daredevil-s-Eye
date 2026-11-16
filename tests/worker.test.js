@@ -80,3 +80,21 @@ test('camera routes require an image',async()=>{
  const r=await handleApi(req('/api/describe',{}),{AI_MODE:'mock'});
  assert.equal(r.status,400);
 });
+
+test('SOS endpoints fail clearly when the durable room is not configured',async()=>{
+ const r=await handleApi(req('/api/sos/trigger',{code:'0123456789ABCDEF'}),{});
+ const d=await r.json();
+ assert.equal(r.status,503);
+ assert.match(d.error,/SOS relay is not configured/);
+});
+test('health reports whether SOS relay is configured',async()=>{
+ const r=await handleApi(health(),{SOS_ROOM:{}});
+ const d=await r.json();
+ assert.equal(d.sosRelayConfigured,true);
+});
+test('speech endpoint fails clearly when Gemini key is missing',async()=>{
+ const r=await handleApi(req('/api/speech',{text:'Hello',voice:'Kore'}),{});
+ const d=await r.json();
+ assert.equal(r.status,503);
+ assert.match(d.error,/API key is missing/);
+});
