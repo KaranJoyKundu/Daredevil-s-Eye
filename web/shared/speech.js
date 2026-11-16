@@ -112,7 +112,7 @@ export function stopSpeaking() {
  * Request microphone permission explicitly from a user gesture, immediately
  * release the temporary stream, then let SpeechRecognition acquire the mic.
  */
-export async function listenOnce({ lang = getSettings().speechLanguage, onResult, onInterim, onError, onEnd, onPermission } = {}) {
+export async function listenOnce({ lang = getSettings().speechLanguage, onResult, onInterim, onError, onEnd, onPermission, onStart } = {}) {
   if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia){
     onError?.('Microphone access requires HTTPS or localhost. This HTTP LAN address is not a secure context.');
     return null;
@@ -154,6 +154,7 @@ export async function listenOnce({ lang = getSettings().speechLanguage, onResult
       if(interim)onInterim?.(interim);
       if(finalText){finalReceived=true;onResult?.(finalText.trim());}
     };
+    recognition.onstart=()=>onStart?.();
     recognition.onerror=event=>{
       const reasons={
         'not-allowed':'Speech recognition permission was denied.',
