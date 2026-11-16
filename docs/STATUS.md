@@ -12,7 +12,7 @@ Updated for the current feature branch. This page separates implemented source f
 - ESP32-CAM `/capture` path and phone photo/upload fallback.
 - Six Diagnostics cards, consent persistence and one-time SOS receiver pairing.
 - GitHub Actions tests/syntax checks and conditional Cloudflare deploy.
-- Prior confirmed production workflow: 39 tests passed, 0 failed; deployment succeeded; Worker version `92233e30-579f-4cb4-a2bd-6aaee6025530`. Live URL: https://daredevils-eye.kjkundu2006.workers.dev/
+- Prior confirmed production workflow: 39 tests passed, 0 failed; deployment succeeded; Worker version `92233e30-579f-4cb4-a2bd-6aaee6025530`. Live URL: https://daredevils-eye.karanjoykundu.workers.dev/
 
 ## Added in this feature branch (not production yet)
 

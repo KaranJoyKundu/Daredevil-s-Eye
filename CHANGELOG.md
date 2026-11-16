@@ -1,5 +1,9 @@
 # Changelog
 
+## Deployment address update
+
+- Updated the documented public Workers URL to https://daredevils-eye.karanjoykundu.workers.dev/ after changing the Cloudflare account-level `workers.dev` subdomain.
+
 ## Unreleased — blind-first accessibility and voice resilience
 
 - Added a dedicated `/blind/` 2×2 action screen without a brand header, navigation menu or on-screen exit control.

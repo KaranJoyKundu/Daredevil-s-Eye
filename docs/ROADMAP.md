@@ -15,7 +15,7 @@ This roadmap replaces the old token/rate-limit checklist, which no longer descri
 - [x] Versioned local privacy consent.
 - [x] One-time SOS invitations, receiver tokens, replacement and acknowledgement.
 - [x] GitHub Actions test/syntax workflow and conditional Cloudflare deployment.
-- [x] Public Cloudflare URL deployed: https://daredevils-eye.kjkundu2006.workers.dev/
+- [x] Public Cloudflare URL deployed: https://daredevils-eye.karanjoykundu.workers.dev/
 
 ## Phase 1 — blind-first and voice-resilience improvements (current feature branch)
 

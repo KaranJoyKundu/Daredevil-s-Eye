@@ -4,7 +4,7 @@
 
 Daredevil's Eye explores how a camera, a phone browser and vision-language AI can describe selected visual information aloud. The project combines an ESP32-CAM still-image path, a phone-photo fallback, a Cloudflare Worker API, Google Gemini vision, browser/device speech and a manually paired SOS receiver.
 
-**Live demo:** https://daredevils-eye.kjkundu2006.workers.dev/
+**Live demo:** https://daredevils-eye.karanjoykundu.workers.dev/
 
 > **Safety first:** This is an experimental project, not a certified navigation aid, medical device or emergency-dispatch service. AI can miss objects and hazards. Never use it to decide whether a road crossing, path or movement is safe. Continue using a white cane, guide dog, mobility training and human assistance.
 
