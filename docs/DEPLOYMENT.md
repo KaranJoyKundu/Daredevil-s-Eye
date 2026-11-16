@@ -17,9 +17,8 @@ In GitHub, open **Settings → Secrets and variables → Actions** and add these
 | CLOUDFLARE_API_TOKEN | Scoped Cloudflare API token for Workers deployment |
 | CLOUDFLARE_ACCOUNT_ID | Cloudflare account ID |
 | GEMINI_API_KEY | Current Gemini key |
-| APP_ACCESS_TOKEN | Random private token of at least 32 characters |
 
-The deploy workflow passes Gemini and app tokens to Wrangler as Worker secrets. Never put these values in workflow source, frontend code, commits or logs.
+The deploy workflow passes the Gemini key to Wrangler as a Worker secret. Never put these values in workflow source, frontend code, commits or logs.
 
 Cloudflare's official guidance uses an API token with the **Edit Cloudflare Workers** permission policy. Scope it to the intended account and review the permissions.
 
@@ -27,7 +26,7 @@ Cloudflare's official guidance uses an API token with the **Edit Cloudflare Work
 
 1. Merge an approved PR into main.
 2. GitHub Actions runs CI.
-3. After CI succeeds, the deploy job runs only if all four repository secrets exist.
+3. After CI succeeds, the deploy job runs only if all three repository secrets exist.
 4. Wrangler deploys the Worker and static assets to the Cloudflare account.
 5. Obtain the workers.dev URL from the GitHub Actions deployment output or Cloudflare Dashboard.
 6. Open /access/ and enter the configured APP_ACCESS_TOKEN.
@@ -40,7 +39,6 @@ After authenticating Wrangler and selecting the correct Cloudflare account:
 
 ~~~powershell
 npx wrangler secret put GEMINI_API_KEY
-npx wrangler secret put APP_ACCESS_TOKEN
 npx wrangler deploy
 ~~~
 
