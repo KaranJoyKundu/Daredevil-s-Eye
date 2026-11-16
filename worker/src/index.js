@@ -1,5 +1,5 @@
 import { buildPrompt, DEFAULT_MODES, RESPONSE_STYLES, RESPONSE_LANGUAGES, SAFETY_CORE, SCENE_RULES } from './prompts.js';
-import { appTokenConfigured, hasValidAppToken, enforceRateLimit } from './auth.js';
+import { enforceRateLimit } from './rate-limit.js';
 export { SOSRoom } from './sos-room.js';
 export { SOSDirectory } from './sos-directory.js';
 
@@ -14,7 +14,7 @@ function validPayload(body) {
   if (body.image && !/^data:image\/(jpeg|png|webp);base64,/i.test(body.image)) return 'Only JPEG, PNG, or WebP images are accepted.';
   if (body.image && body.image.length > 5_500_000) return 'Image is too large (maximum about 4 MB encoded).';
   if (body.question && (typeof body.question !== 'string' || body.question.length > 1000)) return 'Question must be text up to 1,000 characters.';
-  if (body.customPrompt && (typeof body.customPrompt !== 'string' || body.customPrompt.length > 4000)) return 'Custom prompt must be text up to 4,000 characters.';
+  if (body.customPrompt && (typeof body.customPrompt !== 'string' || body.customPrompt.length > 1000)) return 'Custom prompt must be text up to 1,000 characters.';
   if (body.model && (typeof body.model !== 'string' || !/^[a-zA-Z0-9._-]{3,100}$/.test(body.model.replace(/^models\//, '')))) return 'Invalid model identifier.';
   if (body.responseStyle && !Object.hasOwn(RESPONSE_STYLES, body.responseStyle)) return 'Unsupported response style.';
   if (body.waitSeconds !== undefined && (!Number.isInteger(body.waitSeconds) || body.waitSeconds < 15 || body.waitSeconds > 180)) return 'Wait time must be between 15 and 180 seconds.';
@@ -35,8 +35,13 @@ function getMode(env) {
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+function getAllowedGeminiModels(env) {
+  const configured = String(env.GEMINI_ALLOWED_MODELS || env.GEMINI_MODEL || 'gemini-3.8-flash');
+  return new Set(configured.split(',').map(value => value.trim().replace(/^models\//, '')).filter(value => /^[a-zA-Z0-9._-]{3,100}$/.test(value)));
+}
+
 async function listGeminiModels(env) {
-  if (!env.GEMINI_API_KEY) throw new Error('Gemini API key is missing from .dev.vars.');
+  if (!env.GEMINI_API_KEY) throw new Error('Gemini API key is not configured.');
   const models = [];
   let pageToken = '';
   for (let page = 0; page < 3; page += 1) {
@@ -52,6 +57,7 @@ async function listGeminiModels(env) {
   }
   return models
     .filter(model => model.name && model.supportedGenerationMethods?.includes('generateContent'))
+    .filter(model => getAllowedGeminiModels(env).has(String(model.name).replace(/^models\//, '')))
     .filter(model => !/(embedding|tts|live|imagen|veo|lyria|transcrib|audio|robotics)/i.test(model.name))
     .map(model => ({
       id: String(model.name).replace(/^models\//, ''),
@@ -147,16 +153,14 @@ export async function handleApi(request, env = {}) {
       apiKeyConfigured: Boolean(env.GEMINI_API_KEY),
       // Configuration is observable; actual provider reachability is only established by a real request.
       providerConfigured: mode === 'gemini' && Boolean(env.GEMINI_API_KEY),
-      appAccessConfigured: appTokenConfigured(env),
+      rateLimitsConfigured: Boolean(env.APP_AI_LIMIT && env.APP_SOS_LIMIT),
       sosRelayConfigured: Boolean(env.SOS_ROOM && env.SOS_DIRECTORY),
       mockModeExplicitlyEnabled: mode === 'mock',
       message: !supportedMode
         ? `Unsupported AI_MODE "${mode}". Use "gemini" or explicitly "mock".`
-        : !appTokenConfigured(env)
-          ? 'Backend is not ready: APP_ACCESS_TOKEN is missing or too short.'
-          : mode === 'gemini'
-            ? (env.GEMINI_API_KEY ? 'Gemini mode selected; provider key is loaded.' : 'Gemini mode selected, but GEMINI_API_KEY is missing.')
-            : 'Mock mode explicitly enabled; no live image analysis.'
+        : mode === 'gemini'
+          ? (env.GEMINI_API_KEY ? 'Gemini mode selected; provider key is loaded.' : 'Gemini mode selected, but GEMINI_API_KEY is missing.')
+          : 'Mock mode explicitly enabled; no live image analysis.'
     }, supportedMode ? 200 : 503);
   }
 
@@ -176,27 +180,29 @@ export async function handleApi(request, env = {}) {
     '/api/sos/ack': 'ack'
   };
   if (request.method === 'POST' && receiverActions[url.pathname]) {
-    const limited = await enforceRateLimit(env.APP_SOS_LIMIT, request, 'public-sos');
-    if (!limited) return json({ error: 'SOS receiver request limit reached. Wait before trying again.' }, 429);
+    const limitResult = await enforceRateLimit(env.APP_SOS_LIMIT, request, 'sos-receiver');
+    if (!limitResult.configured) return json({ error: 'SOS rate limiting is not configured.' }, 503);
+    if (!limitResult.success) return json({ error: 'SOS receiver request limit reached. Please wait before trying again.' }, 429);
     return forwardSos(request, env, receiverActions[url.pathname]);
   }
 
-  const authAllowed = await enforceRateLimit(env.APP_AUTH_LIMIT, request, 'auth');
-  if (!authAllowed) return json({ error: 'Too many access attempts. Wait one minute and try again.' }, 429);
-  if (!appTokenConfigured(env)) return json({ error: 'Private app access is not configured. Set APP_ACCESS_TOKEN as a Worker secret.' }, 503);
-  if (!hasValidAppToken(request, env)) return json({ error: 'Unlock this private app at /access/ before using its API.' }, 401);
-
-  if (request.method === 'GET' && url.pathname === '/api/session') {
-    return json({ authenticated: true });
+  // The browser app is public: expensive routes are protected by per-IP,
+  // weighted Cloudflare limits instead of an owner login token.
+  const isVisionRoute = request.method === 'POST' && ['/api/describe', '/api/ask'].includes(url.pathname);
+  const isSpeechRoute = request.method === 'POST' && url.pathname === '/api/speech';
+  const isModelsRoute = request.method === 'GET' && url.pathname === '/api/models';
+  if (isVisionRoute || isSpeechRoute || isModelsRoute) {
+    const delta = isVisionRoute ? 4 : isSpeechRoute ? 2 : 1;
+    const limitResult = await enforceRateLimit(env.APP_AI_LIMIT, request, 'ai', delta);
+    if (!limitResult.configured) return json({ error: 'AI rate limiting is not configured. Please try again later.' }, 503);
+    if (!limitResult.success) return json({ error: 'Public AI usage limit reached for this network. Please wait a minute and try again.' }, 429);
   }
 
-  if (url.pathname === '/api/models' || url.pathname === '/api/describe' || url.pathname === '/api/ask' || url.pathname === '/api/speech') {
-    const limited = await enforceRateLimit(env.APP_AI_LIMIT, request, 'ai');
-    if (!limited) return json({ error: 'AI request limit reached. Wait one minute before trying again.' }, 429);
-  }
-  if (url.pathname.startsWith('/api/sos/')) {
-    const limited = await enforceRateLimit(env.APP_SOS_LIMIT, request, 'sos');
-    if (!limited) return json({ error: 'SOS request limit reached. Wait before trying again.' }, 429);
+  const isSenderSosRoute = request.method === 'POST' && ['/api/sos/invite', '/api/sos/trigger'].includes(url.pathname);
+  if (isSenderSosRoute) {
+    const limitResult = await enforceRateLimit(env.APP_SOS_LIMIT, request, 'sos-sender');
+    if (!limitResult.configured) return json({ error: 'SOS rate limiting is not configured.' }, 503);
+    if (!limitResult.success) return json({ error: 'SOS request limit reached. Please wait before trying again.' }, 429);
   }
 
   const sosActions = {
@@ -233,7 +239,10 @@ export async function handleApi(request, env = {}) {
     if (!body.image) return json({ error: 'A camera image is required for this endpoint.' }, 400);
     if (action === 'ask' && !body.question?.trim()) return json({ error: 'Please provide a question.' }, 400);
     if (mode !== 'gemini' && mode !== 'mock') return json({ error: `Unsupported AI_MODE "${mode}".` }, 503);
-    const selectedModel = body.model || model;
+    const selectedModel = String(body.model || model).replace(/^models\//, '');
+    if (!getAllowedGeminiModels(env).has(selectedModel)) {
+      return json({ error: 'This public demo currently allows only its configured Gemini model. The model was not enabled for public API use.' }, 400);
+    }
     const waitSeconds = body.waitSeconds || 120;
     const prompt = buildPrompt({
       mode: action,
