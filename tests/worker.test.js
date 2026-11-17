@@ -792,6 +792,44 @@ test('account write routes reject missing and cross-origin Origin headers',async
 });
 
 
+test('email confirmation redirects to the app and exchanges the Supabase session for secure cookies',async t=>{
+ const originalFetch=globalThis.fetch;
+ let signupRedirect='';
+ t.after(()=>{globalThis.fetch=originalFetch;});
+ globalThis.fetch=async(input,init={})=>{
+  const url=new URL(String(input));
+  if(url.pathname==='/auth/v1/signup'){
+   signupRedirect=url.searchParams.get('redirect_to')||'';
+   return new Response(JSON.stringify({user:{id:'44444444-4444-4444-8444-444444444444',email:'owner@example.test'}}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  if(url.pathname==='/auth/v1/user'){
+   const headers=new Headers(init.headers);
+   assert.equal(headers.get('authorization'),'Bearer access-token-with-more-than-twenty-characters');
+   return new Response(JSON.stringify({id:'44444444-4444-4444-8444-444444444444',email:'owner@example.test'}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  throw new Error('Unexpected confirmation test request: '+url.href);
+ };
+ const env={SUPABASE_URL:'https://supabase.example.test',SUPABASE_PUBLISHABLE_KEY:'sb_publishable_test',SUPABASE_SECRET_KEY:'sb_secret_test'};
+ const signup=await handleApi(new Request('https://local.test/api/account/signup',{
+  method:'POST',headers:{'content-type':'application/json',Origin:'https://local.test'},
+  body:JSON.stringify({email:'owner@example.test',password:'a-very-long-test-password'})
+ }),env);
+ assert.equal(signup.status,200);
+ assert.equal(signupRedirect,'https://local.test/account/');
+ const confirmation=await handleApi(new Request('https://local.test/api/account/confirm',{
+  method:'POST',headers:{'content-type':'application/json',Origin:'https://local.test'},
+  body:JSON.stringify({accessToken:'access-token-with-more-than-twenty-characters',refreshToken:'refresh-token-with-more-than-twenty-characters'})
+ }),env);
+ assert.equal(confirmation.status,200);
+ const result=await confirmation.json();
+ assert.equal(result.authenticated,true);
+ assert.equal(result.user.email,'owner@example.test');
+ const cookies=confirmation.headers.get('set-cookie')||'';
+ assert.match(cookies,/de_access=/);
+ assert.match(cookies,/de_refresh=/);
+ assert.match(cookies,/HttpOnly/);
+ assert.match(cookies,/Secure/);
+});
 test('legacy Supabase anon and service_role key names retain their JWT Authorization headers',async t=>{
  const originalFetch=globalThis.fetch;
  let authHeaders=null,serviceHeaders=null;
