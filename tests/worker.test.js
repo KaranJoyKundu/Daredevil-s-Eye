@@ -344,6 +344,7 @@ test('Gemini MAX_TOKENS output is retried with a larger budget and never returne
     {name:'models/gemini-3.8-flash',displayName:'Gemini Flash',supportedGenerationMethods:['generateContent']},
     {name:'models/gemini-3.7-flash',displayName:'Gemini Flash 3.7',supportedGenerationMethods:['generateContent']},
     {name:'models/gemini-3.6-flash',displayName:'Gemini Flash 3.6',supportedGenerationMethods:['generateContent']},
+    {name:'models/gemini-3.1-pro-preview',displayName:'Gemini Pro Preview',supportedGenerationMethods:['generateContent']},
     {name:'models/gemini-3.5-flash',displayName:'Gemini Flash 3.5',supportedGenerationMethods:['generateContent']}
    ]}),{status:200,headers:{'content-type':'application/json'}});
   }
@@ -371,8 +372,9 @@ test('Gemini MAX_TOKENS output is retried with a larger budget and never returne
  assert.equal(data.answer,'The complete answer is from the fallback model.');
  assert.notEqual(data.model,firstModel);
  assert.notEqual(calls[0].model,'gemini-3.6-flash');
- assert.deepEqual(calls.filter(call=>call.model===firstModel).map(call=>call.tokens),[2048,4096]);
+ assert.deepEqual(calls.filter(call=>call.model===firstModel).map(call=>call.tokens),[4096,8192]);
  assert.ok(!calls.some(call=>call.model==='gemini-3.6-flash'));
+ assert.ok(!calls.some(call=>call.model==='gemini-3.1-pro-preview'),'automatic retries must never switch to Pro');
  assert.equal(data.attemptedModels.includes(firstModel),true);
 });
 
