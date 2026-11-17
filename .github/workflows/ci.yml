@@ -91,12 +91,16 @@ jobs:
           KEY_ENCRYPTION: ${{ secrets.API_KEY_ENCRYPTION_KEY }}
           IP_FINGERPRINT: ${{ secrets.IP_HASH_SECRET }}
         run: |
-          if [[ -n "$SB_URL" && -n "$KEY_ENCRYPTION" && -n "$IP_FINGERPRINT" ]] && {
-            [[ -n "$SB_PUBLISHABLE" && -n "$SB_SECRET" ]] ||
-            [[ -n "$SB_ANON" && -n "$SB_SERVICE" ]];
-          }; then
+          if [[ -n "$SB_URL" && -n "$KEY_ENCRYPTION" && -n "$IP_FINGERPRINT" && -n "$SB_PUBLISHABLE" && -n "$SB_SECRET" ]]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
-            echo "Optional Supabase account/history secrets are present."
+            echo "modern=true" >> "$GITHUB_OUTPUT"
+            echo "legacy=false" >> "$GITHUB_OUTPUT"
+            echo "Modern Supabase publishable/secret keys are configured."
+          elif [[ -n "$SB_URL" && -n "$KEY_ENCRYPTION" && -n "$IP_FINGERPRINT" && -n "$SB_ANON" && -n "$SB_SERVICE" ]]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "modern=false" >> "$GITHUB_OUTPUT"
+            echo "legacy=true" >> "$GITHUB_OUTPUT"
+            echo "Legacy Supabase anon/service_role keys are configured."
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
             echo "Account/history services remain disabled: configure SUPABASE_URL, either the modern publishable/secret key pair or legacy anon/service_role pair, API_KEY_ENCRYPTION_KEY and IP_HASH_SECRET."
@@ -119,7 +123,7 @@ jobs:
           IP_HASH_SECRET: ${{ secrets.IP_HASH_SECRET }}
 
       - name: Upload modern Supabase API keys
-        if: steps.account-secrets-check.outputs.configured == 'true' && secrets.SUPABASE_PUBLISHABLE_KEY != '' && secrets.SUPABASE_SECRET_KEY != ''
+        if: steps.account-secrets-check.outputs.modern == 'true'
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -133,7 +137,7 @@ jobs:
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
 
       - name: Upload legacy Supabase API keys
-        if: steps.account-secrets-check.outputs.configured == 'true' && secrets.SUPABASE_PUBLISHABLE_KEY == '' && secrets.SUPABASE_SECRET_KEY == '' && secrets.SUPABASE_ANON_KEY != '' && secrets.SUPABASE_SERVICE_ROLE_KEY != ''
+        if: steps.account-secrets-check.outputs.legacy == 'true'
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
