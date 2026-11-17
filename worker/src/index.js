@@ -316,7 +316,10 @@ async function handleAccountApi(request,env,url) {
     if(!rows.length)return json({error:'That history record was not found in your account.'},404);
     for(const row of rows){
       if(row.photo_path){
-        try{await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:{apikey:String(env.SUPABASE_SERVICE_ROLE_KEY),Authorization:'Bearer '+String(env.SUPABASE_SERVICE_ROLE_KEY)}});}catch{}
+        try{
+          const removed=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:{apikey:String(env.SUPABASE_SERVICE_ROLE_KEY),Authorization:'Bearer '+String(env.SUPABASE_SERVICE_ROLE_KEY)}});
+          if(!removed.ok)return json({error:'Could not remove one of your private photo files. History records were kept; please retry.'},502);
+        }catch{return json({error:'Private photo storage is unreachable. History records were kept; please retry.'},502);}
       }
     }
     const deleted=await supabaseRest(env,'ai_history?id=eq.'+encodeURIComponent(id)+'&user_id=eq.'+encodeURIComponent(user.id),{method:'DELETE'});
@@ -350,7 +353,10 @@ async function handleAccountApi(request,env,url) {
     const rows=response.ok?await response.json().catch(()=>[]):[];
     for(const row of rows){
       if(row.photo_path){
-        try{await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:{apikey:String(env.SUPABASE_SERVICE_ROLE_KEY),Authorization:'Bearer '+String(env.SUPABASE_SERVICE_ROLE_KEY)}});}catch{}
+        try{
+          const removed=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:{apikey:String(env.SUPABASE_SERVICE_ROLE_KEY),Authorization:'Bearer '+String(env.SUPABASE_SERVICE_ROLE_KEY)}});
+          if(!removed.ok)return json({error:'Could not remove one of your private photo files. History records were kept; please retry.'},502);
+        }catch{return json({error:'Private photo storage is unreachable. History records were kept; please retry.'},502);}
       }
     }
     const deleted=await supabaseRest(env,'ai_history?user_id=eq.'+encodeURIComponent(user.id),{method:'DELETE'});
@@ -359,7 +365,8 @@ async function handleAccountApi(request,env,url) {
     return json({ok:true,deleted:true});
   }
   if(path==='/api/account/usage'&&request.method==='GET'){
-    const response=await supabaseRest(env,'api_usage?select=request_type,model,prompt_tokens,output_tokens,total_tokens,ip_fingerprint,created_at&user_id=eq.'+encodeURIComponent(user.id)+'&order=created_at.desc&limit=100');
+    const liveExpiry=new Date().toISOString();
+    const response=await supabaseRest(env,'api_usage?select=request_type,model,prompt_tokens,output_tokens,total_tokens,ip_fingerprint,created_at&user_id=eq.'+encodeURIComponent(user.id)+'&expires_at=gt.'+encodeURIComponent(liveExpiry)+'&order=created_at.desc&limit=100');
     if(!response.ok)return json({error:'Could not load usage history.'},502);
     return json({ok:true,usage:await response.json()});
   }
