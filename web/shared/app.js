@@ -224,12 +224,16 @@ async function run(mode,question='',imageOverride=null){
   const image=await blobToDataUrl(imageBlob);
   const settings=getSettings();
   if(status)status.textContent='Sending the compressed photo for analysis.';
-  const result=await requestAI(mode==='ask'&&question.trim()?'/api/ask':'/api/describe',{image,question:question.trim(),customPrompt:settings.customPrompt,model:settings.aiModel,waitSeconds:settings.waitSeconds,responseStyle:settings.responseStyle,responseLanguage:settings.speechLanguage});
+  const result=await requestAI(mode==='ask'&&question.trim()?'/api/ask':'/api/describe',{image,question:question.trim(),customPrompt:settings.customPrompt,model:settings.aiModel,waitSeconds:settings.waitSeconds,responseStyle:settings.responseStyle,responseLanguage:settings.speechLanguage,saveToHistory:settings.savePhotoHistory===true});
   if(result.mock)throw new Error('AI is in MOCK mode. No image was analysed.');
   if(result.provider!=='Gemini'||!result.answer)throw new Error('The AI backend did not return a verified Gemini answer.');
   const safetyNote=/\b(safe to walk|safe to cross|clear to walk|path is safe|no danger)\b/i.test(result.answer)?' I cannot confirm that this area is safe. Continue using your cane or guide dog.':'';
   await announceAnswer(result.answer,[result.disclaimer||'',safetyNote].filter(Boolean).join(' '));
-  if(status)status.textContent='Completed with '+(result.model||'Gemini')+'.';
+  if(status){
+   const completed='Completed with '+(result.model||'Gemini')+'.';
+   const message=result.historyMessage||completed;
+   status.textContent=settings.speechLanguage==='bn-BD'?localizeSpeech(message):message;
+  }
  }catch(error){
   const message=error.message||'Something went wrong.';revealRun++;if($('#result'))$('#result').textContent=message;if(status)status.textContent=message;
   speak(spokenError(error),{lang:getSettings().speechLanguage||'en-US'});
