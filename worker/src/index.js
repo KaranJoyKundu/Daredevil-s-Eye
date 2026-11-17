@@ -65,6 +65,16 @@ function readCookies(request) {
   }
   return out;
 }
+function randomGuestToken() {
+  const bytes=crypto.getRandomValues(new Uint8Array(32));
+  return Array.from(bytes,byte=>byte.toString(16).padStart(2,'0')).join('');
+}
+async function guestSessionHash(request) {
+  const token=String(readCookies(request).de_guest||'');
+  if(!/^[a-f0-9]{64}$/i.test(token))return null;
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(token));
+  return Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
+}
 function sessionCookie(name,value,maxAge) {
   return name+'='+encodeURIComponent(value||'')+'; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age='+maxAge;
 }
@@ -161,12 +171,14 @@ async function keyedIpFingerprint(request,env) {
     return Array.from(new Uint8Array(signature).slice(0,12),b=>b.toString(16).padStart(2,'0')).join('');
   }catch{return null;}
 }
-async function storePrivatePhoto(env,userId,imageDataUrl) {
+async function storePrivatePhoto(env,ownerFolder,imageDataUrl) {
   const match=/^data:(image\/jpeg);base64,([A-Za-z0-9+/=]+)$/i.exec(String(imageDataUrl||''));
   if(!match)throw new Error('The selected photo could not be stored as a supported image.');
   const bytes=base64ToBytes(match[2]);
   if(bytes.byteLength>3_800_000)throw new Error('The compressed photo exceeds the private history limit.');
-  const path=userId+'/'+crypto.randomUUID()+'.jpg';
+  const safeFolder=String(ownerFolder||'').replace(/[^a-zA-Z0-9_-]/g,'');
+  if(!safeFolder)throw new Error('A valid private photo owner is required.');
+  const path=safeFolder+'/'+crypto.randomUUID()+'.jpg';
   const response=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+path,{
     method:'POST',
     headers:supabaseServiceHeaders(env,{
@@ -194,36 +206,68 @@ async function storeAccountUsage(env,user,request,{model,requestType,usage,image
     await supabaseRest(env,'api_usage?expires_at=lt.'+encodeURIComponent(expiry),{method:'DELETE'});
   }catch{}
 }
-async function saveAccountHistory(env,user,request,body,result,fullPrompt) {
-  if(!body.saveToHistory)return {saved:false,message:'History saving is switched off.'};
-  if(!supabaseConfigured(env))return {saved:false,message:'Account history is not configured on the Worker yet.'};
-  if(!user)return {saved:false,message:'Sign in to save this photo and answer to your private history.'};
+async function createPhotoHistoryDraft(env,user,request,body,fullPrompt,selectedModel,action) {
+  if(body.saveToHistory===false)return {saved:false,message:'Photo history is switched off.'};
+  if(!supabaseConfigured(env))return {saved:false,message:'Photo history is not configured on the Worker yet.'};
+  const guestHash=user?null:await guestSessionHash(request);
+  if(!user&&!guestHash)return {saved:false,message:'A private guest-history session could not be created. Refresh the page and try again.'};
   let storedPhoto=null;
   try{
-    storedPhoto=await storePrivatePhoto(env,user.id,body.image);
-    const usage=result.usage||{};
+    const ownerFolder=user?user.id:'guest-'+guestHash;
+    storedPhoto=await storePrivatePhoto(env,ownerFolder,body.image);
+    const id=crypto.randomUUID();
     const record={
-      user_id:user.id,request_type:request.url.endsWith('/api/ask')?'ask':'describe',
-      question:String(body.question||''),system_prompt:String(fullPrompt||body.customPrompt||''),
-      response_text:String(result.answer||''),model:String(result.model||'unknown'),
-      attempted_models:result.attempted||[],finish_reason:result.finishReason||null,
-      response_language:String(body.responseLanguage||'en-US'),
-      prompt_tokens:Number.isFinite(usage.promptTokenCount)?usage.promptTokenCount:null,
-      output_tokens:Number.isFinite(usage.candidatesTokenCount)?usage.candidatesTokenCount:null,
-      total_tokens:Number.isFinite(usage.totalTokenCount)?usage.totalTokenCount:null,
-      photo_path:storedPhoto.path,photo_mime:storedPhoto.mime,photo_size_bytes:storedPhoto.size,
-      ip_fingerprint:await keyedIpFingerprint(request,env),
-      user_agent:String(request.headers.get('user-agent')||'').slice(0,500)
+      id,user_id:user?.id||null,guest_session_hash:guestHash,
+      request_type:action,question:String(body.question||''),
+      system_prompt:String(fullPrompt||body.customPrompt||''),
+      response_text:'',model:String(selectedModel||'unknown'),
+      attempted_models:[],finish_reason:null,
+      response_language:String(body.responseLanguage||'bn-BD'),
+      prompt_tokens:null,output_tokens:null,total_tokens:null,
+      photo_path:storedPhoto.path,photo_mime:storedPhoto.mime,
+      photo_size_bytes:storedPhoto.size,analysis_status:'pending',analysis_error:null,
+      ip_fingerprint:user?await keyedIpFingerprint(request,env):null,
+      user_agent:user?String(request.headers.get('user-agent')||'').slice(0,500):null
     };
     const response=await supabaseRest(env,'ai_history',{method:'POST',body:record});
-    if(!response.ok)throw new Error('History metadata insert failed (HTTP '+response.status+').');
-    return {saved:true,message:'Photo and answer saved to your account history.'};
+    if(!response.ok)throw new Error('Private history metadata insert failed (HTTP '+response.status+').');
+    return {
+      saved:true,id,ownerId:user?.id||null,guestHash,
+      message:user?'Photo saved to your account history.':'Photo saved to private guest history in this browser.'
+    };
   }catch(error){
     if(storedPhoto?.path){
       try{await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+storedPhoto.path,{method:'DELETE',headers:supabaseServiceHeaders(env)});}catch{}
     }
-    return {saved:false,message:error.message||'History could not be saved.'};
+    return {saved:false,message:error.message||'Photo could not be saved.'};
   }
+}
+async function completePhotoHistory(env,draft,result,error) {
+  if(!draft?.saved)return draft||{saved:false,message:'No history record was created.'};
+  const usage=result?.usage||{};
+  const patch={
+    response_text:error
+      ?'AI analysis did not complete. The photo itself is saved; you can keep it in history or delete it.'
+      :String(result?.answer||''),
+    model:String(result?.model||'unknown'),
+    attempted_models:Array.isArray(result?.attempted)?result.attempted:[],
+    finish_reason:result?.finishReason|| (error?'ERROR':null),
+    prompt_tokens:Number.isFinite(usage.promptTokenCount)?usage.promptTokenCount:null,
+    output_tokens:Number.isFinite(usage.candidatesTokenCount)?usage.candidatesTokenCount:null,
+    total_tokens:Number.isFinite(usage.totalTokenCount)?usage.totalTokenCount:null,
+    analysis_status:error?'failed':'completed',
+    analysis_error:error?String(error.message||'AI analysis failed.').replace(/[\r\n]+/g,' ').slice(0,240):null
+  };
+  const ownerFilter=draft.ownerId
+    ?'user_id=eq.'+encodeURIComponent(draft.ownerId)
+    :'guest_session_hash=eq.'+encodeURIComponent(draft.guestHash);
+  try{
+    const response=await supabaseRest(env,'ai_history?id=eq.'+encodeURIComponent(draft.id)+'&'+ownerFilter,{method:'PATCH',body:patch});
+    if(!response.ok)return {...draft,saved:true,message:'Photo is saved, but its AI result status could not be updated.'};
+    return {...draft,saved:true,message:error
+      ?'Photo saved to history. AI analysis did not complete.'
+      :draft.message.replace('Photo saved','Photo and answer saved')};
+  }catch{return {...draft,saved:true,message:'Photo is saved, but its AI result status could not be updated.'};}
 }
 
 async function handleAccountApi(request,env,url) {
@@ -233,8 +277,14 @@ async function handleAccountApi(request,env,url) {
     try{if(new URL(origin).origin!==url.origin)return json({error:'Cross-origin account changes are not allowed.'},403);}
     catch{return json({error:'Invalid request origin.'},403);}
   }
-  if(!supabaseConfigured(env))return json({ok:false,error:'Account services are not configured yet. Connect Supabase and add the Worker secrets described in the setup guide.'},503);
   const path=url.pathname;
+  if(!supabaseConfigured(env))return json({ok:false,error:'Account and photo-history services are not configured yet. Connect Supabase and add the Worker secrets described in the setup guide.'},503);
+  if(path==='/api/guest/session'&&request.method==='GET'){
+    const existing=readCookies(request).de_guest||'';
+    if(/^[a-f0-9]{64}$/i.test(existing))return json({ok:true,ready:true,expiresInDays:30});
+    const token=randomGuestToken();
+    return accountJson({ok:true,ready:true,expiresInDays:30},200,[sessionCookie('de_guest',token,30*24*60*60)]);
+  }
   if(path==='/api/account/signup'&&request.method==='POST'){
     let body;try{body=await request.json();}catch{return json({error:'Invalid sign-up form.'},400);}
     const email=String(body.email||'').trim().toLowerCase(),password=String(body.password||'');
@@ -298,6 +348,78 @@ async function handleAccountApi(request,env,url) {
     }
     return accountJson({ok:true},200,[sessionCookie('de_access','',0),sessionCookie('de_refresh','',0)]);
   }
+  if(path==='/api/guest/history'||path.startsWith('/api/guest/history/')){
+    const guestHash=await guestSessionHash(request);
+    if(!guestHash)return json({error:'Guest history session expired. Refresh this page to create a new private session.'},401);
+    const guestFilter='guest_session_hash=eq.'+encodeURIComponent(guestHash);
+    const guestItemId=path.startsWith('/api/guest/history/')?path.slice('/api/guest/history/'.length):'';
+    if(guestItemId&&request.method==='DELETE'&&/^[0-9a-f-]{36}$/i.test(guestItemId)){
+      const filter='id=eq.'+encodeURIComponent(guestItemId)+'&'+guestFilter;
+      const selected=await supabaseRest(env,'ai_history?select=photo_path&'+filter);
+      if(!selected.ok)return json({error:'Could not find that guest-history record.'},404);
+      const rows=await selected.json().catch(()=>[]);
+      if(!rows.length)return json({error:'That record is not in this browser’s guest history.'},404);
+      for(const row of rows){
+        if(row.photo_path){
+          try{
+            const removed=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:supabaseServiceHeaders(env)});
+            if(!removed.ok&&removed.status!==404)return json({error:'Could not remove the private photo file. The history record was kept; retry deletion.'},502);
+          }catch{return json({error:'Private photo storage is unreachable. The history record was kept; retry deletion.'},502);}
+        }
+      }
+      const deleted=await supabaseRest(env,'ai_history?'+filter,{method:'DELETE'});
+      if(!deleted.ok)return json({error:'Could not delete this guest-history record.'},502);
+      return json({ok:true,deleted:true});
+    }
+    if(path==='/api/guest/history'&&request.method==='GET'){
+      const requestedLimit=Number(url.searchParams.get('limit'));
+      const limit=Number.isInteger(requestedLimit)?Math.max(1,Math.min(100,requestedLimit)):30;
+      const requestedOffset=Number(url.searchParams.get('offset'));
+      const offset=Number.isInteger(requestedOffset)?Math.max(0,Math.min(100000,requestedOffset)):0;
+      const query='ai_history?select=id,request_type,question,response_text,model,attempted_models,response_language,total_tokens,photo_path,photo_size_bytes,analysis_status,analysis_error,created_at&'+guestFilter+'&order=created_at.desc&limit='+(limit+1)+'&offset='+offset;
+      const response=await supabaseRest(env,query);
+      if(!response.ok)return json({error:'Could not load guest photo history.'},502);
+      const rows=await response.json();
+      const hasMore=rows.length>limit,history=[];
+      for(const row of rows.slice(0,limit)){
+        let photoUrl=null;
+        if(row.photo_path){
+          try{
+            const signed=await fetch(supabaseBase(env)+'/storage/v1/object/sign/daredevil-history/'+row.photo_path,{
+              method:'POST',headers:supabaseServiceHeaders(env,{'content-type':'application/json'}),
+              body:JSON.stringify({expiresIn:600})
+            });
+            const signedData=await signed.json().catch(()=>({}));
+            if(signed.ok&&signedData.signedURL)photoUrl=signedData.signedURL.startsWith('http')?signedData.signedURL:supabaseBase(env)+'/storage/v1'+signedData.signedURL;
+          }catch{}
+        }
+        history.push({...row,photoUrl});
+      }
+      return json({ok:true,scope:'guest-browser',retentionDays:30,history,hasMore,nextOffset:offset+history.length});
+    }
+    if(path==='/api/guest/history'&&request.method==='DELETE'){
+      let offset=0;
+      while(true){
+        const selected=await supabaseRest(env,'ai_history?select=id,photo_path&'+guestFilter+'&order=created_at.asc&limit=200&offset='+offset);
+        if(!selected.ok)return json({error:'Could not list guest photos for deletion.'},502);
+        const rows=await selected.json().catch(()=>[]);
+        for(const row of rows){
+          if(row.photo_path){
+            try{
+              const removed=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:supabaseServiceHeaders(env)});
+              if(!removed.ok&&removed.status!==404)return json({error:'Could not remove a private photo. Guest history was kept; retry deletion.'},502);
+            }catch{return json({error:'Private photo storage is unreachable. Guest history was kept; retry deletion.'},502);}
+          }
+        }
+        offset+=rows.length;
+        if(rows.length<200)break;
+      }
+      const deleted=await supabaseRest(env,'ai_history?'+guestFilter,{method:'DELETE'});
+      if(!deleted.ok)return json({error:'Could not delete guest photo history.'},502);
+      return accountJson({ok:true,deleted:true},200,[sessionCookie('de_guest','',0)]);
+    }
+  }
+
   const user=await getAuthenticatedUser(request,env);
   if(!user)return json({error:'Sign in to manage your account data.'},401);
 
@@ -710,7 +832,7 @@ export async function handleApi(request, env = {}) {
     catch { return json({ error: 'Invalid request origin.' }, 403); }
   }
 
-  if(url.pathname.startsWith('/api/account/')) return handleAccountApi(request,env,url);
+  if(url.pathname.startsWith('/api/account/')||url.pathname.startsWith('/api/guest/')) return handleAccountApi(request,env,url);
 
   if (request.method === 'GET' && url.pathname === '/api/health') {
     const apiKey = await providerKey(request, env);
@@ -814,24 +936,33 @@ export async function handleApi(request, env = {}) {
       responseLanguage: body.responseLanguage || 'en-US'
     });
     if (mode === 'gemini') {
+      const saveRequested=body.saveToHistory!==false;
+      const user=saveRequested?await getAuthenticatedUser(request,env):null;
+      const historyDraft=saveRequested
+        ?await createPhotoHistoryDraft(env,user,request,body,prompt,selectedModel,action)
+        :{saved:false,message:'Photo history is switched off.'};
       try {
         const result = await askGemini({ image: body.image, prompt, model: selectedModel, waitSeconds }, apiKey);
-        const user = body.saveToHistory ? await getAuthenticatedUser(request,env) : null;
         if(user) await storeAccountUsage(env,user,request,{
-          model:result.model,requestType:url.pathname.endsWith('/ask')?'ask':'describe',
+          model:result.model,requestType:action,
           usage:result.usage,imageSizeBytes:dataUrlByteLength(body.image)
         });
-        const history = await saveAccountHistory(env,user,request,body,result,prompt);
+        const history=await completePhotoHistory(env,historyDraft,result,null);
         return json({
-          ok: true, mock: false, provider: 'Gemini',
-          model: result.model, attemptedModels: result.attempted,
-          finishReason: result.finishReason, usageMetadata: result.usage || null,
-          historySaved:history.saved, historyMessage:body.saveToHistory?history.message:null,
-          answer: result.answer,
-          disclaimer: 'AI can miss objects and hazards. Do not rely on this description alone for mobility or safety decisions.'
+          ok:true,mock:false,provider:'Gemini',
+          model:result.model,attemptedModels:result.attempted,
+          finishReason:result.finishReason,usageMetadata:result.usage||null,
+          historySaved:Boolean(history.saved),historyMessage:saveRequested?history.message:null,
+          historyId:history.id||null,answer:result.answer
         });
-      } catch (error) {
-        return json({ error: error.message || 'Gemini request failed.' }, 502);
+      } catch(error) {
+        const failedHistory=await completePhotoHistory(env,historyDraft,null,error);
+        return json({
+          error:error.message||'Gemini request failed.',
+          historySaved:Boolean(failedHistory.saved),
+          historyMessage:saveRequested?failedHistory.message:null,
+          historyId:failedHistory.id||null
+        },502);
       }
     }
     return json({
@@ -847,7 +978,35 @@ export async function handleApi(request, env = {}) {
   return null;
 }
 
+export async function purgeExpiredGuestHistory(env,now=Date.now()) {
+  if(!supabaseConfigured(env))return {skipped:true,deleted:0};
+  const cutoff=new Date(now-30*24*60*60*1000).toISOString();
+  let offset=0,removedRows=0;
+  while(true){
+    const query='ai_history?select=id,photo_path&guest_session_hash=not.is.null&created_at=lt.'+encodeURIComponent(cutoff)+'&order=created_at.asc&limit=200&offset='+offset;
+    const response=await supabaseRest(env,query);
+    if(!response.ok)throw new Error('Could not list expired guest-history records.');
+    const rows=await response.json().catch(()=>[]);
+    for(const row of rows){
+      if(row.photo_path){
+        const deleted=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{
+          method:'DELETE',headers:supabaseServiceHeaders(env)
+        });
+        if(!deleted.ok&&deleted.status!==404)throw new Error('Could not remove an expired guest photo; its history row was kept.');
+      }
+    }
+    offset+=rows.length;
+    if(rows.length<200)break;
+  }
+  const deleted=await supabaseRest(env,'ai_history?guest_session_hash=not.is.null&created_at=lt.'+encodeURIComponent(cutoff),{method:'DELETE'});
+  if(!deleted.ok)throw new Error('Could not delete expired guest-history metadata.');
+  return {skipped:false,deleted:'expired_guest_history'};
+}
+
 export default {
+  async scheduled(controller,env) {
+    await purgeExpiredGuestHistory(env,controller?.scheduledTime||Date.now());
+  },
   async fetch(request, env) {
     const api = await handleApi(request, env);
     if (api) return api;
