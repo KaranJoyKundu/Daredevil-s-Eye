@@ -55,6 +55,13 @@ alter table public.user_api_keys enable row level security;
 alter table public.ai_history enable row level security;
 alter table public.api_usage enable row level security;
 
+-- These tables are accessed only by the trusted Cloudflare Worker using
+-- the Supabase server-side Secret key (service_role). Browser roles receive
+-- no direct table privileges; RLS remains enabled as defense in depth.
+revoke all on table public.user_api_keys, public.ai_history, public.api_usage from anon, authenticated;
+grant all on table public.user_api_keys, public.ai_history, public.api_usage to service_role;
+grant usage, select on sequence public.api_usage_id_seq to service_role;
+
 drop policy if exists "Users can read their encrypted Gemini key metadata" on public.user_api_keys;
 create policy "Users can read their encrypted Gemini key metadata"
   on public.user_api_keys for select to authenticated
