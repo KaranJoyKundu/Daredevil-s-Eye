@@ -109,11 +109,17 @@ function syncLanguageControls(){
 syncLanguageControls();
 updateThemeChoices();
 for(const [id,key] of [['custom-interface-language','interface'],['language','speech'],['speech-input-mode','inputMode'],['input-language','input'],['sos-voice-language','sos']]){
- $('#'+id).addEventListener('change',()=>{if($('#language-mode').value==='custom')customLanguageDraft[key]=$('#'+id).value;});
+ $('#'+id).addEventListener('change',()=>{
+  if($('#language-mode').value==='custom'){
+   customLanguageDraft[key]=$('#'+id).value;
+   if(key==='interface')applyInterfaceLanguage({...getSettings(),interfaceLanguage:customLanguageDraft.interface});
+  }
+ });
 }
 $('#language-mode').addEventListener('change',()=>{
+ const mode=$('#language-mode').value;
  syncLanguageControls();
- const current={...getSettings(),languageMode:$('#language-mode').value,
+ const current={...getSettings(),languageMode:mode,interfaceLanguage:mode==='bn'?'bn':mode==='en'?'en':customLanguageDraft.interface,
   customInterfaceLanguage:customLanguageDraft.interface,customSpeechLanguage:customLanguageDraft.speech,
   customSpeechInputMode:customLanguageDraft.inputMode,customSpeechInputLanguage:customLanguageDraft.input,customSosVoiceLanguage:customLanguageDraft.sos};
  applyInterfaceLanguage(current);
@@ -123,6 +129,12 @@ document.querySelectorAll('[data-theme-choice]').forEach(button=>button.addEvent
  applyDisplaySettings(next);updateThemeChoices();
  $('#theme-preview-status').textContent='Live preview: '+button.querySelector('strong').textContent+'. Save all settings to keep it.';
 }));
+for(const id of ['follow-system-theme','text-size','high-contrast','reduced-motion']){
+ $('#'+id).addEventListener('change',()=>applyDisplaySettings({...getSettings(),
+  followSystemTheme:$('#follow-system-theme').checked,textSize:$('#text-size').value,
+  highContrast:$('#high-contrast').checked,reducedMotion:$('#reduced-motion').checked
+ }));
+}
 $('#require-photo-confirmation').checked=saved.requirePhotoConfirmation!==false;
 $('#save-photo-history').checked=saved.savePhotoHistory!==false;
 $('#contact-name').value=saved.emergencyName;
