@@ -11,13 +11,21 @@
 <nav class="quick-jump" aria-label="Admin shortcuts"><a href="#camera-settings">📷 <span>Camera & SOS</span></a><a href="#ai-settings">✨ <span>AI models</span></a><a href="#voice-settings">🎙 <span>Voice</span></a><a href="#image-lab">🧪 <span>Image tester</span></a><a href="/diagnostics/">✅ <span>Diagnostics</span></a><a href="/account/">👤 <span>Account & History</span></a><a href="#stored-data">🗃 <span>Stored data</span></a><a href="/action/">⌂ <span>Home</span></a></nav>
 <section class="panel settings-section" id="stored-data">
 <h2>Stored users, guest sessions &amp; photos</h2>
-<p>All submitted photo records are in Supabase. The links below open your secured Supabase dashboard; this app does not expose other people's private guest sessions inside a normal user account.</p>
+<p>All user and guest records are stored in your private Supabase project. These links open the secured project dashboard; they are visible only to people with Supabase project access. This app deliberately does not expose every person's private history to ordinary signed-in accounts.</p>
 <div class="quick-jump">
-<a href="https://supabase.com/dashboard/project/dyfpawbkttbgoorcgwbd/editor" target="_blank" rel="noopener noreferrer">🗃 <span>AI history table — signed-in and guest rows</span></a>
-<a href="https://supabase.com/dashboard/project/dyfpawbkttbgoorcgwbd/storage/buckets/daredevil-history" target="_blank" rel="noopener noreferrer">🖼 <span>Private uploaded photos</span></a>
-<a href="https://supabase.com/dashboard/project/dyfpawbkttbgoorcgwbd/auth/users" target="_blank" rel="noopener noreferrer">👤 <span>Registered accounts</span></a>
+<a href="https://supabase.com/dashboard/project/dyfpawbkttbgoorcgwbd/editor" target="_blank" rel="noopener noreferrer">🗃 <span>Table Editor — inspect <code>public.ai_history</code>, <code>public.api_usage</code> and <code>public.user_api_keys</code></span></a>
+<a href="https://supabase.com/dashboard/project/dyfpawbkttbgoorcgwbd/storage/buckets/daredevil-history" target="_blank" rel="noopener noreferrer">🖼 <span>Private uploaded photos — <code>daredevil-history</code> bucket</span></a>
+<a href="https://supabase.com/dashboard/project/dyfpawbkttbgoorcgwbd/auth/users" target="_blank" rel="noopener noreferrer">👤 <span>Authentication → Users — registered accounts</span></a>
 </div>
-<p><strong>Important:</strong> Guest history on the Account page is bound to one browser's private HttpOnly cookie. Its delete buttons cannot delete records belonging to another guest browser, or records whose cookie was lost. The dashboard links above are the current way to inspect and manage all stored records. When manually deleting a photo, delete the storage object and its matching <code>ai_history</code> row.</p>
+<ul>
+<li><strong><code>public.ai_history</code>:</strong> photo records, guest or account owner, submitted question, AI answer, model, status, time and private photo path. Guest rows have a guest-session hash and a null <code>user_id</code>.</li>
+<li><strong><code>public.api_usage</code>:</strong> account-linked AI usage and token totals (when usage rows are recorded).</li>
+<li><strong><code>public.user_api_keys</code>:</strong> encrypted personal Gemini-key material. It is not plaintext and should not be edited manually.</li>
+<li><strong>Storage:</strong> original submitted JPEGs are in the private <code>daredevil-history</code> bucket.</li>
+<li><strong>Authentication → Users:</strong> registered account identities. Deleting an account is separate from deleting its history and files.</li>
+</ul>
+<p><strong>Deleting guest data:</strong> Account &amp; History can delete guest records tied to the current browser cookie only. It cannot reach another visitor's session or a session whose cookie was cleared. For an owner-level cleanup, find the matching guest rows in <code>public.ai_history</code>, remove each corresponding object from the private bucket using its <code>photo_path</code>, then remove the matching database row. Do not delete only the table row while leaving the image object behind.</p>
+<p><strong>Privacy boundary:</strong> Do not share these dashboard links with untrusted people, and never copy the private Supabase secret key into browser code or screenshots.</p>
 </section>
 <form id="settings-form">
 <section id="appearance-settings" class="panel settings-section">
