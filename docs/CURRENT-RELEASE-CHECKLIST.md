@@ -15,8 +15,8 @@ This document is the current checklist. It supersedes older status text where th
 | Repeated safety warnings | Generic hazard warnings are removed from every AI response. Safety limits remain in Terms, Privacy and the consent screen. | Confirm fresh assets load after deployment. |
 | Bengali voice | Browser voice enumeration is asynchronous; code waits for it and requests Android's bn-BD locale even when Chrome does not list a Bengali voice. Admin has refresh and preview controls. | Actual Google TTS playback/pronunciation on A55. |
 | Account page | Redesigned responsive Account & History dashboard with sign-in, private account photos, guest photos, personal Gemini key, usage summary and deletion controls. | Mobile/TalkBack usability. |
-| Signed-in photo history | Submitted compressed JPEG is written to the private bucket before Gemini starts; record is updated to completed or failed afterward. | Live persistence after secrets are configured. |
-| Guest photo history | Guest session uses a random 256-bit HttpOnly cookie. Only its SHA-256 digest is stored. Guest photos are private and accessible through this browser's cookie. | Live end-to-end check after secrets are configured. |
+| Signed-in photo history | Submitted compressed JPEG is written to the private bucket before Gemini starts; record is updated to completed or failed afterward. | Production secrets are now uploaded; end-to-end live persistence still needs user-device verification. |
+| Guest photo history | Guest session uses a random 256-bit HttpOnly cookie. Only its SHA-256 digest is stored. Guest photos are private and accessible through this browser's cookie. | Production secrets are now uploaded; end-to-end live persistence still needs user-device verification. |
 | Guest retention | Guest photo rows and objects are scheduled for deletion after 30 days using a daily Worker Cron trigger. | Check scheduled execution in Cloudflare. |
 | Support page | bKash/Nagad support page exists. Buy Me a Coffee remains skipped because no creator URL exists. | Nothing pending unless a creator URL is supplied. |
 
@@ -28,14 +28,14 @@ The default is Gemini 3.8 Flash, not 3.6 Flash. This is already configured in th
 
 Supabase project: dyfpawbkttbgoorcgwbd, Mumbai ap-south-1. The base history schema and guest-history schema have been applied; the daredevil-history bucket is private.
 
-The Cloudflare Worker still needs these GitHub Actions secrets:
+The required Worker secrets were successfully uploaded by production workflow run #448 (and re-uploaded by #450):
 - SUPABASE_URL
 - SUPABASE_PUBLISHABLE_KEY
 - SUPABASE_SECRET_KEY
 - API_KEY_ENCRYPTION_KEY
 - IP_HASH_SECRET
 
-The Supabase Secret key must stay private. Generate two different random secrets for the encryption and HMAC values. Add them at https://github.com/KaranJoyKundu/Daredevil-s-Eye/settings/secrets/actions, then run Actions → Verify and deploy Daredevil's Eye → Run workflow → main. The workflow uploads the values to the Worker. Supabase Auth must allow the production site URL.
+The modern publishable/secret pair, project URL, encryption key and HMAC key are now present on the production Worker. Do not add them again unless rotating credentials. Keep the Supabase Secret key private. Supabase Auth must allow the production site URL.
 
 Do not assume history is live merely because the Worker deployment succeeds. Confirm the Account page service status, then submit one guest photo and one signed-in photo and verify they appear.
 
@@ -43,7 +43,7 @@ Do not assume history is live merely because the Worker deployment succeeds. Con
 
 | Priority | Remaining item | Done condition |
 |---|---|---|
-| P0 | Add the five Supabase secrets and redeploy | Account page reports the account/history service ready. |
+| P0 | Add the five Supabase secrets and deploy | Done: workflow runs #448 and #450 uploaded the modern Supabase keys and shared secrets successfully. |
 | P0 | Guest-history end-to-end test | Submit while signed out; confirm the photo appears after refresh, opens privately, and can be deleted. |
 | P0 | Signed-in history end-to-end test | Submit while signed in; confirm the photo appears on another browser/device and deletion works. |
 | P1 | Guest 30-day cleanup | Confirm Cloudflare Cron runs; test purge with a controlled old timestamp in a test database. |
@@ -68,4 +68,9 @@ Do not assume history is live merely because the Worker deployment succeeds. Con
 
 ## Branch and release record
 
-This checklist tracks the current changes on feat/guest-photo-history-bangla-account-ui. Update the PR number, CI count and production deployment SHA after the branch passes checks and merges.
+## Completed merge and deployment record
+
+- PR #7 merged to main as 7f5b3ad8c45fc5516559357c0f4268d3e0819015. CI run #447 passed 72/72 tests; main production deployment #448 succeeded and uploaded the Supabase URL, modern publishable/secret keys, encryption key and IP-hash secret.
+- PR #8 merged to main as b6a6ffc25b15dcee76518cdb46069df52170d00a. CI run #449 passed 72/72 tests; the follow-up main deployment #450 succeeded and re-uploaded the Supabase secrets.
+- Supabase security and health advisors reported no findings after the guest schema update. The performance advisor only reported unused indexes while the tables are still empty.
+- Remaining live checks are guest/account photo persistence, 30-day Cron execution, A55 Bengali speech and second-phone screen-off SOS.
