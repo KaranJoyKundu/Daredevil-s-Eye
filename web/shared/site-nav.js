@@ -17,6 +17,11 @@ for(const [label,href] of links){
   menu.append(link);
 }
 document.body.prepend(bar);
+applyDisplaySettings();
+applyInterfaceLanguage();
+const menuLabel=bar.querySelector('.menu-label');
+if(menuLabel)menuLabel.dataset.i18n='menu';
+applyInterfaceLanguage();
 
 // Require the same explicit consent before any app surface can be used,
 // including direct visits to Admin, Diagnostics, Account and the SOS receiver.
