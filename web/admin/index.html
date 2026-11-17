@@ -8,7 +8,7 @@
 <body><main>
 <header><p class="eyebrow">DEVICE SETTINGS</p><h1>Admin / Settings</h1><p class="subtitle">Tune the camera, AI behaviour and spoken voice. Settings stay in this browser on this device.</p></header>
 
-<nav class="quick-jump" aria-label="Admin shortcuts"><a href="#camera-settings">📷 <span>Camera & SOS</span></a><a href="#ai-settings">✨ <span>AI models</span></a><a href="#voice-settings">🎙 <span>Voice</span></a><a href="#image-lab">🧪 <span>Image tester</span></a><a href="/diagnostics/">✅ <span>Diagnostics</span></a><a href="/action/">⌂ <span>Home</span></a></nav>
+<nav class="quick-jump" aria-label="Admin shortcuts"><a href="#camera-settings">📷 <span>Camera & SOS</span></a><a href="#ai-settings">✨ <span>AI models</span></a><a href="#voice-settings">🎙 <span>Voice</span></a><a href="#image-lab">🧪 <span>Image tester</span></a><a href="/diagnostics/">✅ <span>Diagnostics</span></a><a href="/account/">👤 <span>Account & History</span></a><a href="/action/">⌂ <span>Home</span></a></nav>
 <form id="settings-form">
 <section id="camera-settings" class="panel settings-section">
 <h2>Camera & trusted contact</h2>
@@ -17,6 +17,8 @@
 <small>Current camera address: http://192.168.0.104. The app adds http:// when you enter a plain IP.</small>
 <label class="inline-checkbox" for="require-photo-confirmation"><input id="require-photo-confirmation" type="checkbox" checked> Preview every phone photo before sending (recommended)</label>
 <small>When enabled, the selected camera/upload photo stays on this device until the user reviews it and presses Ask AI. Turn this off to automatically describe a selected photo.</small>
+<label class="inline-checkbox" for="save-photo-history"><input id="save-photo-history" type="checkbox"> Save photos and AI answers to my account history</label>
+<small>Optional and off by default. Requires signing in at <a href="/account/">Account & History</a>. When enabled, the compressed photo, question, response, model and usage metadata are saved privately to your account. A pseudonymous IP fingerprint is saved for 90-day usage auditing; raw IP addresses are not stored.</small>
 <div class="field-grid">
 <div><label for="contact-name">Trusted contact name</label><input id="contact-name" maxlength="80" placeholder="Name"></div>
 <div><label for="contact-phone">Trusted contact phone</label><input id="contact-phone" type="tel" maxlength="30" placeholder="+880..."></div>
