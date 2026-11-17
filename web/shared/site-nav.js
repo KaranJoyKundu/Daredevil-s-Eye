@@ -1,7 +1,7 @@
 const links = [
   ['Home','/action/'],['Blind mode','/blind/'],['Admin / Settings','/admin/'],
   ['Diagnostics','/diagnostics/'],['Account & History','/account/'],['Help','/help/'],['SOS Receiver','/sos-receiver/'],
-  ['Contact','/contact/'],['Privacy','/privacy/']
+  ['Contact','/contact/'],['Support','/support/'],['Terms & Conditions','/terms/'],['Privacy','/privacy/']
 ];
 const bar=document.createElement('div');
 bar.className='site-nav';
