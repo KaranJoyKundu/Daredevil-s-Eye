@@ -1,5 +1,5 @@
-import {hasCurrentConsent,acceptConsent,rejectConsent} from './consent.js?v=20261117-release5';
-import {saveSettings, applyDisplaySettings, applyInterfaceLanguage} from './settings.js?v=20261117-release5';
+import {hasCurrentConsent,acceptConsent,rejectConsent} from './consent.js?v=20261117-release6';
+import {saveSettings, applyDisplaySettings, applyInterfaceLanguage} from './settings.js?v=20261117-release6';
 
 const links = [
   ['Home','/action/','nav_home'],['Blind mode','/blind/','nav_blind'],['Admin / Settings','/admin/','nav_admin'],
