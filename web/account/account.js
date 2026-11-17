@@ -5,6 +5,9 @@ const authPanel=$('#auth-panel'),accountPanel=$('#account-panel');
 let currentUser=null;
 
 async function api(path,{method='GET',body}={}) {
+ if(!['/api/account/session','/api/account/login','/api/account/signup'].includes(path)){
+  await fetch('/api/account/session',{credentials:'same-origin',cache:'no-store'}).catch(()=>null);
+ }
  const response=await fetch(path,{
   method,credentials:'same-origin',cache:'no-store',
   headers:body!==undefined?{'content-type':'application/json'}:{},
