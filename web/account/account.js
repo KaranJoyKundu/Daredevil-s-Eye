@@ -3,6 +3,7 @@ import { clearSessionGeminiApiKey } from '/shared/api.js?v=20261117-account1';
 const $=selector=>document.querySelector(selector);
 const authPanel=$('#auth-panel'),accountPanel=$('#account-panel');
 let currentUser=null;
+let historyOffset=0;
 
 async function api(path,{method='GET',body}={}) {
  if(!['/api/account/session','/api/account/login','/api/account/signup'].includes(path)){
@@ -120,17 +121,20 @@ $('#remove-api-key').addEventListener('click',async()=>{
  finally{$('#remove-api-key').disabled=false;}
 });
 
-async function loadHistory(){
- $('#history-status').textContent='Loading private history…';
- $('#history-list').replaceChildren();
+async function loadHistory(append=false){
+ if(!append){historyOffset=0;$('#history-list').replaceChildren();}
+ $('#history-status').textContent=append?'Loading older history…':'Loading private history…';
  try{
-  const data=await api('/api/account/history');
-  if(!data.history?.length){
+  const data=await api('/api/account/history?limit=50&offset='+historyOffset);
+  if(!data.history?.length&&!append){
    $('#history-status').textContent='No saved photos or answers yet. Enable the history option in Admin before a future photo analysis.';
+   $('#load-more-history').hidden=true;
    return;
   }
-  $('#history-status').textContent=data.history.length+' saved records (up to 50 shown).';
-  for(const item of data.history){
+  historyOffset=Number(data.nextOffset)||historyOffset;
+  $('#load-more-history').hidden=!data.hasMore;
+  $('#history-status').textContent=append?'Loaded '+data.history.length+' older records.':'Showing the newest saved records.';
+  for(const item of (data.history||[])){
    const card=make('article','history-card');
    const title=make('h3','',item.question||'Scene description');
    const meta=make('p','hint',formatDate(item.created_at)+' · '+item.model+' · '+(item.total_tokens??'Token count unavailable')+' tokens');
@@ -154,7 +158,8 @@ async function loadHistory(){
   }
  }catch(error){$('#history-status').textContent=error.message;}
 }
-$('#refresh-history').addEventListener('click',loadHistory);
+$('#refresh-history').addEventListener('click',()=>loadHistory(false));
+$('#load-more-history').addEventListener('click',()=>loadHistory(true));
 
 async function loadUsage(){
  $('#usage-list').replaceChildren();
@@ -182,7 +187,7 @@ $('#delete-history').addEventListener('click',async()=>{
  try{
   await api('/api/account/history',{method:'DELETE'});
   $('#history-status').textContent='All saved history and usage records were deleted.';
-  $('#history-list').replaceChildren();$('#usage-list').replaceChildren();$('#usage-summary').textContent='No usage records.';
+  $('#history-list').replaceChildren();$('#load-more-history').hidden=true;$('#usage-list').replaceChildren();$('#usage-summary').textContent='No usage records.';
  }catch(error){$('#history-status').textContent=error.message;}
 });
 
