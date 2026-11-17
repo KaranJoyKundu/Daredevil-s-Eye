@@ -1,4 +1,4 @@
-import {getSettings,saveSettings} from '/shared/settings.js?v=20261117-photo-final';
+import {getSettings,saveSettings} from '/shared/settings.js?v=20261117-history';
 import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261116-sos3';
 import {captureImage} from '/shared/camera.js?v=20261117-photo-final';
 import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261117-speech-queue';
@@ -21,6 +21,7 @@ function formSettings(){
  return {
   cameraBaseUrl:normalizeCameraAddress($('#camera').value),
   requirePhotoConfirmation:$('#require-photo-confirmation').checked,
+  savePhotoHistory:$('#save-photo-history').checked,
   emergencyName:$('#contact-name').value.trim(),
   emergencyPhone:$('#contact-phone').value.trim(),
   speechLanguage:$('#language').value,
@@ -51,6 +52,7 @@ $('#save-personal-key').addEventListener('click',()=>{
 $('#remove-personal-key').addEventListener('click',()=>{clearSessionGeminiApiKey();$('#personal-api-key').value='';$('#personal-key-status').textContent='Personal key removed from this tab. Using the project key if configured.';loadModels();});
 $('#camera').value=saved.cameraBaseUrl;
 $('#require-photo-confirmation').checked=saved.requirePhotoConfirmation!==false;
+$('#save-photo-history').checked=saved.savePhotoHistory===true;
 $('#contact-name').value=saved.emergencyName;
 $('#contact-phone').value=saved.emergencyPhone;
 $('#sos-code').value=saved.sosPairingCode;
