@@ -39,7 +39,7 @@ The old generic safety warning is no longer appended to every AI reply. The proj
 
 The private Supabase bucket is not publicly accessible. Signed-in history remains until the user deletes it. Guest history uses a random HttpOnly browser cookie; only its SHA-256 digest is stored, and records/photos are deleted after 30 days. A preview cancelled before submission is not saved. Photos submitted for AI analysis are saved even if Gemini fails.
 
-History is not active in production until the Supabase Worker secrets are configured and a main deployment uploads them. See [Supabase account/history setup](docs/SUPABASE-ACCOUNT-HISTORY-SETUP.md).
+The Supabase Worker secrets were uploaded successfully by production deployment runs #448 and #450. Account and guest history are configured in production, but still need an end-to-end photo test from a browser/phone. See [Supabase account/history setup](docs/SUPABASE-ACCOUNT-HISTORY-SETUP.md).
 
 ## Model choice
 
@@ -82,4 +82,4 @@ Add GEMINI_API_KEY to .dev.vars locally. Never commit it.
 
 ## Remaining device tests
 
-See the current release checklist for prioritized acceptance criteria. The main blockers are Supabase Worker secrets, guest/account live persistence verification, Bengali speech on the A55, and screen-off SOS verification on a second handset.
+See the current release checklist for prioritized acceptance criteria. Remaining validation is guest/account photo persistence, 30-day cleanup execution, Bengali speech on the A55, Account-page TalkBack review, and screen-off SOS on a second handset.

@@ -14,9 +14,11 @@ This project keeps the Cloudflare Worker as the API gateway. Supabase supplies e
 
 The base private-history migration and guest-history schema have been applied. The ai_history table allows either a signed-in owner UUID or a guest-session hash, never both. RLS remains enabled; direct browser roles have no table access. The Worker verifies ownership/cookie and uses the server-side Supabase Secret key.
 
-## Required GitHub Actions secrets
+## Production Worker secrets
 
-Add these secrets to https://github.com/KaranJoyKundu/Daredevil-s-Eye/settings/secrets/actions:
+The current main deployments (#448 and #450) have already uploaded the modern Supabase key pair, Supabase URL, API-key encryption secret and IP-hash secret to the production Worker. You do not need to add these again unless you rotate credentials. The list below documents the required values for a new environment or recovery deployment.
+
+For a new environment, add these secrets to https://github.com/KaranJoyKundu/Daredevil-s-Eye/settings/secrets/actions:
 
 - SUPABASE_URL — https://dyfpawbkttbgoorcgwbd.supabase.co
 - SUPABASE_PUBLISHABLE_KEY — copy the sb_publishable key from Project Settings → API Keys
@@ -68,7 +70,7 @@ A user's personal key is encrypted with AES-256-GCM in the Worker using API_KEY_
 
 ## Deployment and verification
 
-After adding the secrets:
+For a new environment, or after rotating any secret:
 1. Open GitHub → Actions.
 2. Select Verify and deploy Daredevil's Eye.
 3. Select Run workflow, choose main and run it.
