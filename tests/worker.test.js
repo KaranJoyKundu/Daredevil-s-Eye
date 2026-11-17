@@ -408,9 +408,12 @@ test('SOS receiver gets a persistent VAPID key and subscription, and trigger sub
  const pushRequests=[];
  t.after(()=>{globalThis.fetch=originalFetch;});
  globalThis.fetch=async(input,init={})=>{
-  pushRequests.push({url:String(input),headers:init.headers||{}});
+  pushRequests.push({url:String(input),headers:init.headers||{},body:init.body});
   return new Response('',{status:201});
  };
+ const receiverPair=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']);
+ const publicBytes=new Uint8Array(await crypto.subtle.exportKey('raw',receiverPair.publicKey));
+ const authBytes=crypto.getRandomValues(new Uint8Array(16));
  const values=new Map();
  const state={storage:{
   get:async key=>values.get(key),
@@ -432,7 +435,7 @@ test('SOS receiver gets a persistent VAPID key and subscription, and trigger sub
   subscription:{
    endpoint:'https://push.example.test/send/123',
    expirationTime:null,
-   keys:{p256dh:'public-subscription-key',auth:'auth-secret'}
+   keys:{p256dh:Buffer.from(publicBytes).toString('base64url'),auth:Buffer.from(authBytes).toString('base64url')}
   }
  })).json();
  assert.equal(subscription.pushSubscribed,true);
@@ -443,6 +446,9 @@ test('SOS receiver gets a persistent VAPID key and subscription, and trigger sub
  assert.equal(pushRequests.length,1);
  assert.match(pushRequests[0].headers.Authorization,/^vapid t=/);
  assert.equal(pushRequests[0].headers.TTL,'120');
+ assert.equal(pushRequests[0].headers['Content-Encoding'],'aes128gcm');
+ assert.ok(pushRequests[0].body instanceof Uint8Array);
+ assert.ok(pushRequests[0].body.byteLength>86);
 });
 
 test('re-pairing clears the previous receiver push subscription',async()=>{
