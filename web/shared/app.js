@@ -225,7 +225,9 @@ async function announceAnswer(message,disclaimer=''){
 }
 async function run(mode,question='',imageOverride=null){
  if(!hasCurrentConsent()){announce('Please review and accept the privacy notice before using the camera.');return;}
- actionVibration(mode==='ask'?'ask':'describe');let wakeLock=null;
+ actionVibration(mode==='ask'?'ask':'describe');
+ if(!imageOverride&&!phonePhoto)primeShutterAudio();
+ let wakeLock=null;
  try{
   wakeLock=await acquireWakeLock();
   if(!imageOverride&&!phonePhoto)announce('Taking several photos. Hold still.');
