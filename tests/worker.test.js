@@ -665,7 +665,8 @@ test('opted-in AI history stores private JPEG, answer, prompt, model, token coun
   }
   if(url.origin==='https://supabase.example.test'&&url.pathname.startsWith('/rest/v1/ai_history')){
    if(init.method==='POST')historyRows.push(JSON.parse(init.body));
-   return new Response(null,{status:201});
+   if(init.method==='PATCH'&&historyRows.length)Object.assign(historyRows[historyRows.length-1],JSON.parse(init.body));
+   return new Response(null,{status:init.method==='POST'?201:204});
   }
   if(url.origin==='https://supabase.example.test'&&url.pathname.startsWith('/storage/v1/object/daredevil-history/')){
    if(init.method==='POST')uploaded.push({url:url.href,type:init.headers['content-type'],bytes:init.body});
