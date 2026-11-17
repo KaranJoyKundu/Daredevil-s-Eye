@@ -3,12 +3,23 @@ import { clearSessionGeminiApiKey } from '/shared/api.js?v=20261117-release1';
 const $=selector=>document.querySelector(selector);
 const authPanel=$('#auth-panel'),accountPanel=$('#account-panel');
 let currentUser=null;
+let sessionCheckedAt=0;
+let sessionRefreshPromise=null;
+
+async function ensureSessionFresh(){
+ if(Date.now()-sessionCheckedAt<4*60*1000)return;
+ if(!sessionRefreshPromise){
+  sessionRefreshPromise=fetch('/api/account/session',{credentials:'same-origin',cache:'no-store'})
+   .catch(()=>null)
+   .finally(()=>{sessionCheckedAt=Date.now();sessionRefreshPromise=null;});
+ }
+ await sessionRefreshPromise;
+}
 let historyOffset=0;
 
 async function api(path,{method='GET',body}={}) {
- if(!['/api/account/session','/api/account/login','/api/account/signup'].includes(path)){
-  await fetch('/api/account/session',{credentials:'same-origin',cache:'no-store'}).catch(()=>null);
- }
+ if(!['/api/account/session','/api/account/login','/api/account/signup'].includes(path))await ensureSessionFresh();
+ if(path==='/api/account/session')sessionCheckedAt=Date.now();
  const response=await fetch(path,{
   method,credentials:'same-origin',cache:'no-store',
   headers:body!==undefined?{'content-type':'application/json'}:{},
@@ -63,6 +74,7 @@ $('#login-form').addEventListener('submit',async event=>{
    email:$('#login-email').value.trim(),password:$('#login-password').value
   }});
   $('#login-password').value='';
+  sessionCheckedAt=Date.now();
   showSignedIn(result.user);
   $('#account-status').textContent='Signed in successfully.';
   $('#login-status').textContent='';
@@ -78,6 +90,7 @@ $('#signup-form').addEventListener('submit',async event=>{
    email:$('#signup-email').value.trim(),password:$('#signup-password').value
   }});
   $('#signup-password').value='';
+  if(result.authenticated)sessionCheckedAt=Date.now();
   $('#signup-status').textContent=result.message||'Account created. Check your email if confirmation is required.';
   if(result.authenticated)await refreshSession();
  }catch(error){$('#signup-status').textContent=error.message;}
