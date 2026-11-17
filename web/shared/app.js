@@ -1,10 +1,10 @@
-import { captureImage, blobToDataUrl, compressImageToJpeg } from './camera.js?v=20261117-release5';
-import { requestAI } from './api.js?v=20261117-release5';
-import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release5';
-import { getSettings, saveSettings, applyDisplaySettings, applyInterfaceLanguage } from './settings.js?v=20261117-release5';
+import { captureImage, blobToDataUrl, compressImageToJpeg } from './camera.js?v=20261117-release6';
+import { requestAI } from './api.js?v=20261117-release6';
+import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release6';
+import { getSettings, saveSettings, applyDisplaySettings, applyInterfaceLanguage } from './settings.js?v=20261117-release6';
 applyDisplaySettings();
 applyInterfaceLanguage();
-import { hasCurrentConsent, acceptConsent, rejectConsent } from './consent.js?v=20261117-release5';
+import { hasCurrentConsent, acceptConsent, rejectConsent } from './consent.js?v=20261117-release6';
 import { createShakeSequenceTracker, getShakeMagnitude, matchSosVoiceCommand } from './sos-triggers.js?v=20261117-release1';
 const $=selector=>document.querySelector(selector),status=$('#status');
 let activeRecognition=null,voiceStarting=false,phonePhoto=null,phonePhotoUrl=null,revealRun=0,lastAnswer='';
