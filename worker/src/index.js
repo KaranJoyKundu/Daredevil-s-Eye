@@ -378,7 +378,8 @@ async function handleAccountApi(request,env,url) {
     }
     const deleted=await supabaseRest(env,'ai_history?'+userFilter,{method:'DELETE'});
     if(!deleted.ok)return json({error:'Could not delete your saved history.'},502);
-    await supabaseRest(env,'api_usage?'+userFilter,{method:'DELETE'});
+    const usageDeleted=await supabaseRest(env,'api_usage?'+userFilter,{method:'DELETE'});
+    if(!usageDeleted.ok)return json({error:'History photos and answers were deleted, but usage records could not be deleted. Please retry the usage deletion.'},502);
     return json({ok:true,deleted:true});
   }
   if(path==='/api/account/usage'&&request.method==='GET'){
