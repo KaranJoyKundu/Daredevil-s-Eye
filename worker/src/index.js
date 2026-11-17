@@ -215,6 +215,12 @@ async function saveAccountHistory(env,user,request,body,result,fullPrompt) {
 }
 
 async function handleAccountApi(request,env,url) {
+  if(['POST','PUT','PATCH','DELETE'].includes(request.method)){
+    const origin=request.headers.get('origin');
+    if(!origin)return json({error:'A same-origin request is required for account changes.'},403);
+    try{if(new URL(origin).origin!==url.origin)return json({error:'Cross-origin account changes are not allowed.'},403);}
+    catch{return json({error:'Invalid request origin.'},403);}
+  }
   if(!supabaseConfigured(env))return json({ok:false,error:'Account services are not configured yet. Connect Supabase and add the Worker secrets described in the setup guide.'},503);
   const path=url.pathname;
   if(path==='/api/account/signup'&&request.method==='POST'){
