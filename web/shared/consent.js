@@ -1,5 +1,5 @@
 const CONSENT_KEY = 'daredevils-eye.privacy-consent.v2';
-const CONSENT_VERSION = 3;
+const CONSENT_VERSION = 4;
 const SETTINGS_KEY = 'daredevils-eye.device-settings.v1';
 
 export function getConsentRecord() {
@@ -29,6 +29,12 @@ export function acceptConsent({ migrated = false } = {}) {
     localStorage.setItem(CONSENT_KEY, JSON.stringify(record));
     return Boolean(getConsentRecord());
   } catch { return false; }
+}
+
+export function rejectConsent() {
+  const record = { version: CONSENT_VERSION, accepted: false, rejected: true, rejectedAt: new Date().toISOString() };
+  try { localStorage.setItem(CONSENT_KEY, JSON.stringify(record)); return true; }
+  catch { return false; }
 }
 
 export function resetConsent() {

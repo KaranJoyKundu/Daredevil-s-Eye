@@ -1,8 +1,8 @@
-import { captureImage, blobToDataUrl, compressImageToJpeg, primeShutterAudio } from './camera.js?v=20261117-release1';
-import { requestAI } from './api.js?v=20261117-release2';
-import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release2';
-import { getSettings, saveSettings } from './settings.js?v=20261117-release2';
-import { hasCurrentConsent, acceptConsent } from './consent.js?v=20261117-release1';
+import { captureImage, blobToDataUrl, compressImageToJpeg, primeShutterAudio } from './camera.js?v=20261117-release5';
+import { requestAI } from './api.js?v=20261117-release5';
+import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release5';
+import { getSettings, saveSettings } from './settings.js?v=20261117-release5';
+import { hasCurrentConsent, acceptConsent, rejectConsent } from './consent.js?v=20261117-release5';
 import { createShakeSequenceTracker, getShakeMagnitude, matchSosVoiceCommand } from './sos-triggers.js?v=20261117-release1';
 const $=selector=>document.querySelector(selector),status=$('#status');
 let activeRecognition=null,voiceStarting=false,phonePhoto=null,phonePhotoUrl=null,revealRun=0,lastAnswer='';
@@ -381,14 +381,25 @@ $('#question-form')?.addEventListener('submit',event=>{
  if(question){run('ask',question);return;}
  run('describe');
 });
+const termsCheck=$('#consent-terms-check'),acceptButton=$('#consent-accept');
+if(termsCheck&&acceptButton){
+ const syncAccept=()=>{acceptButton.disabled=!termsCheck.checked;};
+ termsCheck.addEventListener('change',syncAccept);syncAccept();
+}
 $('#consent-accept')?.addEventListener('click',()=>{
- if(!acceptConsent()){$('#consent-status').textContent='Could not save your consent in this browser. Enable site storage and try again.';const settings=getSettings();speak(settings.speechLanguage==='bn-BD'?'এই ব্রাউজারে সম্মতি সংরক্ষণ করা যায়নি। সাইটের স্টোরেজ চালু করে আবার চেষ্টা করুন।':'Could not save your consent. Please enable site storage and try again.',{lang:settings.speechLanguage||'en-US'});return;}
- $('#consent-panel').remove();const settings=getSettings();
- if(!settings.firstRunDisclaimerSpoken){
-  const disclaimer=settings.speechLanguage==='bn-BD'?'প্রথমবার ব্যবহারের আগে জানুন: ডেয়ারডেভিলস আই একটি পরীক্ষামূলক সহায়ক। এটি ভুল করতে পারে এবং বিপদ শনাক্ত করতে ব্যর্থ হতে পারে। এটি সাদা ছড়ি বা গাইড কুকুরের বিকল্প নয় এবং কোনো রাস্তা বা পথ নিরাপদ কি না নিশ্চিত করতে পারে না। আপনার স্বাভাবিক চলাচলের সহায়তা ব্যবহার করতে থাকুন।':'Before first use: Daredevil’s Eye is experimental. It can make mistakes and miss hazards. It is not a cane or guide dog and cannot confirm that a path or road is safe. Keep using your usual mobility aids and mobility support.';
-  if(status)status.textContent='Playing the first-use safety notice.';
-  const utterance=speak(disclaimer,{lang:settings.speechLanguage||'en-US',onEnd:()=>{saveSettings({firstRunDisclaimerSpoken:true});handleDeepLinkAction();}});
-  if(!utterance){saveSettings({firstRunDisclaimerSpoken:true});handleDeepLinkAction();}
- }else{announce('Privacy notice accepted on this device.');handleDeepLinkAction();}
+ if(!termsCheck?.checked){$('#consent-status').textContent='Please tick the box to confirm that you accept the Terms & Conditions.';return;}
+ if(!acceptConsent()){$('#consent-status').textContent='Could not save acceptance in this browser. Enable site storage and try again.';return;}
+ saveSettings({savePhotoHistory:true,consentAccepted:true});
+ $('#consent-panel').remove();
+ const settings=getSettings();
+ announce(settings.speechLanguage==='bn-BD'?'শর্তাবলি গ্রহণ করা হয়েছে। আপনি এখন অ্যাপ ব্যবহার করতে পারেন।':'Terms accepted. You can now use the app.');
+ handleDeepLinkAction();
+});
+$('#consent-reject')?.addEventListener('click',()=>{
+ rejectConsent();stopSosVoiceListener();stopSpeaking();
+ if(termsCheck)termsCheck.checked=false;
+ if(acceptButton)acceptButton.disabled=true;
+ const message=$('#consent-status');
+ if(message)message.textContent='You declined the Terms & Conditions. The app remains locked. Close this page, or return and accept if you change your mind.';
 });
 handleDeepLinkAction();

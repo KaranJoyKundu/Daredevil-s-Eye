@@ -1,5 +1,5 @@
-import { getSettings } from './settings.js?v=20261117-release1';
-import { apiFetch } from './api.js?v=20261117-release1';
+import { getSettings } from './settings.js?v=20261117-release5';
+import { apiFetch } from './api.js?v=20261117-release5';
 
 export const VOICE_PRESETS = Object.freeze({
   gentle: { label: 'Gentle · soft and slightly higher', rate: 0.94, pitch: 1.14 },
@@ -95,14 +95,46 @@ export function splitSpeechText(value, maxLength = 420) {
 
 export function getAvailableVoices() {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return [];
-  return window.speechSynthesis.getVoices();
+  try { return window.speechSynthesis.getVoices() || []; } catch { return []; }
+}
+
+export function isBengaliVoice(voice) {
+  const lang = String(voice?.lang || '').replace(/_/g, '-');
+  const label = String(voice?.name || '') + ' ' + String(voice?.voiceURI || '');
+  return /^bn(?:-|$)/i.test(lang) || /bengali|bangla|বাংলা/i.test(label);
+}
+
+export function refreshAvailableVoices(timeoutMs = 5000) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return Promise.resolve([]);
+  const synth = window.speechSynthesis;
+  const first = getAvailableVoices();
+  if (first.some(isBengaliVoice)) return Promise.resolve(first);
+  return new Promise(resolve => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      synth.removeEventListener?.('voiceschanged', onVoicesChanged);
+      resolve(getAvailableVoices());
+    };
+    const onVoicesChanged = () => {
+      if (getAvailableVoices().some(isBengaliVoice)) finish();
+    };
+    synth.addEventListener?.('voiceschanged', onVoicesChanged);
+    for (const delay of [120, 400, 900, 1800, 3200]) {
+      setTimeout(() => {
+        if (!settled && getAvailableVoices().some(isBengaliVoice)) finish();
+      }, delay);
+    }
+    setTimeout(finish, Math.max(700, timeoutMs));
+  });
 }
 
 export function selectVoiceForText(voices, { lang = 'en-US', voiceURI = '', text = '' } = {}) {
   const available = Array.isArray(voices) ? voices : [];
   const wantsBangla = /^bn(?:-|$)/i.test(lang) || detectSpokenLanguage(text) === 'bn-BD';
-  if (wantsBangla) return available.find(v => v.voiceURI === voiceURI && /^bn(?:-|$)/i.test(v.lang || '')) ||
-    available.find(v => /^bn-BD$/i.test(v.lang || '')) || available.find(v => /^bn(?:-|$)/i.test(v.lang || '')) || null;
+  if (wantsBangla) return available.find(v => v.voiceURI === voiceURI && isBengaliVoice(v)) ||
+    available.find(isBengaliVoice) || null;
   const languageMatches = voice => (voice.lang || '').toLowerCase() === String(lang).toLowerCase() ||
     (voice.lang || '').toLowerCase().startsWith(String(lang).slice(0,2).toLowerCase());
   return available.find(v => v.voiceURI === voiceURI && languageMatches(v)) ||
@@ -117,6 +149,7 @@ function stopDeviceSpeech() {
 function runSpeechQueue(chunks, options, settings, runId, voices) {
   let index = 0;
   let firstStarted = false;
+  let banglaFallbackNoticeSent = false;
   const requestedLanguage = options.lang || settings.speechLanguage || 'en-US';
   const voiceURI = options.voiceURI ?? settings.speechVoiceURI;
   const fail = message => {
@@ -129,9 +162,9 @@ function runSpeechQueue(chunks, options, settings, runId, voices) {
     const chunk = chunks[index++];
     const lang = resolveSpeechLanguage(chunk, requestedLanguage);
     const selectedVoice = selectVoiceForText(voices, { lang, voiceURI, text: chunk });
-    if (/^bn(?:-|$)/i.test(lang) && !selectedVoice) {
-      fail('No Bengali speech voice is installed on this device. Install Bengali voice data in Android Text-to-speech settings, then retry.');
-      return;
+    if (/^bn(?:-|$)/i.test(lang) && !selectedVoice && !banglaFallbackNoticeSent) {
+      banglaFallbackNoticeSent = true;
+      options.onVoiceFallback?.('Chrome did not expose a Bengali voice name. Trying Android text-to-speech directly with the bn-BD language.');
     }
     try {
       const utterance = new SpeechSynthesisUtterance(chunk);
@@ -186,16 +219,7 @@ export function speak(text, options = {}) {
       clearTimeout(timer);
       window.speechSynthesis.removeEventListener?.('voiceschanged', onVoices);
       const ready = Array.isArray(list) ? list : [];
-      if (!ready.length && requestedLanguage === 'bn-BD') {
-        options.onError?.('No Bengali speech voices are available. Install Bengali voice data in Android Text-to-speech settings.');
-        return;
-      }
-      if (!ready.length) {
-        // English can still use the system default when a browser does not
-        // enumerate voices; Bengali deliberately fails closed instead.
-        runSpeechQueue(chunks, options, settings, runId, []);
-        return;
-      }
+      // Let Android resolve a requested locale even when Chrome exposes no voices.
       voices = ready;
       runSpeechQueue(chunks, options, settings, runId, voices);
     };

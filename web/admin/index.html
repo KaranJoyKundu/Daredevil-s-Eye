@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#07111f"><title>Admin / Settings · Daredevil's Eye</title>
-<link rel="stylesheet" href="/shared/style.css?v=20261117-release2">
+<link rel="stylesheet" href="/shared/style.css?v=20261117-release5">
 </head>
 <body><main>
 <header><p class="eyebrow">DEVICE SETTINGS</p><h1>Admin / Settings</h1><p class="subtitle">Tune the camera, AI behaviour and spoken voice. Settings stay in this browser on this device.</p></header>
@@ -17,8 +17,8 @@
 <small>Current camera address: http://192.168.0.104. The app adds http:// when you enter a plain IP.</small>
 <label class="inline-checkbox" for="require-photo-confirmation"><input id="require-photo-confirmation" type="checkbox" checked> Preview every phone photo before sending (recommended)</label>
 <small>When enabled, the selected camera/upload photo stays on this device until the user reviews it and presses Ask AI. Turn this off to automatically describe a selected photo.</small>
-<label class="inline-checkbox" for="save-photo-history"><input id="save-photo-history" type="checkbox"> Save photos and AI answers to my account history</label>
-<small>Optional and off by default. Requires signing in at <a href="/account/">Account & History</a>. When enabled, the compressed photo, question, response, model and usage metadata are saved privately to your account. A keyed IP fingerprint is saved with each photo record until you delete it; separate usage-only fingerprints expire after 90 days. Raw IP addresses are not stored.</small>
+<label class="inline-checkbox" for="save-photo-history"><input id="save-photo-history" type="checkbox"> Automatically save photos and AI answers to my account history</label>
+<small>On by default after Terms acceptance. Requires signing in at <a href="/account/">Account & History</a>. New compressed photos, questions, AI answers and usage details are saved privately to your account. Turn this off here at any time. Raw IP addresses are not stored; a keyed fingerprint is used for limited usage records.</small>
 <div class="field-grid">
 <div><label for="contact-name">Trusted contact name</label><input id="contact-name" maxlength="80" placeholder="Name"></div>
 <div><label for="contact-phone">Trusted contact phone</label><input id="contact-phone" type="tel" maxlength="30" placeholder="+880..."></div>
@@ -101,6 +101,7 @@
 <p class="hint">Gemini offers 14 prebuilt female voices, along with other voices. Gemini TTS is not wired to this Worker yet. Use device voices for the live demo; Gemini TTS can be added in a later phase.</p>
 <label for="voice-select">Installed voice on this device</label>
 <select id="voice-select"><option value="">Automatic device voice</option></select>
+<button id="refresh-voices" type="button" class="secondary">Refresh device voice list</button>
 <p id="voice-status" class="hint">Voice options depend on the voices installed in your browser or operating system.</p>
 <div class="field-grid">
 <div><label for="speech-rate">Speaking speed: <output id="rate-value">0.96</output></label><input id="speech-rate" type="range" min="0.75" max="1.25" step="0.05"></div>
@@ -110,9 +111,6 @@
 <small>These styles adjust the selected device voice. They do not guarantee a specific gender or sound; available voices vary by device. You can select a named installed voice above.</small>
 </section>
 
-<div class="inline-actions">
-<button type="submit">Save all settings</button>
-</div>
 </form>
 <p id="message" role="status" aria-live="polite"></p>
 
@@ -137,7 +135,8 @@
 </section>
 
 <nav class="navlinks"><a href="/action/">Home</a><a href="/diagnostics/">Diagnostics</a><a href="/contact/">Contact</a><a href="/privacy/">Privacy</a></nav>
+<div class="inline-actions admin-save-actions"><button type="submit" form="settings-form">Save all settings</button></div>
 </main>
-<script type="module" src="/admin/admin.js?v=20261117-release2"></script>
-<script type="module" src="/shared/site-nav.js?v=20261117-release2"></script>
+<script type="module" src="/admin/admin.js?v=20261117-release5"></script>
+<script type="module" src="/shared/site-nav.js?v=20261117-release5"></script>
 </body></html>

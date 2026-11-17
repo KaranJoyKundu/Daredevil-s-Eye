@@ -245,7 +245,7 @@ export class SOSRoom {
         notificationAttempted: push.attempted,
         notificationAccepted: push.success,
         message: push.success
-          ? 'SOS is stored and the push service accepted a notification request. This does not confirm that the receiver displayed it.'
+          ? 'SOS is stored and the push service accepted the notification request. The alert may already have reached the other phone, but this app cannot verify whether it was displayed.'
           : 'SOS is stored, but no push notification was accepted. The receiver must reconnect and poll to see the alert.'
       });
     }

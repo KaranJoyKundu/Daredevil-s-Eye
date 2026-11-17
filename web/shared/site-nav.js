@@ -1,7 +1,10 @@
+import {hasCurrentConsent,acceptConsent,rejectConsent} from './consent.js?v=20261117-release5';
+import {saveSettings} from './settings.js?v=20261117-release5';
+
 const links = [
   ['Home','/action/'],['Blind mode','/blind/'],['Admin / Settings','/admin/'],
   ['Diagnostics','/diagnostics/'],['Account & History','/account/'],['Help','/help/'],['SOS Receiver','/sos-receiver/'],
-  ['Contact','/contact/'],['Privacy','/privacy/']
+  ['Contact','/contact/'],['Support','/support/'],['Terms & Conditions','/terms/'],['Privacy','/privacy/']
 ];
 const bar=document.createElement('div');
 bar.className='site-nav';
@@ -14,6 +17,38 @@ for(const [label,href] of links){
   menu.append(link);
 }
 document.body.prepend(bar);
+
+// Require the same explicit consent before any app surface can be used,
+// including direct visits to Admin, Diagnostics, Account and the SOS receiver.
+const protectedPaths=new Set(['/','/action/','/blind/','/admin/','/diagnostics/','/account/','/help/','/sos-receiver/']);
+const currentPath=location.pathname.replace(/\/?$/,'/');
+if(protectedPaths.has(currentPath)&&!hasCurrentConsent()&&!document.querySelector('#consent-panel')){
+ const gate=document.createElement('section');
+ gate.id='consent-panel';gate.className='consent-gate';gate.setAttribute('role','dialog');gate.setAttribute('aria-modal','true');
+ gate.setAttribute('aria-labelledby','shared-consent-title');
+ gate.innerHTML=`<div class="consent-card">
+  <p class="eyebrow">WELCOME</p><h2 id="shared-consent-title">Before you begin</h2>
+  <p>Photos and voice requests may be processed by this app, Cloudflare and Google Gemini. When you are signed in, photos and AI answers are automatically saved to your private account history. You can turn automatic saving off in Admin. Guests can use the app, but their photos and answers are not saved to an account.</p>
+  <p>This is not a certified navigation aid or emergency service. AI can miss hazards; keep using your usual mobility aids and emergency plan.</p>
+  <p>Read the <a href="/terms/">Terms &amp; Conditions</a> and <a href="/privacy/">Privacy details</a>. You can also <a href="/account/">sign in or create an account</a>.</p>
+  <label class="consent-check"><input id="shared-consent-check" type="checkbox"> I have read and agree to the Terms &amp; Conditions and Privacy notice.</label>
+  <p id="shared-consent-status" class="hint" role="status" aria-live="polite"></p>
+  <div class="consent-actions"><button id="shared-consent-accept" type="button" disabled>Accept &amp; continue</button><button id="shared-consent-reject" type="button" class="secondary">Reject</button></div>
+ </div>`;
+ document.body.append(gate);
+ const check=gate.querySelector('#shared-consent-check'),accept=gate.querySelector('#shared-consent-accept'),status=gate.querySelector('#shared-consent-status');
+ check.addEventListener('change',()=>{accept.disabled=!check.checked;});
+ accept.addEventListener('click',()=>{
+  if(!check.checked){status.textContent='Please tick the box to accept the terms.';return;}
+  if(!acceptConsent()){status.textContent='Could not save acceptance in this browser. Enable site storage and try again.';return;}
+  saveSettings({savePhotoHistory:true,consentAccepted:true});
+  gate.remove();
+ });
+ gate.querySelector('#shared-consent-reject').addEventListener('click',()=>{
+  rejectConsent();check.checked=false;accept.disabled=true;
+  status.textContent='You declined the Terms & Conditions. This app page remains locked. Close this page, or return and accept if you change your mind.';
+ });
+}
 const details=bar.querySelector('details');
 document.addEventListener('pointerdown',event=>{
   if(details?.open&&!bar.querySelector('.site-menu')?.contains(event.target))details.removeAttribute('open');

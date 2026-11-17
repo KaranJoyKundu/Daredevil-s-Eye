@@ -1,14 +1,14 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Privacy · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css?v=20261117-release1"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Privacy · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css?v=20261117-release5"></head>
 <body><main>
-<header><p class="eyebrow">DATA & PERMISSIONS</p><h1>Privacy</h1><p class="subtitle">What this prototype processes, what it stores, which services receive it and how you can remove saved data.</p></header>
+<header><p class="eyebrow">DATA & PERMISSIONS</p><h1>Privacy</h1><p class="subtitle">What the app processes, what it stores, which services receive it and how you can remove saved data.</p></header>
 
 <section class="panel settings-section">
 <h2>Camera images and AI analysis</h2>
 <p>When you use Describe, Ask AI, the phone camera or Upload photo, the selected image is processed in your browser and sent to this app's Cloudflare Worker backend. Phone photos and uploads are resized and re-encoded as JPEG below 3.8 MB before they are sent. In Gemini mode, the Worker forwards the image and your question or prompt to Google Gemini. Google processes that content under the terms for the Gemini service and API key being used. Do not submit images unless you are comfortable sharing their contents with Google.</p>
 
 <h2>Optional account photo and answer history</h2>
-<p>Saving is optional and off by default. To save history, sign in at <a href="/account/">Account & History</a> and enable <strong>Save photos and AI answers to my account history</strong> in Admin. When enabled, a successful camera or upload analysis saves the exact compressed JPEG to a private storage bucket and saves its question, system prompt, answer, model, fallback models, response language, token usage and timestamp to your account. The photo is not publicly accessible; the account page uses short-lived viewing links.</p>
+<p>After you accept the Terms &amp; Conditions, account-history saving is on by default for signed-in users. Sign in at <a href="/account/">Account &amp; History</a> and successful photo analyses automatically save the compressed JPEG to a private storage bucket, with the question, system prompt, answer, model, fallback models, response language, token usage and timestamp. The photo is not public; the account page uses short-lived viewing links. You can turn automatic saving off in Admin at any time. Guests can use the app, but their photos and answers are not saved to an account.</p>
 <p>History is kept until you delete it. You can delete one saved photo/answer at a time or delete all saved history and usage from your Account page. Turning the option off stops new photo and answer records from being saved; it does not automatically delete older records.</p>
 
 <h2>Usage records and IP information</h2>
@@ -21,7 +21,7 @@
 <p>A personal Gemini key entered directly in Admin is kept only in that browser tab's session storage and is removed when the tab closes. Signed-in users can instead save a personal Gemini key to their account. That saved key is encrypted by the Worker using AES-256-GCM before it is stored in the database. The plaintext key is not returned to the browser or stored in plaintext; the Worker decrypts it in memory only when making a Gemini request. You can replace or delete the saved key from Account & History. The shared project key, when configured, is stored as a Cloudflare Worker secret.</p>
 
 <h2>Account service and current availability</h2>
-<p>The feature branch includes email sign-up/sign-in, encrypted saved keys, private photo history and usage records. These account features are not available on the production site until the Supabase project is provisioned, the database migration is applied and the required Worker secrets are configured. If the Account page reports that the service is not configured, no account history or saved keys can be written yet. See <a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/blob/feat/reliability-photo-history-push/docs/SUPABASE-ACCOUNT-HISTORY-SETUP.md">the setup instructions</a>.</p>
+<p>The Supabase project and private-history database schema have been provisioned. Account sign-in, photo history and saved Gemini keys become active on the live site once the Cloudflare Worker receives the Supabase URL, publishable key, Secret key and encryption secrets. Until the Account page confirms the service is ready, do not assume a photo or answer was saved. Personal Gemini keys are encrypted by the Worker before database storage.</p>
 
 <h2>Device storage</h2>
 <p>Camera address, speech preferences, consent state, emergency contact details and a per-install SOS sender identifier are saved in this browser's local storage. The paired SOS receiver token is stored in local storage on the receiver device so it can reconnect after the tab closes. A browser push subscription (endpoint and cryptographic subscription keys) is held in the sender's Cloudflare Durable Object so screen-off Web Push notifications can be sent. Re-pairing replaces the old receiver subscription.</p>
@@ -33,7 +33,7 @@
 <p>Shake-to-SOS is optional and disabled by default. When enabled, accelerometer readings are evaluated locally while Blind mode is visible and are not sent to the Worker. Voice SOS is optional and disabled by default. It uses browser speech recognition only while Blind mode is open and the page is visible; the browser's recognition provider may process audio outside this app. No SOS audio recording is intentionally stored by Daredevil's Eye.</p>
 
 <h2>Spoken responses and assistive limitations</h2>
-<p>Device speech synthesis uses voices supplied by Android or the browser. Bangla mode requires a Bengali text-to-speech voice to be installed on the device; the app does not silently substitute an English voice. Daredevil's Eye is experimental, may miss hazards and is not a replacement for a cane, guide dog, emergency service or human assistance.</p>
+<p>Device speech synthesis uses voices supplied by Android or the browser. Bangla mode requests the bn-BD locale; Chrome may not expose every Android voice in its voice list, so use the Admin voice preview to check actual playback. Daredevil's Eye is an experimental project, not a certified navigation aid, medical device or emergency-dispatch service. AI can miss hazards; continue using a cane, guide dog, mobility training and human assistance.</p>
 
 <h2>External services and free-tier use</h2>
 <p>Images and voice recordings submitted for AI analysis/transcription are processed by Google Gemini. Account authentication, database records and private photo objects use Supabase once configured. SOS push notifications are handled by the browser's push provider. Each provider has its own privacy terms and service availability. Google may treat free-tier and paid-tier content differently; review the current terms for the key you use and avoid sending confidential images or audio through a shared free-tier key.</p>
@@ -45,13 +45,13 @@
 <h2>Prototype status</h2>
 <p>This is not a production privacy or safety certification. Account history is opt-in and requires server configuration. Account deletion is not yet self-service; you can delete saved photos/answers, usage and personal Gemini keys from your Account page, and contact the project owner for account removal.</p>
 </section>
-<nav class="navlinks"><a href="/action/">Home</a><a href="/account/">Account & History</a><a href="/blind/">Blind mode</a><a href="/help/">Help</a></nav>
+<nav class="navlinks"><a href="/action/">Home</a><a href="/account/">Account &amp; History</a><a href="/blind/">Blind mode</a><a href="/terms/">Terms &amp; Conditions</a><a href="/support/">Support</a><a href="/help/">Help</a></nav>
 <script type="module">
-import {resetConsent} from '/shared/consent.js?v=20261117-release1';
+import {resetConsent} from '/shared/consent.js?v=20261117-release5';
 document.querySelector('#reset-consent').addEventListener('click',()=>{
  const ok=resetConsent();
  document.querySelector('#consent-reset-status').textContent=ok?'Consent reset. The notice will appear the next time you open Home.':'Could not reset consent in this browser.';
 });
 </script>
-<script type="module" src="/shared/site-nav.js?v=20261117-release1"></script>
+<script type="module" src="/shared/site-nav.js?v=20261117-release5"></script>
 </main></body></html>
