@@ -309,7 +309,7 @@ async function handleAccountApi(request,env,url) {
   }
   const historyItemId=path.startsWith('/api/account/history/')?path.slice('/api/account/history/'.length):'';
   if(historyItemId&&request.method==='DELETE'&&/^[0-9a-f-]{36}$/i.test(historyItemId)){
-    const id=historyItemMatch[1];
+    const id=historyItemId;
     const selected=await supabaseRest(env,'ai_history?select=photo_path&id=eq.'+encodeURIComponent(id)+'&user_id=eq.'+encodeURIComponent(user.id));
     if(!selected.ok)return json({error:'Could not find that history record.'},404);
     const rows=await selected.json().catch(()=>[]);
@@ -322,6 +322,7 @@ async function handleAccountApi(request,env,url) {
     const deleted=await supabaseRest(env,'ai_history?id=eq.'+encodeURIComponent(id)+'&user_id=eq.'+encodeURIComponent(user.id),{method:'DELETE'});
     if(!deleted.ok)return json({error:'Could not delete that history record.'},502);
     return json({ok:true,deleted:true});
+  }
   if(path==='/api/account/history'&&request.method==='GET'){
     const query='ai_history?select=id,request_type,question,response_text,model,attempted_models,response_language,total_tokens,photo_path,photo_size_bytes,created_at&user_id=eq.'+encodeURIComponent(user.id)+'&order=created_at.desc&limit=50';
     const response=await supabaseRest(env,query);
