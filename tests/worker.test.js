@@ -201,7 +201,7 @@ test('personal Gemini key header is recognised but never echoed by health',async
  assert.equal(d.usingPersonalKey,true);
  assert.equal(JSON.stringify(d).includes('user-secret-key'),false);
 });
-test('vision models are ranked with advanced photo understanding first and lite tiers lower',()=>{
+test('vision models prefer stable Flash alternatives in the automatic free-tier path',()=>{
  const ranked=rankVisionModels([
   {id:'gemini-3.1-flash-lite',name:'Flash Lite'},
   {id:'gemini-3.8-flash',name:'Flash'},
@@ -209,7 +209,7 @@ test('vision models are ranked with advanced photo understanding first and lite 
   {id:'gemini-3.7-flash',name:'Flash 3.7'}
  ]);
  assert.deepEqual(ranked.map(item=>item.id),[
-  'gemini-3.1-pro-preview','gemini-3.8-flash','gemini-3.7-flash','gemini-3.1-flash-lite'
+  'gemini-3.8-flash','gemini-3.7-flash','gemini-3.1-flash-lite','gemini-3.1-pro-preview'
  ]);
  assert.deepEqual(ranked.map(item=>item.rank),[1,2,3,4]);
 });
@@ -302,8 +302,8 @@ test('vision fallback tries the next ranked model after a model-specific 429',as
  const d=await r.json();
  assert.equal(r.status,200);
  assert.equal(d.answer,'A clear test answer.');
- assert.equal(d.model,'gemini-3.1-pro-preview');
- assert.deepEqual(attempts,['gemini-3.8-flash','gemini-3.1-pro-preview']);
+ assert.equal(d.model,'gemini-3.1-flash-lite');
+ assert.deepEqual(attempts,['gemini-3.8-flash','gemini-3.1-flash-lite']);
 });
 
 
