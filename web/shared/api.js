@@ -39,7 +39,7 @@ export async function apiFetch(path, options = {}) {
   const target = String(path);
   if(/^\\/api\\/(health|models|config|describe|ask|transcribe|speech)$/.test(target)){
     // Refresh a returning user's HttpOnly session before the Worker resolves
-    // their encrypted Gemini key. Ignore setup errors so public-key use works.
+  if(/^\/api\/(health|models|config|describe|ask|transcribe|speech)$/.test(target)){
     await refreshSavedAccountSession();
   }
   // Never send a personal Gemini key to unrelated paths or SOS endpoints.
