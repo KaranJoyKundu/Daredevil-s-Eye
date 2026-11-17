@@ -67,6 +67,8 @@ async function ensureGuestSession(){
  return data;
 }
 async function guestApi(path,{method='GET'}={}){
+ // Ensure the HttpOnly guest cookie exists before every history operation, including deletes.
+ await ensureGuestSession();
  const response=await fetch(path,{method,credentials:'same-origin',cache:'no-store'});
  const data=await response.json().catch(()=>({}));
  if(!response.ok)throw new Error(data.error||('Request failed ('+response.status+').'));
@@ -128,9 +130,14 @@ function createHistoryCard(item,scope){
   if(!window.confirm(prompt))return;
   del.disabled=true;
   try{
-   if(scope==='guest')await guestApi('/api/guest/history/'+encodeURIComponent(item.id),{method:'DELETE'});
-   else await api('/api/account/history/'+encodeURIComponent(item.id),{method:'DELETE'});
-   if(scope==='guest')await loadGuestHistory(false);else await loadHistory(false);
+   if(scope==='guest'){
+    const deleted=await guestApi('/api/guest/history/'+encodeURIComponent(item.id),{method:'DELETE'});
+    if(!deleted.deleted)throw new Error('The server did not confirm deletion. Refresh the history and retry.');
+    await loadGuestHistory(false);
+   }else{
+    await api('/api/account/history/'+encodeURIComponent(item.id),{method:'DELETE'});
+    await loadHistory(false);
+   }
   }catch(error){
    const statusNode=scope==='guest'?$('#guest-history-status'):$('#history-status');
    statusNode.textContent=error.message;del.disabled=false;
@@ -185,9 +192,11 @@ $('#delete-guest-history').addEventListener('click',async()=>{
  const button=$('#delete-guest-history');button.disabled=true;
  $('#guest-history-status').textContent='Deleting guest history…';
  try{
-  await guestApi('/api/guest/history',{method:'DELETE'});
+  const result=await guestApi('/api/guest/history',{method:'DELETE'});
+  if(!result.deleted)throw new Error('The server did not confirm deletion. Refresh the history and retry.');
   $('#guest-history-list').replaceChildren();$('#guest-history-more')?.remove();
-  $('#guest-history-status').textContent='All guest photos and answers for this browser were deleted.';
+  $('#delete-guest-history').disabled=true;
+  $('#guest-history-status').textContent='Deleted '+(Number(result.deletedCount)||0)+' guest photo record(s) and their stored photos from this browser.';
  }catch(error){$('#guest-history-status').textContent=error.message;}
  finally{button.disabled=false;}
 });
