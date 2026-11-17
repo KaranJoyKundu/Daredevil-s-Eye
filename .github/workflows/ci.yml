@@ -78,3 +78,42 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
+      - name: Check optional Supabase account-history secrets
+        id: account-secrets-check
+        if: steps.secrets-check.outputs.configured == 'true'
+        shell: bash
+        env:
+          SB_URL: ${{ secrets.SUPABASE_URL }}
+          SB_ANON: ${{ secrets.SUPABASE_ANON_KEY }}
+          SB_SERVICE: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          KEY_ENCRYPTION: ${{ secrets.API_KEY_ENCRYPTION_KEY }}
+          IP_FINGERPRINT: ${{ secrets.IP_HASH_SECRET }}
+        run: |
+          if [[ -n "$SB_URL" && -n "$SB_ANON" && -n "$SB_SERVICE" && -n "$KEY_ENCRYPTION" && -n "$IP_FINGERPRINT" ]]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "Optional Supabase account/history secrets are present."
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "Account/history services remain disabled: configure all five Supabase and encryption secrets to enable them."
+          fi
+
+      - name: Upload optional Supabase account-history secrets
+        if: steps.account-secrets-check.outputs.configured == 'true'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4"
+          secrets: |
+            SUPABASE_URL
+            SUPABASE_ANON_KEY
+            SUPABASE_SERVICE_ROLE_KEY
+            API_KEY_ENCRYPTION_KEY
+            IP_HASH_SECRET
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          API_KEY_ENCRYPTION_KEY: ${{ secrets.API_KEY_ENCRYPTION_KEY }}
+          IP_HASH_SECRET: ${{ secrets.IP_HASH_SECRET }}
+
