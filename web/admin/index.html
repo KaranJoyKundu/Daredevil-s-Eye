@@ -10,6 +10,45 @@
 
 <nav class="quick-jump" aria-label="Admin shortcuts"><a href="#camera-settings">📷 <span>Camera & SOS</span></a><a href="#ai-settings">✨ <span>AI models</span></a><a href="#voice-settings">🎙 <span>Voice</span></a><a href="#image-lab">🧪 <span>Image tester</span></a><a href="/diagnostics/">✅ <span>Diagnostics</span></a><a href="/account/">👤 <span>Account & History</span></a><a href="/action/">⌂ <span>Home</span></a></nav>
 <form id="settings-form">
+<section id="appearance-settings" class="panel settings-section">
+<h2>Appearance &amp; six themes</h2>
+<p>Choose a design. Selecting a card previews it immediately; Save all settings keeps your choice on this device.</p>
+<div id="theme-picker" class="theme-picker" role="group" aria-label="Choose an app theme">
+<button type="button" class="theme-choice" data-theme-choice="refined"><strong>1 · Refined Daredevil</strong><span class="theme-swatches"><i style="background:#07111f"></i><i style="background:#0e1d33"></i><i style="background:#f5b942"></i></span><small>Dark navy, amber and the current identity</small></button>
+<button type="button" class="theme-choice" data-theme-choice="swiss"><strong>2 · Swiss Accessibility</strong><span class="theme-swatches"><i style="background:#fafaf7"></i><i style="background:#111"></i><i style="background:#d71920"></i></span><small>Warm white, strict grid and red accents</small></button>
+<button type="button" class="theme-choice" data-theme-choice="material"><strong>3 · Material You Android</strong><span class="theme-swatches"><i style="background:#f5f3fa"></i><i style="background:#0b57d0"></i><i style="background:#b3261e"></i></span><small>Android tonal surfaces and optional device dark mode</small></button>
+<button type="button" class="theme-choice" data-theme-choice="clinical"><strong>4 · Clinical High Contrast</strong><span class="theme-swatches"><i style="background:#000"></i><i style="background:#fff"></i><i style="background:#ffd400"></i></span><small>Black, white, bold borders and yellow focus</small></button>
+<button type="button" class="theme-choice" data-theme-choice="tactile"><strong>5 · Tactile Minimal</strong><span class="theme-swatches"><i style="background:#e9e6df"></i><i style="background:#1f1f1d"></i><i style="background:#2f5d50"></i></span><small>Warm neutral surfaces and green accents</small></button>
+<button type="button" class="theme-choice" data-theme-choice="night"><strong>6 · Night Navigation</strong><span class="theme-swatches"><i style="background:#0a0e14"></i><i style="background:#171f29"></i><i style="background:#ffb454"></i></span><small>Low-glare charcoal and warm amber</small></button>
+</div>
+<div class="field-grid">
+<div><label class="inline-checkbox" for="follow-system-theme"><input id="follow-system-theme" type="checkbox"> Follow device light / dark setting</label></div>
+<div><label for="text-size">App text size</label><select id="text-size"><option value="small">Small</option><option value="normal">Normal</option><option value="large">Large</option></select></div>
+<div><label class="inline-checkbox" for="high-contrast"><input id="high-contrast" type="checkbox"> Extra high contrast</label></div>
+<div><label class="inline-checkbox" for="reduced-motion"><input id="reduced-motion" type="checkbox"> Reduce motion and transitions</label></div>
+</div>
+<p class="hint" id="theme-preview-status" role="status" aria-live="polite">Current theme preview is applied to this page.</p>
+</section>
+<section id="language-settings" class="panel settings-section">
+<h2>App language</h2>
+<label for="language-mode">Language mode</label>
+<select id="language-mode"><option value="bn">বাংলা — force the app into Bangla</option><option value="en">English — force the app into English</option><option value="custom">Custom — choose each language yourself</option></select>
+<p class="hint">Bangla and English modes set the AI answer, spoken responses and recognition languages to match. Custom mode lets you choose each setting separately.</p>
+<div id="custom-language-controls" class="language-custom-controls">
+<label for="custom-interface-language">Interface language</label>
+<select id="custom-interface-language"><option value="en">English</option><option value="bn">বাংলা</option></select>
+<label for="language">AI response language</label>
+<select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
+<label for="speech-input-mode">Voice input mode</label>
+<select id="speech-input-mode"><option value="auto">Automatic multilingual detection (Gemini)</option><option value="browser">Browser speech recognition first</option></select>
+<label for="input-language">Browser recognition language</label>
+<select id="input-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
+<label for="sos-voice-language">Voice SOS recognition language</label>
+<select id="sos-voice-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
+</div>
+<small>Automatic mode uses Gemini for Bangla, English and mixed speech. Browser mode starts with the selected language and falls back when available.</small>
+</section>
+
 <section id="camera-settings" class="panel settings-section">
 <h2>Camera & trusted contact</h2>
 <label for="camera">ESP32-CAM address</label>
@@ -44,16 +83,7 @@
   <p id="sos-voice-status" class="hint" role="status" aria-live="polite">Disabled. Say “SOS”, then “Confirm SOS”.</p>
  </div>
 </div>
-<label for="sos-voice-language">Voice SOS recognition language</label>
-<select id="sos-voice-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
-<small>Voice SOS uses the browser's continuous speech-recognition API, not Gemini. The microphone is monitored only in the visible Blind mode page. English: say “SOS”, then “Confirm SOS”. Bangla: say “এসওএস”, then “নিশ্চিত করুন” or “এসওএস পাঠান”. Say “Cancel SOS” / “এসওএস বাতিল” during the countdown to stop it. Recognition availability depends on Android/Chrome and installed speech services.</small>
-<label for="language">AI response language</label>
-<select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
-<label for="speech-input-mode">Voice input mode</label>
-<select id="speech-input-mode"><option value="auto">Automatic multilingual detection (recommended — Gemini)</option><option value="browser">Browser speech recognition first</option></select>
-<label for="input-language">Browser recognition language</label>
-<select id="input-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
-<small>Automatic mode records a short clip and sends it to Gemini to detect Bangla, English or mixed speech. Browser mode uses the selected language first and switches to Gemini if it fails. Audio is processed externally; do not speak confidential information.</small>
+<p class="hint">Voice SOS listens only in visible Blind mode. Say “SOS” to start, then “Confirm SOS” to continue. Say “Cancel SOS” during the countdown to stop it.</p>
 </section>
 
 <section id="ai-settings" class="panel settings-section">
