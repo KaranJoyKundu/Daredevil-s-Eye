@@ -8,12 +8,12 @@
 </head>
 <body class="blind-page">
 <main id="blind-grid" class="blind-grid" aria-label="Four main actions" data-i18n-aria="four_actions">
-<button class="blind-tile blind-describe" type="button" data-action="describe" aria-label="Describe the camera view"><span aria-hidden="true">◉</span><strong data-i18n="describe">DESCRIBE</strong><small data-i18n="describe_question">What is around me?</small></button>
-<button class="blind-tile blind-ask" type="button" data-action="ask" aria-label="Ask a question by speaking"><span aria-hidden="true">🎙</span><strong data-i18n="ask_ai">ASK AI</strong><small data-i18n="ask_voice">Ask by voice</small></button>
-<button class="blind-tile blind-sos" type="button" data-action="sos" aria-label="SOS. Tap once to arm, tap again to confirm"><span aria-hidden="true">☎</span><strong>SOS</strong><small data-i18n="sos_twice">Tap twice to confirm</small></button>
+<button class="blind-tile blind-describe" type="button" data-action="describe" aria-label="Describe the camera view" data-i18n-aria="aria_describe"><span aria-hidden="true">◉</span><strong data-i18n="describe">DESCRIBE</strong><small data-i18n="describe_question">What is around me?</small></button>
+<button class="blind-tile blind-ask" type="button" data-action="ask" aria-label="Ask a question by speaking" data-i18n-aria="aria_ask"><span aria-hidden="true">🎙</span><strong data-i18n="ask_ai">ASK AI</strong><small data-i18n="ask_voice">Ask by voice</small></button>
+<button class="blind-tile blind-sos" type="button" data-action="sos" aria-label="SOS. Tap once to arm, tap again to confirm" data-i18n-aria="aria_sos"><span aria-hidden="true">☎</span><strong>SOS</strong><small data-i18n="sos_twice">Tap twice to confirm</small></button>
 <button class="blind-tile blind-repeat" type="button" data-action="repeat" aria-label="Repeat the last spoken answer"><span aria-hidden="true">↻</span><strong data-i18n="repeat">REPEAT</strong><small data-i18n="repeat_subtitle">Hear the last answer again</small></button>
 </main>
-<div class="blind-utility" role="group" aria-label="Additional controls" data-i18n-aria="additional_controls"><button id="spoken-help-button" class="blind-help-button" type="button" data-action="help" aria-label="Spoken help. Hear how to use Daredevil's Eye"><span data-i18n="spoken_help">🔊 SPOKEN HELP</span></button><button id="sos-trigger-cancel" type="button" data-action="cancel-sos-trigger" hidden data-i18n="cancel_sos">Cancel SOS countdown</button></div>
+<div class="blind-utility" role="group" aria-label="Additional controls" data-i18n-aria="additional_controls"><button id="spoken-help-button" class="blind-help-button" type="button" data-action="help" aria-label="Spoken help. Hear how to use Daredevil's Eye" data-i18n-aria="aria_help"><span data-i18n="spoken_help">🔊 SPOKEN HELP</span></button><button id="sos-trigger-cancel" type="button" data-action="cancel-sos-trigger" hidden data-i18n="cancel_sos">Cancel SOS countdown</button></div>
 <div class="sr-only" aria-live="polite" role="status" id="status">Ready. Four main actions: Describe, Ask AI, SOS and Repeat. Spoken Help is separate.</div>
 <a id="sos-call-link" class="sr-only" href="#" hidden>Call trusted contact</a>
 <input id="phone-photo" class="sr-only" type="file" accept="image/*" capture="environment">
