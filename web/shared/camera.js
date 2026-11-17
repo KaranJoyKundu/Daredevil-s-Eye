@@ -1,6 +1,15 @@
 import { getSettings } from './settings.js?v=20261117-photo-buffer';
 
 let shutterAudioContext=null;
+export function primeShutterAudio(){
+ try{
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextClass)return false;
+  if(!shutterAudioContext)shutterAudioContext=new AudioContextClass();
+  if(shutterAudioContext.state==='suspended')void shutterAudioContext.resume().catch(()=>{});
+  return true;
+ }catch{return false;}
+}
 export async function playShutterClick(){
  try{
   const AudioContextClass=window.AudioContext||window.webkitAudioContext;
