@@ -412,7 +412,7 @@ export async function listenOnce({
     if (fallbackStarted || stopped) return;
     fallbackStarted = true;
     onFallback?.('Browser recognition did not return speech. Switching to Gemini multilingual transcription.');
-    fallbackController = await recordWithGemini({ onResult, onError, onEnd, onStatus, cancelled: () => stopped });
+    fallbackController = await recordWithGemini({ onResult, onError, onEnd, onStatus, outputLanguage, saveToHistory, cancelled: () => stopped });
   };
   if (!Recognition) { await startFallback(); return { stop }; }
   try {
