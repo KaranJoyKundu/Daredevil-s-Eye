@@ -220,7 +220,8 @@ async function announceAnswer(message,disclaimer=''){
  const settings=getSettings(),spokenLanguage=settings.speechLanguage==='bn-BD'?'bn-BD':detectSpokenLanguage(answer),output=$('#result'),runId=++revealRun;
  if(output)output.textContent=disclaimer?disclaimer+'\n\n':'';
  const displayPromise=revealWords(output,answer,runId);
- const speechPromise=speakResponse(answer,{lang:spokenLanguage,engine:settings.speechEngine==='gemini'?'device':settings.speechEngine,onFallback:error=>{if(status)status.textContent=settings.speechLanguage==='bn-BD'?'নির্বাচিত ভয়েস চালু হয়নি। ফোনের ভয়েস ব্যবহার করা হচ্ছে।':'Using the device voice because the selected speech service failed: '+error.message;},onError:error=>{if(status)status.textContent=settings.speechLanguage==='bn-BD'?localizeSpeech(error):String(error);startSosVoiceListener();},onEnd:()=>startSosVoiceListener()});
+ const speechText=[disclaimer,answer].filter(Boolean).join(' ');
+ const speechPromise=speakResponse(speechText,{lang:spokenLanguage,engine:settings.speechEngine==='gemini'?'device':settings.speechEngine,onFallback:error=>{if(status)status.textContent=settings.speechLanguage==='bn-BD'?'নির্বাচিত ভয়েস চালু হয়নি। ফোনের ভয়েস ব্যবহার করা হচ্ছে।':'Using the device voice because the selected speech service failed: '+error.message;},onError:error=>{if(status)status.textContent=settings.speechLanguage==='bn-BD'?localizeSpeech(error):String(error);startSosVoiceListener();},onEnd:()=>startSosVoiceListener()});
  await Promise.allSettled([displayPromise,speechPromise]);
 }
 async function run(mode,question='',imageOverride=null){
