@@ -83,6 +83,26 @@ async function encryptWebPushPayload(subscription,payloadText) {
   const header=concatBytes(salt,rs,Uint8Array.of(appPublicBytes.length),appPublicBytes);
   return concatBytes(header,ciphertext);
 }
+function isSupportedPushEndpoint(value) {
+  try {
+    const endpoint = new URL(String(value || ''));
+    const host = endpoint.hostname.toLowerCase();
+    const supportedHost =
+      host === 'fcm.googleapis.com' ||
+      host === 'updates.push.services.mozilla.com' ||
+      host.endsWith('.push.services.mozilla.com') ||
+      host === 'web.push.apple.com' ||
+      host.endsWith('.notify.windows.com');
+    return endpoint.protocol === 'https:' &&
+      supportedHost &&
+      !endpoint.username &&
+      !endpoint.password &&
+      (!endpoint.port || endpoint.port === '443');
+  } catch {
+    return false;
+  }
+}
+
 function safeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
   let mismatch = a.length ^ b.length;
@@ -127,6 +147,7 @@ export class SOSRoom {
     if (!subscription?.endpoint) return { attempted: false, success: false, reason: 'no_subscription' };
     try {
       const keys = await this.getVapidKeys();
+      if (!isSupportedPushEndpoint(subscription.endpoint)) return { attempted: false, success: false, reason: 'unsupported_push_endpoint' };
       const endpoint = new URL(subscription.endpoint);
       const now = Math.floor(Date.now() / 1000);
       const header = base64Url(encoder.encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
@@ -158,6 +179,7 @@ export class SOSRoom {
         },
         body: encryptedBody
       });
+      if (response.status === 404 || response.status === 410) await this.state.storage.delete('pushSubscription');
       return { attempted: true, success: response.ok, status: response.status };
     } catch {
       return { attempted: true, success: false, reason: 'push_request_failed' };
@@ -226,7 +248,7 @@ export class SOSRoom {
     if (action === 'subscribe') {
       const subscription = body.subscription;
       if (!subscription || typeof subscription.endpoint !== 'string' ||
-          !subscription.endpoint.startsWith('https://') ||
+          !isSupportedPushEndpoint(subscription.endpoint) ||
           typeof subscription.keys?.p256dh !== 'string' ||
           typeof subscription.keys?.auth !== 'string') {
         return json({ ok: false, error: 'A valid browser push subscription is required.' }, 400);
