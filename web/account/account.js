@@ -1,4 +1,7 @@
 import { clearSessionGeminiApiKey } from '/shared/api.js?v=20261117-release5';
+import { applyDisplaySettings, applyInterfaceLanguage } from '/shared/settings.js?v=20261117-release5';
+applyDisplaySettings();
+applyInterfaceLanguage();
 
 const $=selector=>document.querySelector(selector);
 const authPanel=$('#auth-panel'),accountPanel=$('#account-panel');
