@@ -1,7 +1,7 @@
-import {getSettings,saveSettings} from '/shared/settings.js?v=20261117-release1';
-import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261117-release1';
+import {getSettings,saveSettings} from '/shared/settings.js?v=20261117-release2';
+import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261117-release2';
 import {captureImage} from '/shared/camera.js?v=20261117-release1';
-import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261117-release1';
+import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261117-release2';
 
 const $=s=>document.querySelector(s);
 const form=$('#settings-form');
