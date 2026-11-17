@@ -823,7 +823,7 @@ test('guest photo history saves submitted photos privately, shows them in this b
   if(url.origin==='https://supabase.example.test'&&url.pathname==='/rest/v1/ai_history'){
    if(init.method==='POST')historyRows.push(JSON.parse(init.body));
    if(init.method==='PATCH'&&historyRows.length)Object.assign(historyRows[historyRows.length-1],JSON.parse(init.body));
-   if(init.method==='DELETE'){historyRows.length=0;return new Response(null,{status:204});}
+   if(init.method==='DELETE'){const removed=historyRows.splice(0,historyRows.length);return new Response(JSON.stringify(removed),{status:200,headers:{'content-type':'application/json'}});}
    return new Response(JSON.stringify(historyRows),{status:200,headers:{'content-type':'application/json'}});
   }
   if(url.origin==='https://supabase.example.test'&&url.pathname.startsWith('/storage/v1/object/daredevil-history/')){
