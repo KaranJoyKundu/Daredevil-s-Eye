@@ -186,8 +186,8 @@ async function storeAccountUsage(env,user,request,{model,requestType,usage,image
 }
 async function saveAccountHistory(env,user,request,body,result,fullPrompt) {
   if(!body.saveToHistory)return {saved:false,message:'History saving is switched off.'};
-  if(!user)return {saved:false,message:'Sign in to save this photo and answer to your private history.'};
   if(!supabaseConfigured(env))return {saved:false,message:'Account history is not configured on the Worker yet.'};
+  if(!user)return {saved:false,message:'Sign in to save this photo and answer to your private history.'};
   let storedPhoto=null;
   try{
     storedPhoto=await storePrivatePhoto(env,user.id,body.image);
