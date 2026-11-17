@@ -1,4 +1,4 @@
-import { captureImage, blobToDataUrl, compressImageToJpeg } from './camera.js?v=20261117-release1';
+import { captureImage, blobToDataUrl, compressImageToJpeg, primeShutterAudio } from './camera.js?v=20261117-release1';
 import { requestAI } from './api.js?v=20261117-release1';
 import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release1';
 import { getSettings, saveSettings } from './settings.js?v=20261117-release1';
