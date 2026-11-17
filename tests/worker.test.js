@@ -454,6 +454,9 @@ test('SOS receiver gets a persistent VAPID key and subscription, and trigger sub
 });
 
 test('re-pairing clears the previous receiver push subscription',async()=>{
+ const receiverPair=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']);
+ const publicBytes=new Uint8Array(await crypto.subtle.exportKey('raw',receiverPair.publicKey));
+ const authBytes=crypto.getRandomValues(new Uint8Array(16));
  const values=new Map();
  const state={storage:{
   get:async key=>values.get(key),
@@ -467,7 +470,7 @@ test('re-pairing clears the previous receiver push subscription',async()=>{
  }));
  const first=await (await post('pair')).json();
  await post('subscribe',{receiverToken:first.receiverToken,subscription:{
-  endpoint:'https://fcm.googleapis.com/fcm/send/old',keys:{p256dh:'x',auth:'y'}
+  endpoint:'https://fcm.googleapis.com/fcm/send/old',keys:{p256dh:Buffer.from(publicBytes).toString('base64url'),auth:Buffer.from(authBytes).toString('base64url')}
  }});
  assert.ok(await state.storage.get('pushSubscription'));
  await post('pair');
