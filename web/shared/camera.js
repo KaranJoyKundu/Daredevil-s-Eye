@@ -1,4 +1,4 @@
-import { getSettings } from './settings.js?v=20261117-photo-buffer';
+import { getSettings } from './settings.js?v=20261117-release1';
 
 let shutterAudioContext=null;
 export function primeShutterAudio(){
