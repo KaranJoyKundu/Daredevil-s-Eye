@@ -1,4 +1,4 @@
-import { clearSessionGeminiApiKey } from '/shared/api.js?v=20261117-release1';
+import { clearSessionGeminiApiKey } from '/shared/api.js?v=20261117-release2';
 
 const $=selector=>document.querySelector(selector);
 const authPanel=$('#auth-panel'),accountPanel=$('#account-panel');
