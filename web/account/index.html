@@ -12,9 +12,9 @@
 <main class="account-shell">
 <header class="account-hero">
   <div>
-    <p class="eyebrow">YOUR PRIVATE SPACE</p>
-    <h1>Account &amp; History</h1>
-    <p class="subtitle">Your saved photos, AI answers and Gemini account settings.</p>
+    <p class="eyebrow" data-i18n="account_eyebrow">YOUR PRIVATE SPACE</p>
+    <h1 data-i18n="account_heading">Account &amp; History</h1>
+    <p class="subtitle" data-i18n="account_subtitle">Your saved photos, AI answers and Gemini account settings.</p>
   </div>
   <div class="account-hero-mark" aria-hidden="true">◉</div>
 </header>
@@ -27,44 +27,44 @@
 <section id="guest-history-panel" class="account-card guest-history-section">
   <div class="account-section-heading">
     <div>
-      <p class="account-kicker">NO SIGN-IN REQUIRED</p>
-      <h2>Guest photo history</h2>
-      <p class="account-muted">Photos submitted while you are signed out are saved privately and can be viewed from this browser. Guest history is automatically deleted after 30 days.</p>
+      <p class="account-kicker" data-i18n="guest_kicker">NO SIGN-IN REQUIRED</p>
+      <h2 data-i18n="guest_title">Guest photo history</h2>
+      <p class="account-muted" data-i18n="guest_description">Photos submitted while you are signed out are saved privately and can be viewed from this browser. Guest history is automatically deleted after 30 days.</p>
     </div>
     <span class="account-retention">30-day history</span>
   </div>
   <div class="account-toolbar">
     <p id="guest-history-status" class="account-inline-status" role="status" aria-live="polite">Checking this browser's history…</p>
     <div class="account-toolbar-actions">
-      <button id="refresh-guest-history" type="button" class="account-button account-button-light">Refresh</button>
-      <button id="delete-guest-history" type="button" class="account-button account-button-danger">Delete guest history</button>
+      <button id="refresh-guest-history" type="button" class="account-button account-button-light" data-i18n="refresh">Refresh</button>
+      <button id="delete-guest-history" type="button" class="account-button account-button-danger" data-i18n="delete_guest">Delete guest history</button>
     </div>
   </div>
   <div id="guest-history-list" class="account-history-grid"></div>
-  <p class="account-footnote">Guest history is tied to a secure browser cookie. Clearing this browser's site data may remove your access to these records before automatic deletion.</p>
+  <p class="account-footnote" data-i18n="guest_footnote">Guest history is tied to a secure browser cookie. Clearing this browser's site data may remove your access to these records before automatic deletion.</p>
 </section>
 
 <section id="auth-panel" class="account-auth-grid">
   <form id="login-form" class="account-card account-auth-card">
-    <p class="account-kicker">WELCOME BACK</p>
-    <h2>Sign in</h2>
-    <p class="account-muted">Continue to your private account history and saved Gemini key.</p>
-    <label for="login-email">Email address</label>
+    <p class="account-kicker" data-i18n="welcome_back">WELCOME BACK</p>
+    <h2 data-i18n="sign_in">Sign in</h2>
+    <p class="account-muted" data-i18n="sign_in_description">Continue to your private account history and saved Gemini key.</p>
+    <label for="login-email" data-i18n="email_address">Email address</label>
     <input id="login-email" type="email" autocomplete="username" required placeholder="you@example.com">
-    <label for="login-password">Password</label>
+    <label for="login-password" data-i18n="password">Password</label>
     <input id="login-password" type="password" autocomplete="current-password" required placeholder="Your password">
-    <button type="submit" class="account-button">Sign in</button>
+    <button type="submit" class="account-button" data-i18n="sign_in_button">Sign in</button>
     <p id="login-status" class="account-form-status" role="status" aria-live="polite"></p>
   </form>
   <form id="signup-form" class="account-card account-auth-card account-auth-card-accent">
-    <p class="account-kicker">KEEP YOUR HISTORY</p>
-    <h2>Create an account</h2>
-    <p class="account-muted">Access your saved photos and answers on another device.</p>
-    <label for="signup-email">Email address</label>
+    <p class="account-kicker" data-i18n="keep_history">KEEP YOUR HISTORY</p>
+    <h2 data-i18n="create_account">Create an account</h2>
+    <p class="account-muted" data-i18n="create_account_description">Access your saved photos and answers on another device.</p>
+    <label for="signup-email" data-i18n="email_address">Email address</label>
     <input id="signup-email" type="email" autocomplete="email" required placeholder="you@example.com">
-    <label for="signup-password">Password <span class="account-label-note">12+ characters</span></label>
+    <label for="signup-password"><span data-i18n="password">Password</span> <span class="account-label-note" data-i18n="password_hint">12+ characters</span></label>
     <input id="signup-password" type="password" autocomplete="new-password" minlength="12" required placeholder="Create a strong password">
-    <button type="submit" class="account-button">Create account</button>
+    <button type="submit" class="account-button" data-i18n="create_account_button">Create account</button>
     <p id="signup-status" class="account-form-status" role="status" aria-live="polite"></p>
   </form>
 </section>
@@ -73,37 +73,37 @@
   <section class="account-card account-profile-card">
     <div class="account-avatar" aria-hidden="true">✓</div>
     <div class="account-profile-copy">
-      <p class="account-kicker">SIGNED IN</p>
-      <h2>Your account</h2>
+      <p class="account-kicker" data-i18n="signed_in">SIGNED IN</p>
+      <h2 data-i18n="your_account">Your account</h2>
       <p id="account-email" class="account-muted"></p>
     </div>
-    <button id="logout-button" type="button" class="account-button account-button-light">Sign out</button>
+    <button id="logout-button" type="button" class="account-button account-button-light" data-i18n="sign_out">Sign out</button>
   </section>
 
   <section class="account-card">
     <div class="account-section-heading">
       <div>
-        <p class="account-kicker">PERSONAL API ACCESS</p>
-        <h2>Gemini API key</h2>
-        <p class="account-muted">Your key is encrypted by the Worker before it is stored. The original key is never displayed again.</p>
+        <p class="account-kicker" data-i18n="personal_api">PERSONAL API ACCESS</p>
+        <h2 data-i18n="gemini_key">Gemini API key</h2>
+        <p class="account-muted" data-i18n="gemini_key_description">Your key is encrypted by the Worker before it is stored. The original key is never displayed again.</p>
       </div>
       <span class="account-icon-chip" aria-hidden="true">⌘</span>
     </div>
     <p id="key-state" class="account-inline-status" role="status" aria-live="polite">Checking saved key…</p>
-    <label for="api-key">Add or replace your Gemini key</label>
+    <label for="api-key" data-i18n="add_replace_key">Add or replace your Gemini key</label>
     <input id="api-key" type="password" autocomplete="new-password" maxlength="256" placeholder="Paste your Gemini API key">
     <div class="account-toolbar-actions">
-      <button id="save-api-key" type="button" class="account-button">Encrypt &amp; save key</button>
-      <button id="remove-api-key" type="button" class="account-button account-button-light">Delete saved key</button>
+      <button id="save-api-key" type="button" class="account-button" data-i18n="save_key">Encrypt &amp; save key</button>
+      <button id="remove-api-key" type="button" class="account-button account-button-light" data-i18n="remove_key">Delete saved key</button>
     </div>
   </section>
 
   <section class="account-card">
     <div class="account-section-heading">
       <div>
-        <p class="account-kicker">YOUR PRIVATE RECORDS</p>
-        <h2>Account photo history</h2>
-        <p class="account-muted">Successful and failed photo submissions are kept here with their image and analysis status until you delete them.</p>
+        <p class="account-kicker" data-i18n="private_records">YOUR PRIVATE RECORDS</p>
+        <h2 data-i18n="account_history">Account photo history</h2>
+        <p class="account-muted" data-i18n="account_history_description">Successful and failed photo submissions are kept here with their image and analysis status until you delete them.</p>
       </div>
       <span class="account-icon-chip" aria-hidden="true">▧</span>
     </div>
@@ -111,32 +111,32 @@
       <p id="history-status" class="account-inline-status" role="status" aria-live="polite">Loading saved photos…</p>
       <div class="account-toolbar-actions">
         <button id="refresh-history" type="button" class="account-button account-button-light">Refresh</button>
-        <button id="delete-history" type="button" class="account-button account-button-danger">Delete all account history</button>
+        <button id="delete-history" type="button" class="account-button account-button-danger" data-i18n="delete_all_account">Delete all account history</button>
       </div>
     </div>
     <div id="history-list" class="account-history-grid"></div>
-    <button id="load-more-history" type="button" class="account-button account-button-light account-load-more" hidden>Load older photos</button>
+    <button id="load-more-history" type="button" class="account-button account-button-light account-load-more" hidden data-i18n="load_older">Load older photos</button>
   </section>
 
   <section class="account-card">
     <div class="account-section-heading">
       <div>
-        <p class="account-kicker">LAST 90 DAYS</p>
-        <h2>Usage summary</h2>
-        <p class="account-muted">AI requests and reported token usage associated with this account.</p>
+        <p class="account-kicker" data-i18n="last_90_days">LAST 90 DAYS</p>
+        <h2 data-i18n="usage_summary">Usage summary</h2>
+        <p class="account-muted" data-i18n="usage_description">AI requests and reported token usage associated with this account.</p>
       </div>
       <span class="account-icon-chip" aria-hidden="true">↗</span>
     </div>
     <div class="account-usage-summary" id="usage-summary" role="status" aria-live="polite">Loading usage…</div>
     <div id="usage-list" class="account-usage-list"></div>
-    <button id="refresh-usage" type="button" class="account-button account-button-light">Refresh usage</button>
+    <button id="refresh-usage" type="button" class="account-button account-button-light" data-i18n="refresh_usage">Refresh usage</button>
   </section>
 </section>
 
 <section class="account-privacy-note">
   <span aria-hidden="true">🔒</span>
   <div>
-    <h2>Your data stays private</h2>
+    <h2 data-i18n="your_data_private">Your data stays private</h2>
     <p>Photos are held in a private storage bucket. Account records are visible only to the signed-in account, and guest records are accessible only through the private cookie for this browser. You can delete guest or account history from this page. See the <a href="/privacy/">Privacy notice</a> for full details.</p>
   </div>
 </section>
