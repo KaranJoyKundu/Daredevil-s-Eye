@@ -318,7 +318,7 @@ async function handleAccountApi(request,env,url) {
       if(row.photo_path){
         try{
           const removed=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:{apikey:String(env.SUPABASE_SERVICE_ROLE_KEY),Authorization:'Bearer '+String(env.SUPABASE_SERVICE_ROLE_KEY)}});
-          if(!removed.ok)return json({error:'Could not remove one of your private photo files. History records were kept; please retry.'},502);
+          if(!removed.ok&&removed.status!==404)return json({error:'Could not remove one of your private photo files. History records were kept; please retry.'},502);
         }catch{return json({error:'Private photo storage is unreachable. History records were kept; please retry.'},502);}
       }
     }
@@ -349,23 +349,31 @@ async function handleAccountApi(request,env,url) {
     return json({ok:true,history});
   }
   if(path==='/api/account/history'&&request.method==='DELETE'){
-    const response=await supabaseRest(env,'ai_history?select=photo_path&user_id=eq.'+encodeURIComponent(user.id));
-    const rows=response.ok?await response.json().catch(()=>[]):[];
-    for(const row of rows){
-      if(row.photo_path){
-        try{
-          const removed=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:{apikey:String(env.SUPABASE_SERVICE_ROLE_KEY),Authorization:'Bearer '+String(env.SUPABASE_SERVICE_ROLE_KEY)}});
-          if(!removed.ok)return json({error:'Could not remove one of your private photo files. History records were kept; please retry.'},502);
-        }catch{return json({error:'Private photo storage is unreachable. History records were kept; please retry.'},502);}
+    const userFilter='user_id=eq.'+encodeURIComponent(user.id);
+    let offset=0;
+    while(true){
+      const selected=await supabaseRest(env,'ai_history?select=photo_path&'+userFilter+'&limit=500&offset='+offset);
+      if(!selected.ok)return json({error:'Could not list all saved photos for deletion.'},502);
+      const page=await selected.json().catch(()=>[]);
+      for(const row of page){
+        if(row.photo_path){
+          try{
+            const removed=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:{apikey:String(env.SUPABASE_SERVICE_ROLE_KEY),Authorization:'Bearer '+String(env.SUPABASE_SERVICE_ROLE_KEY)}});
+            if(!removed.ok&&removed.status!==404)return json({error:'Could not remove one of your private photo files. History records were kept; please retry.'},502);
+          }catch{return json({error:'Private photo storage is unreachable. History records were kept; please retry.'},502);}
+        }
       }
+      offset+=page.length;
+      if(page.length<500)break;
     }
-    const deleted=await supabaseRest(env,'ai_history?user_id=eq.'+encodeURIComponent(user.id),{method:'DELETE'});
+    const deleted=await supabaseRest(env,'ai_history?'+userFilter,{method:'DELETE'});
     if(!deleted.ok)return json({error:'Could not delete your saved history.'},502);
-    await supabaseRest(env,'api_usage?user_id=eq.'+encodeURIComponent(user.id),{method:'DELETE'});
+    await supabaseRest(env,'api_usage?'+userFilter,{method:'DELETE'});
     return json({ok:true,deleted:true});
   }
   if(path==='/api/account/usage'&&request.method==='GET'){
     const liveExpiry=new Date().toISOString();
+    await supabaseRest(env,'api_usage?user_id=eq.'+encodeURIComponent(user.id)+'&expires_at=lt.'+encodeURIComponent(liveExpiry),{method:'DELETE'});
     const response=await supabaseRest(env,'api_usage?select=request_type,model,prompt_tokens,output_tokens,total_tokens,ip_fingerprint,created_at&user_id=eq.'+encodeURIComponent(user.id)+'&expires_at=gt.'+encodeURIComponent(liveExpiry)+'&order=created_at.desc&limit=100');
     if(!response.ok)return json({error:'Could not load usage history.'},502);
     return json({ok:true,usage:await response.json()});
