@@ -526,3 +526,138 @@ test('SOS receiver refuses private, local and untrusted push endpoints',async()=
  }
  assert.equal(await state.storage.get('pushSubscription'),undefined);
 });
+
+
+test('account-saved Gemini API keys are encrypted at rest and reused only inside the Worker',async t=>{
+ const originalFetch=globalThis.fetch;
+ let keyRow=null,providerKeySeen='';
+ t.after(()=>{globalThis.fetch=originalFetch;});
+ globalThis.fetch=async(input,init={})=>{
+  const url=new URL(String(input));
+  if(url.origin==='https://supabase.example.test'&&url.pathname==='/auth/v1/user'){
+   return new Response(JSON.stringify({id:'11111111-1111-4111-8111-111111111111',email:'owner@example.test'}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  if(url.origin==='https://supabase.example.test'&&url.pathname==='/rest/v1/user_api_keys'){
+   if(init.method==='POST'){keyRow=JSON.parse(init.body);return new Response(null,{status:201});}
+   return new Response(JSON.stringify(keyRow?[keyRow]:[]),{status:200,headers:{'content-type':'application/json'}});
+  }
+  if(url.origin==='https://generativelanguage.googleapis.com'&&url.pathname==='/v1beta/models'){
+   return new Response(JSON.stringify({models:[
+    {name:'models/gemini-3.8-flash',displayName:'Gemini 3.8 Flash',supportedGenerationMethods:['generateContent']},
+    {name:'models/gemini-3.7-flash',displayName:'Gemini 3.7 Flash',supportedGenerationMethods:['generateContent']}
+   ]}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  if(url.origin==='https://generativelanguage.googleapis.com'&&url.pathname.endsWith(':generateContent')){
+   providerKeySeen=init.headers['x-goog-api-key'];
+   return new Response(JSON.stringify({candidates:[{
+    content:{parts:[{text:'The saved account key worked.'}]},finishReason:'STOP'
+   }]}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  throw new Error('Unexpected test fetch: '+url.href);
+ };
+ const env={
+  SUPABASE_URL:'https://supabase.example.test',
+  SUPABASE_ANON_KEY:'test-anon-key',
+  SUPABASE_SERVICE_ROLE_KEY:'test-service-role-key',
+  API_KEY_ENCRYPTION_KEY:'test-encryption-secret-with-more-than-thirty-two-bytes'
+ };
+ const apiKey='AIzaSy-test-personal-gemini-key-for-account-storage';
+ const save=await handleApi(req('/api/account/api-key',{apiKey},{
+  Origin:'https://local.test',Cookie:'de_access=valid-access-token'
+ }),env);
+ const savedData=await save.json();
+ assert.equal(save.status,200);
+ assert.equal(savedData.configured,true);
+ assert.ok(keyRow?.key_ciphertext);
+ assert.ok(keyRow?.key_iv);
+ assert.notEqual(keyRow.key_ciphertext,apiKey);
+ assert.equal(JSON.stringify(keyRow).includes(apiKey),false);
+ assert.equal(JSON.stringify(savedData).includes(apiKey),false);
+
+ const analysis=await handleApi(req('/api/describe',{
+  image,model:'gemini-3.8-flash',responseStyle:'concise'
+ },{
+  Origin:'https://local.test',Cookie:'de_access=valid-access-token'
+ }),env);
+ const answer=await analysis.json();
+ assert.equal(analysis.status,200);
+ assert.equal(answer.answer,'The saved account key worked.');
+ assert.equal(providerKeySeen,apiKey);
+});
+
+test('opted-in AI history stores private JPEG, answer, prompt, model, token counts and pseudonymous IP',async t=>{
+ const originalFetch=globalThis.fetch;
+ const usageRows=[],historyRows=[],uploaded=[];
+ let providerKeySeen='';
+ t.after(()=>{globalThis.fetch=originalFetch;});
+ globalThis.fetch=async(input,init={})=>{
+  const url=new URL(String(input));
+  if(url.origin==='https://supabase.example.test'&&url.pathname==='/auth/v1/user'){
+   return new Response(JSON.stringify({id:'22222222-2222-4222-8222-222222222222',email:'owner@example.test'}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  if(url.origin==='https://supabase.example.test'&&url.pathname.startsWith('/rest/v1/api_usage')){
+   if(init.method==='POST')usageRows.push(JSON.parse(init.body));
+   return new Response(null,{status:204});
+  }
+  if(url.origin==='https://supabase.example.test'&&url.pathname.startsWith('/rest/v1/ai_history')){
+   if(init.method==='POST')historyRows.push(JSON.parse(init.body));
+   return new Response(null,{status:201});
+  }
+  if(url.origin==='https://supabase.example.test'&&url.pathname.startsWith('/storage/v1/object/daredevil-history/')){
+   if(init.method==='POST')uploaded.push({url:url.href,type:init.headers['content-type'],bytes:init.body});
+   return new Response(null,{status:200});
+  }
+  if(url.origin==='https://generativelanguage.googleapis.com'&&url.pathname==='/v1beta/models'){
+   return new Response(JSON.stringify({models:[
+    {name:'models/gemini-3.8-flash',displayName:'Gemini 3.8 Flash',supportedGenerationMethods:['generateContent']}
+   ]}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  if(url.origin==='https://generativelanguage.googleapis.com'&&url.pathname.endsWith(':generateContent')){
+   providerKeySeen=init.headers['x-goog-api-key'];
+   return new Response(JSON.stringify({candidates:[{
+    content:{parts:[{text:'A clear doorway is visible.'}]},finishReason:'STOP'
+   }],usageMetadata:{promptTokenCount:100,candidatesTokenCount:24,totalTokenCount:124}}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  throw new Error('Unexpected test fetch: '+url.href);
+ };
+ const env={
+  SUPABASE_URL:'https://supabase.example.test',
+  SUPABASE_ANON_KEY:'test-anon-key',
+  SUPABASE_SERVICE_ROLE_KEY:'test-service-role-key',
+  IP_HASH_SECRET:'private-fingerprint-secret'
+ };
+ const response=await handleApi(req('/api/describe',{
+  image,model:'gemini-3.8-flash',responseStyle:'concise',
+  responseLanguage:'bn-BD',saveToHistory:true
+ },{
+  Origin:'https://local.test',
+  Cookie:'de_access=valid-access-token',
+  'x-user-gemini-api-key':'AIzaSy-test-personal-gemini-key',
+  'cf-connecting-ip':'203.0.113.45',
+  'user-agent':'DaredevilsEye-Test/1.0'
+ }),env);
+ const data=await response.json();
+ assert.equal(response.status,200);
+ assert.equal(data.historySaved,true);
+ assert.equal(providerKeySeen,'AIzaSy-test-personal-gemini-key');
+ assert.equal(uploaded.length,1);
+ assert.equal(uploaded[0].type,'image/jpeg');
+ assert.equal(uploaded[0].bytes.byteLength,3);
+ assert.equal(historyRows.length,1);
+ assert.equal(historyRows[0].user_id,'22222222-2222-4222-8222-222222222222');
+ assert.equal(historyRows[0].response_text,'A clear doorway is visible.');
+ assert.equal(historyRows[0].model,'gemini-3.8-flash');
+ assert.equal(historyRows[0].response_language,'bn-BD');
+ assert.ok(historyRows[0].system_prompt.includes('Bangladeshi Bengali'));
+ assert.equal(historyRows[0].prompt_tokens,100);
+ assert.equal(historyRows[0].output_tokens,24);
+ assert.equal(historyRows[0].total_tokens,124);
+ assert.ok(historyRows[0].photo_path.startsWith('22222222-2222-4222-8222-222222222222/'));
+ assert.match(historyRows[0].ip_fingerprint,/^[a-f0-9]{24}$/);
+ assert.notEqual(historyRows[0].ip_fingerprint,'203.0.113.45');
+ assert.equal(usageRows.length,1);
+ assert.equal(usageRows[0].request_type,'describe');
+ assert.equal(usageRows[0].total_tokens,124);
+ assert.equal(usageRows[0].image_size_bytes,3);
+ assert.match(usageRows[0].ip_fingerprint,/^[a-f0-9]{24}$/);
+});
