@@ -489,7 +489,8 @@ export async function listGeminiModels(apiKey) {
 async function modelCandidates(apiKey, selectedModel) {
   let available = [];
   try { available = await listGeminiModels(apiKey); } catch { /* Use known fallbacks if catalogue lookup is unavailable. */ }
-  const availableIds = available.map(model => model.id);
+  // Automatic fallbacks stay on Flash models; Pro remains a deliberate manual choice.
+  const availableIds = available.map(model => model.id).filter(id => !/-pro(?:-|$)/i.test(id));
   const base = availableIds.length ? availableIds : [selectedModel, ...STATIC_VISION_FALLBACKS];
   const unique = [...new Set([selectedModel, ...base].filter(Boolean))];
   const selectedIndex = Math.max(0, unique.indexOf(selectedModel));
@@ -515,13 +516,13 @@ async function askGemini({ image, prompt, model, waitSeconds }, apiKey) {
       generationConfig: {
         // The old 260-token ceiling was too small for detailed answers and
         // also counted internal thinking tokens on Gemini 3.x.
-        maxOutputTokens: 2048,
+        maxOutputTokens: 4096,
         temperature: 0.2,
         ...(candidate.startsWith('gemini-3.') ? { thinkingConfig: { thinkingLevel: 'LOW' } } : {})
       }
     };
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      if (attempt === 1) requestBody.generationConfig.maxOutputTokens = 4096;
+      if (attempt === 1) requestBody.generationConfig.maxOutputTokens = 8192;
       let response;
       try {
         response = await fetch(endpoint, {
@@ -608,14 +609,24 @@ async function transcribeGemini(audio, apiKey, outputLanguage = 'en-US') {
         headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: part }] }],
-          generationConfig: { maxOutputTokens: 512, temperature: 0, ...(candidate.startsWith('gemini-3.') ? { thinkingConfig: { thinkingLevel: 'LOW' } } : {}) }
+          generationConfig: { maxOutputTokens: 1024, temperature: 0, ...(candidate.includes('flash') ? { thinkingConfig: { thinkingLevel: 'LOW' } } : {}) }
         }),
         signal: AbortSignal.timeout(35_000)
       });
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
-        const transcript = (data?.candidates?.[0]?.content?.parts || []).map(item => item.text || '').join('').trim();
-        if (transcript) return { transcript, model: candidate, attempted, usage: data.usageMetadata || null };
+        const resultCandidate=data?.candidates?.[0]||{};
+        const transcript = (resultCandidate?.content?.parts || []).map(item => item.text || '').join('').trim();
+        const finishReason=String(resultCandidate.finishReason||'');
+        if(finishReason==='MAX_TOKENS'){
+          lastFailure=candidate+' reached MAX_TOKENS during transcription; trying another model.';
+          continue;
+        }
+        if(finishReason&&!['STOP','FINISH_REASON_UNSPECIFIED'].includes(finishReason)){
+          lastFailure=candidate+' ended transcription with '+finishReason+'.';
+          continue;
+        }
+        if (transcript) return { transcript, model: candidate, attempted, finishReason:finishReason||'unspecified', usage: data.usageMetadata || null };
         lastFailure = candidate + ' returned an empty transcript.';
         continue;
       }
