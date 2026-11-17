@@ -11,6 +11,7 @@ const DEFAULTS = Object.freeze({
   cameraBaseUrl: 'http://192.168.0.104',
   captureCount: 3,
   requirePhotoConfirmation: true,
+  savePhotoHistory: false,
   speechLanguage: 'en-US',
   speechInputMode: 'auto',
   speechInputLanguage: 'bn-BD',
