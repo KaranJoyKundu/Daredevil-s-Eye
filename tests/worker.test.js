@@ -333,6 +333,9 @@ test('Action photo flow has separate camera and upload inputs plus a confirmatio
  assert.match(camera,/compressImageToJpeg/);
  assert.match(camera,/maxBytes=3_800_000/);
  assert.match(camera,/void playShutterClick\(\)/);
+ assert.match(camera,/export function primeShutterAudio/);
+ assert.match(app,/primeShutterAudio\(\)/);
+ assert.doesNotMatch(app,/speak\(spokenError\(error\),\{lang:'en-US'\}\)/);
  assert.match(nav,/addEventListener\('pointerdown'/);
 });
 
