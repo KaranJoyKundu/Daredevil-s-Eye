@@ -1,6 +1,6 @@
 const links = [
   ['Home','/action/'],['Blind mode','/blind/'],['Admin / Settings','/admin/'],
-  ['Diagnostics','/diagnostics/'],['Help','/help/'],['SOS Receiver','/sos-receiver/'],
+  ['Diagnostics','/diagnostics/'],['Account & History','/account/'],['Help','/help/'],['SOS Receiver','/sos-receiver/'],
   ['Contact','/contact/'],['Privacy','/privacy/']
 ];
 const bar=document.createElement('div');
