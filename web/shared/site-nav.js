@@ -1,18 +1,18 @@
 import {hasCurrentConsent,acceptConsent,rejectConsent} from './consent.js?v=20261117-release5';
-import {saveSettings, getSettings, applyDisplaySettings, applyInterfaceLanguage} from './settings.js?v=20261117-release5';
+import {saveSettings, applyDisplaySettings, applyInterfaceLanguage} from './settings.js?v=20261117-release5';
 
 const links = [
-  ['Home','/action/'],['Blind mode','/blind/'],['Admin / Settings','/admin/'],
-  ['Diagnostics','/diagnostics/'],['Account & History','/account/'],['Help','/help/'],['SOS Receiver','/sos-receiver/'],
-  ['Contact','/contact/'],['Support','/support/'],['Terms & Conditions','/terms/'],['Privacy','/privacy/']
+  ['Home','/action/','nav_home'],['Blind mode','/blind/','nav_blind'],['Admin / Settings','/admin/','nav_admin'],
+  ['Diagnostics','/diagnostics/','nav_diagnostics'],['Account & History','/account/','nav_account'],['Help','/help/','nav_help'],['SOS Receiver','/sos-receiver/','nav_receiver'],
+  ['Contact','/contact/','nav_contact'],['Support','/support/','nav_support'],['Terms & Conditions','/terms/','nav_terms'],['Privacy','/privacy/','nav_privacy']
 ];
 const bar=document.createElement('div');
 bar.className='site-nav';
-bar.innerHTML='<details class="site-menu"><summary aria-label="Open site menu"><span aria-hidden="true">☰</span><span class="menu-label">Menu</span></summary><nav aria-label="Main navigation"></nav></details><a class="site-brand" href="/action/" aria-label="Daredevil’s Eye — return to home">Daredevil’s Eye</a>';
+bar.innerHTML='<details class="site-menu"><summary aria-label="Open site menu"><span aria-hidden="true">☰</span><span class="menu-label" data-i18n="menu">Menu</span></summary><nav aria-label="Main navigation"></nav></details><a class="site-brand" href="/action/" aria-label="Daredevil’s Eye — return to home">Daredevil’s Eye</a>';
 const menu=bar.querySelector('nav');
-for(const [label,href] of links){
+for(const [label,href,key] of links){
   const link=document.createElement('a');
-  link.href=href;link.textContent=label;
+  link.href=href;link.textContent=label;link.dataset.i18n=key;
   if(location.pathname.replace(/\/?$/,'/')===href)link.setAttribute('aria-current','page');
   menu.append(link);
 }
