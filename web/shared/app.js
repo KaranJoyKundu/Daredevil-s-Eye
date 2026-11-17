@@ -296,7 +296,7 @@ async function deliverSos(){
   if(result.notificationAccepted)announce('SOS is stored. The push service accepted the notification request, but delivery is not confirmed.');
   else announce('SOS is stored, but no push notification was accepted. Keep the receiver connected to the internet and notifications enabled.');
   const callLink=$('#sos-call-link');if(settings.emergencyPhone&&callLink){callLink.href='tel:'+settings.emergencyPhone.replace(/[^+0-9]/g,'');callLink.hidden=false;callLink.style.display='block';callLink.textContent='Call '+(settings.emergencyName||'trusted contact')+' now';}
- }catch(error){const message=error.message||'SOS alert could not be sent. Pair a receiver in Admin first.';if(status)status.textContent=message;speak(spokenError(error),{lang:'en-US'});}
+ }catch(error){const message=error.message||'SOS alert could not be sent. Pair a receiver in Admin first.';if(status)status.textContent=message;speak(spokenError(error),{lang:getSettings().speechLanguage||'en-US'});}
  finally{if(button)button.disabled=false;await releaseWakeLock(wakeLock);sosDispatching=false;startSosVoiceListener();}
 }
 function armSos({shortcut=false}={}){
