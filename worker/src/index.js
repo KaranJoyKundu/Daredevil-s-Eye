@@ -39,7 +39,7 @@ function supabaseConfigured(env) {
   return Boolean(env.SUPABASE_URL && env.SUPABASE_ANON_KEY && env.SUPABASE_SERVICE_ROLE_KEY);
 }
 function supabaseBase(env) {
-  return String(env.SUPABASE_URL || '').replace(/\\/+$/, '');
+  return String(env.SUPABASE_URL || '').replace(/\/+$/, '');
 }
 function readCookies(request) {
   const out = {};
@@ -150,7 +150,7 @@ async function keyedIpFingerprint(request,env) {
   }catch{return null;}
 }
 async function storePrivatePhoto(env,userId,imageDataUrl) {
-  const match=/^data:(image\\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/i.exec(String(imageDataUrl||''));
+  const match=/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/i.exec(String(imageDataUrl||''));
   if(!match)throw new Error('The selected photo could not be stored as a supported image.');
   const bytes=base64ToBytes(match[2]);
   if(bytes.byteLength>3_800_000)throw new Error('The compressed photo exceeds the private history limit.');
@@ -222,7 +222,7 @@ async function handleAccountApi(request,env,url) {
   if(path==='/api/account/signup'&&request.method==='POST'){
     let body;try{body=await request.json();}catch{return json({error:'Invalid sign-up form.'},400);}
     const email=String(body.email||'').trim().toLowerCase(),password=String(body.password||'');
-    if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||email.length>254||password.length<12||password.length>256)return json({error:'Enter a valid email and a password of at least 12 characters.'},400);
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||password.length<12||password.length>256)return json({error:'Enter a valid email and a password of at least 12 characters.'},400);
     try{
       const response=await supabaseAuthFetch(env,'signup',{method:'POST',body:{email,password}});
       const data=await response.json().catch(()=>({}));
