@@ -28,7 +28,7 @@ if(protectedPaths.has(currentPath)&&!hasCurrentConsent()&&!document.querySelecto
  gate.setAttribute('aria-labelledby','shared-consent-title');
  gate.innerHTML=`<div class="consent-card">
   <p class="eyebrow">WELCOME</p><h2 id="shared-consent-title">Before you begin</h2>
-  <p>Photos and voice requests may be processed by this app, Cloudflare and Google Gemini. When you are signed in, photos and AI answers are automatically saved to your private account history. You can turn automatic saving off in Admin. Guests can use the app, but their photos and answers are not saved to an account.</p>
+  <p>Photos and voice requests may be processed by this app, Cloudflare and Google Gemini. After you accept, each photo submitted for AI analysis is saved automatically: signed-in users get private account history, while guests get private history tied to this browser for 30 days. You can turn photo saving off in Admin.</p>
   <p>This is not a certified navigation aid or emergency service. AI can miss hazards; keep using your usual mobility aids and emergency plan.</p>
   <p>Read the <a href="/terms/">Terms &amp; Conditions</a> and <a href="/privacy/">Privacy details</a>. You can also <a href="/account/">sign in or create an account</a>.</p>
   <label class="consent-check"><input id="shared-consent-check" type="checkbox"> I have read and agree to the Terms &amp; Conditions and Privacy notice.</label>
@@ -41,7 +41,7 @@ if(protectedPaths.has(currentPath)&&!hasCurrentConsent()&&!document.querySelecto
  accept.addEventListener('click',()=>{
   if(!check.checked){status.textContent='Please tick the box to accept the terms.';return;}
   if(!acceptConsent()){status.textContent='Could not save acceptance in this browser. Enable site storage and try again.';return;}
-  saveSettings({savePhotoHistory:true,consentAccepted:true});
+  saveSettings({savePhotoHistory:true,consentAccepted:true,speechLanguage:'bn-BD',speechInputLanguage:'bn-BD',sosVoiceLanguage:'bn-BD'});
   gate.remove();
  });
  gate.querySelector('#shared-consent-reject').addEventListener('click',()=>{

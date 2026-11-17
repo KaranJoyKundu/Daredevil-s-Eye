@@ -1,10 +1,12 @@
-import { clearSessionGeminiApiKey } from '/shared/api.js?v=20261117-release2';
+import { clearSessionGeminiApiKey } from '/shared/api.js?v=20261117-release5';
 
 const $=selector=>document.querySelector(selector);
 const authPanel=$('#auth-panel'),accountPanel=$('#account-panel');
 let currentUser=null;
 let sessionCheckedAt=0;
 let sessionRefreshPromise=null;
+let historyOffset=0;
+let guestHistoryOffset=0;
 
 async function ensureSessionFresh(){
  if(Date.now()-sessionCheckedAt<4*60*1000)return;
@@ -15,8 +17,6 @@ async function ensureSessionFresh(){
  }
  await sessionRefreshPromise;
 }
-let historyOffset=0;
-
 async function api(path,{method='GET',body}={}) {
  if(!['/api/account/session','/api/account/login','/api/account/signup'].includes(path))await ensureSessionFresh();
  if(path==='/api/account/session')sessionCheckedAt=Date.now();
@@ -29,62 +29,173 @@ async function api(path,{method='GET',body}={}) {
  if(!response.ok)throw new Error(data.error||('Request failed ('+response.status+').'));
  return data;
 }
-function showSignedIn(user) {
+async function ensureGuestSession(){
+ const response=await fetch('/api/guest/session',{credentials:'same-origin',cache:'no-store'});
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok)throw new Error(data.error||'Could not prepare this browser’s private history.');
+ return data;
+}
+async function guestApi(path,{method='GET'}={}){
+ const response=await fetch(path,{method,credentials:'same-origin',cache:'no-store'});
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok)throw new Error(data.error||('Request failed ('+response.status+').'));
+ return data;
+}
+function showSignedIn(user){
  currentUser=user;
  authPanel.hidden=true;accountPanel.hidden=false;
  $('#account-email').textContent=user.email||'Signed in';
 }
-function showSignedOut() {
+function showSignedOut(){
  currentUser=null;
  authPanel.hidden=false;accountPanel.hidden=true;
 }
-function formatDate(value) {
+function formatDate(value){
  const date=new Date(value);
- return Number.isNaN(date.getTime())?String(value||''):date.toLocaleString();
+ return Number.isNaN(date.getTime())?String(value||''):date.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'});
 }
-function make(tag,className,text) {
+function make(tag,className,text){
  const node=document.createElement(tag);
  if(className)node.className=className;
  if(text!==undefined)node.textContent=String(text);
  return node;
 }
+function createHistoryCard(item,scope){
+ const card=make('article','account-history-card');
+ const top=make('div','account-history-top');
+ const textBlock=make('div','');
+ const title=make('h3','account-history-title',item.question||'Scene description');
+ const meta=make('p','account-history-meta',formatDate(item.created_at)+' · '+(item.model||'Gemini model pending'));
+ textBlock.append(title,meta);
+ const status=item.analysis_status||'completed';
+ const stateLabel=status==='failed'?'Analysis failed':status==='pending'?'Analysis pending':'Saved';
+ const state=make('span','account-record-state account-state-'+status,stateLabel);
+ top.append(textBlock,state);card.append(top);
+ if(item.photoUrl){
+  const image=document.createElement('img');
+  image.src=item.photoUrl;image.alt='Private photo saved with this history record';image.loading='lazy';
+  image.className='account-history-photo';card.append(image);
+ }
+ if(item.response_text){
+  card.append(make('p','account-history-answer',item.response_text));
+ }else if(status==='pending'){
+  card.append(make('p','account-history-placeholder','The photo is saved. Its AI analysis is still being recorded.'));
+ }
+ if(item.analysis_error)card.append(make('p','account-history-error',item.analysis_error));
+ const footer=make('div','account-history-footer');
+ const details=[];
+ if(Number.isFinite(Number(item.total_tokens)))details.push(Number(item.total_tokens).toLocaleString()+' tokens');
+ if(item.photo_size_bytes)details.push((Number(item.photo_size_bytes)/1024/1024).toFixed(2)+' MB');
+ if(item.response_language)details.push(item.response_language==='bn-BD'?'বাংলা':'English');
+ footer.append(make('span','account-history-details',details.join(' · ')||'Photo record'));
+ const del=make('button','account-button account-button-danger account-delete-one','Delete');
+ del.type='button';
+ del.addEventListener('click',async()=>{
+  const prompt=scope==='guest'
+   ?'Delete this guest photo and its answer from this browser history?'
+   :'Delete this photo and answer from your account?';
+  if(!window.confirm(prompt))return;
+  del.disabled=true;
+  try{
+   if(scope==='guest')await guestApi('/api/guest/history/'+encodeURIComponent(item.id),{method:'DELETE'});
+   else await api('/api/account/history/'+encodeURIComponent(item.id),{method:'DELETE'});
+   if(scope==='guest')await loadGuestHistory(false);else await loadHistory(false);
+  }catch(error){
+   const statusNode=scope==='guest'?$('#guest-history-status'):$('#history-status');
+   statusNode.textContent=error.message;del.disabled=false;
+  }
+ });
+ footer.append(del);card.append(footer);
+ return card;
+}
 
-async function refreshSession() {
+async function refreshGuestHistorySession(){
+ try{
+  await ensureGuestSession();
+  await loadGuestHistory(false);
+ }catch(error){
+  $('#guest-history-status').textContent=error.message;
+ }
+}
+async function loadGuestHistory(append=false){
+ if(!append){guestHistoryOffset=0;$('#guest-history-list').replaceChildren();}
+ $('#guest-history-status').textContent=append?'Loading older guest photos…':'Loading private guest history…';
+ try{
+  const data=await guestApi('/api/guest/history?limit=24&offset='+guestHistoryOffset);
+  const history=data.history||[];
+  if(!history.length&&!append){
+   $('#guest-history-status').textContent='No guest photos saved in this browser yet. New photos you submit to AI while signed out will appear here.';
+  }else{
+   $('#guest-history-status').textContent='Showing '+history.length+' guest record'+(history.length===1?'':'s')+'.';
+  }
+  guestHistoryOffset=Number(data.nextOffset)||guestHistoryOffset;
+  $('#delete-guest-history').disabled=!history.length&&!append;
+  for(const item of history)$('#guest-history-list').append(createHistoryCard(item,'guest'));
+  if(data.hasMore){
+   let button=$('#guest-history-more');
+   if(!button){
+    button=make('button','account-button account-button-light account-load-more','Load older guest photos');
+    button.id='guest-history-more';button.type='button';
+    button.addEventListener('click',()=>loadGuestHistory(true));
+    $('#guest-history-panel').append(button);
+   }
+   button.hidden=false;
+  }else{
+   $('#guest-history-more')?.remove();
+  }
+ }catch(error){
+  $('#guest-history-status').textContent=error.message;
+  $('#delete-guest-history').disabled=true;
+ }
+}
+$('#refresh-guest-history').addEventListener('click',()=>refreshGuestHistorySession());
+$('#delete-guest-history').addEventListener('click',async()=>{
+ if(!window.confirm('Delete every guest photo and answer saved for this browser? This cannot be undone.'))return;
+ const button=$('#delete-guest-history');button.disabled=true;
+ $('#guest-history-status').textContent='Deleting guest history…';
+ try{
+  await guestApi('/api/guest/history',{method:'DELETE'});
+  $('#guest-history-list').replaceChildren();$('#guest-history-more')?.remove();
+  $('#guest-history-status').textContent='All guest photos and answers for this browser were deleted.';
+ }catch(error){$('#guest-history-status').textContent=error.message;}
+ finally{button.disabled=false;}
+});
+
+async function refreshSession(){
  try{
   const state=await api('/api/account/session');
   if(!state.authenticated){
    showSignedOut();
-   $('#account-status').textContent='Account service is ready. Sign in or create an account.';
+   $('#account-status').textContent='Account service is ready. Sign in or create an account to keep history across devices.';
    return;
   }
   showSignedIn(state.user);
-  $('#account-status').textContent='Signed in. Your account data is private to this account.';
+  $('#account-status').textContent='Signed in. Your account photos and settings are private to this account.';
   await Promise.all([loadKeyState(),loadHistory(),loadUsage()]);
  }catch(error){
   showSignedOut();
   $('#account-status').textContent=error.message;
  }
 }
-
 $('#login-form').addEventListener('submit',async event=>{
  event.preventDefault();
  $('#login-status').textContent='Signing in…';
+ const button=event.currentTarget.querySelector('button[type=submit]');button.disabled=true;
  try{
   const result=await api('/api/account/login',{method:'POST',body:{
    email:$('#login-email').value.trim(),password:$('#login-password').value
   }});
-  $('#login-password').value='';
-  sessionCheckedAt=Date.now();
-  showSignedIn(result.user);
-  $('#account-status').textContent='Signed in successfully.';
+  $('#login-password').value='';sessionCheckedAt=Date.now();
+  showSignedIn(result.user);$('#account-status').textContent='Signed in successfully.';
   $('#login-status').textContent='';
   await Promise.all([loadKeyState(),loadHistory(),loadUsage()]);
  }catch(error){$('#login-status').textContent=error.message;}
+ finally{button.disabled=false;}
 });
-
 $('#signup-form').addEventListener('submit',async event=>{
  event.preventDefault();
  $('#signup-status').textContent='Creating account…';
+ const button=event.currentTarget.querySelector('button[type=submit]');button.disabled=true;
  try{
   const result=await api('/api/account/signup',{method:'POST',body:{
    email:$('#signup-email').value.trim(),password:$('#signup-password').value
@@ -94,116 +205,86 @@ $('#signup-form').addEventListener('submit',async event=>{
   $('#signup-status').textContent=result.message||'Account created. Check your email if confirmation is required.';
   if(result.authenticated)await refreshSession();
  }catch(error){$('#signup-status').textContent=error.message;}
+ finally{button.disabled=false;}
 });
-
 $('#logout-button').addEventListener('click',async()=>{
  try{await api('/api/account/logout',{method:'POST'});}catch{}
- clearSessionGeminiApiKey();
- showSignedOut();
- $('#account-status').textContent='You have signed out.';
+ clearSessionGeminiApiKey();showSignedOut();
+ $('#account-status').textContent='You have signed out. This browser’s guest history remains separate.';
 });
-
 async function loadKeyState(){
  try{
   const data=await api('/api/account/api-key');
   $('#key-state').textContent=data.configured
-   ? 'A personal Gemini key is saved securely for this account ('+data.masked+').'
-   : 'No personal key is saved. The project key will be used if configured.';
+   ?'A personal Gemini key is saved securely for this account ('+data.masked+').'
+   :'No personal key is saved. The project key will be used if configured.';
  }catch(error){$('#key-state').textContent=error.message;}
 }
 $('#save-api-key').addEventListener('click',async()=>{
  const key=$('#api-key').value.trim();
  if(!key){$('#key-state').textContent='Paste your Gemini API key first.';return;}
- $('#save-api-key').disabled=true;
- $('#key-state').textContent='Encrypting and saving…';
+ const button=$('#save-api-key');button.disabled=true;$('#key-state').textContent='Encrypting and saving…';
  try{
   await api('/api/account/api-key',{method:'PUT',body:{apiKey:key}});
-  $('#api-key').value='';
-  clearSessionGeminiApiKey();
-  $('#key-state').textContent='Your Gemini key is encrypted and saved to this account. It will be used when you are signed in.';
+  $('#api-key').value='';clearSessionGeminiApiKey();
+  $('#key-state').textContent='Your Gemini key is encrypted and saved to this account.';
   await loadKeyState();
  }catch(error){$('#key-state').textContent=error.message;}
- finally{$('#save-api-key').disabled=false;}
+ finally{button.disabled=false;}
 });
 $('#remove-api-key').addEventListener('click',async()=>{
- $('#remove-api-key').disabled=true;
+ const button=$('#remove-api-key');button.disabled=true;
  try{
   await api('/api/account/api-key',{method:'DELETE'});
   $('#key-state').textContent='Saved Gemini key deleted. The project key will be used if configured.';
  }catch(error){$('#key-state').textContent=error.message;}
- finally{$('#remove-api-key').disabled=false;}
+ finally{button.disabled=false;}
 });
-
 async function loadHistory(append=false){
  if(!append){historyOffset=0;$('#history-list').replaceChildren();}
- $('#history-status').textContent=append?'Loading older history…':'Loading private history…';
+ $('#history-status').textContent=append?'Loading older account photos…':'Loading account history…';
  try{
-  const data=await api('/api/account/history?limit=50&offset='+historyOffset);
-  if(!data.history?.length&&!append){
-   $('#history-status').textContent='No saved photos or answers yet. Enable the history option in Admin before a future photo analysis.';
-   $('#load-more-history').hidden=true;
-   return;
-  }
+  const data=await api('/api/account/history?limit=24&offset='+historyOffset);
+  const history=data.history||[];
+  if(!history.length&&!append)$('#history-status').textContent='No account photos yet. Photos submitted while signed in will appear here.';
+  else $('#history-status').textContent='Showing '+history.length+' account record'+(history.length===1?'':'s')+'.';
   historyOffset=Number(data.nextOffset)||historyOffset;
   $('#load-more-history').hidden=!data.hasMore;
-  $('#history-status').textContent=append?'Loaded '+data.history.length+' older records.':'Showing the newest saved records.';
-  for(const item of (data.history||[])){
-   const card=make('article','history-card');
-   const title=make('h3','',item.question||'Scene description');
-   const meta=make('p','hint',formatDate(item.created_at)+' · '+item.model+' · '+(item.total_tokens??'Token count unavailable')+' tokens');
-   card.append(title,meta);
-   if(item.photoUrl){
-    const image=document.createElement('img');image.src=item.photoUrl;image.alt='Private photo saved with this AI response';image.loading='lazy';image.className='history-photo';card.append(image);
-   }
-   const answer=make('p','history-answer',item.response_text||'No saved answer.');
-   card.append(answer);
-   if(item.ip_fingerprint)card.append(make('small','hint','Network IP fingerprint (not the raw IP): '+item.ip_fingerprint));
-   if(item.user_agent)card.append(make('small','hint','Browser: '+item.user_agent));
-   if(item.attempted_models?.length)card.append(make('small','hint','Models tried: '+item.attempted_models.join(' → ')));
-   const deleteButton=make('button','secondary','Delete this record');
-   deleteButton.type='button';
-   deleteButton.addEventListener('click',async()=>{
-    if(!window.confirm('Delete this photo and answer from your account?'))return;
-    deleteButton.disabled=true;
-    try{await api('/api/account/history/'+encodeURIComponent(item.id),{method:'DELETE'});await loadHistory();}
-    catch(error){$('#history-status').textContent=error.message;deleteButton.disabled=false;}
-   });
-   card.append(deleteButton);
-   $('#history-list').append(card);
-  }
+  for(const item of history)$('#history-list').append(createHistoryCard(item,'account'));
  }catch(error){$('#history-status').textContent=error.message;}
 }
 $('#refresh-history').addEventListener('click',()=>loadHistory(false));
 $('#load-more-history').addEventListener('click',()=>loadHistory(true));
 
 async function loadUsage(){
- $('#usage-list').replaceChildren();
- $('#usage-summary').textContent='Loading usage…';
+ $('#usage-list').replaceChildren();$('#usage-summary').textContent='Loading usage…';
  try{
-  const data=await api('/api/account/usage');
-  const usage=data.usage||[];
+  const data=await api('/api/account/usage'),usage=data.usage||[];
   const total=usage.reduce((sum,row)=>sum+(Number(row.total_tokens)||0),0);
-  $('#usage-summary').textContent=usage.length+' logged requests · '+total.toLocaleString()+' reported tokens · rolling 90-day window.';
+  $('#usage-summary').textContent=usage.length+' requests · '+total.toLocaleString()+' reported tokens in the last 90 days.';
+  if(!usage.length)$('#usage-list').append(make('p','account-muted','No usage records yet.'));
   for(const item of usage){
-   const meta=make('p','hint',formatDate(item.created_at)+' · '+item.request_type+' · '+item.model+
-    ' · '+(item.total_tokens??'unknown')+' tokens'+
-    (item.ip_fingerprint?' · IP fingerprint '+item.ip_fingerprint:''));
-   $('#usage-list').append(meta);
+   const row=make('div','account-usage-row');
+   row.append(make('strong','',item.request_type||'AI request'));
+   row.append(make('span','',item.model||'Unknown model'));
+   row.append(make('span','',formatDate(item.created_at)));
+   row.append(make('span','',Number(item.total_tokens||0).toLocaleString()+' tokens'));
+   $('#usage-list').append(row);
   }
-  if(!usage.length)$('#usage-list').append(make('p','hint','No usage records yet. Turn on photo history in Admin and use the AI while signed in.'));
  }catch(error){$('#usage-summary').textContent=error.message;}
 }
 $('#refresh-usage').addEventListener('click',loadUsage);
-
 $('#delete-history').addEventListener('click',async()=>{
- const accepted=window.confirm('Delete all photos, answers and usage records in this account? This cannot be undone.');
- if(!accepted)return;
- $('#history-status').textContent='Deleting…';
+ if(!window.confirm('Delete all photos, answers and usage records in this account? This cannot be undone.'))return;
+ const button=$('#delete-history');button.disabled=true;$('#history-status').textContent='Deleting account history…';
  try{
   await api('/api/account/history',{method:'DELETE'});
-  $('#history-status').textContent='All saved history and usage records were deleted.';
-  $('#history-list').replaceChildren();$('#load-more-history').hidden=true;$('#usage-list').replaceChildren();$('#usage-summary').textContent='No usage records.';
+  $('#history-list').replaceChildren();$('#load-more-history').hidden=true;
+  $('#usage-list').replaceChildren();$('#usage-summary').textContent='No usage records.';
+  $('#history-status').textContent='All account photos, answers and usage records were deleted.';
  }catch(error){$('#history-status').textContent=error.message;}
+ finally{button.disabled=false;}
 });
 
+refreshGuestHistorySession();
 refreshSession();

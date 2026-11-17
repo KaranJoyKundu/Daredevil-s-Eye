@@ -665,7 +665,8 @@ test('opted-in AI history stores private JPEG, answer, prompt, model, token coun
   }
   if(url.origin==='https://supabase.example.test'&&url.pathname.startsWith('/rest/v1/ai_history')){
    if(init.method==='POST')historyRows.push(JSON.parse(init.body));
-   return new Response(null,{status:201});
+   if(init.method==='PATCH'&&historyRows.length)Object.assign(historyRows[historyRows.length-1],JSON.parse(init.body));
+   return new Response(null,{status:init.method==='POST'?201:204});
   }
   if(url.origin==='https://supabase.example.test'&&url.pathname.startsWith('/storage/v1/object/daredevil-history/')){
    if(init.method==='POST')uploaded.push({url:url.href,type:init.headers['content-type'],bytes:init.body});
@@ -802,4 +803,88 @@ test('legacy Supabase anon and service_role key names retain their JWT Authoriza
  assert.equal(authHeaders.Authorization,'Bearer legacy-user-token');
  assert.equal(serviceHeaders.apikey,'legacy-service-role-jwt');
  assert.equal(serviceHeaders.Authorization,'Bearer legacy-service-role-jwt');
+});
+
+
+test('guest photo history saves submitted photos privately, shows them in this browser and deletes them',async t=>{
+ const originalFetch=globalThis.fetch;
+ const historyRows=[],uploads=[];
+ t.after(()=>{globalThis.fetch=originalFetch;});
+ globalThis.fetch=async(input,init={})=>{
+  const url=new URL(String(input));
+  if(url.origin==='https://supabase.example.test'&&url.pathname==='/rest/v1/ai_history'){
+   if(init.method==='POST')historyRows.push(JSON.parse(init.body));
+   if(init.method==='PATCH'&&historyRows.length)Object.assign(historyRows[historyRows.length-1],JSON.parse(init.body));
+   if(init.method==='DELETE'){historyRows.length=0;return new Response(null,{status:204});}
+   return new Response(JSON.stringify(historyRows),{status:200,headers:{'content-type':'application/json'}});
+  }
+  if(url.origin==='https://supabase.example.test'&&url.pathname.startsWith('/storage/v1/object/daredevil-history/')){
+   if(init.method==='POST')uploads.push(url.pathname);
+   if(init.method==='DELETE')return new Response(null,{status:200});
+   return new Response(null,{status:200});
+  }
+  if(url.origin==='https://supabase.example.test'&&url.pathname.startsWith('/storage/v1/object/sign/daredevil-history/')){
+   const path=url.pathname.split('/').slice(-1)[0];
+   return new Response(JSON.stringify({signedURL:'/object/sign/daredevil-history/'+path+'?token=test'}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  if(url.origin==='https://generativelanguage.googleapis.com'&&url.pathname==='/v1beta/models'){
+   return new Response(JSON.stringify({models:[
+    {name:'models/gemini-3.8-flash',displayName:'Gemini 3.8 Flash',supportedGenerationMethods:['generateContent']}
+   ]}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  if(url.origin==='https://generativelanguage.googleapis.com'&&url.pathname.endsWith(':generateContent')){
+   return new Response(JSON.stringify({candidates:[{
+    content:{parts:[{text:'A doorway is visible.'}]},finishReason:'STOP'
+   }],usageMetadata:{promptTokenCount:18,candidatesTokenCount:9,totalTokenCount:27}}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  throw new Error('Unexpected guest test fetch: '+url.href);
+ };
+ const env={
+  AI_MODE:'gemini',GEMINI_API_KEY:'test-gemini-key-for-guest-history',
+  SUPABASE_URL:'https://supabase.example.test',
+  SUPABASE_PUBLISHABLE_KEY:'sb_publishable_test-public-key',
+  SUPABASE_SECRET_KEY:'sb_secret_test-server-key'
+ };
+ const session=await handleApi(new Request('https://local.test/api/guest/session'),env);
+ assert.equal(session.status,200);
+ const cookieHeader=session.headers.get('set-cookie')||'';
+ const token=cookieHeader.match(/de_guest=([a-f0-9]{64})/i)?.[1];
+ assert.ok(token,'guest history is bound to a random HttpOnly cookie');
+ assert.match(cookieHeader,/HttpOnly/i);
+ assert.match(cookieHeader,/Secure/i);
+ assert.match(cookieHeader,/SameSite=Lax/i);
+ const analysis=await handleApi(req('/api/describe',{
+  image,model:'gemini-3.8-flash',responseStyle:'concise',responseLanguage:'bn-BD'
+ },{Origin:'https://local.test',Cookie:'de_guest='+token}),env);
+ const data=await analysis.json();
+ assert.equal(analysis.status,200);
+ assert.equal(data.historySaved,true);
+ assert.equal(data.historyMessage,'Photo and answer saved to private guest history in this browser.');
+ assert.equal(historyRows.length,1);
+ assert.equal(historyRows[0].user_id,null);
+ assert.match(historyRows[0].guest_session_hash,/^[a-f0-9]{64}$/);
+ assert.notEqual(historyRows[0].guest_session_hash,token,'the raw guest cookie token is not stored');
+ assert.ok(historyRows[0].photo_path.startsWith('guest-'+historyRows[0].guest_session_hash+'/'));
+ assert.equal(historyRows[0].analysis_status,'completed');
+ assert.equal(historyRows[0].response_text,'A doorway is visible.');
+ assert.equal(historyRows[0].total_tokens,27);
+ assert.equal(uploads.length,1);
+
+ const historyResponse=await handleApi(new Request('https://local.test/api/guest/history?limit=10&offset=0',{
+  headers:{Cookie:'de_guest='+token}
+ }),env);
+ const historyData=await historyResponse.json();
+ assert.equal(historyResponse.status,200);
+ assert.equal(historyData.scope,'guest-browser');
+ assert.equal(historyData.retentionDays,30);
+ assert.equal(historyData.history.length,1);
+ assert.equal(historyData.history[0].response_text,'A doorway is visible.');
+ assert.ok(historyData.history[0].photoUrl.includes('/storage/v1/object/sign/'));
+
+ const deleted=await handleApi(new Request('https://local.test/api/guest/history/'+historyRows[0].id,{
+  method:'DELETE',headers:{Origin:'https://local.test',Cookie:'de_guest='+token}
+ }),env);
+ assert.equal(deleted.status,200);
+ assert.equal((await deleted.json()).deleted,true);
+ assert.equal(historyRows.length,0);
 });

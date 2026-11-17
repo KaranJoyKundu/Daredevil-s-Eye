@@ -60,7 +60,7 @@ test('stale versioned consent is not silently migrated from the legacy flag', ()
   const storage = new MemoryStorage();
   Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: storage });
   try {
-    storage.setItem('daredevils-eye.privacy-consent.v2', JSON.stringify({ version: 3, accepted: true }));
+    storage.setItem('daredevils-eye.privacy-consent.v2', JSON.stringify({ version: 4, accepted: true }));
     storage.setItem('daredevils-eye.device-settings.v1', JSON.stringify({ consentAccepted: true }));
     assert.equal(hasCurrentConsent(), false);
   } finally {

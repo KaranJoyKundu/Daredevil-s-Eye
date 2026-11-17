@@ -1,5 +1,8 @@
 # Daredevil's Eye — reliability, photo workflow, SOS delivery and user history
 
+> **Current update (17 November 2026):** Use [CURRENT-RELEASE-CHECKLIST.md](CURRENT-RELEASE-CHECKLIST.md) as the authoritative checklist. It supersedes earlier status rows below for Bangla defaults, Gemini 3.8 Flash, Account UI and signed-in/guest photo history. Earlier rows remain as historical context.
+
+
 Target device: **Samsung Galaxy A55 5G, Android 16 / One UI 8**. Other Android 16 Samsung models are compatibility targets, not presumed identical.
 
 This checklist records the owner's 17 November 2026 requests. A task is not "done" merely because code exists: automated checks, a production deployment, and the relevant A55 / second-phone test must all be recorded.
