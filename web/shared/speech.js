@@ -43,10 +43,10 @@ export function resolveSpeechLanguage(text, requestedLanguage = 'en-US') {
 export function cleanTextForSpeech(value) {
   return String(value ?? '')
     .replace(/```[\s\S]*?```/g, ' ')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
     .replace(/https?:\/\/\S+/gi, ' ')
     .replace(/<[^>]*>/g, ' ')
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/`([^`]+)`/g, '$1')
     .replace(/[*_~#>|]/g, ' ')
     .replace(/^[\s•\-–—]+/gm, '')
