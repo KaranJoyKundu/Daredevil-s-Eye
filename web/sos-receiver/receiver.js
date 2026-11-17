@@ -17,13 +17,13 @@ function base64UrlToBytes(value){
  const binary=atob(base64);
  return Uint8Array.from(binary,character=>character.charCodeAt(0));
 }
-async function registerPushNotifications(){
+async function registerPushNotifications(permissionPromise){
  if(!('serviceWorker'in navigator)||!('PushManager'in window)||!('Notification'in window)){
   throw new Error('This browser does not support background push notifications. Foreground polling will still work.');
  }
  if(Notification.permission==='denied')throw new Error('Notifications are blocked for this site. Allow notifications in Android site settings.');
  if(Notification.permission!=='granted'){
-  const permission=await Notification.requestPermission();
+  const permission=permissionPromise?await permissionPromise:await Notification.requestPermission();
   if(permission!=='granted')throw new Error('Notification permission was not granted. Foreground polling will still work.');
  }
  const registration=await navigator.serviceWorker.register('/sw.js',{scope:'/'});
@@ -132,9 +132,20 @@ $('#enable-alarm').addEventListener('click',async()=>{
  const button=$('#enable-alarm');button.disabled=true;
  try{
   if(!deviceId||!receiverToken)throw new Error('This tab has no valid receiver session.');
-  await unlockAudio();await keepScreenAwake();
+  // Start gesture-gated browser permissions and audio unlock before the
+  // first await so Android can associate them with this button tap.
+  let permissionPromise=Promise.resolve('unsupported');
+  if('Notification'in window){
+   permissionPromise=Notification.permission==='default'
+    ?Notification.requestPermission()
+    :Promise.resolve(Notification.permission);
+  }
+  const audioUnlock=unlockAudio();
+  const screenWake=keepScreenAwake();
+  await audioUnlock;
+  await screenWake;
   let pushReady=false,pushError='';
-  try{pushReady=await registerPushNotifications();}catch(error){pushError=error.message||'Push registration failed.';}
+  try{pushReady=await registerPushNotifications(permissionPromise);}catch(error){pushError=error.message||'Push registration failed.';}
   isConnected=true;
   updateStatus(pushReady
    ? 'Receiver connected. Screen-off notifications are enabled; keep notifications allowed.'
