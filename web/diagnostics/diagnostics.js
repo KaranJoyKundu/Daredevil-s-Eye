@@ -1,7 +1,7 @@
-import {getSettings} from '/shared/settings.js?v=20261117-release5';
-import {captureImage,blobToDataUrl} from '/shared/camera.js?v=20261117-release5';
-import {requestAI,apiFetch} from '/shared/api.js?v=20261117-release5';
-import {listenOnce,speak,speakResponse,stopSpeaking,getAvailableVoices,isBengaliVoice,refreshAvailableVoices} from '/shared/speech.js?v=20261117-release5';
+import {getSettings} from '/shared/settings.js?v=20261117-release6';
+import {captureImage,blobToDataUrl} from '/shared/camera.js?v=20261117-release6';
+import {requestAI,apiFetch} from '/shared/api.js?v=20261117-release6';
+import {listenOnce,speak,speakResponse,stopSpeaking,getAvailableVoices,isBengaliVoice,refreshAvailableVoices} from '/shared/speech.js?v=20261117-release6';
 
 const $=selector=>document.querySelector(selector);
 let latestCameraBlob=null,latestCameraUrl=null,selectedAiFile=null,micController=null;
