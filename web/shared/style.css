@@ -131,3 +131,6 @@ input[type=file]{min-height:48px;padding:8px;font-size:.9rem}
 .consent-check input{width:22px;min-width:22px;min-height:22px;margin-top:2px;accent-color:#10b7cf}
 .consent-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}.consent-actions button{margin:0}.consent-actions button:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:520px){.consent-card{padding:18px}.consent-actions{grid-template-columns:1fr}}
+
+.admin-save-actions{margin:26px 0 8px;padding-top:18px;border-top:1px solid #35506d}
+.admin-save-actions button{min-height:64px;font-size:1.1rem;background:linear-gradient(135deg,#078cf0,#0864c2)}
