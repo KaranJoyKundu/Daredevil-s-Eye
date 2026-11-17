@@ -9,17 +9,17 @@ This checklist records the owner's 17 November 2026 requests. A task is not "don
 | # | Work item | Acceptance criteria | Status |
 |---|---|---|---|
 | 1 | Gemini responses cut off mid-sentence; remove the 3.6 Flash dependency and try alternatives | No response ending with `MAX_TOKENS` is presented as complete; larger visible-output budget; model fallback records which model succeeded; tests cover a truncated first model and a complete fallback | Implemented on branch; tests pending |
-| 2 | Full Bangla mode for every spoken instruction | When Admin language is বাংলা, camera instructions, waiting/error/SOS/status prompts and AI answers are spoken in Bangla; no English system fallback is spoken; tests cover language routing | In progress |
-| 3 | More effective Bangla voice transcription | Preserve Bangla in Bengali script when Bangla mode is selected; preserve mixed technical terms without translating the whole question to English; transcription models use low-cost-first fallback | In progress |
-| 4 | Camera and upload path on Home / Action | Separate **Use phone camera** and **Upload photo** controls; both open the same preview/confirm flow; upload selection works without the camera-only capture hint | In progress |
-| 5 | Automatic image compression | Resize/re-encode large camera and uploaded images locally to JPEG below 4,000,000 bytes before upload; EXIF is removed by re-encoding; clear error for formats the browser cannot decode | In progress |
-| 6 | Preview and Ask AI buffer | Preview shows the exact compressed image; optional question box; default Ask AI button waits for explicit confirmation; Admin can disable the wait and restore automatic Describe; nothing is sent before confirmation when enabled | In progress |
-| 7 | Three-frame camera shutter sounds | Three synthetic shutter clicks align with the three ESP32-CAM capture attempts; browser/device mute and autoplay restrictions are documented; no claim of changing the native Samsung camera app's shutter sound | Planned |
-| 8 | SOS while the receiver phone screen is off | Receiver registers a Web Push subscription; sender pushes a notification through a service worker; receiver can acknowledge; foreground polling remains a fallback; delivery is labelled queued/attempted, never guaranteed | Planned — requires VAPID secrets and real A55/second-phone testing |
-| 9 | Persistent user account, photo/answer history and usage | Authenticated per-user records; private image objects with database metadata, model/answer/timestamp and aggregate usage; user can revisit and delete their own records | Planned — requires provisioned database and private object storage |
-| 10 | Persist user-owned Gemini keys across sign-in | Keys encrypted server-side with a Worker secret; never stored as plaintext, exposed in pages, logs or API responses; deletion and rotation controls | Planned — requires account/database stage |
-| 11 | IP/usage audit | Store minimal pseudonymous IP fingerprints and request counts with a documented retention period; do not expose raw IPs in public pages or store indefinite location histories | Planned — retention controls required |
-| 12 | Menu closes when tapping elsewhere | Clicking outside the site menu closes it; Escape and link navigation continue to close it; keyboard and touch behavior tested | Planned |
+| 2 | Full Bangla mode for every spoken instruction | When Admin language is বাংলা, camera instructions, waiting/error/SOS/status prompts and AI answers are spoken in Bangla; no English system fallback is spoken; tests cover language routing | Implemented on feature branch; CI pending |
+| 3 | More effective Bangla voice transcription | Preserve Bangla in Bengali script when Bangla mode is selected; preserve mixed technical terms without translating the whole question to English; transcription models use low-cost-first fallback | Implemented on feature branch; A55 voice test pending |
+| 4 | Camera and upload path on Home / Action | Separate **Use phone camera** and **Upload photo** controls; both open the same preview/confirm flow; upload selection works without the camera-only capture hint | Implemented on feature branch; transcription test pending |
+| 5 | Automatic image compression | Resize/re-encode large camera and uploaded images locally to JPEG below 4,000,000 bytes before upload; EXIF is removed by re-encoding; clear error for formats the browser cannot decode | Implemented on feature branch; browser test pending |
+| 6 | Preview and Ask AI buffer | Preview shows the exact compressed image; optional question box; default Ask AI button waits for explicit confirmation; Admin can disable the wait and restore automatic Describe; nothing is sent before confirmation when enabled | Implemented on feature branch; compression test pending |
+| 7 | Three-frame camera shutter sounds | Three synthetic shutter clicks align with the three ESP32-CAM capture attempts; browser/device mute and autoplay restrictions are documented; no claim of changing the native Samsung camera app's shutter sound | Implemented on feature branch; three ESP32 frame audio needs device confirmation |
+| 8 | SOS while the receiver phone screen is off | Receiver registers a Web Push subscription; sender pushes a notification through a service worker; receiver can acknowledge; foreground polling remains a fallback; delivery is labelled queued/attempted, never guaranteed | Implemented on feature branch; requires real A55/second-phone screen-off test |
+| 9 | Persistent user account, photo/answer history and usage | Authenticated per-user records; private image objects with database metadata, model/answer/timestamp and aggregate usage; user can revisit and delete their own records | Code and SQL schema added; Supabase project still needs provisioning and credentials |
+| 10 | Persist user-owned Gemini keys across sign-in | Keys encrypted server-side with a Worker secret; never stored as plaintext, exposed in pages, logs or API responses; deletion and rotation controls | Encryption and per-user key endpoints added; requires Supabase secrets |
+| 11 | IP/usage audit | Store minimal pseudonymous IP fingerprints and request counts with a documented retention period; do not expose raw IPs in public pages or store indefinite location histories | Pseudonymous IP fingerprint and 90-day usage table added; requires Supabase secrets |
+| 12 | Menu closes when tapping elsewhere | Clicking outside the site menu closes it; Escape and link navigation continue to close it; keyboard and touch behavior tested | Implemented on feature branch; touch/keyboard test pending |
 
 ## Architecture decisions and privacy boundaries
 
@@ -28,6 +28,12 @@ This checklist records the owner's 17 November 2026 requests. A task is not "don
 - Store a keyed, rotating IP fingerprint and usage counts rather than raw IP addresses by default. Admin should see useful counts without creating a permanent visitor-location log.
 - Screen-off SOS needs Web Push / service-worker delivery. Browser polling and a Wake Lock do not wake a phone whose screen is off. Push notifications can still be delayed or blocked by permissions, network, Doze/battery policy or vendor settings.
 - No paid SMS, paid APIs or new API-wide rate limit is introduced without approval. Login protection and secure session expiry are separate from AI usage throttling.
+
+## Current verification boundary
+
+- The latest physical Galaxy A55 / receiver-phone tests have not been performed.
+- Account, private photo history, encrypted saved keys and usage reporting do not become active until the Supabase migration is applied and the five Supabase/encryption secrets are configured in GitHub Actions.
+- The current feature branch is intended to pass CI before any production merge. Screen-off SOS, native camera shutter behavior and Bengali voice quality cannot be certified by CI.
 
 ## Release gate
 
