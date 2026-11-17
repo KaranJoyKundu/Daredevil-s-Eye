@@ -8,7 +8,17 @@
 <body><main>
 <header><p class="eyebrow">DEVICE SETTINGS</p><h1>Admin / Settings</h1><p class="subtitle">Tune the camera, AI behaviour and spoken voice. Settings stay in this browser on this device.</p></header>
 
-<nav class="quick-jump" aria-label="Admin shortcuts"><a href="#camera-settings">📷 <span>Camera & SOS</span></a><a href="#ai-settings">✨ <span>AI models</span></a><a href="#voice-settings">🎙 <span>Voice</span></a><a href="#image-lab">🧪 <span>Image tester</span></a><a href="/diagnostics/">✅ <span>Diagnostics</span></a><a href="/account/">👤 <span>Account & History</span></a><a href="/action/">⌂ <span>Home</span></a></nav>
+<nav class="quick-jump" aria-label="Admin shortcuts"><a href="#camera-settings">📷 <span>Camera & SOS</span></a><a href="#ai-settings">✨ <span>AI models</span></a><a href="#voice-settings">🎙 <span>Voice</span></a><a href="#image-lab">🧪 <span>Image tester</span></a><a href="/diagnostics/">✅ <span>Diagnostics</span></a><a href="/account/">👤 <span>Account & History</span></a><a href="#stored-data">🗃 <span>Stored data</span></a><a href="/action/">⌂ <span>Home</span></a></nav>
+<section class="panel settings-section" id="stored-data">
+<h2>Stored users, guest sessions &amp; photos</h2>
+<p>All submitted photo records are in Supabase. The links below open your secured Supabase dashboard; this app does not expose other people's private guest sessions inside a normal user account.</p>
+<div class="quick-jump">
+<a href="https://supabase.com/dashboard/project/dyfpawbkttbgoorcgwbd/editor" target="_blank" rel="noopener noreferrer">🗃 <span>AI history table — signed-in and guest rows</span></a>
+<a href="https://supabase.com/dashboard/project/dyfpawbkttbgoorcgwbd/storage/buckets/daredevil-history" target="_blank" rel="noopener noreferrer">🖼 <span>Private uploaded photos</span></a>
+<a href="https://supabase.com/dashboard/project/dyfpawbkttbgoorcgwbd/auth/users" target="_blank" rel="noopener noreferrer">👤 <span>Registered accounts</span></a>
+</div>
+<p><strong>Important:</strong> Guest history on the Account page is bound to one browser's private HttpOnly cookie. Its delete buttons cannot delete records belonging to another guest browser, or records whose cookie was lost. The dashboard links above are the current way to inspect and manage all stored records. When manually deleting a photo, delete the storage object and its matching <code>ai_history</code> row.</p>
+</section>
 <form id="settings-form">
 <section id="appearance-settings" class="panel settings-section">
 <h2>Appearance &amp; six themes</h2>
