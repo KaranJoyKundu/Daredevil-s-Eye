@@ -209,9 +209,10 @@ test('vision models prefer stable Flash alternatives in the automatic free-tier 
   {id:'gemini-3.7-flash',name:'Flash 3.7'}
  ]);
  assert.deepEqual(ranked.map(item=>item.id),[
-  'gemini-3.8-flash','gemini-3.7-flash','gemini-3.1-flash-lite','gemini-3.1-pro-preview'
+  'gemini-3.8-flash','gemini-3.7-flash','gemini-3.1-flash-lite'
  ]);
- assert.deepEqual(ranked.map(item=>item.rank),[1,2,3,4]);
+ assert.deepEqual(ranked.map(item=>item.rank),[1,2,3]);
+ assert.ok(ranked.every(item=>!/-pro(?:-|$)/i.test(item.id)));
 });
 test('transcription endpoint rejects a missing audio data URL',async()=>{
  const r=await handleApi(req('/api/transcribe',{audio:'not-audio'}),{});
