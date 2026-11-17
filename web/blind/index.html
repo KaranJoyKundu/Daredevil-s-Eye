@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#07111f"><meta name="description" content="Audio-first camera assistant with large accessible controls.">
 <link rel="manifest" href="/manifest.webmanifest"><title>Blind mode · Daredevil's Eye</title>
-<link rel="stylesheet" href="/shared/style.css?v=20261117-release4">
+<link rel="stylesheet" href="/shared/style.css?v=20261117-release5">
 </head>
 <body class="blind-page">
 <main id="blind-grid" class="blind-grid" aria-label="Four main actions">
@@ -19,10 +19,13 @@
 <input id="phone-photo" class="sr-only" type="file" accept="image/*" capture="environment">
 <form id="question-form" class="sr-only"><label for="question">Type a question</label><input id="question" maxlength="1000"><button type="submit">Ask AI</button></form>
 <pre id="result" class="sr-only" aria-live="polite"></pre>
-<section id="consent-panel" class="blind-consent" aria-labelledby="blind-consent-title"><div class="blind-consent-card">
-<h2 id="blind-consent-title">Before first use</h2>
-<p>Photos are sent to the selected AI service. In recommended multilingual voice mode, your short microphone recording is sent to Gemini to recognise Bangla, English or mixed speech. Optional voice-SOS monitoring keeps the microphone active while Blind mode is visible and uses the browser's speech-recognition provider; audio may be processed by that provider. Shake detection is processed locally. Both triggers are off until enabled in Admin. Do not speak passwords or private information. AI may miss hazards and is not a navigation or emergency service.</p>
-<p id="consent-status" class="hint" role="status" aria-live="polite"></p><button id="consent-accept" type="button">I understand — continue</button><a href="/privacy/">Read privacy details</a>
-</div></section>
-<script type="module" src="/shared/app.js?v=20261117-release4"></script>
+<section id="consent-panel" class="blind-consent consent-gate" role="dialog" aria-modal="true" aria-labelledby="blind-consent-title"><div class="blind-consent-card consent-card">
+<p class="eyebrow">WELCOME</p><h2 id="blind-consent-title">Before you begin</h2>
+<p>Photos and voice requests may be processed by this app, Cloudflare and Google Gemini. When you are signed in, photos and AI answers are automatically saved to your private account history. You can turn automatic saving off in Admin. Guests can use the app, but their photos and answers are not saved to an account.</p>
+<p>This is not a certified navigation aid or emergency service. AI can miss hazards; keep using your usual mobility aids and emergency plan.</p>
+<p>Read the <a href="/terms/">Terms &amp; Conditions</a> and <a href="/privacy/">Privacy details</a>. You can also <a href="/account/">sign in or create an account</a>.</p>
+<label class="consent-check" for="consent-terms-check"><input id="consent-terms-check" type="checkbox"> I have read and agree to the Terms &amp; Conditions and Privacy notice.</label>
+<p id="consent-status" class="hint" role="status" aria-live="polite"></p>
+<div class="consent-actions"><button id="consent-accept" type="button" disabled>Accept &amp; continue</button><button id="consent-reject" type="button" class="secondary">Reject</button></div></div></section>
+<script type="module" src="/shared/app.js?v=20261117-release5"></script>
 </body></html>
