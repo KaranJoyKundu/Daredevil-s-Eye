@@ -7,6 +7,13 @@ const $=s=>document.querySelector(s);
 const form=$('#settings-form');
 const saved=getSettings();
 const presetValues=VOICE_PRESETS;
+const customLanguageDraft={
+ interface:saved.customInterfaceLanguage||'en',
+ speech:saved.customSpeechLanguage||saved.speechLanguage||'bn-BD',
+ inputMode:saved.customSpeechInputMode||saved.speechInputMode||'auto',
+ input:saved.customSpeechInputLanguage||saved.speechInputLanguage||'bn-BD',
+ sos:saved.customSosVoiceLanguage||saved.sosVoiceLanguage||'bn-BD'
+};
 
 
 function normalizeCameraAddress(value){
@@ -19,11 +26,11 @@ function normalizeCameraAddress(value){
 }
 function formSettings(){
  const languageMode=$('#language-mode').value||'bn';
- const customInterfaceLanguage=$('#custom-interface-language').value||'en';
- const customSpeechLanguage=$('#language').value;
- const customSpeechInputMode=$('#speech-input-mode').value;
- const customSpeechInputLanguage=$('#input-language').value;
- const customSosVoiceLanguage=$('#sos-voice-language').value;
+ const customInterfaceLanguage=languageMode==='custom'?$('#custom-interface-language').value:customLanguageDraft.interface;
+ const customSpeechLanguage=languageMode==='custom'?$('#language').value:customLanguageDraft.speech;
+ const customSpeechInputMode=languageMode==='custom'?$('#speech-input-mode').value:customLanguageDraft.inputMode;
+ const customSpeechInputLanguage=languageMode==='custom'?$('#input-language').value:customLanguageDraft.input;
+ const customSosVoiceLanguage=languageMode==='custom'?$('#sos-voice-language').value:customLanguageDraft.sos;
  return {
   cameraBaseUrl:normalizeCameraAddress($('#camera').value),
   requirePhotoConfirmation:$('#require-photo-confirmation').checked,
@@ -87,17 +94,28 @@ function syncLanguageControls(){
  const mode=$('#language-mode').value||'bn',custom=mode==='custom';
  $('#custom-language-controls').hidden=!custom;
  for(const id of ['custom-interface-language','language','speech-input-mode','input-language','sos-voice-language'])$('#'+id).disabled=!custom;
- if(mode==='bn'){
+ if(custom){
+  $('#custom-interface-language').value=customLanguageDraft.interface;
+  $('#language').value=customLanguageDraft.speech;
+  $('#speech-input-mode').value=customLanguageDraft.inputMode;
+  $('#input-language').value=customLanguageDraft.input;
+  $('#sos-voice-language').value=customLanguageDraft.sos;
+ }else if(mode==='bn'){
   $('#language').value='bn-BD';$('#speech-input-mode').value='auto';$('#input-language').value='bn-BD';$('#sos-voice-language').value='bn-BD';
- }else if(mode==='en'){
+ }else{
   $('#language').value='en-US';$('#speech-input-mode').value='auto';$('#input-language').value='en-US';$('#sos-voice-language').value='en-US';
  }
 }
 syncLanguageControls();
 updateThemeChoices();
+for(const [id,key] of [['custom-interface-language','interface'],['language','speech'],['speech-input-mode','inputMode'],['input-language','input'],['sos-voice-language','sos']]){
+ $('#'+id).addEventListener('change',()=>{if($('#language-mode').value==='custom')customLanguageDraft[key]=$('#'+id).value;});
+}
 $('#language-mode').addEventListener('change',()=>{
  syncLanguageControls();
- const current={...getSettings(),languageMode:$('#language-mode').value};
+ const current={...getSettings(),languageMode:$('#language-mode').value,
+  customInterfaceLanguage:customLanguageDraft.interface,customSpeechLanguage:customLanguageDraft.speech,
+  customSpeechInputMode:customLanguageDraft.inputMode,customSpeechInputLanguage:customLanguageDraft.input,customSosVoiceLanguage:customLanguageDraft.sos};
  applyInterfaceLanguage(current);
 });
 document.querySelectorAll('[data-theme-choice]').forEach(button=>button.addEventListener('click',()=>{
@@ -110,12 +128,8 @@ $('#save-photo-history').checked=saved.savePhotoHistory!==false;
 $('#contact-name').value=saved.emergencyName;
 $('#contact-phone').value=saved.emergencyPhone;
 $('#sos-code').value=saved.sosPairingCode;
-$('#language').value=saved.speechLanguage;
-$('#speech-input-mode').value=saved.speechInputMode||'auto';
-$('#input-language').value=saved.speechInputLanguage||'bn-BD';
 $('#sos-shake-enabled').checked=!!saved.sosShakeEnabled;
 $('#sos-voice-enabled').checked=!!saved.sosVoiceEnabled;
-$('#sos-voice-language').value=saved.sosVoiceLanguage||'bn-BD';
 $('#voice-preset').value=saved.speechPreset;
 $('#speech-engine').value=saved.speechEngine==='gemini'?'device':saved.speechEngine;
 $('#gemini-voice-style').value=saved.geminiTtsStyle;
