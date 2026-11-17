@@ -184,7 +184,7 @@ async function storeAccountUsage(env,user,request,{model,requestType,usage,image
     await supabaseRest(env,'api_usage?expires_at=lt.'+encodeURIComponent(expiry),{method:'DELETE'});
   }catch{}
 }
-async function saveAccountHistory(env,user,request,body,result) {
+async function saveAccountHistory(env,user,request,body,result,fullPrompt) {
   if(!body.saveToHistory)return {saved:false,message:'History saving is switched off.'};
   if(!user)return {saved:false,message:'Sign in to save this photo and answer to your private history.'};
   if(!supabaseConfigured(env))return {saved:false,message:'Account history is not configured on the Worker yet.'};
@@ -194,7 +194,7 @@ async function saveAccountHistory(env,user,request,body,result) {
     const usage=result.usage||{};
     const record={
       user_id:user.id,request_type:request.url.endsWith('/api/ask')?'ask':'describe',
-      question:String(body.question||''),system_prompt:String(body.customPrompt||''),
+      question:String(body.question||''),system_prompt:String(fullPrompt||body.customPrompt||''),
       response_text:String(result.answer||''),model:String(result.model||'unknown'),
       attempted_models:result.attempted||[],finish_reason:result.finishReason||null,
       response_language:String(body.responseLanguage||'en-US'),
@@ -586,7 +586,7 @@ async function transcribeGemini(audio, apiKey, outputLanguage = 'en-US') {
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
         const transcript = (data?.candidates?.[0]?.content?.parts || []).map(item => item.text || '').join('').trim();
-        if (transcript) return { transcript, model: candidate, attempted };
+        if (transcript) return { transcript, model: candidate, attempted, usage: data.usageMetadata || null };
         lastFailure = candidate + ' returned an empty transcript.';
         continue;
       }
@@ -712,7 +712,11 @@ export async function handleApi(request, env = {}) {
     if (body.audio.length > 2_800_000) return json({ error: 'Voice recording is too long. Please speak a shorter question.' }, 413);
     try {
       const result = await transcribeGemini(body.audio, apiKey, Object.hasOwn(RESPONSE_LANGUAGES, body.responseLanguage) ? body.responseLanguage : 'en-US');
-      return json({ ok: true, transcript: result.transcript, model: result.model, attemptedModels: result.attempted, outputLanguage: Object.hasOwn(RESPONSE_LANGUAGES, body.responseLanguage) ? body.responseLanguage : 'en-US' });
+      if(body.saveToHistory===true){
+        const user=await getAuthenticatedUser(request,env);
+        if(user)await storeAccountUsage(env,user,request,{model:result.model,requestType:'transcribe',usage:result.usage,imageSizeBytes:null});
+      }
+      return json({ ok: true, transcript: result.transcript, model: result.model, attemptedModels: result.attempted, usageMetadata:result.usage||null, outputLanguage: Object.hasOwn(RESPONSE_LANGUAGES, body.responseLanguage) ? body.responseLanguage : 'en-US' });
     } catch (error) {
       return json({ error: error.message || 'Voice transcription failed.' }, 502);
     }
@@ -744,7 +748,7 @@ export async function handleApi(request, env = {}) {
           model:result.model,requestType:url.pathname.endsWith('/ask')?'ask':'describe',
           usage:result.usage,imageSizeBytes:Math.floor((body.image.length*3)/4)
         });
-        const history = await saveAccountHistory(env,user,request,body,result);
+        const history = await saveAccountHistory(env,user,request,body,result,prompt);
         return json({
           ok: true, mock: false, provider: 'Gemini',
           model: result.model, attemptedModels: result.attempted,
