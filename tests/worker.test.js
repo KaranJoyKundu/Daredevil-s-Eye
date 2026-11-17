@@ -601,8 +601,10 @@ test('account-saved Gemini API keys are encrypted at rest and reused only inside
   API_KEY_ENCRYPTION_KEY:'test-encryption-secret-with-more-than-thirty-two-bytes'
  };
  const apiKey='AIzaSy-test-personal-gemini-key-for-account-storage';
- const save=await handleApi(req('/api/account/api-key',{apiKey},{
-  Origin:'https://local.test',Cookie:'de_access=valid-access-token'
+ const save=await handleApi(new Request('https://local.test/api/account/api-key',{
+  method:'PUT',
+  headers:{'content-type':'application/json',Origin:'https://local.test',Cookie:'de_access=valid-access-token'},
+  body:JSON.stringify({apiKey})
  }),env);
  const savedData=await save.json();
  assert.equal(save.status,200);
