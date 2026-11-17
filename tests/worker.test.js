@@ -455,6 +455,15 @@ test('SOS receiver gets a persistent VAPID key and subscription, and trigger sub
  assert.equal(triggered.notificationAccepted,true);
  assert.equal(pushRequests.length,1);
  assert.match(pushRequests[0].headers.Authorization,/^vapid t=/);
+ const vapidRecord=values.get('vapidKeys');
+ const authorizationParts=pushRequests[0].headers.Authorization.match(/^vapid t=([^,]+), k=(.+)$/);
+ assert.ok(authorizationParts);
+ assert.equal(authorizationParts[2],vapidRecord.publicKey);
+ const jwt=authorizationParts[1].split('.');
+ assert.equal(jwt.length,3);
+ const vapidPublicKey=await crypto.subtle.importKey('jwk',vapidRecord.publicJwk,{name:'ECDSA',namedCurve:'P-256'},false,['verify']);
+ const jwtSignature=Buffer.from(jwt[2],'base64url');
+ assert.equal(await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},vapidPublicKey,jwtSignature,new TextEncoder().encode(jwt[0]+'.'+jwt[1])),true);
  assert.equal(pushRequests[0].headers.TTL,'120');
  assert.equal(pushRequests[0].headers['Content-Encoding'],'aes128gcm');
  assert.ok(pushRequests[0].body instanceof Uint8Array);
