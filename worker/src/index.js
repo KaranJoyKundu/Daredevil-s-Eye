@@ -671,9 +671,18 @@ export async function handleApi(request, env = {}) {
   const url = new URL(request.url);
   const mode = getMode(env);
   const model = String(env.GEMINI_MODEL || 'gemini-3.8-flash');
-  const apiKey = await providerKey(request, env);
+  if (!url.pathname.startsWith('/api/')) return null;
+
+  const origin = request.headers.get('origin');
+  if (origin) {
+    try { if (new URL(origin).origin !== url.origin) return json({ error: 'Cross-origin API requests are not allowed.' }, 403); }
+    catch { return json({ error: 'Invalid request origin.' }, 403); }
+  }
+
+  if(url.pathname.startsWith('/api/account/')) return handleAccountApi(request,env,url);
 
   if (request.method === 'GET' && url.pathname === '/api/health') {
+    const apiKey = await providerKey(request, env);
     const supportedMode = mode === 'gemini' || mode === 'mock';
     return json({
       ok: supportedMode,
@@ -692,16 +701,6 @@ export async function handleApi(request, env = {}) {
           : 'Mock mode explicitly enabled; no live image analysis.'
     }, supportedMode ? 200 : 503);
   }
-
-  if (!url.pathname.startsWith('/api/')) return null;
-
-  const origin = request.headers.get('origin');
-  if (origin) {
-    try { if (new URL(origin).origin !== url.origin) return json({ error: 'Cross-origin API requests are not allowed.' }, 403); }
-    catch { return json({ error: 'Invalid request origin.' }, 403); }
-  }
-
-  if(url.pathname.startsWith('/api/account/')) return handleAccountApi(request,env,url);
 
   const receiverActions = {
     '/api/sos/pair': 'pair',
@@ -723,6 +722,7 @@ export async function handleApi(request, env = {}) {
   }
 
   if (request.method === 'GET' && url.pathname === '/api/models') {
+    const apiKey = await providerKey(request, env);
     try {
       return json({
         ok: true,
@@ -746,6 +746,7 @@ export async function handleApi(request, env = {}) {
   }
 
   if (request.method === 'POST' && url.pathname === '/api/transcribe') {
+    const apiKey = await providerKey(request, env);
     let body;
     try { body = await request.json(); } catch { return json({ error: 'Recording data must be valid JSON.' }, 400); }
     if (typeof body.audio !== 'string' || !/^data:audio\//i.test(body.audio)) return json({ error: 'A recorded audio data URL is required.' }, 400);
@@ -763,6 +764,7 @@ export async function handleApi(request, env = {}) {
   }
 
   if (request.method === 'POST' && ['/api/describe', '/api/ask'].includes(url.pathname)) {
+    const apiKey = await providerKey(request, env);
     let body;
     try { body = await request.json(); } catch { return json({ error: 'Request body must be valid JSON.' }, 400); }
     const invalid = validPayload(body);
