@@ -770,13 +770,36 @@ test('account write routes reject missing and cross-origin Origin headers',async
 });
 
 
-test('legacy Supabase anon and service_role key names remain supported for older projects',async()=>{
- const response=await handleApi(new Request('https://local.test/api/account/session'),{
+test('legacy Supabase anon and service_role key names retain their JWT Authorization headers',async t=>{
+ const originalFetch=globalThis.fetch;
+ let authHeaders=null,serviceHeaders=null;
+ t.after(()=>{globalThis.fetch=originalFetch;});
+ globalThis.fetch=async(input,init={})=>{
+  const url=new URL(String(input));
+  if(url.pathname==='/auth/v1/user'){
+   authHeaders=init.headers;
+   return new Response(JSON.stringify({id:'33333333-3333-4333-8333-333333333333',email:'legacy@example.test'}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  if(url.pathname==='/rest/v1/user_api_keys'){
+   serviceHeaders=init.headers;
+   return new Response(null,{status:201});
+  }
+  throw new Error('Unexpected legacy-key test request: '+url.href);
+ };
+ const env={
   SUPABASE_URL:'https://supabase.example.test',
   SUPABASE_ANON_KEY:'legacy-anon-jwt',
-  SUPABASE_SERVICE_ROLE_KEY:'legacy-service-role-jwt'
- });
+  SUPABASE_SERVICE_ROLE_KEY:'legacy-service-role-jwt',
+  API_KEY_ENCRYPTION_KEY:'legacy-test-encryption-secret-with-more-than-thirty-two-bytes'
+ };
+ const response=await handleApi(new Request('https://local.test/api/account/api-key',{
+  method:'PUT',
+  headers:{'content-type':'application/json',Origin:'https://local.test',Cookie:'de_access=legacy-user-token'},
+  body:JSON.stringify({apiKey:'AIzaSy-legacy-personal-gemini-key-for-test'})
+ }),env);
  assert.equal(response.status,200);
- const data=await response.json();
- assert.equal(data.authenticated,false);
+ assert.equal(authHeaders.apikey,'legacy-anon-jwt');
+ assert.equal(authHeaders.Authorization,'Bearer legacy-user-token');
+ assert.equal(serviceHeaders.apikey,'legacy-service-role-jwt');
+ assert.equal(serviceHeaders.Authorization,'Bearer legacy-service-role-jwt');
 });
