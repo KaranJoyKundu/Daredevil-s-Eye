@@ -1,14 +1,14 @@
-import {getSettings} from '/shared/settings.js?v=20261116-public1';
-import {captureImage,blobToDataUrl} from '/shared/camera.js?v=20261116-public1';
-import {requestAI,apiFetch} from '/shared/api.js?v=20261116-public1';
-import {listenOnce,speak,speakResponse,stopSpeaking} from '/shared/speech.js?v=20261116-public1';
+import {getSettings} from '/shared/settings.js?v=20261117-release5';
+import {captureImage,blobToDataUrl} from '/shared/camera.js?v=20261117-release5';
+import {requestAI,apiFetch} from '/shared/api.js?v=20261117-release5';
+import {listenOnce,speak,speakResponse,stopSpeaking,getAvailableVoices,isBengaliVoice,refreshAvailableVoices} from '/shared/speech.js?v=20261117-release5';
 
 const $=selector=>document.querySelector(selector);
 let latestCameraBlob=null,latestCameraUrl=null,selectedAiFile=null,micController=null;
 let micState={hardware:false,permission:false,recognition:false,transcript:'',error:''};
 
 
-function getPhoneProfile(){
+function getPhoneProfile(voicesOverride=getAvailableVoices()){
  const ua=navigator.userAgent||'';
  const androidMatch=ua.match(/Android\s([0-9.]+)/i);
  const modelMatch=ua.match(/\b(SM-[A-Z0-9]+)\b/i);
@@ -17,13 +17,13 @@ function getPhoneProfile(){
   /CriOS\//i.test(ua)?'Chrome for iOS':
   /Chrome\//i.test(ua)?'Chrome':
   /Firefox\//i.test(ua)?'Firefox':'Other / not identified';
- const voices=window.speechSynthesis?.getVoices?.()||[];
- const banglaVoices=voices.filter(voice=>/^bn(?:-|$)/i.test(voice.lang||''));
+ const voices=Array.isArray(voicesOverride)?voicesOverride:[];
+ const banglaVoices=voices.filter(isBengaliVoice);
  const mimeTypes=['audio/webm;codecs=opus','audio/mp4','audio/ogg;codecs=opus']
   .filter(type=>window.MediaRecorder?.isTypeSupported?.(type));
  return [
   'Device model: '+(modelMatch?.[1]||'Not exposed by browser'),
-  'Android version (browser report): '+(androidMatch?.[1]||'Not exposed / not Android UA'),
+  'Android version (user-agent hint; may be a compatibility value): '+(androidMatch?.[1]||'Not exposed / not Android UA'),
   'Browser: '+browser,
   'Browser version / user agent: '+ua,
   'Secure HTTPS context: '+(window.isSecureContext?'yes':'no'),
@@ -32,7 +32,8 @@ function getPhoneProfile(){
   'Supported recording formats: '+(mimeTypes.join(', ')||'browser default only / none detected'),
   'Speech recognition API: '+(window.SpeechRecognition||window.webkitSpeechRecognition?'available':'not exposed'),
   'Speech synthesis API: '+('speechSynthesis'in window?'available':'unavailable'),
-  'Installed Bengali device voices: '+(banglaVoices.length?banglaVoices.map(v=>v.name+' ('+v.lang+')').join('; '):'none currently reported'),
+  'Speech voices exposed: '+voices.length,
+  'Bengali voice entries exposed to Chrome: '+(banglaVoices.length?banglaVoices.map(v=>v.name+' ('+v.lang+')').join('; '):'none listed — this does not prove the Android TTS pack is missing'),
   'Wake Lock API: '+(navigator.wakeLock?.request?'available':'unavailable'),
   'Vibration API: '+(navigator.vibrate?'available':'unavailable'),
   'Device motion API: '+('DeviceMotionEvent'in window?'available':'unavailable'),
@@ -46,9 +47,11 @@ function getPhoneProfile(){
   'Note: browsers may hide or reduce device details. Confirm the exact model in Android Settings → About phone.'
  ].join('\n');
 }
-$('#run-phone-check').addEventListener('click',()=>{
- $('#phone-output').textContent=getPhoneProfile();
- $('#phone-status').textContent='Phone and browser capability report generated. Review any unavailable APIs below.';
+$('#run-phone-check').addEventListener('click',async()=>{
+ const button=$('#run-phone-check');button.disabled=true;$('#phone-status').textContent='Checking phone capabilities and waiting for the device voice list…';
+ try{const voices=await refreshAvailableVoices(5000);$('#phone-output').textContent=getPhoneProfile(voices);$('#phone-status').textContent='Phone report generated. Voice enumeration is only a browser hint; use the Admin voice preview to test Bengali speech.';}
+ catch(error){$('#phone-status').textContent='Phone check failed: '+error.message;}
+ finally{button.disabled=false;}
 });
 $('#test-motion-sensor').addEventListener('click',async()=>{
  const button=$('#test-motion-sensor');button.disabled=true;
