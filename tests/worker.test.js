@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {handleApi,rankVisionModels,getTranscriptionModelOrder} from '../worker/src/index.js';
+import {handleApi,purgeExpiredGuestHistory,rankVisionModels,getTranscriptionModelOrder} from '../worker/src/index.js';
 import {SOSRoom} from '../worker/src/sos-room.js';
 import {detectSpokenLanguage,selectVoiceForText,resolveSpeechLanguage,cleanTextForSpeech,splitSpeechText} from '../web/shared/speech.js';
 import {createShakeSequenceTracker,getShakeMagnitude,matchSosVoiceCommand} from '../web/shared/sos-triggers.js';
@@ -889,4 +889,37 @@ test('guest photo history saves submitted photos privately, shows them in this b
  assert.equal(deleted.status,200);
  assert.equal((await deleted.json()).deleted,true);
  assert.equal(historyRows.length,0);
+});
+
+
+test('guest-history retention removes expired private photo objects before deleting metadata',async t=>{
+ const originalFetch=globalThis.fetch;
+ const calls=[];
+ t.after(()=>{globalThis.fetch=originalFetch;});
+ globalThis.fetch=async(input,init={})=>{
+  const url=new URL(String(input));
+  calls.push({url:url.href,method:init.method||'GET'});
+  if(url.origin==='https://supabase.example.test'&&url.pathname==='/rest/v1/ai_history'){
+   if(init.method==='DELETE')return new Response(null,{status:204});
+   const offset=Number(url.searchParams.get('offset')||0);
+   const rows=offset===0?[{id:'old-guest-row',photo_path:'guest-hash/old-photo.jpg'}]:[];
+   return new Response(JSON.stringify(rows),{status:200,headers:{'content-type':'application/json'}});
+  }
+  if(url.origin==='https://supabase.example.test'&&url.pathname==='/storage/v1/object/daredevil-history/guest-hash/old-photo.jpg'&&init.method==='DELETE'){
+   return new Response(null,{status:200});
+  }
+  throw new Error('Unexpected retention test fetch: '+url.href);
+ };
+ const env={
+  SUPABASE_URL:'https://supabase.example.test',
+  SUPABASE_PUBLISHABLE_KEY:'sb_publishable_test-public-key',
+  SUPABASE_SECRET_KEY:'sb_secret_test-server-key'
+ };
+ const result=await purgeExpiredGuestHistory(env,Date.UTC(2026,10,17,3,0,0));
+ assert.equal(result.skipped,false);
+ const objectDelete=calls.findIndex(call=>call.method==='DELETE'&&call.url.includes('/storage/v1/object/daredevil-history/'));
+ const metadataDelete=calls.findIndex(call=>call.method==='DELETE'&&call.url.includes('/rest/v1/ai_history'));
+ assert.ok(objectDelete>=0,'the expired private image is deleted');
+ assert.ok(metadataDelete>objectDelete,'metadata is deleted only after the photo object is removed');
+ assert.ok(calls.some(call=>call.url.includes('guest_session_hash=not.is.null')&&call.url.includes('created_at=lt.')));
 });
