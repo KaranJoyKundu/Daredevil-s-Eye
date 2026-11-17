@@ -16,6 +16,8 @@ export function clearSessionGeminiApiKey() {
   try { sessionStorage.removeItem(SESSION_KEY); } catch {}
 }
 
+let guestSessionCheckedAt=0;
+let guestSessionRefresh=null;
 let accountSessionCheckedAt=0;
 let accountSessionRefresh=null;
 
@@ -33,6 +35,15 @@ async function refreshSavedAccountSession() {
   await accountSessionRefresh;
 }
 
+async function ensureGuestHistorySession() {
+  if(Date.now()-guestSessionCheckedAt<5*60*1000)return;
+  if(!guestSessionRefresh){
+    guestSessionRefresh=fetch('/api/guest/session',{method:'GET',credentials:'same-origin',cache:'no-store'})
+      .catch(()=>null).finally(()=>{guestSessionCheckedAt=Date.now();guestSessionRefresh=null;});
+  }
+  await guestSessionRefresh;
+}
+
 export async function apiFetch(path, options = {}) {
   const headers = new Headers(options.headers || {});
   if (options.body && !headers.has('content-type')) headers.set('content-type', 'application/json');
@@ -41,6 +52,8 @@ export async function apiFetch(path, options = {}) {
   if(/^\/api\/(health|models|config|describe|ask|transcribe|speech)$/.test(target)){
     await refreshSavedAccountSession();
   }
+  // Ensure guests have an HttpOnly history cookie before a photo is submitted.
+  if(/^\/api\/(describe|ask)$/.test(target))await ensureGuestHistorySession();
   // Never send a personal Gemini key to unrelated paths or SOS endpoints.
   if (/^\/api\/(health|models|config|describe|ask|transcribe|speech)$/.test(target)) {
     const key = getSessionGeminiApiKey();
