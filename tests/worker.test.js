@@ -450,7 +450,41 @@ test('SOS receiver gets a persistent VAPID key and subscription, and trigger sub
  assert.equal(pushRequests[0].headers.TTL,'120');
  assert.equal(pushRequests[0].headers['Content-Encoding'],'aes128gcm');
  assert.ok(pushRequests[0].body instanceof Uint8Array);
- assert.ok(pushRequests[0].body.byteLength>86);
+ const encryptedBody=new Uint8Array(pushRequests[0].body);
+ assert.ok(encryptedBody.byteLength>86);
+ const salt=encryptedBody.slice(0,16);
+ assert.deepEqual(Array.from(encryptedBody.slice(16,20)),[0,0,16,0]);
+ const keyLength=encryptedBody[20];
+ assert.equal(keyLength,65);
+ const senderPublicBytes=encryptedBody.slice(21,21+keyLength);
+ const ciphertext=encryptedBody.slice(21+keyLength);
+ const senderPublicKey=await crypto.subtle.importKey('raw',senderPublicBytes,{name:'ECDH',namedCurve:'P-256'},false,[]);
+ const sharedSecret=await crypto.subtle.deriveBits({name:'ECDH',public:senderPublicKey},receiverPair.privateKey,256);
+ const hmac=async(keyBytes,dataBytes)=>{
+  const key=await crypto.subtle.importKey('raw',keyBytes,{name:'HMAC',hash:'SHA-256'},false,['sign']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC',key,dataBytes));
+ };
+ const hkdfExpand=async(prk,info,length)=>{
+  let previous=new Uint8Array(0),output=new Uint8Array(0),counter=1;
+  while(output.length<length){
+   previous=await hmac(prk,new Uint8Array([...previous,...info,counter]));
+   output=new Uint8Array([...output,...previous]);counter++;
+  }
+  return output.slice(0,length);
+ };
+ const encoder=new TextEncoder();
+ const keyInfo=new Uint8Array([
+  ...encoder.encode('WebPush: info'),0,...publicBytes,...senderPublicBytes
+ ]);
+ const authPrk=await hmac(authBytes,new Uint8Array(sharedSecret));
+ const inputKeyingMaterial=await hkdfExpand(authPrk,keyInfo,32);
+ const contentPrk=await hmac(salt,inputKeyingMaterial);
+ const contentKey=await hkdfExpand(contentPrk,new Uint8Array([...encoder.encode('Content-Encoding: aes128gcm'),0]),16);
+ const nonce=await hkdfExpand(contentPrk,new Uint8Array([...encoder.encode('Content-Encoding: nonce'),0]),12);
+ const aesKey=await crypto.subtle.importKey('raw',contentKey,{name:'AES-GCM'},false,['decrypt']);
+ const plaintext=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:nonce,tagLength:128},aesKey,ciphertext));
+ assert.equal(plaintext[plaintext.length-1],2);
+ assert.match(new TextDecoder().decode(plaintext.slice(0,-1)),/SOS alert may need your attention/);
 });
 
 test('re-pairing clears the previous receiver push subscription',async()=>{
