@@ -41,7 +41,7 @@ if(protectedPaths.has(currentPath)&&!hasCurrentConsent()&&!document.querySelecto
  accept.addEventListener('click',()=>{
   if(!check.checked){status.textContent='Please tick the box to accept the terms.';return;}
   if(!acceptConsent()){status.textContent='Could not save acceptance in this browser. Enable site storage and try again.';return;}
-  saveSettings({savePhotoHistory:true,consentAccepted:true});
+  saveSettings({savePhotoHistory:true,consentAccepted:true,speechLanguage:'bn-BD',speechInputLanguage:'bn-BD',sosVoiceLanguage:'bn-BD'});
   gate.remove();
  });
  gate.querySelector('#shared-consent-reject').addEventListener('click',()=>{
