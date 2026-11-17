@@ -452,7 +452,7 @@ function modelPriority(id) {
 
 export function rankVisionModels(models) {
   return (Array.isArray(models) ? models : [])
-    .filter(model => model && model.id && /^gemini-/i.test(model.id))
+    .filter(model => model && model.id && /^gemini-/i.test(model.id) && !/-pro(?:-|$)/i.test(model.id))
     .slice()
     .sort((a, b) => modelPriority(a.id) - modelPriority(b.id) || a.name.localeCompare(b.name))
     .map((model, index) => ({
