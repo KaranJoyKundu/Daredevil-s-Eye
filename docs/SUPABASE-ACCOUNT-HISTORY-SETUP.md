@@ -22,7 +22,7 @@ This project keeps the Cloudflare Worker as the API gateway. Supabase supplies e
 When the signed-in user enables **Save photo and answer history** in Admin, a successful Describe/Ask operation stores:
 - The compressed JPEG in the private `daredevil-history` bucket (not public).
 - The question, system prompt, answer, model, attempted fallback models, finish reason, output language, usage tokens and timestamp.
-- A keyed, pseudonymous IP fingerprint and browser user-agent for abuse/debug auditing; the raw IP address is never written to the database.
+- A keyed, pseudonymous IP fingerprint and browser user-agent. The fingerprint stays with the photo/answer record until the user deletes it; usage-only fingerprint rows expire after 90 days. The raw IP address is never written to the database.
 
 Authenticated AI requests also write usage rows for the signed-in user, with a 90-day expiry timestamp. The app does not store photos or responses from unsigned users. A user can delete individual history records and all saved data.
 
