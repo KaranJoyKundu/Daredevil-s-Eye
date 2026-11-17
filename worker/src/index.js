@@ -388,6 +388,12 @@ function validPayload(body) {
   return null;
 }
 
+function dataUrlByteLength(dataUrl) {
+  const encoded=String(dataUrl||'').split(',')[1]||'';
+  const padding=encoded.endsWith('==')?2:encoded.endsWith('=')?1:0;
+  return Math.max(0,Math.floor(encoded.length*3/4)-padding);
+}
+
 function imageParts(dataUrl) {
   const match = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/i.exec(dataUrl || '');
   if (!match) throw new Error('Invalid image data.');
@@ -769,7 +775,7 @@ export async function handleApi(request, env = {}) {
         const user = body.saveToHistory ? await getAuthenticatedUser(request,env) : null;
         if(user) await storeAccountUsage(env,user,request,{
           model:result.model,requestType:url.pathname.endsWith('/ask')?'ask':'describe',
-          usage:result.usage,imageSizeBytes:Math.floor((body.image.length*3)/4)
+          usage:result.usage,imageSizeBytes:dataUrlByteLength(body.image)
         });
         const history = await saveAccountHistory(env,user,request,body,result,prompt);
         return json({
