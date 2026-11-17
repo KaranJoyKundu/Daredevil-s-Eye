@@ -322,6 +322,7 @@ test('Action photo flow has separate camera and upload inputs plus a confirmatio
  const admin=readFileSync(new URL('../web/admin/index.html',import.meta.url),'utf8');
  const settings=readFileSync(new URL('../web/shared/settings.js',import.meta.url),'utf8');
  const camera=readFileSync(new URL('../web/shared/camera.js',import.meta.url),'utf8');
+ const app=readFileSync(new URL('../web/shared/app.js',import.meta.url),'utf8');
  const nav=readFileSync(new URL('../web/shared/site-nav.js',import.meta.url),'utf8');
  assert.match(html,/id="phone-photo-camera"[^>]*capture="environment"/);
  assert.match(html,/id="phone-photo-upload"[^>]*hidden/);
