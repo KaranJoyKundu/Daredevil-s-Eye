@@ -1,5 +1,5 @@
-import { clearSessionGeminiApiKey } from '/shared/api.js?v=20261117-release5';
-import { applyDisplaySettings, applyInterfaceLanguage } from '/shared/settings.js?v=20261117-release5';
+import { clearSessionGeminiApiKey } from '/shared/api.js?v=20261117-release6';
+import { applyDisplaySettings, applyInterfaceLanguage } from '/shared/settings.js?v=20261117-release6';
 applyDisplaySettings();
 applyInterfaceLanguage();
 
