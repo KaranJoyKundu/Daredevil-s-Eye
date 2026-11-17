@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { acceptConsent, hasCurrentConsent, getConsentRecord, resetConsent, CURRENT_CONSENT_VERSION } from '../web/shared/consent.js';
+import { acceptConsent, rejectConsent, hasCurrentConsent, getConsentRecord, resetConsent, CURRENT_CONSENT_VERSION } from '../web/shared/consent.js';
 
 class MemoryStorage {
   values = new Map();
@@ -60,9 +60,25 @@ test('stale versioned consent is not silently migrated from the legacy flag', ()
   const storage = new MemoryStorage();
   Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: storage });
   try {
-    storage.setItem('daredevils-eye.privacy-consent.v2', JSON.stringify({ version: 1, accepted: true }));
+    storage.setItem('daredevils-eye.privacy-consent.v2', JSON.stringify({ version: 3, accepted: true }));
     storage.setItem('daredevils-eye.device-settings.v1', JSON.stringify({ consentAccepted: true }));
     assert.equal(hasCurrentConsent(), false);
+  } finally {
+    if (previous === undefined) delete globalThis.localStorage;
+    else Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: previous });
+  }
+});
+
+test('rejecting the current terms does not grant access, but later acceptance can', () => {
+  const previous = globalThis.localStorage;
+  const storage = new MemoryStorage();
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: storage });
+  try {
+    assert.equal(rejectConsent(), true);
+    assert.equal(hasCurrentConsent(), false);
+    assert.equal(JSON.parse(storage.getItem('daredevils-eye.privacy-consent.v2')).rejected, true);
+    assert.equal(acceptConsent(), true);
+    assert.equal(hasCurrentConsent(), true);
   } finally {
     if (previous === undefined) delete globalThis.localStorage;
     else Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: previous });
