@@ -327,12 +327,18 @@ async function handleAccountApi(request,env,url) {
     return json({ok:true,deleted:true});
   }
   if(path==='/api/account/history'&&request.method==='GET'){
-    const query='ai_history?select=id,request_type,question,response_text,model,attempted_models,response_language,total_tokens,photo_path,photo_size_bytes,created_at&user_id=eq.'+encodeURIComponent(user.id)+'&order=created_at.desc&limit=50';
+    const requestedLimit=Number(url.searchParams.get('limit'));
+    const limit=Number.isInteger(requestedLimit)?Math.max(1,Math.min(100,requestedLimit)):50;
+    const requestedOffset=Number(url.searchParams.get('offset'));
+    const offset=Number.isInteger(requestedOffset)?Math.max(0,Math.min(100000,requestedOffset)):0;
+    const query='ai_history?select=id,request_type,question,response_text,model,attempted_models,response_language,total_tokens,photo_path,photo_size_bytes,created_at&user_id=eq.'+encodeURIComponent(user.id)+'&order=created_at.desc&limit='+(limit+1)+'&offset='+offset;
     const response=await supabaseRest(env,query);
     if(!response.ok)return json({error:'Could not load history from Supabase.'},502);
     const rows=await response.json();
+    const hasMore=rows.length>limit;
+    const pageRows=rows.slice(0,limit);
     const history=[];
-    for(const row of rows){
+    for(const row of pageRows){
       let photoUrl=null;
       if(row.photo_path){
         try{
@@ -346,7 +352,7 @@ async function handleAccountApi(request,env,url) {
       }
       history.push({...row,photoUrl});
     }
-    return json({ok:true,history});
+    return json({ok:true,history,hasMore,nextOffset:offset+history.length});
   }
   if(path==='/api/account/history'&&request.method==='DELETE'){
     const userFilter='user_id=eq.'+encodeURIComponent(user.id);
@@ -374,7 +380,7 @@ async function handleAccountApi(request,env,url) {
   if(path==='/api/account/usage'&&request.method==='GET'){
     const liveExpiry=new Date().toISOString();
     await supabaseRest(env,'api_usage?user_id=eq.'+encodeURIComponent(user.id)+'&expires_at=lt.'+encodeURIComponent(liveExpiry),{method:'DELETE'});
-    const response=await supabaseRest(env,'api_usage?select=request_type,model,prompt_tokens,output_tokens,total_tokens,ip_fingerprint,created_at&user_id=eq.'+encodeURIComponent(user.id)+'&expires_at=gt.'+encodeURIComponent(liveExpiry)+'&order=created_at.desc&limit=100');
+    const response=await supabaseRest(env,'api_usage?select=request_type,model,prompt_tokens,output_tokens,total_tokens,ip_fingerprint,created_at&user_id=eq.'+encodeURIComponent(user.id)+'&expires_at=gt.'+encodeURIComponent(liveExpiry)+'&order=created_at.desc&limit=1000');
     if(!response.ok)return json({error:'Could not load usage history.'},502);
     return json({ok:true,usage:await response.json()});
   }
