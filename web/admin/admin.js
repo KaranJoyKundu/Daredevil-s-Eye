@@ -213,7 +213,7 @@ $('#preview-voice').addEventListener('click',async()=>{
    });
   }else{
    const previewText=options.speechLanguage==='bn-BD'?'হ্যালো। আমি ডেয়ারডেভিলস আই। আমি যা দেখতে পাচ্ছি, তা স্পষ্টভাবে বর্ণনা করব।':'Hello. I am your Daredevil’s Eye assistant. I will describe what is visible clearly and calmly.';
-   speak(previewText,{lang:options.speechLanguage,rate:options.speechRate,pitch:options.speechPitch,voiceURI:options.speechVoiceURI});
+   speak(previewText,{lang:options.speechLanguage,rate:options.speechRate,pitch:options.speechPitch,voiceURI:options.speechVoiceURI,onError:error=>{$('#voice-status').textContent=options.speechLanguage==='bn-BD'?'এই ফোনে বাংলা বলার কণ্ঠস্বর পাওয়া যায়নি। অ্যান্ড্রয়েডের টেক্সট-টু-স্পিচ সেটিংসে বাংলা ভয়েস ডেটা ইনস্টল করুন।':error;}});
   }
   $('#voice-status').textContent='Voice preview playing.';
  }catch(error){$('#voice-status').textContent='Voice preview failed: '+error.message;}
