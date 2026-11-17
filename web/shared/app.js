@@ -85,9 +85,19 @@ function localizeSpeech(message){
   'SOS confirmation expired. No alert was sent.':'এসওএস নিশ্চিত করার সময় শেষ হয়েছে। কোনো সতর্কবার্তা পাঠানো হয়নি।',
   'Privacy notice accepted on this device.':'এই ফোনে গোপনীয়তার বিজ্ঞপ্তি গ্রহণ করা হয়েছে।',
   'Please review and accept the privacy notice before using the camera.':'ক্যামেরা ব্যবহারের আগে অনুগ্রহ করে গোপনীয়তার বিজ্ঞপ্তিটি পড়ে সম্মতি দিন।',
-  'I could not complete that action.':'দুঃখিত, কাজটি সম্পন্ন করা যায়নি। আবার চেষ্টা করুন।'
+  'I could not complete that action.':'দুঃখিত, কাজটি সম্পন্ন করা যায়নি। আবার চেষ্টা করুন।',
+  'No speech was recognised. Please try again.':'আপনার কথা বোঝা যায়নি। অনুগ্রহ করে আবার বলুন।',
+  'Please review and accept the privacy notice before using the camera.':'ক্যামেরা ব্যবহারের আগে অনুগ্রহ করে গোপনীয়তার বিজ্ঞপ্তিটি পড়ে সম্মতি দিন।',
+  'Photo and answer saved to your account history.':'ছবি ও উত্তর আপনার অ্যাকাউন্টের ব্যক্তিগত ইতিহাসে সংরক্ষণ করা হয়েছে।',
+  'Sign in to save this photo and answer to your private history.':'এই ছবি ও উত্তর ব্যক্তিগত ইতিহাসে সংরক্ষণ করতে আপনার অ্যাকাউন্টে প্রবেশ করুন।',
+  'Account history is not configured on the Worker yet.':'অ্যাকাউন্টের ইতিহাস সংরক্ষণের ব্যবস্থা সার্ভারে এখনো চালু হয়নি।',
+  'History saving is switched off.':'ছবি ও উত্তর সংরক্ষণের ব্যবস্থা বন্ধ আছে।',
+  'Photo ready. Review it, then press Ask AI to send it.':'ছবিটি প্রস্তুত। দেখে নিয়ে পাঠাতে “এআই-কে জিজ্ঞাসা” বোতাম চাপুন।'
  };
  if(exact[message])return exact[message];
+ if(/^Completed with /i.test(message))return 'ছবির বিশ্লেষণ সম্পন্ন হয়েছে।';
+ if(/^Sending the compressed photo/i.test(message))return 'সংকুচিত ছবিটি বিশ্লেষণের জন্য পাঠানো হচ্ছে।';
+ if(/^Speaking the answer/i.test(message))return 'উত্তরটি বলা হচ্ছে।';
  if(/no bengali speech voice|no bengali speech voices/i.test(message))return 'এই ফোনে বাংলা বলার কণ্ঠস্বর পাওয়া যায়নি। অ্যান্ড্রয়েডের টেক্সট-টু-স্পিচ সেটিংসে বাংলা ভয়েস ডেটা ইনস্টল করুন।';
  if(/quota|429|resource.exhausted/i.test(message))return 'এআই সেবার ব্যবহারের সীমা আপাতত পূর্ণ হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন অথবা অ্যাডমিন সেটিংসে নিজের জেমিনি এপিআই কী ব্যবহার করুন।';
  if(/camera|capture|cors|network isolation/i.test(message))return 'ক্যামেরার সঙ্গে সংযোগ করা যায়নি। ক্যামেরা চালু আছে কি না এবং একই ওয়াই-ফাই নেটওয়ার্কে আছে কি না পরীক্ষা করুন।';
@@ -183,7 +193,7 @@ document.addEventListener('visibilitychange',()=>{
   shakeTracker.reset();
  }else syncSosAutomation();
 });
-function announce(message){if(status)status.textContent=message;speakSosStatus(message);}
+function announce(message){const settings=getSettings(),spoken=localizeSpeech(message);if(status)status.textContent=settings.speechLanguage==='bn-BD'?spoken:message;speakSosStatus(message);}
 function actionVibration(action){const patterns={describe:[65],ask:[55,90,55],sos:[260],repeat:[45,65,45,65,45],help:[35,65,35]};vibrate(patterns[action]||60);}
 async function acquireWakeLock(){if(!navigator.wakeLock?.request)return null;try{return await navigator.wakeLock.request('screen');}catch{return null;}}
 async function releaseWakeLock(lock){try{if(lock&&!lock.released)await lock.release();}catch{}}
@@ -227,11 +237,21 @@ async function run(mode,question='',imageOverride=null){
   const result=await requestAI(mode==='ask'&&question.trim()?'/api/ask':'/api/describe',{image,question:question.trim(),customPrompt:settings.customPrompt,model:settings.aiModel,waitSeconds:settings.waitSeconds,responseStyle:settings.responseStyle,responseLanguage:settings.speechLanguage,saveToHistory:settings.savePhotoHistory===true});
   if(result.mock)throw new Error('AI is in MOCK mode. No image was analysed.');
   if(result.provider!=='Gemini'||!result.answer)throw new Error('The AI backend did not return a verified Gemini answer.');
-  const safetyNote=/\b(safe to walk|safe to cross|clear to walk|path is safe|no danger)\b/i.test(result.answer)?' I cannot confirm that this area is safe. Continue using your cane or guide dog.':'';
-  await announceAnswer(result.answer,[result.disclaimer||'',safetyNote].filter(Boolean).join(' '));
+  const mentionsSafety=/\b(safe to walk|safe to cross|clear to walk|path is safe|no danger)\b/i.test(result.answer);
+  const safetyNote=mentionsSafety
+   ?(settings.speechLanguage==='bn-BD'?'আমি নিশ্চিত করতে পারি না যে এই পথটি নিরাপদ। আপনার সাদা ছড়ি বা গাইড কুকুর ব্যবহার করতে থাকুন।':' I cannot confirm that this area is safe. Continue using your cane or guide dog.')
+   :'';
+  const disclaimer=settings.speechLanguage==='bn-BD'
+   ?'এআই ভুল করতে পারে এবং বিপদ দেখতে নাও পেতে পারে। চলাচল বা নিরাপত্তার সিদ্ধান্তে শুধু এই বর্ণনার ওপর নির্ভর করবেন না।'
+   :(result.disclaimer||'');
+  await announceAnswer(result.answer,[disclaimer,safetyNote].filter(Boolean).join(' '));
   if(status){
-   const completed='Completed with '+(result.model||'Gemini')+'.';
-   const message=result.historyMessage||completed;
+   const completed=settings.speechLanguage==='bn-BD'
+    ?'ছবির বিশ্লেষণ সম্পন্ন হয়েছে। ব্যবহৃত মডেল: '+(result.model||'Gemini')
+    :'Completed with '+(result.model||'Gemini')+'.';
+   const message=settings.savePhotoHistory&&result.historySaved
+    ?(settings.speechLanguage==='bn-BD'?'ছবি ও উত্তর আপনার অ্যাকাউন্টের ব্যক্তিগত ইতিহাসে সংরক্ষণ করা হয়েছে।':'Photo and answer saved to your account history.')
+    :completed;
    status.textContent=settings.speechLanguage==='bn-BD'?localizeSpeech(message):message;
   }
  }catch(error){
