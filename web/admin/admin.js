@@ -127,7 +127,7 @@ $('#language-mode').addEventListener('change',()=>{
 document.querySelectorAll('[data-theme-choice]').forEach(button=>button.addEventListener('click',()=>{
  const next=saveSettings({theme:button.dataset.themeChoice});
  applyDisplaySettings(next);updateThemeChoices();
- $('#theme-preview-status').textContent='Live preview: '+button.querySelector('strong').textContent+'. Save all settings to keep it.';
+ $('#theme-preview-status').textContent='Theme saved on this device: '+button.querySelector('strong').textContent+'.';
 }));
 for(const id of ['follow-system-theme','text-size','high-contrast','reduced-motion']){
  $('#'+id).addEventListener('change',()=>applyDisplaySettings({...getSettings(),
