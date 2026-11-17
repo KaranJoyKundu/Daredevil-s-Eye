@@ -433,7 +433,7 @@ test('SOS receiver gets a persistent VAPID key and subscription, and trigger sub
  const subscription=await (await post('subscribe',{
   receiverToken:paired.receiverToken,
   subscription:{
-   endpoint:'https://push.example.test/send/123',
+   endpoint:'https://fcm.googleapis.com/fcm/send/123',
    expirationTime:null,
    keys:{p256dh:Buffer.from(publicBytes).toString('base64url'),auth:Buffer.from(authBytes).toString('base64url')}
   }
@@ -465,7 +465,7 @@ test('re-pairing clears the previous receiver push subscription',async()=>{
  }));
  const first=await (await post('pair')).json();
  await post('subscribe',{receiverToken:first.receiverToken,subscription:{
-  endpoint:'https://push.example.test/old',keys:{p256dh:'x',auth:'y'}
+  endpoint:'https://fcm.googleapis.com/fcm/send/old',keys:{p256dh:'x',auth:'y'}
  }});
  assert.ok(await state.storage.get('pushSubscription'));
  await post('pair');
@@ -494,4 +494,35 @@ test('long AI answers are split into sequential speech-sized chunks without losi
  assert.ok(chunks.length>1);
  assert.ok(chunks.every(chunk=>chunk.length<=120));
  assert.equal(chunks.join(' '),sentence);
+});
+
+
+test('SOS receiver refuses private, local and untrusted push endpoints',async()=>{
+ const values=new Map();
+ const state={storage:{
+  get:async key=>values.get(key),
+  put:async(key,value)=>values.set(key,value),
+  delete:async key=>values.delete(key),
+  setAlarm:async()=>{}
+ }};
+ const room=new SOSRoom(state);
+ const paired=await (await room.fetch(new Request('https://sos.internal/pair',{
+  method:'POST',headers:{'content-type':'application/json'},body:'{}'
+ }))).json();
+ const request=endpoint=>room.fetch(new Request('https://sos.internal/subscribe',{
+  method:'POST',headers:{'content-type':'application/json'},
+  body:JSON.stringify({receiverToken:paired.receiverToken,subscription:{
+   endpoint,keys:{p256dh:'not-a-real-key',auth:'not-a-real-key'}
+  }})
+ }));
+ for(const endpoint of [
+  'http://127.0.0.1/admin',
+  'https://localhost/internal',
+  'https://169.254.169.254/latest/meta-data',
+  'https://untrusted.example.test/push'
+ ]){
+  const response=await request(endpoint);
+  assert.equal(response.status,400);
+ }
+ assert.equal(await state.storage.get('pushSubscription'),undefined);
 });
