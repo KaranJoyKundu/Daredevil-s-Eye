@@ -60,7 +60,22 @@ const UI_COPY = Object.freeze({
   four_actions: ['চারটি প্রধান কাজ', 'Four main actions'],
   additional_controls: ['অতিরিক্ত নিয়ন্ত্রণ', 'Additional controls'],
   type_question: ['প্রশ্ন লিখুন', 'Type a question'],
-  menu: ['মেনু', 'Menu']
+  menu: ['মেনু', 'Menu'],
+  nav_home: ['হোম', 'Home'],
+  nav_blind: ['ব্লাইন্ড মোড', 'Blind mode'],
+  nav_admin: ['অ্যাডমিন / সেটিংস', 'Admin / Settings'],
+  nav_diagnostics: ['ডায়াগনস্টিকস', 'Diagnostics'],
+  nav_account: ['অ্যাকাউন্ট ও ইতিহাস', 'Account & History'],
+  nav_help: ['সহায়তা', 'Help'],
+  nav_receiver: ['এসওএস রিসিভার', 'SOS Receiver'],
+  nav_contact: ['যোগাযোগ', 'Contact'],
+  nav_support: ['সহায়তা কেন্দ্র', 'Support'],
+  nav_terms: ['শর্তাবলি', 'Terms & Conditions'],
+  nav_privacy: ['গোপনীয়তা', 'Privacy'],
+  aria_describe: ['ক্যামেরার দৃশ্য বর্ণনা করুন', 'Describe the camera view'],
+  aria_ask: ['কথা বলে একটি প্রশ্ন করুন', 'Ask a question by speaking'],
+  aria_sos: ['এসওএস। পাঠানোর আগে নিশ্চিত করুন', 'SOS. Confirm before sending'],
+  aria_help: ['ডেয়ারডেভিলস আই ব্যবহারের সহায়িকা শুনুন', "Hear how to use Daredevil's Eye"]
 });
 
 function applyLanguageMode(settings) {
