@@ -137,7 +137,7 @@ $('#enable-alarm').addEventListener('click',async()=>{
   let permissionPromise=Promise.resolve('unsupported');
   if('Notification'in window){
    permissionPromise=Notification.permission==='default'
-    ?Notification.requestPermission()
+    ?Notification.requestPermission().catch(()=> 'denied')
     :Promise.resolve(Notification.permission);
   }
   const audioUnlock=unlockAudio();
