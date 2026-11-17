@@ -8,7 +8,7 @@ This checklist records the owner's 17 November 2026 requests. A task is not "don
 
 | # | Work item | Acceptance criteria | Status |
 |---|---|---|---|
-| 1 | Gemini responses cut off mid-sentence; remove the 3.6 Flash dependency and try alternatives | No response ending with `MAX_TOKENS` is presented as complete; larger visible-output budget; model fallback records which model succeeded; tests cover a truncated first model and a complete fallback | Implemented on branch; 69/69 CI tests pass; A55 model-quality validation pending |
+| 1 | Gemini responses cut off mid-sentence; remove the 3.6 Flash dependency and try alternatives | No response ending with `MAX_TOKENS` is presented as complete; larger visible-output budget; model fallback records which model succeeded; tests cover a truncated first model and a complete fallback | Implemented on branch; 70/70 CI tests pass; A55 model-quality validation pending |
 | 2 | Full Bangla mode for every spoken instruction | When Admin language is বাংলা, camera instructions, waiting/error/SOS/status prompts and AI answers are spoken in Bangla; no English system fallback is spoken; tests cover language routing | Implemented on feature branch; 69/69 CI tests pass; A55 voice playback pending |
 | 3 | More effective Bangla voice transcription | Preserve Bangla in Bengali script when Bangla mode is selected; preserve mixed technical terms without translating the whole question to English; transcription models use low-cost-first fallback | Implemented on feature branch; transcription tests pass; A55 microphone/transcription test pending |
 | 4 | Camera and upload path on Home / Action | Separate **Use phone camera** and **Upload photo** controls; both open the same preview/confirm flow; upload selection works without the camera-only capture hint | Implemented on feature branch; CI markup test passes; Android upload test pending |
@@ -31,9 +31,9 @@ This checklist records the owner's 17 November 2026 requests. A task is not "don
 
 ## Current verification boundary
 
-- Latest GitHub Actions run **43988577256** passed **69/69 tests** and completed `npm run check` with all JavaScript syntax checks passing. The production deployment job was skipped because this is a feature branch.
+- Latest GitHub Actions run **43989545596** (run #437) passed **70/70 tests** and completed `npm run check` with all JavaScript syntax checks passing. The production deployment job was skipped because this is a pull request / feature branch.
 - The latest physical Galaxy A55 / receiver-phone tests have not been performed.
-- Account, private photo history, encrypted saved keys and usage reporting do not become active until the Supabase migration is applied and the five Supabase/encryption secrets are configured in GitHub Actions.
+- Account, private photo history, encrypted saved keys and usage reporting do not become active until the Supabase migration is applied and the five Supabase/encryption secrets are configured in GitHub Actions. The Worker supports modern `SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_SECRET_KEY` values and a legacy `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` fallback.
 - CI is green on the current PR head. Screen-off SOS, ESP32 shutter audibility, Android photo compression/upload and Bengali voice quality still require real-device checks.
 
 ## Release gate
