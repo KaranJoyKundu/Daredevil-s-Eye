@@ -663,3 +663,32 @@ test('opted-in AI history stores private JPEG, answer, prompt, model, token coun
  assert.equal(usageRows[0].image_size_bytes,3);
  assert.match(usageRows[0].ip_fingerprint,/^[a-f0-9]{24}$/);
 });
+
+
+test('voice transcription never accepts an incomplete MAX_TOKENS transcript',async t=>{
+ const originalFetch=globalThis.fetch;
+ const attempted=[];
+ t.after(()=>{globalThis.fetch=originalFetch;});
+ globalThis.fetch=async(input,init={})=>{
+  const url=new URL(String(input));
+  assert.ok(url.pathname.endsWith(':generateContent'));
+  const model=decodeURIComponent(url.pathname.split('/models/')[1].split(':')[0]);
+  attempted.push(model);
+  if(attempted.length===1){
+   return new Response(JSON.stringify({candidates:[{
+    content:{parts:[{text:'আমি দরজার কাছে'}]},finishReason:'MAX_TOKENS'
+   }]}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  return new Response(JSON.stringify({candidates:[{
+   content:{parts:[{text:'আমি দরজার কাছে একটি সাদা দরজা দেখতে পাচ্ছি।'}]},finishReason:'STOP'
+  }]}),{status:200,headers:{'content-type':'application/json'}});
+ };
+ const r=await handleApi(req('/api/transcribe',{
+  audio:'data:audio/webm;base64,AAAA',responseLanguage:'bn-BD'
+ }),{GEMINI_API_KEY:'test-key-for-truncated-transcription'});
+ const data=await r.json();
+ assert.equal(r.status,200);
+ assert.equal(data.transcript,'আমি দরজার কাছে একটি সাদা দরজা দেখতে পাচ্ছি।');
+ assert.equal(data.model,attempted[1]);
+ assert.equal(attempted.length,2);
+});
