@@ -33,8 +33,24 @@ function hasPersonalKey(request) {
   return Boolean(String(request.headers.get(USER_KEY_HEADER) || '').trim());
 }
 
+function supabasePublishableKey(env) {
+  return String(env.SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY || '').trim();
+}
+function supabaseSecretKey(env) {
+  return String(env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+}
 function supabaseConfigured(env) {
-  return Boolean(env.SUPABASE_URL && env.SUPABASE_ANON_KEY && env.SUPABASE_SERVICE_ROLE_KEY);
+  return Boolean(env.SUPABASE_URL && supabasePublishableKey(env) && supabaseSecretKey(env));
+}
+function supabaseServiceHeaders(env, extra = {}) {
+  const secretKey = supabaseSecretKey(env);
+  return {
+    apikey: secretKey,
+    // New sb_secret keys must only be sent via apikey; they are not JWTs.
+    // Keep the Authorization header only for legacy JWT service_role keys.
+    ...(!env.SUPABASE_SECRET_KEY ? { Authorization: 'Bearer ' + secretKey } : {}),
+    ...extra
+  };
 }
 function supabaseBase(env) {
   return String(env.SUPABASE_URL || '').replace(/\/+$/, '');
@@ -61,7 +77,7 @@ function accountJson(data,status=200,cookies=[]) {
 }
 function supabaseHeaders(env,token,extra={}) {
   return {
-    apikey:String(env.SUPABASE_ANON_KEY||''),
+    apikey:supabasePublishableKey(env),
     ...(token?{Authorization:'Bearer '+token}:{}),
     ...extra
   };
@@ -73,12 +89,10 @@ async function supabaseAuthFetch(env,path,{method='GET',body,token}={}) {
   });
 }
 async function supabaseRest(env,path,{method='GET',body,prefer='return=minimal'}={}) {
-  const headers={
-    apikey:String(env.SUPABASE_SERVICE_ROLE_KEY||''),
-    Authorization:'Bearer '+String(env.SUPABASE_SERVICE_ROLE_KEY||''),
+  const headers=supabaseServiceHeaders(env,{
     'content-type':'application/json',
     Prefer:prefer
-  };
+  });
   return fetch(supabaseBase(env)+'/rest/v1/'+path,{
     method,headers,...(body!==undefined?{body:JSON.stringify(body)}:{})
   });
@@ -155,12 +169,10 @@ async function storePrivatePhoto(env,userId,imageDataUrl) {
   const path=userId+'/'+crypto.randomUUID()+'.jpg';
   const response=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+path,{
     method:'POST',
-    headers:{
-      apikey:String(env.SUPABASE_SERVICE_ROLE_KEY),
-      Authorization:'Bearer '+String(env.SUPABASE_SERVICE_ROLE_KEY),
+    headers:supabaseServiceHeaders(env,{
       'content-type':'image/jpeg',
       'x-upsert':'false'
-    },
+    }),
     body:bytes
   });
   if(!response.ok)throw new Error('Private photo storage failed (HTTP '+response.status+').');
@@ -208,7 +220,7 @@ async function saveAccountHistory(env,user,request,body,result,fullPrompt) {
     return {saved:true,message:'Photo and answer saved to your account history.'};
   }catch(error){
     if(storedPhoto?.path){
-      try{await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+storedPhoto.path,{method:'DELETE',headers:{apikey:String(env.SUPABASE_SERVICE_ROLE_KEY),Authorization:'Bearer '+String(env.SUPABASE_SERVICE_ROLE_KEY)}});}catch{}
+      try{await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+storedPhoto.path,{method:'DELETE',headers:supabaseServiceHeaders(env)});}catch{}
     }
     return {saved:false,message:error.message||'History could not be saved.'};
   }
@@ -347,7 +359,7 @@ async function handleAccountApi(request,env,url) {
       if(row.photo_path){
         try{
           const signed=await fetch(supabaseBase(env)+'/storage/v1/object/sign/daredevil-history/'+row.photo_path,{
-            method:'POST',headers:{apikey:String(env.SUPABASE_SERVICE_ROLE_KEY),Authorization:'Bearer '+String(env.SUPABASE_SERVICE_ROLE_KEY),'content-type':'application/json'},
+            method:'POST',headers:supabaseServiceHeaders(env,{'content-type':'application/json'}),
             body:JSON.stringify({expiresIn:600})
           });
           const signedData=await signed.json().catch(()=>({}));
