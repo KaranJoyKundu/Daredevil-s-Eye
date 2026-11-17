@@ -4,93 +4,148 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#07111f">
+<meta name="description" content="Private Daredevil's Eye photo history, account settings and Gemini API key management.">
 <title>Account & History · Daredevil's Eye</title>
-<link rel="stylesheet" href="/shared/style.css?v=20261117-release2?v=20261117-release2">
+<link rel="stylesheet" href="/shared/style.css?v=20261117-account1">
 </head>
-<body>
-<main>
-<header>
-<p class="eyebrow">PRIVATE ACCOUNT</p>
-<h1>Account & History</h1>
-<p class="subtitle">Sign in to keep your Gemini key, review saved photo answers and see your usage on another device.</p>
+<body class="account-page">
+<main class="account-shell">
+<header class="account-hero">
+  <div>
+    <p class="eyebrow">YOUR PRIVATE SPACE</p>
+    <h1>Account &amp; History</h1>
+    <p class="subtitle">Your saved photos, AI answers and Gemini account settings.</p>
+  </div>
+  <div class="account-hero-mark" aria-hidden="true">◉</div>
 </header>
 
-<section id="account-setup" class="panel">
-<h2>Account service status</h2>
-<p id="account-status" class="hint" role="status" aria-live="polite">Checking account service…</p>
+<section id="account-setup" class="account-status-banner">
+  <span class="account-status-dot" aria-hidden="true"></span>
+  <p id="account-status" role="status" aria-live="polite">Checking account service…</p>
 </section>
 
-<section id="auth-panel" class="diagnostic-grid">
-<form id="login-form" class="panel">
-<h2>Sign in</h2>
-<label for="login-email">Email</label>
-<input id="login-email" type="email" autocomplete="username" required>
-<label for="login-password">Password</label>
-<input id="login-password" type="password" autocomplete="current-password" required>
-<button type="submit">Sign in</button>
-<p id="login-status" class="hint" role="status" aria-live="polite"></p>
-</form>
-<form id="signup-form" class="panel">
-<h2>Create account</h2>
-<label for="signup-email">Email</label>
-<input id="signup-email" type="email" autocomplete="email" required>
-<label for="signup-password">Password (at least 12 characters)</label>
-<input id="signup-password" type="password" autocomplete="new-password" minlength="12" required>
-<button type="submit">Create account</button>
-<p id="signup-status" class="hint" role="status" aria-live="polite"></p>
-</form>
+<section id="guest-history-panel" class="account-card guest-history-section">
+  <div class="account-section-heading">
+    <div>
+      <p class="account-kicker">NO SIGN-IN REQUIRED</p>
+      <h2>Guest photo history</h2>
+      <p class="account-muted">Photos submitted while you are signed out are saved privately and can be viewed from this browser. Guest history is automatically deleted after 30 days.</p>
+    </div>
+    <span class="account-retention">30-day history</span>
+  </div>
+  <div class="account-toolbar">
+    <p id="guest-history-status" class="account-inline-status" role="status" aria-live="polite">Checking this browser's history…</p>
+    <div class="account-toolbar-actions">
+      <button id="refresh-guest-history" type="button" class="account-button account-button-light">Refresh</button>
+      <button id="delete-guest-history" type="button" class="account-button account-button-danger">Delete guest history</button>
+    </div>
+  </div>
+  <div id="guest-history-list" class="account-history-grid"></div>
+  <p class="account-footnote">Guest history is tied to a secure browser cookie. Clearing this browser's site data may remove your access to these records before automatic deletion.</p>
+</section>
+
+<section id="auth-panel" class="account-auth-grid">
+  <form id="login-form" class="account-card account-auth-card">
+    <p class="account-kicker">WELCOME BACK</p>
+    <h2>Sign in</h2>
+    <p class="account-muted">Continue to your private account history and saved Gemini key.</p>
+    <label for="login-email">Email address</label>
+    <input id="login-email" type="email" autocomplete="username" required placeholder="you@example.com">
+    <label for="login-password">Password</label>
+    <input id="login-password" type="password" autocomplete="current-password" required placeholder="Your password">
+    <button type="submit" class="account-button">Sign in</button>
+    <p id="login-status" class="account-form-status" role="status" aria-live="polite"></p>
+  </form>
+  <form id="signup-form" class="account-card account-auth-card account-auth-card-accent">
+    <p class="account-kicker">KEEP YOUR HISTORY</p>
+    <h2>Create an account</h2>
+    <p class="account-muted">Access your saved photos and answers on another device.</p>
+    <label for="signup-email">Email address</label>
+    <input id="signup-email" type="email" autocomplete="email" required placeholder="you@example.com">
+    <label for="signup-password">Password <span class="account-label-note">12+ characters</span></label>
+    <input id="signup-password" type="password" autocomplete="new-password" minlength="12" required placeholder="Create a strong password">
+    <button type="submit" class="account-button">Create account</button>
+    <p id="signup-status" class="account-form-status" role="status" aria-live="polite"></p>
+  </form>
 </section>
 
 <section id="account-panel" hidden>
-<div class="panel">
-<div class="field-grid">
-<div><h2>Your account</h2><p id="account-email" class="hint"></p></div>
-<div><button id="logout-button" type="button" class="secondary">Sign out</button></div>
-</div>
-</div>
+  <section class="account-card account-profile-card">
+    <div class="account-avatar" aria-hidden="true">✓</div>
+    <div class="account-profile-copy">
+      <p class="account-kicker">SIGNED IN</p>
+      <h2>Your account</h2>
+      <p id="account-email" class="account-muted"></p>
+    </div>
+    <button id="logout-button" type="button" class="account-button account-button-light">Sign out</button>
+  </section>
 
-<section class="panel">
-<h2>Personal Gemini API key</h2>
-<p>Save your own Gemini key securely to this account. The Worker encrypts it at rest and never sends the plaintext back to this page. A key saved here can be used after you sign in on another device.</p>
-<p id="key-state" class="hint" role="status" aria-live="polite">Checking…</p>
-<label for="api-key">Replace saved key</label>
-<input id="api-key" type="password" autocomplete="new-password" maxlength="256" placeholder="Paste Gemini API key">
-<div class="field-grid">
-<button id="save-api-key" type="button">Encrypt and save key</button>
-<button id="remove-api-key" type="button" class="secondary">Delete saved key</button>
-</div>
+  <section class="account-card">
+    <div class="account-section-heading">
+      <div>
+        <p class="account-kicker">PERSONAL API ACCESS</p>
+        <h2>Gemini API key</h2>
+        <p class="account-muted">Your key is encrypted by the Worker before it is stored. The original key is never displayed again.</p>
+      </div>
+      <span class="account-icon-chip" aria-hidden="true">⌘</span>
+    </div>
+    <p id="key-state" class="account-inline-status" role="status" aria-live="polite">Checking saved key…</p>
+    <label for="api-key">Add or replace your Gemini key</label>
+    <input id="api-key" type="password" autocomplete="new-password" maxlength="256" placeholder="Paste your Gemini API key">
+    <div class="account-toolbar-actions">
+      <button id="save-api-key" type="button" class="account-button">Encrypt &amp; save key</button>
+      <button id="remove-api-key" type="button" class="account-button account-button-light">Delete saved key</button>
+    </div>
+  </section>
+
+  <section class="account-card">
+    <div class="account-section-heading">
+      <div>
+        <p class="account-kicker">YOUR PRIVATE RECORDS</p>
+        <h2>Account photo history</h2>
+        <p class="account-muted">Successful and failed photo submissions are kept here with their image and analysis status until you delete them.</p>
+      </div>
+      <span class="account-icon-chip" aria-hidden="true">▧</span>
+    </div>
+    <div class="account-toolbar">
+      <p id="history-status" class="account-inline-status" role="status" aria-live="polite">Loading saved photos…</p>
+      <div class="account-toolbar-actions">
+        <button id="refresh-history" type="button" class="account-button account-button-light">Refresh</button>
+        <button id="delete-history" type="button" class="account-button account-button-danger">Delete all account history</button>
+      </div>
+    </div>
+    <div id="history-list" class="account-history-grid"></div>
+    <button id="load-more-history" type="button" class="account-button account-button-light account-load-more" hidden>Load older photos</button>
+  </section>
+
+  <section class="account-card">
+    <div class="account-section-heading">
+      <div>
+        <p class="account-kicker">LAST 90 DAYS</p>
+        <h2>Usage summary</h2>
+        <p class="account-muted">AI requests and reported token usage associated with this account.</p>
+      </div>
+      <span class="account-icon-chip" aria-hidden="true">↗</span>
+    </div>
+    <div class="account-usage-summary" id="usage-summary" role="status" aria-live="polite">Loading usage…</div>
+    <div id="usage-list" class="account-usage-list"></div>
+    <button id="refresh-usage" type="button" class="account-button account-button-light">Refresh usage</button>
+  </section>
 </section>
 
-<section class="panel">
-<div class="field-grid">
-<div><h2>Saved photo & answer history</h2><p class="hint">Only photos selected for history after you enabled the Admin setting are saved. Images are private and signed viewing links expire.</p></div>
-<div><button id="refresh-history" type="button" class="secondary">Refresh history</button></div>
-</div>
-<p id="history-status" class="hint" role="status" aria-live="polite"></p>
-<div id="history-list" class="history-list"></div>
-<button id="load-more-history" type="button" class="secondary" hidden>Load older history</button>
-<button id="delete-history" type="button" class="secondary">Delete all my saved history and usage</button>
+<section class="account-privacy-note">
+  <span aria-hidden="true">🔒</span>
+  <div>
+    <h2>Your data stays private</h2>
+    <p>Photos are held in a private storage bucket. Account records are visible only to the signed-in account, and guest records are accessible only through the private cookie for this browser. You can delete guest or account history from this page. See the <a href="/privacy/">Privacy notice</a> for full details.</p>
+  </div>
 </section>
 
-<section class="panel">
-<div class="field-grid">
-<div><h2>Usage history (last 90 days)</h2><p class="hint">Counts by model, token usage and pseudonymous IP fingerprint. Raw IP addresses are not stored.</p></div>
-<div><button id="refresh-usage" type="button" class="secondary">Refresh usage</button></div>
-</div>
-<p id="usage-summary" class="hint" role="status" aria-live="polite"></p>
-<div id="usage-list" class="history-list"></div>
-</section>
-</section>
-
-<section class="panel">
-<h2>Privacy and control</h2>
-<p>Private photo history is optional. Turn on <strong>Save photos and AI answers to my account history</strong> in Admin to store new compressed photos and results. You can delete all saved history and usage from this page. Gemini keys are encrypted using a Worker secret and are never stored as plaintext.</p>
-<p>Raw IP addresses are not saved. A keyed pseudonymous fingerprint is stored with opted-in usage records and expires after 90 days. Do not use this history as a safety record or as proof that an SOS notification was delivered.</p>
-</section>
-
-<nav class="navlinks"><a href="/action/">Home</a><a href="/admin/">Admin / Settings</a><a href="/privacy/">Privacy</a><a href="/help/">Help</a></nav>
+<nav class="navlinks account-page-links">
+  <a href="/action/">Home</a><a href="/admin/">Admin / Settings</a><a href="/terms/">Terms &amp; Conditions</a><a href="/privacy/">Privacy</a><a href="/support/">Support</a>
+</nav>
 </main>
-<script type="module" src="/account/account.js?v=20261117-release2"></script>
-<script type="module" src="/shared/site-nav.js?v=20261117-release2"></script>
+<script type="module" src="/account/account.js?v=20261117-account1"></script>
+<script type="module" src="/shared/site-nav.js?v=20261117-release5"></script>
 </body>
 </html>
