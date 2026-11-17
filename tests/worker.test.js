@@ -923,3 +923,13 @@ test('guest-history retention removes expired private photo objects before delet
  assert.ok(metadataDelete>objectDelete,'metadata is deleted only after the photo object is removed');
  assert.ok(calls.some(call=>call.url.includes('guest_session_hash=not.is.null')&&call.url.includes('created_at=lt.')));
 });
+
+
+test('new browser settings default to Bangla and Gemini 3.8 Flash, and replies do not append the old generic warning',()=>{
+ const settings=readFileSync(new URL('../web/shared/settings.js',import.meta.url),'utf8');
+ const app=readFileSync(new URL('../web/shared/app.js',import.meta.url),'utf8');
+ assert.match(settings,/speechLanguage:\s*'bn-BD'/);
+ assert.match(settings,/aiModel:\s*'gemini-3\.8-flash'/);
+ assert.match(settings,/merged\.aiModel === 'gemini-3\.6-flash'/);
+ assert.doesNotMatch(app,/AI can miss objects and hazards\. Do not rely on this description alone/);
+});
