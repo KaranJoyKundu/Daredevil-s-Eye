@@ -249,8 +249,8 @@ async function run(mode,question='',imageOverride=null){
    const completed=settings.speechLanguage==='bn-BD'
     ?'ছবির বিশ্লেষণ সম্পন্ন হয়েছে। ব্যবহৃত মডেল: '+(result.model||'Gemini')
     :'Completed with '+(result.model||'Gemini')+'.';
-   const message=settings.savePhotoHistory&&result.historySaved
-    ?(settings.speechLanguage==='bn-BD'?'ছবি ও উত্তর আপনার অ্যাকাউন্টের ব্যক্তিগত ইতিহাসে সংরক্ষণ করা হয়েছে।':'Photo and answer saved to your account history.')
+   const message=settings.savePhotoHistory&&result.historyMessage
+    ?result.historyMessage
     :completed;
    status.textContent=settings.speechLanguage==='bn-BD'?localizeSpeech(message):message;
   }
