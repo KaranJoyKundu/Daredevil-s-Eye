@@ -333,7 +333,7 @@ async function handleAccountApi(request,env,url) {
     for(const row of rows){
       if(row.photo_path){
         try{
-          const removed=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:{apikey:String(env.SUPABASE_SERVICE_ROLE_KEY),Authorization:'Bearer '+String(env.SUPABASE_SERVICE_ROLE_KEY)}});
+          const removed=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:supabaseServiceHeaders(env)});
           if(!removed.ok&&removed.status!==404)return json({error:'Could not remove one of your private photo files. History records were kept; please retry.'},502);
         }catch{return json({error:'Private photo storage is unreachable. History records were kept; please retry.'},502);}
       }
@@ -380,7 +380,7 @@ async function handleAccountApi(request,env,url) {
       for(const row of page){
         if(row.photo_path){
           try{
-            const removed=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:{apikey:String(env.SUPABASE_SERVICE_ROLE_KEY),Authorization:'Bearer '+String(env.SUPABASE_SERVICE_ROLE_KEY)}});
+            const removed=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:supabaseServiceHeaders(env)});
             if(!removed.ok&&removed.status!==404)return json({error:'Could not remove one of your private photo files. History records were kept; please retry.'},502);
           }catch{return json({error:'Private photo storage is unreachable. History records were kept; please retry.'},502);}
         }
