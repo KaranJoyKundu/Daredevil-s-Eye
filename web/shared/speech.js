@@ -1,5 +1,5 @@
-import { getSettings } from './settings.js?v=20261117-photo-buffer';
-import { apiFetch } from './api.js?v=20261116-access2';
+import { getSettings } from './settings.js?v=20261117-release1';
+import { apiFetch } from './api.js?v=20261117-release1';
 
 export const VOICE_PRESETS = Object.freeze({
   gentle: { label: 'Gentle · soft and slightly higher', rate: 0.94, pitch: 1.14 },
