@@ -8,6 +8,34 @@ let sessionRefreshPromise=null;
 let historyOffset=0;
 let guestHistoryOffset=0;
 
+async function adoptEmailConfirmation(){
+ const hash=new URLSearchParams(window.location.hash.replace(/^#/,''));
+ const accessToken=hash.get('access_token'),refreshToken=hash.get('refresh_token');
+ const authError=hash.get('error_description')||hash.get('error');
+ if(authError){
+  $('#login-status').textContent='Email confirmation failed: '+authError.replace(/\\+/g,' ');
+  history.replaceState(null,'',location.pathname+location.search);
+  return false;
+ }
+ if(!accessToken||!refreshToken)return false;
+ $('#account-status').textContent='Finishing email confirmation…';
+ try{
+  const response=await fetch('/api/account/confirm',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'content-type':'application/json'},body:JSON.stringify({accessToken,refreshToken})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||'Could not finish email confirmation.');
+  history.replaceState(null,'',location.pathname+location.search);
+  sessionCheckedAt=Date.now();
+  showSignedIn(data.user);
+  $('#account-status').textContent='Email confirmed. You are signed in.';
+  await Promise.all([loadKeyState(),loadHistory(),loadUsage()]);
+  return true;
+ }catch(error){
+  $('#login-status').textContent=error.message;
+  history.replaceState(null,'',location.pathname+location.search);
+  return false;
+ }
+}
+
 async function ensureSessionFresh(){
  if(Date.now()-sessionCheckedAt<4*60*1000)return;
  if(!sessionRefreshPromise){
@@ -287,4 +315,4 @@ $('#delete-history').addEventListener('click',async()=>{
 });
 
 refreshGuestHistorySession();
-refreshSession();
+adoptEmailConfirmation().finally(()=>refreshSession());
