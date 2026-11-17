@@ -738,3 +738,17 @@ test('voice transcription never accepts an incomplete MAX_TOKENS transcript',asy
  assert.equal(data.model,attempted[1]);
  assert.equal(attempted.length,2);
 });
+
+
+test('account write routes reject missing and cross-origin Origin headers',async()=>{
+ const env={SUPABASE_URL:'https://supabase.example.test',SUPABASE_ANON_KEY:'anon',SUPABASE_SERVICE_ROLE_KEY:'service'};
+ const missing=await handleApi(new Request('https://local.test/api/account/signup',{
+  method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:'a@example.test',password:'a-very-long-test-password'})
+ }),env);
+ assert.equal(missing.status,403);
+ const cross=await handleApi(new Request('https://local.test/api/account/signup',{
+  method:'POST',headers:{'content-type':'application/json',Origin:'https://attacker.example.test'},
+  body:JSON.stringify({email:'a@example.test',password:'a-very-long-test-password'})
+ }),env);
+ assert.equal(cross.status,403);
+});
