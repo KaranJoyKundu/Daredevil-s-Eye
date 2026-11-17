@@ -260,18 +260,21 @@ test('Bengali text selects a Bengali device voice even when an English voice was
  assert.equal(selectVoiceForText(voices.slice(0,1),{lang:'bn-BD',text:'বাংলা উত্তর'}),null);
 });
 
-test('voice transcription alternates its two low-cost first-choice models before higher-cost fallbacks',()=>{
+test('voice transcription rotates across free-tier Flash models only',()=>{
  const first=getTranscriptionModelOrder();
  const second=getTranscriptionModelOrder();
  const third=getTranscriptionModelOrder();
- const lowCost=new Set(['gemini-3.1-flash-lite','gemini-3.5-flash-lite']);
- assert.ok(lowCost.has(first[0]));
- assert.ok(lowCost.has(second[0]));
+ const expected=new Set(['gemini-3.1-flash-lite','gemini-3.5-flash-lite','gemini-3.8-flash']);
+ assert.ok(expected.has(first[0]));
+ assert.ok(expected.has(second[0]));
+ assert.ok(expected.has(third[0]));
  assert.notEqual(first[0],second[0]);
- assert.equal(third[0],first[0]);
+ assert.notEqual(second[0],third[0]);
  for(const order of [first,second,third]){
-  assert.deepEqual(new Set(order.slice(0,2)),lowCost);
-  assert.deepEqual(order.slice(2),['gemini-3.8-flash','gemini-3.5-transcribe']);
+  assert.equal(order.length,3);
+  assert.deepEqual(new Set(order),expected);
+  assert.ok(order.every(model=>/flash/i.test(model)));
+  assert.ok(!order.some(model=>/pro|transcribe/i.test(model)));
  }
 });
 
