@@ -30,6 +30,25 @@ test('Blind mode keeps Help outside the four main action buttons and declares ph
  ]);
 });
 
+test('camera capture does not play a synthetic shutter sound',()=>{
+ const camera=readFileSync(new URL('../web/shared/camera.js',import.meta.url),'utf8');
+ assert.doesNotMatch(camera,/playShutterClick|AudioContext|createBufferSource/);
+ assert.match(camera,/Capture silently/);
+});
+
+test('Admin provides three forced/custom language modes and all six theme choices',()=>{
+ const settings=readFileSync(new URL('../web/shared/settings.js',import.meta.url),'utf8');
+ const admin=readFileSync(new URL('../web/admin/index.html',import.meta.url),'utf8');
+ const adminJs=readFileSync(new URL('../web/admin/admin.js',import.meta.url),'utf8');
+ for(const mode of ['bn','en','custom'])assert.ok(admin.includes('value="'+mode+'"'));
+ for(const theme of ['refined','swiss','material','clinical','tactile','night']){
+  assert.ok(admin.includes('data-theme-choice="'+theme+'"'));
+  assert.ok(settings.includes("'"+theme+"'"));
+ }
+ assert.match(settings,/settings\.speechLanguage = 'bn-BD'/);
+ assert.match(settings,/settings\.speechLanguage = 'en-US'/);
+ assert.match(adminJs,/customLanguageDraft/);
+});
 test('blind-mode action colours meet 4.5:1 white-text contrast target',()=>{
  const css=readFileSync(new URL('../web/shared/style.css',import.meta.url),'utf8');
  const backgrounds=[['blind-describe','#07509b'],['blind-ask','#00665f'],['blind-sos','#8a3700'],['blind-repeat','#4b3292'],['blind-help-button','#132b45']];
@@ -64,10 +83,12 @@ test('shake magnitude supports linear acceleration and gravity-inclusive fallbac
  assert.ok(Math.abs(getShakeMagnitude({accelerationIncludingGravity:{x:0,y:0,z:22.31}})-12.5)<0.02);
  assert.equal(getShakeMagnitude({}),0);
 });
-test('voice SOS requires a distinctive wake phrase and a separate confirmation',()=>{
- assert.equal(matchSosVoiceCommand('SOS'),null);
- assert.equal(matchSosVoiceCommand('Daredevil SOS'),'wake');
- assert.equal(matchSosVoiceCommand('ডেয়ারডেভিল এসওএস'),'wake');
+test('voice SOS uses only the standalone SOS wake word and keeps separate confirmation',()=>{
+ assert.equal(matchSosVoiceCommand('SOS'),'wake');
+ assert.equal(matchSosVoiceCommand(' এসওএস '),'wake');
+ assert.equal(matchSosVoiceCommand('Daredevil SOS'),null);
+ assert.equal(matchSosVoiceCommand('ডেয়ারডেভিল এসওএস'),null);
+ assert.equal(matchSosVoiceCommand('please SOS'),null);
  assert.equal(matchSosVoiceCommand('Confirm SOS','confirm'),'confirm');
  assert.equal(matchSosVoiceCommand('এসওএস পাঠান','confirm'),'confirm');
  assert.equal(matchSosVoiceCommand('confirm SOS'),null);
@@ -333,9 +354,9 @@ test('Action photo flow has separate camera and upload inputs plus a confirmatio
  assert.match(settings,/requirePhotoConfirmation: true/);
  assert.match(camera,/compressImageToJpeg/);
  assert.match(camera,/maxBytes=3_800_000/);
- assert.match(camera,/void playShutterClick\(\)/);
- assert.match(camera,/export function primeShutterAudio/);
- assert.match(app,/primeShutterAudio\(\)/);
+ assert.match(camera,/Capture silently/);
+ assert.doesNotMatch(camera,/playShutterClick|primeShutterAudio|AudioContext|createBufferSource/);
+ assert.doesNotMatch(app,/playShutterClick|primeShutterAudio/);
  assert.doesNotMatch(app,/speak\(spokenError\(error\),\{lang:'en-US'\}\)/);
  assert.match(nav,/addEventListener\('pointerdown'/);
 });
@@ -771,6 +792,44 @@ test('account write routes reject missing and cross-origin Origin headers',async
 });
 
 
+test('email confirmation redirects to the app and exchanges the Supabase session for secure cookies',async t=>{
+ const originalFetch=globalThis.fetch;
+ let signupRedirect='';
+ t.after(()=>{globalThis.fetch=originalFetch;});
+ globalThis.fetch=async(input,init={})=>{
+  const url=new URL(String(input));
+  if(url.pathname==='/auth/v1/signup'){
+   signupRedirect=url.searchParams.get('redirect_to')||'';
+   return new Response(JSON.stringify({user:{id:'44444444-4444-4444-8444-444444444444',email:'owner@example.test'}}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  if(url.pathname==='/auth/v1/user'){
+   const headers=new Headers(init.headers);
+   assert.equal(headers.get('authorization'),'Bearer access-token-with-more-than-twenty-characters');
+   return new Response(JSON.stringify({id:'44444444-4444-4444-8444-444444444444',email:'owner@example.test'}),{status:200,headers:{'content-type':'application/json'}});
+  }
+  throw new Error('Unexpected confirmation test request: '+url.href);
+ };
+ const env={SUPABASE_URL:'https://supabase.example.test',SUPABASE_PUBLISHABLE_KEY:'sb_publishable_test',SUPABASE_SECRET_KEY:'sb_secret_test'};
+ const signup=await handleApi(new Request('https://local.test/api/account/signup',{
+  method:'POST',headers:{'content-type':'application/json',Origin:'https://local.test'},
+  body:JSON.stringify({email:'owner@example.test',password:'a-very-long-test-password'})
+ }),env);
+ assert.equal(signup.status,200);
+ assert.equal(signupRedirect,'https://local.test/account/');
+ const confirmation=await handleApi(new Request('https://local.test/api/account/confirm',{
+  method:'POST',headers:{'content-type':'application/json',Origin:'https://local.test'},
+  body:JSON.stringify({accessToken:'access-token-with-more-than-twenty-characters',refreshToken:'refresh-token-with-more-than-twenty-characters'})
+ }),env);
+ assert.equal(confirmation.status,200);
+ const result=await confirmation.json();
+ assert.equal(result.authenticated,true);
+ assert.equal(result.user.email,'owner@example.test');
+ const cookies=confirmation.headers.get('set-cookie')||'';
+ assert.match(cookies,/de_access=/);
+ assert.match(cookies,/de_refresh=/);
+ assert.match(cookies,/HttpOnly/);
+ assert.match(cookies,/Secure/);
+});
 test('legacy Supabase anon and service_role key names retain their JWT Authorization headers',async t=>{
  const originalFetch=globalThis.fetch;
  let authHeaders=null,serviceHeaders=null;
@@ -815,7 +874,7 @@ test('guest photo history saves submitted photos privately, shows them in this b
   if(url.origin==='https://supabase.example.test'&&url.pathname==='/rest/v1/ai_history'){
    if(init.method==='POST')historyRows.push(JSON.parse(init.body));
    if(init.method==='PATCH'&&historyRows.length)Object.assign(historyRows[historyRows.length-1],JSON.parse(init.body));
-   if(init.method==='DELETE'){historyRows.length=0;return new Response(null,{status:204});}
+   if(init.method==='DELETE'){const removed=historyRows.splice(0,historyRows.length);return new Response(JSON.stringify(removed),{status:200,headers:{'content-type':'application/json'}});}
    return new Response(JSON.stringify(historyRows),{status:200,headers:{'content-type':'application/json'}});
   }
   if(url.origin==='https://supabase.example.test'&&url.pathname.startsWith('/storage/v1/object/daredevil-history/')){

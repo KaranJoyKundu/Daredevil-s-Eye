@@ -1,12 +1,19 @@
-import {getSettings,saveSettings} from '/shared/settings.js?v=20261117-release5';
-import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261117-release5';
+import {getSettings,saveSettings,applyDisplaySettings,applyInterfaceLanguage} from '/shared/settings.js?v=20261117-release6';
+import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261117-release6';
 import {captureImage} from '/shared/camera.js?v=20261117-release1';
-import {speak,speakResponse,getAvailableVoices,isBengaliVoice,refreshAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261117-release5';
+import {speak,speakResponse,getAvailableVoices,isBengaliVoice,refreshAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261117-release6';
 
 const $=s=>document.querySelector(s);
 const form=$('#settings-form');
 const saved=getSettings();
 const presetValues=VOICE_PRESETS;
+const customLanguageDraft={
+ interface:saved.customInterfaceLanguage||'en',
+ speech:saved.customSpeechLanguage||saved.speechLanguage||'bn-BD',
+ inputMode:saved.customSpeechInputMode||saved.speechInputMode||'auto',
+ input:saved.customSpeechInputLanguage||saved.speechInputLanguage||'bn-BD',
+ sos:saved.customSosVoiceLanguage||saved.sosVoiceLanguage||'bn-BD'
+};
 
 
 function normalizeCameraAddress(value){
@@ -18,18 +25,35 @@ function normalizeCameraAddress(value){
  return address;
 }
 function formSettings(){
+ const languageMode=$('#language-mode').value||'bn';
+ const customInterfaceLanguage=languageMode==='custom'?$('#custom-interface-language').value:customLanguageDraft.interface;
+ const customSpeechLanguage=languageMode==='custom'?$('#language').value:customLanguageDraft.speech;
+ const customSpeechInputMode=languageMode==='custom'?$('#speech-input-mode').value:customLanguageDraft.inputMode;
+ const customSpeechInputLanguage=languageMode==='custom'?$('#input-language').value:customLanguageDraft.input;
+ const customSosVoiceLanguage=languageMode==='custom'?$('#sos-voice-language').value:customLanguageDraft.sos;
  return {
   cameraBaseUrl:normalizeCameraAddress($('#camera').value),
   requirePhotoConfirmation:$('#require-photo-confirmation').checked,
   savePhotoHistory:$('#save-photo-history').checked,
+  theme:$('[data-theme-choice][aria-pressed="true"]')?.dataset.themeChoice||saved.theme,
+  followSystemTheme:$('#follow-system-theme').checked,
+  textSize:$('#text-size').value,
+  highContrast:$('#high-contrast').checked,
+  reducedMotion:$('#reduced-motion').checked,
+  languageMode,
+  customInterfaceLanguage,
+  customSpeechLanguage,
+  customSpeechInputMode,
+  customSpeechInputLanguage,
+  customSosVoiceLanguage,
   emergencyName:$('#contact-name').value.trim(),
   emergencyPhone:$('#contact-phone').value.trim(),
-  speechLanguage:$('#language').value,
-  speechInputMode:$('#speech-input-mode').value,
-  speechInputLanguage:$('#input-language').value,
+  speechLanguage:languageMode==='bn'?'bn-BD':languageMode==='en'?'en-US':customSpeechLanguage,
+  speechInputMode:languageMode==='custom'?customSpeechInputMode:'auto',
+  speechInputLanguage:languageMode==='bn'?'bn-BD':languageMode==='en'?'en-US':customSpeechInputLanguage,
   sosShakeEnabled:$('#sos-shake-enabled').checked,
   sosVoiceEnabled:$('#sos-voice-enabled').checked,
-  sosVoiceLanguage:$('#sos-voice-language').value,
+  sosVoiceLanguage:languageMode==='bn'?'bn-BD':languageMode==='en'?'en-US':customSosVoiceLanguage,
   speechPreset:$('#voice-preset').value,
   speechVoiceURI:$('#voice-select').value,
   speechEngine:$('#speech-engine').value,
@@ -51,17 +75,73 @@ $('#save-personal-key').addEventListener('click',()=>{
 });
 $('#remove-personal-key').addEventListener('click',()=>{clearSessionGeminiApiKey();$('#personal-api-key').value='';$('#personal-key-status').textContent='Personal key removed from this tab. Using the project key if configured.';loadModels();});
 $('#camera').value=saved.cameraBaseUrl;
+$('#language-mode').value=saved.languageMode||'bn';
+$('#custom-interface-language').value=saved.customInterfaceLanguage||'en';
+$('#language').value=saved.customSpeechLanguage||saved.speechLanguage;
+$('#speech-input-mode').value=saved.customSpeechInputMode||saved.speechInputMode||'auto';
+$('#input-language').value=saved.customSpeechInputLanguage||saved.speechInputLanguage||'bn-BD';
+$('#sos-voice-language').value=saved.customSosVoiceLanguage||saved.sosVoiceLanguage||'bn-BD';
+$('#follow-system-theme').checked=saved.followSystemTheme!==false;
+$('#text-size').value=saved.textSize||'normal';
+$('#high-contrast').checked=!!saved.highContrast;
+$('#reduced-motion').checked=!!saved.reducedMotion;
+applyDisplaySettings(saved);
+applyInterfaceLanguage(saved);
+function updateThemeChoices(){
+ document.querySelectorAll('[data-theme-choice]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.themeChoice===(getSettings().theme||'refined'))));
+}
+function syncLanguageControls(){
+ const mode=$('#language-mode').value||'bn',custom=mode==='custom';
+ $('#custom-language-controls').hidden=!custom;
+ for(const id of ['custom-interface-language','language','speech-input-mode','input-language','sos-voice-language'])$('#'+id).disabled=!custom;
+ if(custom){
+  $('#custom-interface-language').value=customLanguageDraft.interface;
+  $('#language').value=customLanguageDraft.speech;
+  $('#speech-input-mode').value=customLanguageDraft.inputMode;
+  $('#input-language').value=customLanguageDraft.input;
+  $('#sos-voice-language').value=customLanguageDraft.sos;
+ }else if(mode==='bn'){
+  $('#language').value='bn-BD';$('#speech-input-mode').value='auto';$('#input-language').value='bn-BD';$('#sos-voice-language').value='bn-BD';
+ }else{
+  $('#language').value='en-US';$('#speech-input-mode').value='auto';$('#input-language').value='en-US';$('#sos-voice-language').value='en-US';
+ }
+}
+syncLanguageControls();
+updateThemeChoices();
+for(const [id,key] of [['custom-interface-language','interface'],['language','speech'],['speech-input-mode','inputMode'],['input-language','input'],['sos-voice-language','sos']]){
+ $('#'+id).addEventListener('change',()=>{
+  if($('#language-mode').value==='custom'){
+   customLanguageDraft[key]=$('#'+id).value;
+   if(key==='interface')applyInterfaceLanguage({...getSettings(),interfaceLanguage:customLanguageDraft.interface});
+  }
+ });
+}
+$('#language-mode').addEventListener('change',()=>{
+ const mode=$('#language-mode').value;
+ syncLanguageControls();
+ const current={...getSettings(),languageMode:mode,interfaceLanguage:mode==='bn'?'bn':mode==='en'?'en':customLanguageDraft.interface,
+  customInterfaceLanguage:customLanguageDraft.interface,customSpeechLanguage:customLanguageDraft.speech,
+  customSpeechInputMode:customLanguageDraft.inputMode,customSpeechInputLanguage:customLanguageDraft.input,customSosVoiceLanguage:customLanguageDraft.sos};
+ applyInterfaceLanguage(current);
+});
+document.querySelectorAll('[data-theme-choice]').forEach(button=>button.addEventListener('click',()=>{
+ const next=saveSettings({theme:button.dataset.themeChoice});
+ applyDisplaySettings(next);updateThemeChoices();
+ $('#theme-preview-status').textContent='Theme saved on this device: '+button.querySelector('strong').textContent+'.';
+}));
+for(const id of ['follow-system-theme','text-size','high-contrast','reduced-motion']){
+ $('#'+id).addEventListener('change',()=>applyDisplaySettings({...getSettings(),
+  followSystemTheme:$('#follow-system-theme').checked,textSize:$('#text-size').value,
+  highContrast:$('#high-contrast').checked,reducedMotion:$('#reduced-motion').checked
+ }));
+}
 $('#require-photo-confirmation').checked=saved.requirePhotoConfirmation!==false;
 $('#save-photo-history').checked=saved.savePhotoHistory!==false;
 $('#contact-name').value=saved.emergencyName;
 $('#contact-phone').value=saved.emergencyPhone;
 $('#sos-code').value=saved.sosPairingCode;
-$('#language').value=saved.speechLanguage;
-$('#speech-input-mode').value=saved.speechInputMode||'auto';
-$('#input-language').value=saved.speechInputLanguage||'bn-BD';
 $('#sos-shake-enabled').checked=!!saved.sosShakeEnabled;
 $('#sos-voice-enabled').checked=!!saved.sosVoiceEnabled;
-$('#sos-voice-language').value=saved.sosVoiceLanguage||'bn-BD';
 $('#voice-preset').value=saved.speechPreset;
 $('#speech-engine').value=saved.speechEngine==='gemini'?'device':saved.speechEngine;
 $('#gemini-voice-style').value=saved.geminiTtsStyle;
@@ -115,7 +195,7 @@ $('#enable-voice-sos').addEventListener('click',async()=>{
   stream.getTracks().forEach(track=>track.stop());stream=null;
   const language=$('#sos-voice-language').value;
   saveSettings({sosVoiceEnabled:true,sosVoiceLanguage:language});
-  $('#sos-voice-status').textContent='Enabled. In visible Blind mode say “Daredevil SOS”, then “Confirm SOS”. Say “Cancel SOS” during the five-second countdown to stop it.';
+  $('#sos-voice-status').textContent='Enabled. In visible Blind mode say “SOS”, then “Confirm SOS”. Say “Cancel SOS” during the five-second countdown to stop it.';
  }catch(error){
   if(stream)stream.getTracks().forEach(track=>track.stop());
   $('#sos-voice-enabled').checked=false;saveSettings({sosVoiceEnabled:false});
@@ -233,9 +313,13 @@ form.addEventListener('submit',async event=>{
  submitButton.disabled=true;
  try{
   const next=formSettings();
-  saveSettings(next);
+  const applied=saveSettings(next);
+  applyDisplaySettings(applied);
+  applyInterfaceLanguage(applied);
+  updateThemeChoices();
+  syncLanguageControls();
   $('#camera').value=next.cameraBaseUrl;
-  $('#message').textContent='All settings saved on this device. Generate a fresh SOS invitation whenever you want to pair or replace the receiver.';
+  $('#message').textContent='All settings saved on this device. Language mode and appearance now apply to the app screens in this browser.';
  }catch(error){$('#message').textContent=error.message;}
  finally{submitButton.disabled=false;}
 });

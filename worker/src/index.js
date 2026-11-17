@@ -285,12 +285,28 @@ async function handleAccountApi(request,env,url) {
     const token=randomGuestToken();
     return accountJson({ok:true,ready:true,expiresInDays:30},200,[sessionCookie('de_guest',token,30*24*60*60)]);
   }
+  if(path==='/api/account/confirm'&&request.method==='POST'){
+    let body;try{body=await request.json();}catch{return json({error:'Invalid email confirmation session.'},400);}
+    const accessToken=String(body.accessToken||''),refreshToken=String(body.refreshToken||'');
+    if(accessToken.length<20||accessToken.length>8192||refreshToken.length<20||refreshToken.length>8192)return json({error:'The confirmation link did not contain a valid session. Please sign in after confirming your email.'},400);
+    try{
+      const verified=await supabaseAuthFetch(env,'user',{token:accessToken});
+      if(!verified.ok)return json({error:'Email confirmed, but the sign-in session could not be verified. Please sign in with your email and password.'},401);
+      const user=await verified.json();
+      if(!user?.id)return json({error:'The confirmation session was invalid. Please sign in again.'},401);
+      return accountJson({ok:true,authenticated:true,user:{id:user.id,email:user.email}},200,[
+        sessionCookie('de_access',accessToken,3600),
+        sessionCookie('de_refresh',refreshToken,30*24*60*60)
+      ]);
+    }catch{return json({error:'Could not finish email confirmation. Please sign in again.'},503);}
+  }
   if(path==='/api/account/signup'&&request.method==='POST'){
     let body;try{body=await request.json();}catch{return json({error:'Invalid sign-up form.'},400);}
     const email=String(body.email||'').trim().toLowerCase(),password=String(body.password||'');
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||password.length<12||password.length>256)return json({error:'Enter a valid email and a password of at least 12 characters.'},400);
     try{
-      const response=await supabaseAuthFetch(env,'signup',{method:'POST',body:{email,password}});
+      const confirmationRedirect=new URL('/account/',url.origin).toString();
+      const response=await supabaseAuthFetch(env,'signup?redirect_to='+encodeURIComponent(confirmationRedirect),{method:'POST',body:{email,password}});
       const data=await response.json().catch(()=>({}));
       if(!response.ok)return json({error:response.status===429?'Too many sign-up attempts. Try later.':'Could not create the account. Check the email and password, then try again.'},400);
       const cookies=data.access_token&&data.refresh_token?[
@@ -356,7 +372,7 @@ async function handleAccountApi(request,env,url) {
     if(guestItemId&&request.method==='DELETE'&&/^[0-9a-f-]{36}$/i.test(guestItemId)){
       const filter='id=eq.'+encodeURIComponent(guestItemId)+'&'+guestFilter;
       const selected=await supabaseRest(env,'ai_history?select=photo_path&'+filter);
-      if(!selected.ok)return json({error:'Could not find that guest-history record.'},404);
+      if(!selected.ok)return json({error:'The database could not be checked for that guest-history record. No record was deleted.'},502);
       const rows=await selected.json().catch(()=>[]);
       if(!rows.length)return json({error:'That record is not in this browser’s guest history.'},404);
       for(const row of rows){
@@ -367,9 +383,11 @@ async function handleAccountApi(request,env,url) {
           }catch{return json({error:'Private photo storage is unreachable. The history record was kept; retry deletion.'},502);}
         }
       }
-      const deleted=await supabaseRest(env,'ai_history?'+filter,{method:'DELETE'});
-      if(!deleted.ok)return json({error:'Could not delete this guest-history record.'},502);
-      return json({ok:true,deleted:true});
+      const deleted=await supabaseRest(env,'ai_history?'+filter,{method:'DELETE',prefer:'return=representation'});
+      if(!deleted.ok)return json({error:'The photo file was removed, but the database could not delete its history record. Refresh and retry.'},502);
+      const removedRows=await deleted.json().catch(()=>[]);
+      if(!removedRows.length)return json({error:'The database did not confirm deletion of that guest record. Refresh and retry.'},502);
+      return json({ok:true,deleted:true,deletedCount:removedRows.length});
     }
     if(path==='/api/guest/history'&&request.method==='GET'){
       const requestedLimit=Number(url.searchParams.get('limit'));
@@ -414,9 +432,10 @@ async function handleAccountApi(request,env,url) {
         offset+=rows.length;
         if(rows.length<200)break;
       }
-      const deleted=await supabaseRest(env,'ai_history?'+guestFilter,{method:'DELETE'});
-      if(!deleted.ok)return json({error:'Could not delete guest photo history.'},502);
-      return json({ok:true,deleted:true});
+      const deleted=await supabaseRest(env,'ai_history?'+guestFilter,{method:'DELETE',prefer:'return=representation'});
+      if(!deleted.ok)return json({error:'Photo files were processed, but the database could not delete guest history. Refresh and retry.'},502);
+      const removedRows=await deleted.json().catch(()=>[]);
+      return json({ok:true,deleted:true,deletedCount:removedRows.length});
     }
   }
 

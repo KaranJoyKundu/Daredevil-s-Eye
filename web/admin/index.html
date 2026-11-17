@@ -3,13 +3,70 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#07111f"><title>Admin / Settings · Daredevil's Eye</title>
-<link rel="stylesheet" href="/shared/style.css?v=20261117-release5">
+<link rel="stylesheet" href="/shared/style.css?v=20261117-release6">
 </head>
 <body><main>
-<header><p class="eyebrow">DEVICE SETTINGS</p><h1>Admin / Settings</h1><p class="subtitle">Tune the camera, AI behaviour and spoken voice. Settings stay in this browser on this device.</p></header>
+<header><p class="eyebrow">DEVICE SETTINGS</p><h1 data-i18n="admin_heading">Admin / Settings</h1><p class="subtitle" data-i18n="admin_subtitle">Tune the camera, AI behaviour and spoken voice. Settings stay in this browser on this device.</p></header>
 
-<nav class="quick-jump" aria-label="Admin shortcuts"><a href="#camera-settings">📷 <span>Camera & SOS</span></a><a href="#ai-settings">✨ <span>AI models</span></a><a href="#voice-settings">🎙 <span>Voice</span></a><a href="#image-lab">🧪 <span>Image tester</span></a><a href="/diagnostics/">✅ <span>Diagnostics</span></a><a href="/account/">👤 <span>Account & History</span></a><a href="/action/">⌂ <span>Home</span></a></nav>
+<nav class="quick-jump" aria-label="Admin shortcuts"><a href="#camera-settings">📷 <span>Camera & SOS</span></a><a href="#ai-settings">✨ <span>AI models</span></a><a href="#voice-settings">🎙 <span>Voice</span></a><a href="#image-lab">🧪 <span>Image tester</span></a><a href="/diagnostics/">✅ <span>Diagnostics</span></a><a href="/account/">👤 <span>Account & History</span></a><a href="#stored-data">🗃 <span>Stored data</span></a><a href="/action/">⌂ <span>Home</span></a></nav>
+<section class="panel settings-section" id="stored-data">
+<h2>Stored users, guest sessions &amp; photos</h2>
+<p>All user and guest records are stored in your private Supabase project. These links open the secured project dashboard; they are visible only to people with Supabase project access. This app deliberately does not expose every person's private history to ordinary signed-in accounts.</p>
+<div class="quick-jump">
+<a href="https://supabase.com/dashboard/project/dyfpawbkttbgoorcgwbd/editor" target="_blank" rel="noopener noreferrer">🗃 <span>Table Editor — inspect <code>public.ai_history</code>, <code>public.api_usage</code> and <code>public.user_api_keys</code></span></a>
+<a href="https://supabase.com/dashboard/project/dyfpawbkttbgoorcgwbd/storage/buckets/daredevil-history" target="_blank" rel="noopener noreferrer">🖼 <span>Private uploaded photos — <code>daredevil-history</code> bucket</span></a>
+<a href="https://supabase.com/dashboard/project/dyfpawbkttbgoorcgwbd/auth/users" target="_blank" rel="noopener noreferrer">👤 <span>Authentication → Users — registered accounts</span></a>
+</div>
+<ul>
+<li><strong><code>public.ai_history</code>:</strong> photo records, guest or account owner, submitted question, AI answer, model, status, time and private photo path. Guest rows have a guest-session hash and a null <code>user_id</code>.</li>
+<li><strong><code>public.api_usage</code>:</strong> account-linked AI usage and token totals (when usage rows are recorded).</li>
+<li><strong><code>public.user_api_keys</code>:</strong> encrypted personal Gemini-key material. It is not plaintext and should not be edited manually.</li>
+<li><strong>Storage:</strong> original submitted JPEGs are in the private <code>daredevil-history</code> bucket.</li>
+<li><strong>Authentication → Users:</strong> registered account identities. Deleting an account is separate from deleting its history and files.</li>
+</ul>
+<p><strong>Deleting guest data:</strong> Account &amp; History can delete guest records tied to the current browser cookie only. It cannot reach another visitor's session or a session whose cookie was cleared. For an owner-level cleanup, find the matching guest rows in <code>public.ai_history</code>, remove each corresponding object from the private bucket using its <code>photo_path</code>, then remove the matching database row. Do not delete only the table row while leaving the image object behind.</p>
+<p><strong>Privacy boundary:</strong> Do not share these dashboard links with untrusted people, and never copy the private Supabase secret key into browser code or screenshots.</p>
+</section>
 <form id="settings-form">
+<section id="appearance-settings" class="panel settings-section">
+<h2 data-i18n="appearance_heading">Appearance &amp; six themes</h2>
+<p data-i18n="appearance_description">Choose a design. Selecting a card previews it immediately. Theme selection is saved when you press Save all settings.</p>
+<div id="theme-picker" class="theme-picker" role="group" aria-label="Choose an app theme">
+<button type="button" class="theme-choice" data-theme-choice="refined"><strong>1 · Refined Daredevil</strong><span class="theme-swatches"><i style="background:#07111f"></i><i style="background:#0e1d33"></i><i style="background:#f5b942"></i></span><small>Dark navy, amber and the current identity</small></button>
+<button type="button" class="theme-choice" data-theme-choice="swiss"><strong>2 · Swiss Accessibility</strong><span class="theme-swatches"><i style="background:#fafaf7"></i><i style="background:#111"></i><i style="background:#d71920"></i></span><small>Warm white, strict grid and red accents</small></button>
+<button type="button" class="theme-choice" data-theme-choice="material"><strong>3 · Material You Android</strong><span class="theme-swatches"><i style="background:#f5f3fa"></i><i style="background:#0b57d0"></i><i style="background:#b3261e"></i></span><small>Android tonal surfaces and optional device dark mode</small></button>
+<button type="button" class="theme-choice" data-theme-choice="clinical"><strong>4 · Clinical High Contrast</strong><span class="theme-swatches"><i style="background:#000"></i><i style="background:#fff"></i><i style="background:#ffd400"></i></span><small>Black, white, bold borders and yellow focus</small></button>
+<button type="button" class="theme-choice" data-theme-choice="tactile"><strong>5 · Tactile Minimal</strong><span class="theme-swatches"><i style="background:#e9e6df"></i><i style="background:#1f1f1d"></i><i style="background:#2f5d50"></i></span><small>Warm neutral surfaces and green accents</small></button>
+<button type="button" class="theme-choice" data-theme-choice="night"><strong>6 · Night Navigation</strong><span class="theme-swatches"><i style="background:#0a0e14"></i><i style="background:#171f29"></i><i style="background:#ffb454"></i></span><small>Low-glare charcoal and warm amber</small></button>
+</div>
+<div class="field-grid">
+<div><label class="inline-checkbox" for="follow-system-theme"><input id="follow-system-theme" type="checkbox"> <span data-i18n="follow_system">Follow device light / dark setting</span></label></div>
+<div><label for="text-size" data-i18n="text_size">App text size</label><select id="text-size"><option value="small" data-i18n="text_small">Small</option><option value="normal" data-i18n="text_normal">Normal</option><option value="large" data-i18n="text_large">Large</option></select></div>
+<div><label class="inline-checkbox" for="high-contrast"><input id="high-contrast" type="checkbox"> <span data-i18n="high_contrast">Extra high contrast</span></label></div>
+<div><label class="inline-checkbox" for="reduced-motion"><input id="reduced-motion" type="checkbox"> <span data-i18n="reduce_motion">Reduce motion and transitions</span></label></div>
+</div>
+<p class="hint" id="theme-preview-status" role="status" aria-live="polite" data-i18n="theme_preview">Current theme preview is applied to this page.</p>
+</section>
+<section id="language-settings" class="panel settings-section">
+<h2 data-i18n="language_heading">App language</h2>
+<label for="language-mode" data-i18n="language_mode_label">Language mode</label>
+<select id="language-mode"><option value="bn" data-i18n="mode_bn">বাংলা — force the app into Bangla</option><option value="en" data-i18n="mode_en">English — force the app into English</option><option value="custom" data-i18n="mode_custom">Custom — choose each language yourself</option></select>
+<p class="hint" data-i18n="language_mode_description">Bangla and English modes set the AI answer, spoken responses and recognition languages to match. Custom mode lets you choose each setting separately.</p>
+<div id="custom-language-controls" class="language-custom-controls">
+<label for="custom-interface-language" data-i18n="interface_language">Interface language</label>
+<select id="custom-interface-language"><option value="en">English</option><option value="bn">বাংলা</option></select>
+<label for="language" data-i18n="ai_response_language">AI response language</label>
+<select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
+<label for="speech-input-mode" data-i18n="voice_input_mode">Voice input mode</label>
+<select id="speech-input-mode"><option value="auto" data-i18n="auto_multilingual">Automatic multilingual detection (Gemini)</option><option value="browser" data-i18n="browser_first">Browser speech recognition first</option></select>
+<label for="input-language" data-i18n="browser_recognition_language">Browser recognition language</label>
+<select id="input-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
+<label for="sos-voice-language" data-i18n="sos_recognition_language">Voice SOS recognition language</label>
+<select id="sos-voice-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
+</div>
+<small data-i18n="language_help">Automatic mode uses Gemini for Bangla, English and mixed speech. Browser mode starts with the selected language and falls back when available.</small>
+</section>
+
 <section id="camera-settings" class="panel settings-section">
 <h2>Camera & trusted contact</h2>
 <label for="camera">ESP32-CAM address</label>
@@ -41,19 +98,10 @@
  <div>
   <label class="inline-checkbox" for="sos-voice-enabled"><input id="sos-voice-enabled" type="checkbox"> Enable voice SOS phrase</label>
   <button id="enable-voice-sos" type="button" class="secondary">Grant microphone access & enable</button>
-  <p id="sos-voice-status" class="hint" role="status" aria-live="polite">Disabled. Say “Daredevil SOS”, then “Confirm SOS”.</p>
+  <p id="sos-voice-status" class="hint" role="status" aria-live="polite">Disabled. Say “SOS”, then “Confirm SOS”.</p>
  </div>
 </div>
-<label for="sos-voice-language">Voice SOS recognition language</label>
-<select id="sos-voice-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
-<small>Voice SOS uses the browser's continuous speech-recognition API, not Gemini. The microphone is monitored only in the visible Blind mode page. English: say “Daredevil SOS”, then “Confirm SOS”. Bangla: say “ডেয়ারডেভিল এসওএস”, then “নিশ্চিত করুন” or “এসওএস পাঠান”. Say “Cancel SOS” / “এসওএস বাতিল” during the countdown to stop it. Recognition availability depends on Android/Chrome and installed speech services.</small>
-<label for="language">AI response language</label>
-<select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
-<label for="speech-input-mode">Voice input mode</label>
-<select id="speech-input-mode"><option value="auto">Automatic multilingual detection (recommended — Gemini)</option><option value="browser">Browser speech recognition first</option></select>
-<label for="input-language">Browser recognition language</label>
-<select id="input-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
-<small>Automatic mode records a short clip and sends it to Gemini to detect Bangla, English or mixed speech. Browser mode uses the selected language first and switches to Gemini if it fails. Audio is processed externally; do not speak confidential information.</small>
+<p class="hint">Voice SOS listens only in visible Blind mode. Say “SOS” to start, then “Confirm SOS” to continue. Say “Cancel SOS” during the countdown to stop it.</p>
 </section>
 
 <section id="ai-settings" class="panel settings-section">
@@ -135,8 +183,8 @@
 </section>
 
 <nav class="navlinks"><a href="/action/">Home</a><a href="/diagnostics/">Diagnostics</a><a href="/contact/">Contact</a><a href="/privacy/">Privacy</a></nav>
-<div class="inline-actions admin-save-actions"><button type="submit" form="settings-form">Save all settings</button></div>
+<div class="inline-actions admin-save-actions"><button type="submit" form="settings-form" data-i18n="save_all">Save all settings</button></div>
 </main>
-<script type="module" src="/admin/admin.js?v=20261117-release5"></script>
-<script type="module" src="/shared/site-nav.js?v=20261117-release5"></script>
+<script type="module" src="/admin/admin.js?v=20261117-release6"></script>
+<script type="module" src="/shared/site-nav.js?v=20261117-release6"></script>
 </body></html>

@@ -1,4 +1,7 @@
-import { clearSessionGeminiApiKey } from '/shared/api.js?v=20261117-release5';
+import { clearSessionGeminiApiKey } from '/shared/api.js?v=20261117-release6';
+import { applyDisplaySettings, applyInterfaceLanguage } from '/shared/settings.js?v=20261117-release6';
+applyDisplaySettings();
+applyInterfaceLanguage();
 
 const $=selector=>document.querySelector(selector);
 const authPanel=$('#auth-panel'),accountPanel=$('#account-panel');
@@ -7,6 +10,34 @@ let sessionCheckedAt=0;
 let sessionRefreshPromise=null;
 let historyOffset=0;
 let guestHistoryOffset=0;
+
+async function adoptEmailConfirmation(){
+ const hash=new URLSearchParams(window.location.hash.replace(/^#/,''));
+ const accessToken=hash.get('access_token'),refreshToken=hash.get('refresh_token');
+ const authError=hash.get('error_description')||hash.get('error');
+ if(authError){
+  $('#login-status').textContent='Email confirmation failed: '+authError.replace(/\\+/g,' ');
+  history.replaceState(null,'',location.pathname+location.search);
+  return false;
+ }
+ if(!accessToken||!refreshToken)return false;
+ $('#account-status').textContent='Finishing email confirmation…';
+ try{
+  const response=await fetch('/api/account/confirm',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'content-type':'application/json'},body:JSON.stringify({accessToken,refreshToken})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||'Could not finish email confirmation.');
+  history.replaceState(null,'',location.pathname+location.search);
+  sessionCheckedAt=Date.now();
+  showSignedIn(data.user);
+  $('#account-status').textContent='Email confirmed. You are signed in.';
+  await Promise.all([loadKeyState(),loadHistory(),loadUsage()]);
+  return true;
+ }catch(error){
+  $('#login-status').textContent=error.message;
+  history.replaceState(null,'',location.pathname+location.search);
+  return false;
+ }
+}
 
 async function ensureSessionFresh(){
  if(Date.now()-sessionCheckedAt<4*60*1000)return;
@@ -36,6 +67,8 @@ async function ensureGuestSession(){
  return data;
 }
 async function guestApi(path,{method='GET'}={}){
+ // Ensure the HttpOnly guest cookie exists before every history operation, including deletes.
+ await ensureGuestSession();
  const response=await fetch(path,{method,credentials:'same-origin',cache:'no-store'});
  const data=await response.json().catch(()=>({}));
  if(!response.ok)throw new Error(data.error||('Request failed ('+response.status+').'));
@@ -97,9 +130,14 @@ function createHistoryCard(item,scope){
   if(!window.confirm(prompt))return;
   del.disabled=true;
   try{
-   if(scope==='guest')await guestApi('/api/guest/history/'+encodeURIComponent(item.id),{method:'DELETE'});
-   else await api('/api/account/history/'+encodeURIComponent(item.id),{method:'DELETE'});
-   if(scope==='guest')await loadGuestHistory(false);else await loadHistory(false);
+   if(scope==='guest'){
+    const deleted=await guestApi('/api/guest/history/'+encodeURIComponent(item.id),{method:'DELETE'});
+    if(!deleted.deleted)throw new Error('The server did not confirm deletion. Refresh the history and retry.');
+    await loadGuestHistory(false);
+   }else{
+    await api('/api/account/history/'+encodeURIComponent(item.id),{method:'DELETE'});
+    await loadHistory(false);
+   }
   }catch(error){
    const statusNode=scope==='guest'?$('#guest-history-status'):$('#history-status');
    statusNode.textContent=error.message;del.disabled=false;
@@ -154,9 +192,11 @@ $('#delete-guest-history').addEventListener('click',async()=>{
  const button=$('#delete-guest-history');button.disabled=true;
  $('#guest-history-status').textContent='Deleting guest history…';
  try{
-  await guestApi('/api/guest/history',{method:'DELETE'});
+  const result=await guestApi('/api/guest/history',{method:'DELETE'});
+  if(!result.deleted)throw new Error('The server did not confirm deletion. Refresh the history and retry.');
   $('#guest-history-list').replaceChildren();$('#guest-history-more')?.remove();
-  $('#guest-history-status').textContent='All guest photos and answers for this browser were deleted.';
+  $('#delete-guest-history').disabled=true;
+  $('#guest-history-status').textContent='Deleted '+(Number(result.deletedCount)||0)+' guest photo record(s) and their stored photos from this browser.';
  }catch(error){$('#guest-history-status').textContent=error.message;}
  finally{button.disabled=false;}
 });
@@ -287,4 +327,4 @@ $('#delete-history').addEventListener('click',async()=>{
 });
 
 refreshGuestHistorySession();
-refreshSession();
+adoptEmailConfirmation().finally(()=>refreshSession());

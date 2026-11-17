@@ -44,7 +44,6 @@ export function matchSosVoiceCommand(transcript, phase = 'wake') {
     const banglaConfirm = text.includes('নিশ্চিত') || (hasSos && (text.includes('পাঠান') || text.includes('হ্যাঁ')));
     return englishConfirm || banglaConfirm ? 'confirm' : null;
   }
-  const englishWake = (text.includes('daredevil') || text.includes('dare devil')) && hasSos;
-  const banglaWake = hasSos && (text.includes('ডেয়ার') || text.includes('দেয়ার') || text.includes('সাহায্য'));
-  return englishWake || banglaWake ? 'wake' : null;
+  // Wake word is deliberately just SOS (or its Bangla rendering), not a brand phrase.
+  return text === 'sos' || text === 'এসওএস' ? 'wake' : null;
 }

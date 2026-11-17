@@ -1,43 +1,43 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07111f"><link rel="manifest" href="/manifest.webmanifest"><title>Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css?v=20261117-release5"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07111f"><link rel="manifest" href="/manifest.webmanifest"><title>Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css?v=20261117-release6"></head>
 <body><main>
-<header><h1>Daredevil's Eye</h1><p class="subtitle">Your audio-first visual assistant</p></header>
-<p id="status" role="status" aria-live="polite">Ready. Choose an action.</p>
-<section class="actions" aria-label="Main actions">
-<button class="action-card describe" data-action="describe" aria-label="Describe. What's around me?"><span class="symbol" aria-hidden="true">▣</span><strong>DESCRIBE</strong><span>What's around me?</span></button>
-<button class="action-card ask" data-action="ask" aria-label="Ask AI. Ask a question"><span class="symbol" aria-hidden="true">🎙</span><strong>ASK AI</strong><span>Ask a question</span></button>
-<button class="action-card sos" data-action="sos" aria-label="SOS. Contact trusted person"><span class="symbol" aria-hidden="true">☎</span><strong>SOS</strong><span>Contact trusted person</span></button>
-<a class="action-card help" href="/help/" aria-label="Help. Instructions and support"><span class="symbol" aria-hidden="true">ⓘ</span><strong>HELP</strong><span>Instructions and support</span></a>
+<header><h1>Daredevil's Eye</h1><p class="subtitle" data-i18n="app_subtitle">Your audio-first visual assistant</p></header>
+<p id="status" role="status" aria-live="polite" data-i18n="status_ready">Ready. Choose an action.</p>
+<section class="actions" aria-label="Main actions" data-i18n-aria="main_actions">
+<button class="action-card describe" data-action="describe" aria-label="Describe. What's around me?" data-i18n-aria="aria_describe"><span class="symbol" aria-hidden="true">▣</span><strong data-i18n="describe">DESCRIBE</strong><span data-i18n="describe_question">What's around me?</span></button>
+<button class="action-card ask" data-action="ask" aria-label="Ask AI. Ask a question" data-i18n-aria="aria_ask"><span class="symbol" aria-hidden="true">🎙</span><strong data-i18n="ask_ai">ASK AI</strong><span data-i18n="ask_question">Ask a question</span></button>
+<button class="action-card sos" data-action="sos" aria-label="SOS. Contact trusted person" data-i18n-aria="aria_sos"><span class="symbol" aria-hidden="true">☎</span><strong>SOS</strong><span data-i18n="contact_person">Contact trusted person</span></button>
+<a class="action-card help" href="/help/" aria-label="Help. Instructions and support" data-i18n-aria="help_subtitle"><span class="symbol" aria-hidden="true">ⓘ</span><strong data-i18n="help">HELP</strong><span data-i18n="help_subtitle">Instructions and support</span></a>
 </section>
-<a id="sos-call-link" class="button" href="#" hidden style="display:none">Call trusted contact</a>
+<a id="sos-call-link" class="button" href="#" hidden style="display:none" data-i18n="call_contact">Call trusted contact</a>
 <section class="panel" aria-labelledby="phone-photo-title">
-<h2 id="phone-photo-title">Use a phone photo</h2>
+<h2 id="phone-photo-title" data-i18n="phone_photo">Use a phone photo</h2>
 <div class="field-grid">
-<div><label class="button" for="phone-photo-camera">Use phone camera</label><input id="phone-photo-camera" type="file" accept="image/*" capture="environment" hidden></div>
-<div><label class="button secondary" for="phone-photo-upload">Upload a photo</label><input id="phone-photo-upload" type="file" accept="image/*" hidden></div>
+<div><label class="button" for="phone-photo-camera" data-i18n="use_camera">Use phone camera</label><input id="phone-photo-camera" type="file" accept="image/*" capture="environment" hidden></div>
+<div><label class="button secondary" for="phone-photo-upload" data-i18n="upload_photo">Upload a photo</label><input id="phone-photo-upload" type="file" accept="image/*" hidden></div>
 </div>
-<p class="hint">Large photos are compressed on this device before sending. A preview appears first when the confirmation option is enabled in Admin.</p>
+<p class="hint" data-i18n="photo_hint">Large photos are compressed on this device before sending. A preview appears first when the confirmation option is enabled in Admin.</p>
 <div id="photo-preview-panel" hidden>
 <img id="photo-preview" alt="Preview of the exact compressed image ready for AI analysis" hidden style="display:none;max-width:100%;max-height:360px;object-fit:contain;border-radius:12px">
-<p id="photo-details" class="hint" role="status" aria-live="polite">No photo selected.</p>
+<p id="photo-details" class="hint" role="status" aria-live="polite" data-i18n="no_photo">No photo selected.</p>
 </div>
-<form id="question-form"><label for="question">Question for the AI (optional)</label><input id="question" maxlength="1000" autocomplete="off" placeholder="Leave empty for the default scene description">
+<form id="question-form"><label for="question" data-i18n="question_optional">Question for the AI (optional)</label><input id="question" maxlength="1000" autocomplete="off" placeholder="Leave empty for the default scene description">
 <div class="field-grid">
-<button id="photo-ask-ai" type="button" disabled>Ask AI about this photo</button>
-<button id="photo-cancel" type="button" class="secondary" hidden>Remove photo</button>
+<button id="photo-ask-ai" type="button" disabled data-i18n="ask_photo">Ask AI about this photo</button>
+<button id="photo-cancel" type="button" class="secondary" hidden data-i18n="remove_photo">Remove photo</button>
 <button type="submit">Ask AI</button>
 </div>
 </form>
 </section>
-<section><h2>Response</h2><pre id="result">Your response will appear here and be spoken aloud.</pre></section>
+<section><h2 data-i18n="response">Response</h2><pre id="result" data-i18n="response_placeholder">Your response will appear here and be spoken aloud.</pre></section>
 <nav class="navlinks"><a href="/admin/">Admin / Settings</a><a href="/diagnostics/">Diagnostics</a><a href="/contact/">Contact</a><a href="/sos-receiver/">SOS Receiver</a><a href="/privacy/">Privacy</a></nav>
 <section id="consent-panel" class="consent-gate" role="dialog" aria-modal="true" aria-labelledby="consent-title">
-<div class="consent-card"><p class="eyebrow">WELCOME</p><h2 id="consent-title">Before you begin</h2>
-<p>Photos and voice requests may be processed by this app, Cloudflare and Google Gemini. After you accept, each photo you submit for AI analysis is saved automatically: signed-in users get private account history, while guests get private history tied to this browser for 30 days. You can turn photo saving off in Admin.</p>
-<p>The Terms &amp; Conditions and Privacy pages contain the complete safety and data details.</p>
+<div class="consent-card"><p class="eyebrow" data-i18n="welcome">WELCOME</p><h2 id="consent-title" data-i18n="before_begin">Before you begin</h2>
+<p data-i18n="consent_intro">Photos and voice requests may be processed by this app, Cloudflare and Google Gemini. After you accept, each photo you submit for AI analysis is saved automatically: signed-in users get private account history, while guests get private history tied to this browser for 30 days. You can turn photo saving off in Admin.</p>
+<p data-i18n="consent_details">The Terms &amp; Conditions and Privacy pages contain the complete safety and data details.</p>
 <p>Read the <a href="/terms/">Terms &amp; Conditions</a> and <a href="/privacy/">Privacy details</a> before continuing. You can also <a href="/account/">sign in or create an account</a>.</p>
-<label class="consent-check" for="consent-terms-check"><input id="consent-terms-check" type="checkbox"> I have read and agree to the Terms &amp; Conditions and Privacy notice.</label>
+<label class="consent-check" for="consent-terms-check"><input id="consent-terms-check" type="checkbox"> <span data-i18n="consent_check">I have read and agree to the Terms &amp; Conditions and Privacy notice.</span></label>
 <p id="consent-status" class="hint" role="status" aria-live="polite"></p>
-<div class="consent-actions"><button id="consent-accept" type="button" disabled>Accept &amp; continue</button><button id="consent-reject" type="button" class="secondary">Reject</button></div></div></section>
+<div class="consent-actions"><button id="consent-accept" type="button" disabled data-i18n="consent_accept">Accept &amp; continue</button><button id="consent-reject" type="button" class="secondary" data-i18n="consent_reject">Reject</button></div></div></section>
 <button data-action="repeat">Repeat response</button><button data-action="stop">Stop speech</button>
-</main><script type="module" src="/shared/app.js?v=20261117-release5"></script><script type="module" src="/shared/site-nav.js?v=20261117-release5"></script></body></html>
+</main><script type="module" src="/shared/app.js?v=20261117-release6"></script><script type="module" src="/shared/site-nav.js?v=20261117-release6"></script></body></html>

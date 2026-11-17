@@ -1,33 +1,5 @@
 import { getSettings } from './settings.js?v=20261117-release1';
 
-let shutterAudioContext=null;
-export function primeShutterAudio(){
- try{
-  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
-  if(!AudioContextClass)return false;
-  if(!shutterAudioContext)shutterAudioContext=new AudioContextClass();
-  if(shutterAudioContext.state==='suspended')void shutterAudioContext.resume().catch(()=>{});
-  return true;
- }catch{return false;}
-}
-export async function playShutterClick(){
- try{
-  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
-  if(!AudioContextClass)return false;
-  if(!shutterAudioContext)shutterAudioContext=new AudioContextClass();
-  if(shutterAudioContext.state==='suspended')await shutterAudioContext.resume();
-  const length=Math.max(1,Math.floor(shutterAudioContext.sampleRate*.045));
-  const buffer=shutterAudioContext.createBuffer(1,length,shutterAudioContext.sampleRate);
-  const data=buffer.getChannelData(0);
-  for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*(1-i/length);
-  const source=shutterAudioContext.createBufferSource();source.buffer=buffer;
-  const filter=shutterAudioContext.createBiquadFilter();filter.type='highpass';filter.frequency.value=1200;
-  const gain=shutterAudioContext.createGain();gain.gain.setValueAtTime(.18,shutterAudioContext.currentTime);gain.gain.exponentialRampToValueAtTime(.001,shutterAudioContext.currentTime+.045);
-  source.connect(filter);filter.connect(gain);gain.connect(shutterAudioContext.destination);source.start();
-  return true;
- }catch{return false;}
-}
-
 const canvasBlob=(canvas,type,quality)=>new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('The browser could not compress this photo.')) ,type,quality));
 
 /** Re-encode every selected image locally so EXIF/location metadata is dropped. */
@@ -72,8 +44,7 @@ export function captureUrl() {
  return base+'/capture?t='+Date.now();
 }
 async function getFrame() {
- // One soft synthetic shutter click for each of the up-to-three frame requests.
- void playShutterClick();
+ // Capture silently; the web app does not synthesize a camera sound.
  const url=captureUrl(),controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);
  try{
   const response=await fetch(url,{cache:'no-store',signal:controller.signal});
