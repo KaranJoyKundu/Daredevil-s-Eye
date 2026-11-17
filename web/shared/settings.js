@@ -12,7 +12,7 @@ const DEFAULTS = Object.freeze({
   captureCount: 3,
   requirePhotoConfirmation: true,
   savePhotoHistory: true,
-  speechLanguage: 'en-US',
+  speechLanguage: 'bn-BD',
   speechInputMode: 'auto',
   speechInputLanguage: 'bn-BD',
   sosShakeEnabled: false,
