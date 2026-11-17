@@ -586,14 +586,16 @@ test('SOS receiver refuses private, local and untrusted push endpoints',async()=
 
 test('account-saved Gemini API keys are encrypted at rest and reused only inside the Worker',async t=>{
  const originalFetch=globalThis.fetch;
- let keyRow=null,providerKeySeen='';
+ let keyRow=null,providerKeySeen='',restHeaders=null,authHeaders=null;
  t.after(()=>{globalThis.fetch=originalFetch;});
  globalThis.fetch=async(input,init={})=>{
   const url=new URL(String(input));
   if(url.origin==='https://supabase.example.test'&&url.pathname==='/auth/v1/user'){
+   authHeaders=init.headers;
    return new Response(JSON.stringify({id:'11111111-1111-4111-8111-111111111111',email:'owner@example.test'}),{status:200,headers:{'content-type':'application/json'}});
   }
   if(url.origin==='https://supabase.example.test'&&url.pathname==='/rest/v1/user_api_keys'){
+   restHeaders=init.headers;
    if(init.method==='POST'){keyRow=JSON.parse(init.body);return new Response(null,{status:201});}
    return new Response(JSON.stringify(keyRow?[keyRow]:[]),{status:200,headers:{'content-type':'application/json'}});
   }
@@ -613,8 +615,8 @@ test('account-saved Gemini API keys are encrypted at rest and reused only inside
  };
  const env={
   SUPABASE_URL:'https://supabase.example.test',
-  SUPABASE_ANON_KEY:'test-anon-key',
-  SUPABASE_SERVICE_ROLE_KEY:'test-service-role-key',
+  SUPABASE_PUBLISHABLE_KEY:'sb_publishable_test-public-key',
+  SUPABASE_SECRET_KEY:'sb_secret_test-server-key',
   API_KEY_ENCRYPTION_KEY:'test-encryption-secret-with-more-than-thirty-two-bytes'
  };
  const apiKey='AIzaSy-test-personal-gemini-key-for-account-storage';
@@ -631,6 +633,10 @@ test('account-saved Gemini API keys are encrypted at rest and reused only inside
  assert.notEqual(keyRow.key_ciphertext,apiKey);
  assert.equal(JSON.stringify(keyRow).includes(apiKey),false);
  assert.equal(JSON.stringify(savedData).includes(apiKey),false);
+ assert.equal(restHeaders.apikey,'sb_secret_test-server-key');
+ assert.equal(restHeaders.Authorization,undefined,'modern sb_secret keys must not be sent as Bearer JWTs');
+ assert.equal(authHeaders.apikey,'sb_publishable_test-public-key');
+ assert.equal(authHeaders.Authorization,'Bearer valid-access-token');
 
  const analysis=await handleApi(req('/api/describe',{
   image,model:'gemini-3.8-flash',responseStyle:'concise'
@@ -680,8 +686,8 @@ test('opted-in AI history stores private JPEG, answer, prompt, model, token coun
  };
  const env={
   SUPABASE_URL:'https://supabase.example.test',
-  SUPABASE_ANON_KEY:'test-anon-key',
-  SUPABASE_SERVICE_ROLE_KEY:'test-service-role-key',
+  SUPABASE_PUBLISHABLE_KEY:'sb_publishable_test-public-key',
+  SUPABASE_SECRET_KEY:'sb_secret_test-server-key',
   IP_HASH_SECRET:'private-fingerprint-secret'
  };
  const response=await handleApi(req('/api/describe',{
@@ -761,4 +767,16 @@ test('account write routes reject missing and cross-origin Origin headers',async
   body:JSON.stringify({email:'a@example.test',password:'a-very-long-test-password'})
  }),env);
  assert.equal(cross.status,403);
+});
+
+
+test('legacy Supabase anon and service_role key names remain supported for older projects',async()=>{
+ const response=await handleApi(new Request('https://local.test/api/account/session'),{
+  SUPABASE_URL:'https://supabase.example.test',
+  SUPABASE_ANON_KEY:'legacy-anon-jwt',
+  SUPABASE_SERVICE_ROLE_KEY:'legacy-service-role-jwt'
+ });
+ assert.equal(response.status,200);
+ const data=await response.json();
+ assert.equal(data.authenticated,false);
 });
