@@ -307,6 +307,22 @@ async function handleAccountApi(request,env,url) {
     if(!response.ok)return json({error:'Could not delete the saved API key.'},502);
     return json({ok:true,configured:false});
   }
+  const historyItemMatch=path.match(/^\\/api\\/account\\/history\\/([0-9a-f-]{36})$/i);
+  if(historyItemMatch&&request.method==='DELETE'){
+    const id=historyItemMatch[1];
+    const selected=await supabaseRest(env,'ai_history?select=photo_path&id=eq.'+encodeURIComponent(id)+'&user_id=eq.'+encodeURIComponent(user.id));
+    if(!selected.ok)return json({error:'Could not find that history record.'},404);
+    const rows=await selected.json().catch(()=>[]);
+    if(!rows.length)return json({error:'That history record was not found in your account.'},404);
+    for(const row of rows){
+      if(row.photo_path){
+        try{await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:{apikey:String(env.SUPABASE_SERVICE_ROLE_KEY),Authorization:'Bearer '+String(env.SUPABASE_SERVICE_ROLE_KEY)}});}catch{}
+      }
+    }
+    const deleted=await supabaseRest(env,'ai_history?id=eq.'+encodeURIComponent(id)+'&user_id=eq.'+encodeURIComponent(user.id),{method:'DELETE'});
+    if(!deleted.ok)return json({error:'Could not delete that history record.'},502);
+    return json({ok:true,deleted:true});
+  }
   if(path==='/api/account/history'&&request.method==='GET'){
     const query='ai_history?select=id,request_type,question,response_text,model,attempted_models,response_language,total_tokens,photo_path,photo_size_bytes,created_at&user_id=eq.'+encodeURIComponent(user.id)+'&order=created_at.desc&limit=50';
     const response=await supabaseRest(env,query);
