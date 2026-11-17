@@ -23,6 +23,66 @@ function decodeBase64Url(value) {
   const binary = atob(base64);
   return Uint8Array.from(binary, character => character.charCodeAt(0));
 }
+function concatBytes(...chunks) {
+  const length=chunks.reduce((sum,chunk)=>sum+chunk.length,0);
+  const output=new Uint8Array(length);
+  let offset=0;
+  for(const chunk of chunks){output.set(chunk,offset);offset+=chunk.length;}
+  return output;
+}
+async function hmacSha256(keyBytes,dataBytes) {
+  const key=await crypto.subtle.importKey('raw',keyBytes,{name:'HMAC',hash:'SHA-256'},false,['sign']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC',key,dataBytes));
+}
+async function hkdfExpand(prk,info,length) {
+  let previous=new Uint8Array(0),output=new Uint8Array(0),counter=1;
+  while(output.length<length){
+    previous=await hmacSha256(prk,concatBytes(previous,info,Uint8Array.of(counter)));
+    output=concatBytes(output,previous);
+    counter+=1;
+  }
+  return output.slice(0,length);
+}
+async function encryptWebPushPayload(subscription,payloadText) {
+  const uaPublicBytes=decodeBase64Url(subscription.keys?.p256dh||'');
+  const authSecret=decodeBase64Url(subscription.keys?.auth||'');
+  if(uaPublicBytes.length!==65||uaPublicBytes[0]!==4||authSecret.length!==16){
+    throw new Error('Invalid Web Push subscription keys.');
+  }
+  const uaPublicKey=await crypto.subtle.importKey(
+    'raw',uaPublicBytes,{name:'ECDH',namedCurve:'P-256'},false,[]
+  );
+  const appPair=await crypto.subtle.generateKey(
+    {name:'ECDH',namedCurve:'P-256'},true,['deriveBits']
+  );
+  const appPublicBytes=new Uint8Array(await crypto.subtle.exportKey('raw',appPair.publicKey));
+  const sharedSecret=new Uint8Array(await crypto.subtle.deriveBits(
+    {name:'ECDH',public:uaPublicKey},appPair.privateKey,256
+  ));
+  const keyInfo=concatBytes(
+    encoder.encode('WebPush: info'),Uint8Array.of(0),uaPublicBytes,appPublicBytes
+  );
+  const authPrk=await hmacSha256(authSecret,sharedSecret);
+  const inputKeyingMaterial=await hkdfExpand(authPrk,keyInfo,32);
+
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  const contentPrk=await hmacSha256(salt,inputKeyingMaterial);
+  const cek=await hkdfExpand(
+    contentPrk,concatBytes(encoder.encode('Content-Encoding: aes128gcm'),Uint8Array.of(0)),16
+  );
+  const nonce=await hkdfExpand(
+    contentPrk,concatBytes(encoder.encode('Content-Encoding: nonce'),Uint8Array.of(0)),12
+  );
+  // RFC 8291 final-record delimiter is 0x02; AES-GCM appends the 16-byte tag.
+  const plaintext=concatBytes(encoder.encode(payloadText),Uint8Array.of(2));
+  const aesKey=await crypto.subtle.importKey('raw',cek,{name:'AES-GCM'},false,['encrypt']);
+  const ciphertext=new Uint8Array(await crypto.subtle.encrypt(
+    {name:'AES-GCM',iv:nonce,tagLength:128},aesKey,plaintext
+  ));
+  const rs=Uint8Array.of(0,0,16,0); // 4096 bytes, network byte order.
+  const header=concatBytes(salt,rs,Uint8Array.of(appPublicBytes.length),appPublicBytes);
+  return concatBytes(header,ciphertext);
+}
 function safeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
   let mismatch = a.length ^ b.length;
@@ -83,13 +143,20 @@ export class SOSRoom {
         { name: 'ECDSA', hash: 'SHA-256' }, privateKey, encoder.encode(unsignedToken)
       );
       const authorization = 'vapid t=' + unsignedToken + '.' + base64Url(signature) + ', k=' + keys.publicKey;
-      // Empty payloads require no Web Push content encryption. The service
-      // worker displays a generic urgent notification, then the receiver
-      // page retrieves the event over its authenticated poll endpoint.
+      const encryptedBody=await encryptWebPushPayload(
+        subscription,
+        'An SOS alert may need your attention. Open Daredevil’s Eye to review it.'
+      );
       const response = await fetch(subscription.endpoint, {
         method: 'POST',
-        headers: { Authorization: authorization, TTL: '120', Urgency: 'high' },
-        body: ''
+        headers: {
+          Authorization: authorization,
+          TTL: '120',
+          Urgency: 'high',
+          'Content-Encoding': 'aes128gcm',
+          'Content-Type': 'application/octet-stream'
+        },
+        body: encryptedBody
       });
       return { attempted: true, success: response.ok, status: response.status };
     } catch {
