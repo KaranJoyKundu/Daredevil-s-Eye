@@ -1,13 +1,52 @@
-import {requestPublic} from '/shared/api.js?v=20261116-auth1';
+import {requestPublic} from '/shared/api.js?v=20261117-release1';
 
 const $=selector=>document.querySelector(selector);
 const DEVICE_KEY='daredevils-eye.receiver.device.v2';
-const TOKEN_KEY='daredevils-eye.receiver.token.v2';
-let deviceId=sessionStorage.getItem(DEVICE_KEY)||'';
-let receiverToken=sessionStorage.getItem(TOKEN_KEY)||'';
+const TOKEN_KEY='daredevils-eye.receiver.token.v3';
+const LEGACY_TOKEN_KEY='daredevils-eye.receiver.token.v2';
+const LEGACY_DEVICE_KEY='daredevils-eye.receiver.device.v2';
+let deviceId=localStorage.getItem(DEVICE_KEY)||localStorage.getItem(LEGACY_DEVICE_KEY)||'';
+let receiverToken=localStorage.getItem(TOKEN_KEY)||sessionStorage.getItem(LEGACY_TOKEN_KEY)||'';
+if(deviceId)localStorage.setItem(DEVICE_KEY,deviceId);
+if(receiverToken)localStorage.setItem(TOKEN_KEY,receiverToken);
 let pollTimer=null,speechTimer=null,lastEventId='',audioContext=null,oscillator=null,gainNode=null,alarmLoop=null,wakeLock=null,isConnected=false,polling=false;
 
 function updateStatus(message){$('#receiver-status').textContent=message;}
+function base64UrlToBytes(value){
+ const base64=String(value).replace(/-/g,'+').replace(/_/g,'/')+'==='.slice((String(value).length+3)%4);
+ const binary=atob(base64);
+ return Uint8Array.from(binary,character=>character.charCodeAt(0));
+}
+async function registerPushNotifications(permissionPromise){
+ if(!('serviceWorker'in navigator)||!('PushManager'in window)||!('Notification'in window)){
+  throw new Error('This browser does not support background push notifications. Foreground polling will still work.');
+ }
+ if(Notification.permission==='denied')throw new Error('Notifications are blocked for this site. Allow notifications in Android site settings.');
+ if(Notification.permission!=='granted'){
+  const permission=permissionPromise?await permissionPromise:await Notification.requestPermission();
+  if(permission!=='granted')throw new Error('Notification permission was not granted. Foreground polling will still work.');
+ }
+ const registration=await navigator.serviceWorker.register('/sw.js',{scope:'/'});
+ const keyData=await requestPublic('/api/sos/push-key',{deviceId});
+ if(!keyData.applicationServerKey)throw new Error('The server did not provide a push application key.');
+ const applicationServerKey=base64UrlToBytes(keyData.applicationServerKey);
+ let subscription=await registration.pushManager.getSubscription();
+ if(subscription){
+  const savedKey=subscription.options?.applicationServerKey;
+  const savedBytes=savedKey?Array.from(new Uint8Array(savedKey)):null;
+  const expectedBytes=Array.from(applicationServerKey);
+  if(!savedBytes||savedBytes.length!==expectedBytes.length||savedBytes.some((byte,index)=>byte!==expectedBytes[index])){
+   await subscription.unsubscribe();
+   subscription=null;
+  }
+ }
+ if(!subscription){
+  subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey});
+ }
+ const saved=await requestPublic('/api/sos/subscribe',{deviceId,receiverToken,subscription:subscription.toJSON()});
+ if(!saved.pushSubscribed)throw new Error('The server could not save this receiver subscription.');
+ return true;
+}
 function setConnected(connected){
  $('#pairing-panel').hidden=connected;
  $('#connected-panel').hidden=!connected;
@@ -55,7 +94,7 @@ function showAlert(event){
 }
 function clearReceiverSession(message){
  stopAlarm();isConnected=false;
- sessionStorage.removeItem(DEVICE_KEY);sessionStorage.removeItem(TOKEN_KEY);
+ localStorage.removeItem(DEVICE_KEY);localStorage.removeItem(TOKEN_KEY);sessionStorage.removeItem(LEGACY_TOKEN_KEY);
  deviceId='';receiverToken='';
  if(pollTimer)clearTimeout(pollTimer);pollTimer=null;
  setConnected(false);$('#emergency-alert').hidden=true;
@@ -83,7 +122,7 @@ $('#pair-receiver').addEventListener('click',async()=>{
  try{
   const result=await requestPublic('/api/sos/pair',{code});
   deviceId=result.deviceId;receiverToken=result.receiverToken;
-  sessionStorage.setItem(DEVICE_KEY,deviceId);sessionStorage.setItem(TOKEN_KEY,receiverToken);
+  localStorage.setItem(DEVICE_KEY,deviceId);localStorage.setItem(TOKEN_KEY,receiverToken);
   // Refresh so the receiver opens directly into its paired state.
   location.replace('/sos-receiver/?paired=1');
  }catch(error){updateStatus('Pairing failed: '+error.message);}
@@ -93,10 +132,28 @@ $('#enable-alarm').addEventListener('click',async()=>{
  const button=$('#enable-alarm');button.disabled=true;
  try{
   if(!deviceId||!receiverToken)throw new Error('This tab has no valid receiver session.');
-  await unlockAudio();await keepScreenAwake();
+  // Start gesture-gated browser permissions and audio unlock before the
+  // first await so Android can associate them with this button tap.
+  let permissionPromise=Promise.resolve('unsupported');
+  if('Notification'in window){
+   permissionPromise=Notification.permission==='default'
+    ?Notification.requestPermission().catch(()=> 'denied')
+    :Promise.resolve(Notification.permission);
+  }
+  const audioUnlock=unlockAudio();
+  const screenWake=keepScreenAwake();
+  await audioUnlock;
+  await screenWake;
+  let pushReady=false,pushError='';
+  try{pushReady=await registerPushNotifications(permissionPromise);}catch(error){pushError=error.message||'Push registration failed.';}
   isConnected=true;
-  updateStatus('Alarm enabled. Receiver is connected and listening.');
-  $('#receiver-detail').textContent='Connected. Keep this page open and the phone awake.';
+  updateStatus(pushReady
+   ? 'Receiver connected. Screen-off notifications are enabled; keep notifications allowed.'
+   : 'Receiver connected with foreground polling only. '+pushError);
+  $('#receiver-detail').textContent=pushReady
+   ? 'Push notifications are registered. Android may show an alert while the screen is off; notification permission, connectivity and battery settings still apply.'
+   : 'Foreground polling is active, but this receiver may miss alerts while the screen is off or the browser is suspended.';
+  if(pollTimer)clearTimeout(pollTimer);pollTimer=null;
   poll();
  }catch(error){updateStatus('Could not enable the receiver: '+error.message);}
  finally{button.disabled=false;}
@@ -121,8 +178,18 @@ document.addEventListener('visibilitychange',async()=>{
 });
 if(deviceId&&receiverToken){
  setConnected(true);
- updateStatus('Pairing saved in this tab. Tap Enable alarm & start listening to resume.');
+ isConnected=true;
+ updateStatus('Receiver pairing is saved on this device. Checking for SOS alerts. Tap Enable alarm to unlock sound and enable screen-off notifications.');
+ poll();
 } else {
  setConnected(false);
  updateStatus('Enter the six-character invitation code from the sender phone.');
+}
+
+if('serviceWorker'in navigator){
+ navigator.serviceWorker.addEventListener('message',event=>{
+  if(event.data?.type==='DAREDEVILS_EYE_SOS_PUSH'){
+   if(deviceId&&receiverToken){isConnected=true;setConnected(true);if(pollTimer)clearTimeout(pollTimer);pollTimer=null;poll();}
+  }
+ });
 }

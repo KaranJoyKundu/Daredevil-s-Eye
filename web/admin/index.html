@@ -3,18 +3,22 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#07111f"><title>Admin / Settings · Daredevil's Eye</title>
-<link rel="stylesheet" href="/shared/style.css?v=20261116-sos3">
+<link rel="stylesheet" href="/shared/style.css?v=20261117-release2">
 </head>
 <body><main>
 <header><p class="eyebrow">DEVICE SETTINGS</p><h1>Admin / Settings</h1><p class="subtitle">Tune the camera, AI behaviour and spoken voice. Settings stay in this browser on this device.</p></header>
 
-<nav class="quick-jump" aria-label="Admin shortcuts"><a href="#camera-settings">📷 <span>Camera & SOS</span></a><a href="#ai-settings">✨ <span>AI models</span></a><a href="#voice-settings">🎙 <span>Voice</span></a><a href="#image-lab">🧪 <span>Image tester</span></a><a href="/diagnostics/">✅ <span>Diagnostics</span></a><a href="/action/">⌂ <span>Home</span></a></nav>
+<nav class="quick-jump" aria-label="Admin shortcuts"><a href="#camera-settings">📷 <span>Camera & SOS</span></a><a href="#ai-settings">✨ <span>AI models</span></a><a href="#voice-settings">🎙 <span>Voice</span></a><a href="#image-lab">🧪 <span>Image tester</span></a><a href="/diagnostics/">✅ <span>Diagnostics</span></a><a href="/account/">👤 <span>Account & History</span></a><a href="/action/">⌂ <span>Home</span></a></nav>
 <form id="settings-form">
 <section id="camera-settings" class="panel settings-section">
 <h2>Camera & trusted contact</h2>
 <label for="camera">ESP32-CAM address</label>
 <input id="camera" type="text" inputmode="url" required placeholder="192.168.0.104 or http://192.168.0.104">
 <small>Current camera address: http://192.168.0.104. The app adds http:// when you enter a plain IP.</small>
+<label class="inline-checkbox" for="require-photo-confirmation"><input id="require-photo-confirmation" type="checkbox" checked> Preview every phone photo before sending (recommended)</label>
+<small>When enabled, the selected camera/upload photo stays on this device until the user reviews it and presses Ask AI. Turn this off to automatically describe a selected photo.</small>
+<label class="inline-checkbox" for="save-photo-history"><input id="save-photo-history" type="checkbox"> Save photos and AI answers to my account history</label>
+<small>Optional and off by default. Requires signing in at <a href="/account/">Account & History</a>. When enabled, the compressed photo, question, response, model and usage metadata are saved privately to your account. A keyed IP fingerprint is saved with each photo record until you delete it; separate usage-only fingerprints expire after 90 days. Raw IP addresses are not stored.</small>
 <div class="field-grid">
 <div><label for="contact-name">Trusted contact name</label><input id="contact-name" maxlength="80" placeholder="Name"></div>
 <div><label for="contact-phone">Trusted contact phone</label><input id="contact-phone" type="tel" maxlength="30" placeholder="+880..."></div>
@@ -134,6 +138,6 @@
 
 <nav class="navlinks"><a href="/action/">Home</a><a href="/diagnostics/">Diagnostics</a><a href="/contact/">Contact</a><a href="/privacy/">Privacy</a></nav>
 </main>
-<script type="module" src="/admin/admin.js?v=20261116-sos3"></script>
-<script type="module" src="/shared/site-nav.js?v=20261116-nav1"></script>
+<script type="module" src="/admin/admin.js?v=20261117-release2"></script>
+<script type="module" src="/shared/site-nav.js?v=20261117-release2"></script>
 </body></html>

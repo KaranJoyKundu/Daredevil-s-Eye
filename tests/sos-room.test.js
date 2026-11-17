@@ -40,7 +40,9 @@ test('SOS room issues a high-entropy receiver token and accepts sender trigger',
  assert.equal(data.receiverToken.length,64);
  const trigger=await room.fetch(post('/trigger',{}));
  const event=await trigger.json();
- assert.equal(event.sent,true);
+ assert.equal(event.queued,true);
+ assert.equal(event.notificationAttempted,false);
+ assert.match(event.message,/no push notification was accepted/i);
  const poll=await room.fetch(post('/poll',{receiverToken:data.receiverToken}));
  const active=await poll.json();
  assert.equal(active.active,true);

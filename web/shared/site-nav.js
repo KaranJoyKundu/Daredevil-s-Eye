@@ -1,6 +1,6 @@
 const links = [
   ['Home','/action/'],['Blind mode','/blind/'],['Admin / Settings','/admin/'],
-  ['Diagnostics','/diagnostics/'],['Help','/help/'],['SOS Receiver','/sos-receiver/'],
+  ['Diagnostics','/diagnostics/'],['Account & History','/account/'],['Help','/help/'],['SOS Receiver','/sos-receiver/'],
   ['Contact','/contact/'],['Privacy','/privacy/']
 ];
 const bar=document.createElement('div');
@@ -14,6 +14,11 @@ for(const [label,href] of links){
   menu.append(link);
 }
 document.body.prepend(bar);
-document.addEventListener('keydown',event=>{
-  if(event.key==='Escape')bar.querySelector('details')?.removeAttribute('open');
+const details=bar.querySelector('details');
+document.addEventListener('pointerdown',event=>{
+  if(details?.open&&!bar.querySelector('.site-menu')?.contains(event.target))details.removeAttribute('open');
 });
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape')details?.removeAttribute('open');
+});
+bar.querySelectorAll('.site-menu nav a').forEach(link=>link.addEventListener('click',()=>details?.removeAttribute('open')));

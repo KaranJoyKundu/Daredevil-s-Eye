@@ -1,11 +1,11 @@
-import { captureImage, blobToDataUrl } from './camera.js?v=20261116-sos3';
-import { requestAI } from './api.js?v=20261116-sos3';
-import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261116-sos3';
-import { getSettings, saveSettings } from './settings.js?v=20261116-sos3';
-import { hasCurrentConsent, acceptConsent } from './consent.js?v=20261116-sos3';
-import { createShakeSequenceTracker, getShakeMagnitude, matchSosVoiceCommand } from './sos-triggers.js?v=20261116-sos3';
+import { captureImage, blobToDataUrl, compressImageToJpeg, primeShutterAudio } from './camera.js?v=20261117-release1';
+import { requestAI } from './api.js?v=20261117-release2';
+import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release2';
+import { getSettings, saveSettings } from './settings.js?v=20261117-release2';
+import { hasCurrentConsent, acceptConsent } from './consent.js?v=20261117-release1';
+import { createShakeSequenceTracker, getShakeMagnitude, matchSosVoiceCommand } from './sos-triggers.js?v=20261117-release1';
 const $=selector=>document.querySelector(selector),status=$('#status');
-let activeRecognition=null,voiceStarting=false,phonePhoto=null,revealRun=0,lastAnswer='';
+let activeRecognition=null,voiceStarting=false,phonePhoto=null,phonePhotoUrl=null,revealRun=0,lastAnswer='';
 let sosArmedUntil=0,sosArmTimer=null,deepLinkHandled=false;
 const requestedAction=new URLSearchParams(location.search).get('action');
 const isBlindMode=location.pathname.replace(/\/+$/,'')==='/blind';
@@ -59,10 +59,59 @@ function startSosVoiceListener(){
   if(!sosVoiceBlocked&&!sosVoiceRestartTimer)sosVoiceRestartTimer=setTimeout(()=>{sosVoiceRestartTimer=null;startSosVoiceListener();},1800);
  }
 }
+function localizeSpeech(message){
+ const settings=getSettings();
+ if(settings.speechLanguage!=='bn-BD')return String(message||'');
+ const exact={
+  'SOS countdown cancelled. No alert was sent.':'এসওএস বাতিল করা হয়েছে। কোনো সতর্কবার্তা পাঠানো হয়নি।',
+  'SOS cancelled. No alert was sent.':'এসওএস বাতিল করা হয়েছে। কোনো সতর্কবার্তা পাঠানো হয়নি।',
+  'Three deliberate shakes detected. The SOS alert will be sent in eight seconds. Say cancel SOS or tap Cancel SOS now to stop it.':'তিনবার ইচ্ছাকৃতভাবে ফোন নাড়ানো হয়েছে। আট সেকেন্ড পর এসওএস যাবে। বাতিল করতে “এসওএস বাতিল” বলুন অথবা বাতিল বোতাম চাপুন।',
+  'Voice SOS confirmed. The alert will be sent in five seconds. Say cancel SOS or tap Cancel SOS now to stop it.':'ভয়েস এসওএস নিশ্চিত হয়েছে। পাঁচ সেকেন্ড পর সতর্কবার্তা যাবে। বাতিল করতে “এসওএস বাতিল” বলুন অথবা বাতিল বোতাম চাপুন।',
+  'SOS request cancelled. No alert was sent.':'এসওএস অনুরোধ বাতিল হয়েছে। কোনো সতর্কবার্তা পাঠানো হয়নি।',
+  'Voice SOS confirmation timed out. No alert was sent.':'ভয়েস এসওএস নিশ্চিত করার সময় শেষ হয়েছে। কোনো সতর্কবার্তা পাঠানো হয়নি।',
+  'SOS wake phrase heard. To send an alert, say confirm SOS within twelve seconds. Say cancel SOS to cancel.':'এসওএস সংকেত শোনা গেছে। সতর্কবার্তা পাঠাতে বারো সেকেন্ডের মধ্যে “নিশ্চিত করুন” বলুন। বাতিল করতে “এসওএস বাতিল” বলুন।',
+  'There is no answer to repeat yet.':'পুনরায় শোনানোর মতো কোনো উত্তর এখনো নেই।',
+  'Taking several photos. Hold still.':'তিনটি ছবি তোলা হচ্ছে। অনুগ্রহ করে ক্যামেরা স্থির রাখুন।',
+  'Sending the clearest photo for analysis. Selecting the sharpest of up to three frames.':'সবচেয়ে পরিষ্কার ছবিটি বিশ্লেষণের জন্য পাঠানো হচ্ছে। সর্বোচ্চ তিনটি ছবির মধ্যে সবচেয়ে স্পষ্ট ছবিটি বেছে নেওয়া হচ্ছে।',
+  'Speaking the answer. The written response is appearing as I speak…':'উত্তরটি বলা হচ্ছে। বলার সঙ্গে সঙ্গে লেখাটিও দেখানো হচ্ছে।',
+  'What would you like to know? Speak Bangla, English or both, then pause.':'আপনি কী জানতে চান? বাংলায় প্রশ্ন করুন, তারপর একটু থামুন।',
+  'No speech was recognised. Please try again.':'আপনার কথা বোঝা যায়নি। অনুগ্রহ করে আবার বলুন।',
+  'Emergency alert sent to the paired receiver. This does not call emergency services.':'জোড়া লাগানো ফোনে জরুরি সতর্কবার্তা পাঠানোর অনুরোধ করা হয়েছে। এটি জরুরি সেবায় ফোন করে না।',
+  'SOS is stored. The push service accepted the notification request, but delivery is not confirmed.':'এসওএস সংরক্ষণ করা হয়েছে। নোটিফিকেশন সেবা বার্তাটি গ্রহণ করেছে, তবে ফোনে পৌঁছেছে কি না নিশ্চিত করা যায়নি।',
+  'SOS is stored, but no push notification was accepted. Keep the receiver connected to the internet and notifications enabled.':'এসওএস সংরক্ষণ করা হয়েছে, কিন্তু পুশ নোটিফিকেশন গ্রহণ করা হয়নি। রিসিভার ফোনে ইন্টারনেট ও নোটিফিকেশন চালু রাখুন।',
+  'SOS confirmed. Sending the alert now.':'এসওএস নিশ্চিত হয়েছে। এখন সতর্কবার্তা পাঠানো হচ্ছে।',
+  'SOS shortcut opened. Tap the SOS button once within thirty seconds to confirm sending the alert.':'এসওএস শর্টকাট চালু হয়েছে। সতর্কবার্তা পাঠাতে ত্রিশ সেকেন্ডের মধ্যে এসওএস বোতাম চাপুন।',
+  'SOS is armed. Tap SOS again within five seconds to confirm and send the alert. No alert has been sent yet.':'এসওএস প্রস্তুত। সতর্কবার্তা পাঠাতে পাঁচ সেকেন্ডের মধ্যে আবার এসওএস বোতাম চাপুন। এখনো কোনো সতর্কবার্তা পাঠানো হয়নি।',
+  'SOS confirmation expired. No alert was sent.':'এসওএস নিশ্চিত করার সময় শেষ হয়েছে। কোনো সতর্কবার্তা পাঠানো হয়নি।',
+  'Privacy notice accepted on this device.':'এই ফোনে গোপনীয়তার বিজ্ঞপ্তি গ্রহণ করা হয়েছে।',
+  'Please review and accept the privacy notice before using the camera.':'ক্যামেরা ব্যবহারের আগে অনুগ্রহ করে গোপনীয়তার বিজ্ঞপ্তিটি পড়ে সম্মতি দিন।',
+  'I could not complete that action.':'দুঃখিত, কাজটি সম্পন্ন করা যায়নি। আবার চেষ্টা করুন।',
+  'No speech was recognised. Please try again.':'আপনার কথা বোঝা যায়নি। অনুগ্রহ করে আবার বলুন।',
+  'Please review and accept the privacy notice before using the camera.':'ক্যামেরা ব্যবহারের আগে অনুগ্রহ করে গোপনীয়তার বিজ্ঞপ্তিটি পড়ে সম্মতি দিন।',
+  'Photo and answer saved to your account history.':'ছবি ও উত্তর আপনার অ্যাকাউন্টের ব্যক্তিগত ইতিহাসে সংরক্ষণ করা হয়েছে।',
+  'Sign in to save this photo and answer to your private history.':'এই ছবি ও উত্তর ব্যক্তিগত ইতিহাসে সংরক্ষণ করতে আপনার অ্যাকাউন্টে প্রবেশ করুন।',
+  'Account history is not configured on the Worker yet.':'অ্যাকাউন্টের ইতিহাস সংরক্ষণের ব্যবস্থা সার্ভারে এখনো চালু হয়নি।',
+  'History saving is switched off.':'ছবি ও উত্তর সংরক্ষণের ব্যবস্থা বন্ধ আছে।',
+  'Photo ready. Review it, then press Ask AI to send it.':'ছবিটি প্রস্তুত। দেখে নিয়ে পাঠাতে “এআই-কে জিজ্ঞাসা” বোতাম চাপুন।'
+ };
+ if(exact[message])return exact[message];
+ if(/^Completed with /i.test(message))return 'ছবির বিশ্লেষণ সম্পন্ন হয়েছে।';
+ if(/^Sending the compressed photo/i.test(message))return 'সংকুচিত ছবিটি বিশ্লেষণের জন্য পাঠানো হচ্ছে।';
+ if(/^Speaking the answer/i.test(message))return 'উত্তরটি বলা হচ্ছে।';
+ if(/no bengali speech voice|no bengali speech voices/i.test(message))return 'এই ফোনে বাংলা বলার কণ্ঠস্বর পাওয়া যায়নি। অ্যান্ড্রয়েডের টেক্সট-টু-স্পিচ সেটিংসে বাংলা ভয়েস ডেটা ইনস্টল করুন।';
+ if(/quota|429|resource.exhausted/i.test(message))return 'এআই সেবার ব্যবহারের সীমা আপাতত পূর্ণ হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন অথবা অ্যাডমিন সেটিংসে নিজের জেমিনি এপিআই কী ব্যবহার করুন।';
+ if(/camera|capture|cors|network isolation/i.test(message))return 'ক্যামেরার সঙ্গে সংযোগ করা যায়নি। ক্যামেরা চালু আছে কি না এবং একই ওয়াই-ফাই নেটওয়ার্কে আছে কি না পরীক্ষা করুন।';
+ if(/timed? ?out|timeout|abort/i.test(message))return 'অনুরোধটি সম্পন্ন হতে বেশি সময় লেগেছে। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।';
+ if(/microphone|speech input|record|permission/i.test(message))return 'মাইক্রোফোন ব্যবহার করা যায়নি। ব্রাউজারের মাইক্রোফোন অনুমতি পরীক্ষা করে আবার চেষ্টা করুন।';
+ if(/internet|fetch failed|network|could not reach gemini/i.test(message))return 'ইন্টারনেট সংযোগে সমস্যা হয়েছে। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।';
+ if(/blur|dark|unclear|image quality/i.test(message))return 'ছবিটি যথেষ্ট পরিষ্কার নয়। ক্যামেরা স্থির রাখুন এবং ভালো আলোতে আবার ছবি তুলুন।';
+ return 'দুঃখিত, কাজটি সম্পন্ন করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+}
 function speakSosStatus(message){
- const resume=()=>{if(isBlindMode&&getSettings().sosVoiceEnabled&&!document.hidden&&!sosVoiceBlocked&&!sosDispatching)startSosVoiceListener();};
+ const settings=getSettings();
+ const resume=()=>{if(isBlindMode&&settings.sosVoiceEnabled&&!document.hidden&&!sosVoiceBlocked&&!sosDispatching)startSosVoiceListener();};
  stopSosVoiceListener();
- const utterance=speak(message,{lang:'en-US',onEnd:resume,onError:resume});
+ const utterance=speak(localizeSpeech(message),{lang:settings.speechLanguage||'en-US',onEnd:resume,onError:error=>{if(status)status.textContent=settings.speechLanguage==='bn-BD'?localizeSpeech(error):String(error);resume();}});
  if(!utterance)resume();
 }
 function setSosCancelVisibility(visible){
@@ -144,12 +193,13 @@ document.addEventListener('visibilitychange',()=>{
   shakeTracker.reset();
  }else syncSosAutomation();
 });
-function announce(message){if(status)status.textContent=message;speakSosStatus(message);}
+function announce(message){const settings=getSettings(),spoken=localizeSpeech(message);if(status)status.textContent=settings.speechLanguage==='bn-BD'?spoken:message;speakSosStatus(message);}
 function actionVibration(action){const patterns={describe:[65],ask:[55,90,55],sos:[260],repeat:[45,65,45,65,45],help:[35,65,35]};vibrate(patterns[action]||60);}
 async function acquireWakeLock(){if(!navigator.wakeLock?.request)return null;try{return await navigator.wakeLock.request('screen');}catch{return null;}}
 async function releaseWakeLock(lock){try{if(lock&&!lock.released)await lock.release();}catch{}}
 function spokenError(error){
- const message=String(error?.message||error||'');
+ const settings=getSettings(),message=String(error?.message||error||'');
+ if(settings.speechLanguage==='bn-BD')return localizeSpeech(message);
  if(/quota|429|rate.?limit|resource.exhausted/i.test(message))return 'The AI service has reached its request limit. Please wait for the quota to reset or use your own Gemini key in Admin.';
  if(/camera|capture|cors|network isolation/i.test(message))return 'I could not reach the camera. Check that it is powered on and connected to the same Wi-Fi network.';
  if(/timed? ?out|timeout|abort/i.test(message))return 'That request took too long. Please try again when the connection is stable.';
@@ -167,29 +217,49 @@ async function announceAnswer(message,disclaimer=''){
  stopSosVoiceListener();
  const answer=String(message||'').trim();if(!answer){announce('There is no answer to repeat yet.');return;}lastAnswer=answer;
  if(status)status.textContent='Speaking the answer. The written response is appearing as I speak…';
- const settings=getSettings(),spokenLanguage=detectSpokenLanguage(answer),output=$('#result'),runId=++revealRun;
+ const settings=getSettings(),spokenLanguage=settings.speechLanguage==='bn-BD'?'bn-BD':detectSpokenLanguage(answer),output=$('#result'),runId=++revealRun;
  if(output)output.textContent=disclaimer?disclaimer+'\n\n':'';
  const displayPromise=revealWords(output,answer,runId);
- const speechPromise=speakResponse(answer,{lang:spokenLanguage,engine:settings.speechEngine==='gemini'?'device':settings.speechEngine,onFallback:error=>{if(status)status.textContent='Using the device voice because the selected speech service failed: '+error.message;},onEnd:()=>startSosVoiceListener()});
+ const speechText=[disclaimer,answer].filter(Boolean).join(' ');
+ const speechPromise=speakResponse(speechText,{lang:spokenLanguage,engine:settings.speechEngine==='gemini'?'device':settings.speechEngine,onFallback:error=>{if(status)status.textContent=settings.speechLanguage==='bn-BD'?'নির্বাচিত ভয়েস চালু হয়নি। ফোনের ভয়েস ব্যবহার করা হচ্ছে।':'Using the device voice because the selected speech service failed: '+error.message;},onError:error=>{if(status)status.textContent=settings.speechLanguage==='bn-BD'?localizeSpeech(error):String(error);startSosVoiceListener();},onEnd:()=>startSosVoiceListener()});
  await Promise.allSettled([displayPromise,speechPromise]);
 }
 async function run(mode,question='',imageOverride=null){
  if(!hasCurrentConsent()){announce('Please review and accept the privacy notice before using the camera.');return;}
- actionVibration(mode==='ask'?'ask':'describe');let wakeLock=null;
+ actionVibration(mode==='ask'?'ask':'describe');
+ if(!imageOverride&&!phonePhoto)primeShutterAudio();
+ let wakeLock=null;
  try{
-  wakeLock=await acquireWakeLock();announce('Taking several photos. Hold still.');
-  const imageBlob=imageOverride||phonePhoto||await captureImage(),image=await blobToDataUrl(imageBlob);
-  if(status)status.textContent='Sending the clearest photo for analysis. Selecting the sharpest of up to three frames.';
+  wakeLock=await acquireWakeLock();
+  if(!imageOverride&&!phonePhoto)announce('Taking several photos. Hold still.');
+  const sourceBlob=imageOverride||phonePhoto||await captureImage();
+  const imageBlob=sourceBlob.type==='image/jpeg'&&sourceBlob.size<3_800_000?sourceBlob:await compressImageToJpeg(sourceBlob);
+  const image=await blobToDataUrl(imageBlob);
   const settings=getSettings();
-  const result=await requestAI(mode==='ask'?'/api/ask':'/api/describe',{image,question,customPrompt:settings.customPrompt,model:settings.aiModel,waitSeconds:settings.waitSeconds,responseStyle:settings.responseStyle,responseLanguage:settings.speechLanguage});
+  if(status)status.textContent='Sending the compressed photo for analysis.';
+  const result=await requestAI(mode==='ask'&&question.trim()?'/api/ask':'/api/describe',{image,question:question.trim(),customPrompt:settings.customPrompt,model:settings.aiModel,waitSeconds:settings.waitSeconds,responseStyle:settings.responseStyle,responseLanguage:settings.speechLanguage,saveToHistory:settings.savePhotoHistory===true});
   if(result.mock)throw new Error('AI is in MOCK mode. No image was analysed.');
   if(result.provider!=='Gemini'||!result.answer)throw new Error('The AI backend did not return a verified Gemini answer.');
-  const safetyNote=/\b(safe to walk|safe to cross|clear to walk|path is safe|no danger)\b/i.test(result.answer)?' I cannot confirm that this area is safe. Continue using your cane or guide dog.':'';
-  await announceAnswer(result.answer,[result.disclaimer||'',safetyNote].filter(Boolean).join(' '));
-  if(status)status.textContent='Completed with '+(result.model||'Gemini')+'.';
+  const mentionsSafety=/\b(safe to walk|safe to cross|clear to walk|path is safe|no danger)\b/i.test(result.answer);
+  const safetyNote=mentionsSafety
+   ?(settings.speechLanguage==='bn-BD'?'আমি নিশ্চিত করতে পারি না যে এই পথটি নিরাপদ। আপনার সাদা ছড়ি বা গাইড কুকুর ব্যবহার করতে থাকুন।':' I cannot confirm that this area is safe. Continue using your cane or guide dog.')
+   :'';
+  const disclaimer=settings.speechLanguage==='bn-BD'
+   ?'এআই ভুল করতে পারে এবং বিপদ দেখতে নাও পেতে পারে। চলাচল বা নিরাপত্তার সিদ্ধান্তে শুধু এই বর্ণনার ওপর নির্ভর করবেন না।'
+   :(result.disclaimer||'');
+  await announceAnswer(result.answer,[disclaimer,safetyNote].filter(Boolean).join(' '));
+  if(status){
+   const completed=settings.speechLanguage==='bn-BD'
+    ?'ছবির বিশ্লেষণ সম্পন্ন হয়েছে। ব্যবহৃত মডেল: '+(result.model||'Gemini')
+    :'Completed with '+(result.model||'Gemini')+'.';
+   const message=settings.savePhotoHistory&&result.historyMessage
+    ?result.historyMessage
+    :completed;
+   status.textContent=settings.speechLanguage==='bn-BD'?localizeSpeech(message):message;
+  }
  }catch(error){
   const message=error.message||'Something went wrong.';revealRun++;if($('#result'))$('#result').textContent=message;if(status)status.textContent=message;
-  speak(spokenError(error),{lang:'en-US'});
+  speak(spokenError(error),{lang:getSettings().speechLanguage||'en-US'});
  }finally{await releaseWakeLock(wakeLock);startSosVoiceListener();}
 }
 async function startVoiceQuestion(){
@@ -200,7 +270,7 @@ async function startVoiceQuestion(){
  try{
   try{activeRecognition?.stop();}catch{}activeRecognition=null;if(status)status.textContent='Requesting microphone permission…';
   const settings=getSettings();
-  activeRecognition=await listenOnce({lang:settings.speechInputLanguage||'bn-BD',preferGemini:settings.speechInputMode!=='browser',
+  activeRecognition=await listenOnce({lang:settings.speechInputLanguage||'bn-BD',outputLanguage:settings.speechLanguage||'en-US',preferGemini:settings.speechInputMode!=='browser',
    onPermission:()=>{if(status)status.textContent='Microphone permission granted. Listening…';},
    onStart:()=>{if(status)status.textContent='Browser recognition connected. Speak Bangla, English or mixed speech.';},
    onInterim:text=>{if(status)status.textContent='I heard: '+text;},
@@ -214,7 +284,7 @@ async function startVoiceQuestion(){
 }
 function speakHelp(){
  actionVibration('help');
- const message='Spoken help for Daredevil’s Eye. The four main buttons are Describe, Ask AI, SOS and Repeat. Tap Describe to hear what the camera can see. Tap Ask AI, ask a question in Bangla, English or a mixture, then pause. Tap SOS once to arm it. Tap SOS again within five seconds to confirm and send an alert to your paired receiver. Tap Repeat to hear the last answer again. Spoken Help is the separate button below the four main actions. If you enable the optional SOS triggers in Admin, three deliberate shakes start an eight-second SOS countdown. The optional voice trigger listens only while Blind mode is visible: say Daredevil SOS, then say Confirm SOS; say Cancel SOS to stop a pending alert. This is an experimental tool, not a cane or guide dog. Continue using your normal mobility aid. To leave Blind mode, edit the browser address and remove the word blind between the slashes.';
+ const settings=getSettings();const message=settings.speechLanguage==='bn-BD'?'ডেয়ারডেভিলস আই-এর সহায়িকা। প্রধান চারটি বোতাম হলো বর্ণনা, এআই-কে জিজ্ঞাসা, এসওএস এবং আবার শোনান। বর্ণনা চাপলে ক্যামেরায় যা দেখা যায় তা বলা হবে। এআই-কে জিজ্ঞাসা চাপুন, বাংলায় প্রশ্ন করুন এবং কথা শেষ হলে একটু থামুন। এসওএস পাঠাতে এসওএস বোতাম দুইবার চাপুন। আবার শোনান চাপলে শেষ উত্তরটি শোনা যাবে। অ্যাডমিনে ঐচ্ছিক স্বয়ংক্রিয় এসওএস চালু করলে তিনবার ফোন নাড়ালে আট সেকেন্ডের সতর্কীকরণ সময় শুরু হবে। ভয়েস এসওএস চালু থাকলে “ডেয়ারডেভিল এসওএস” বলুন, তারপর “নিশ্চিত করুন” বলুন। বাতিল করতে “এসওএস বাতিল” বলুন। এটি পরীক্ষামূলক সহায়ক, সাদা ছড়ি বা গাইড কুকুরের বিকল্প নয়। স্বাভাবিক চলাচলের সহায়তা ব্যবহার করতে থাকুন।':'Spoken help for Daredevil’s Eye. The four main buttons are Describe, Ask AI, SOS and Repeat. Tap Describe to hear what the camera can see. Tap Ask AI, ask a question in Bangla, English or a mixture, then pause. Tap SOS once to arm it. Tap SOS again within five seconds to confirm and send an alert to your paired receiver. Tap Repeat to hear the last answer again. Spoken Help is the separate button below the four main actions. If you enable the optional SOS triggers in Admin, three deliberate shakes start an eight-second SOS countdown. The optional voice trigger listens only while Blind mode is visible: say Daredevil SOS, then say Confirm SOS; say Cancel SOS to stop a pending alert. This is an experimental tool, not a cane or guide dog. Continue using your normal mobility aid. To leave Blind mode, edit the browser address and remove the word blind between the slashes.';
  if(status)status.textContent='Playing spoken help.';speakSosStatus(message);
 }
 async function deliverSos(){
@@ -222,10 +292,12 @@ async function deliverSos(){
  sosDispatching=true;stopSosVoiceListener();
  const settings=getSettings(),button=document.querySelector('[data-action="sos"]');if(button)button.disabled=true;let wakeLock=null;
  try{
-  wakeLock=await acquireWakeLock();actionVibration('sos');await requestAI('/api/sos/trigger',{deviceId:settings.deviceId});
-  announce('Emergency alert sent to the paired receiver. This does not call emergency services.');
+  wakeLock=await acquireWakeLock();actionVibration('sos');
+  const result=await requestAI('/api/sos/trigger',{deviceId:settings.deviceId});
+  if(result.notificationAccepted)announce('SOS is stored. The push service accepted the notification request, but delivery is not confirmed.');
+  else announce('SOS is stored, but no push notification was accepted. Keep the receiver connected to the internet and notifications enabled.');
   const callLink=$('#sos-call-link');if(settings.emergencyPhone&&callLink){callLink.href='tel:'+settings.emergencyPhone.replace(/[^+0-9]/g,'');callLink.hidden=false;callLink.style.display='block';callLink.textContent='Call '+(settings.emergencyName||'trusted contact')+' now';}
- }catch(error){const message=error.message||'SOS alert could not be sent. Pair a receiver in Admin first.';if(status)status.textContent=message;speak(spokenError(error),{lang:'en-US'});}
+ }catch(error){const message=error.message||'SOS alert could not be sent. Pair a receiver in Admin first.';if(status)status.textContent=message;speak(spokenError(error),{lang:getSettings().speechLanguage||'en-US'});}
  finally{if(button)button.disabled=false;await releaseWakeLock(wakeLock);sosDispatching=false;startSosVoiceListener();}
 }
 function armSos({shortcut=false}={}){
@@ -252,21 +324,70 @@ updateConsentPanel();
 document.addEventListener('click',event=>{
  const button=event.target.closest('[data-action]');if(!button)return;
  if(button.dataset.action==='describe')run('describe');
- if(button.dataset.action==='ask'){stopSosVoiceListener();const utterance=speak('What would you like to know? Speak Bangla, English or both, then pause.',{lang:'en-US',onEnd:startVoiceQuestion,onError:startVoiceQuestion});if(!utterance)startVoiceQuestion();}
+ if(button.dataset.action==='ask'){stopSosVoiceListener();const settings=getSettings();const prompt=settings.speechLanguage==='bn-BD'?'আপনি কী জানতে চান? বাংলায় আপনার প্রশ্ন বলুন, তারপর একটু থামুন।':'What would you like to know? Speak your question, then pause.';const utterance=speak(prompt,{lang:settings.speechLanguage||'en-US',onEnd:startVoiceQuestion,onError:startVoiceQuestion});if(!utterance)startVoiceQuestion();}
  if(button.dataset.action==='sos')armSos();if(button.dataset.action==='repeat')repeatAnswer();if(button.dataset.action==='help')speakHelp();
  if(button.dataset.action==='cancel-sos-trigger')cancelSosCountdown();
- if(button.dataset.action==='phone-photo')$('#phone-photo')?.click();
  if(button.dataset.action==='stop'){stopSpeaking();try{activeRecognition?.stop();}catch{}revealRun++;if(status)status.textContent='Speech stopped.';}
 });
-$('#phone-photo')?.addEventListener('change',event=>{phonePhoto=event.target.files?.[0]||null;if(phonePhoto)run('describe','',phonePhoto);});
-$('#question-form')?.addEventListener('submit',event=>{event.preventDefault();run('ask',$('#question')?.value.trim()||'');});
+async function preparePhonePhoto(file,source){
+ if(!file)return;
+ const settings=getSettings(),panel=$('#photo-preview-panel'),askButton=$('#photo-ask-ai'),cancelButton=$('#photo-cancel'),preview=$('#photo-preview');
+ try{
+  if(status)status.textContent=settings.speechLanguage==='bn-BD'?'ছবি প্রস্তুত করা হচ্ছে।':'Preparing your photo…';
+  const compressed=await compressImageToJpeg(file);
+  phonePhoto=compressed;
+  if(phonePhotoUrl)URL.revokeObjectURL(phonePhotoUrl);
+  phonePhotoUrl=URL.createObjectURL(compressed);
+  if(preview){preview.src=phonePhotoUrl;preview.hidden=false;preview.style.display='block';}
+  if(panel)panel.hidden=false;
+  const details=source+' · '+(file.size/1024/1024).toFixed(2)+' MB → '+(compressed.size/1024/1024).toFixed(2)+' MB · JPEG';
+  if($('#photo-details'))$('#photo-details').textContent=details+' · '+(settings.requirePhotoConfirmation===false?'Auto-send is enabled.':'Review this exact compressed photo before sending.');
+  if(askButton)askButton.disabled=false;
+  if(cancelButton)cancelButton.hidden=false;
+  if(settings.requirePhotoConfirmation===false){
+   const question=$('#question')?.value.trim()||'';
+   await run(question?'ask':'describe',question,compressed);
+  }else{
+   announce(settings.speechLanguage==='bn-BD'?'ছবিটি প্রস্তুত। পাঠানোর আগে ছবিটি দেখে এআই-কে জিজ্ঞাসা বোতাম চাপুন।':'Photo ready. Review it, then press Ask AI to send it.');
+  }
+ }catch(error){
+  phonePhoto=null;
+  if(askButton)askButton.disabled=true;
+  if($('#photo-details'))$('#photo-details').textContent=error.message;
+  if(status)status.textContent=error.message;
+  speak(spokenError(error),{lang:getSettings().speechLanguage||'en-US'});
+ }
+}
+$('#phone-photo-camera')?.addEventListener('change',event=>{const file=event.target.files?.[0];event.target.value='';preparePhonePhoto(file,'Phone camera');});
+$('#phone-photo-upload')?.addEventListener('change',event=>{const file=event.target.files?.[0];event.target.value='';preparePhonePhoto(file,'Uploaded photo');});
+$('#photo-ask-ai')?.addEventListener('click',()=>{
+ if(!phonePhoto)return;
+ const question=$('#question')?.value.trim()||'';
+ run(question?'ask':'describe',question,phonePhoto);
+});
+$('#photo-cancel')?.addEventListener('click',()=>{
+ phonePhoto=null;
+ if(phonePhotoUrl){URL.revokeObjectURL(phonePhotoUrl);phonePhotoUrl=null;}
+ if($('#photo-preview')){$('#photo-preview').src='';$('#photo-preview').hidden=true;$('#photo-preview').style.display='none';}
+ if($('#photo-preview-panel'))$('#photo-preview-panel').hidden=true;
+ if($('#photo-ask-ai'))$('#photo-ask-ai').disabled=true;
+ if($('#photo-cancel'))$('#photo-cancel').hidden=true;
+ if(status)status.textContent='Photo removed. Nothing was sent.';
+});
+$('#question-form')?.addEventListener('submit',event=>{
+ event.preventDefault();
+ const question=$('#question')?.value.trim()||'';
+ if(phonePhoto){run(question?'ask':'describe',question,phonePhoto);return;}
+ if(question){run('ask',question);return;}
+ run('describe');
+});
 $('#consent-accept')?.addEventListener('click',()=>{
- if(!acceptConsent()){$('#consent-status').textContent='Could not save your consent in this browser. Enable site storage and try again.';speak('Could not save your consent. Please enable site storage and try again.',{lang:'en-US'});return;}
+ if(!acceptConsent()){$('#consent-status').textContent='Could not save your consent in this browser. Enable site storage and try again.';const settings=getSettings();speak(settings.speechLanguage==='bn-BD'?'এই ব্রাউজারে সম্মতি সংরক্ষণ করা যায়নি। সাইটের স্টোরেজ চালু করে আবার চেষ্টা করুন।':'Could not save your consent. Please enable site storage and try again.',{lang:settings.speechLanguage||'en-US'});return;}
  $('#consent-panel').remove();const settings=getSettings();
  if(!settings.firstRunDisclaimerSpoken){
-  const disclaimer='Before first use: Daredevil’s Eye is experimental. It can make mistakes and miss hazards. It is not a cane or guide dog and cannot confirm that a path or road is safe. Keep using your usual mobility aids and mobility support.';
+  const disclaimer=settings.speechLanguage==='bn-BD'?'প্রথমবার ব্যবহারের আগে জানুন: ডেয়ারডেভিলস আই একটি পরীক্ষামূলক সহায়ক। এটি ভুল করতে পারে এবং বিপদ শনাক্ত করতে ব্যর্থ হতে পারে। এটি সাদা ছড়ি বা গাইড কুকুরের বিকল্প নয় এবং কোনো রাস্তা বা পথ নিরাপদ কি না নিশ্চিত করতে পারে না। আপনার স্বাভাবিক চলাচলের সহায়তা ব্যবহার করতে থাকুন।':'Before first use: Daredevil’s Eye is experimental. It can make mistakes and miss hazards. It is not a cane or guide dog and cannot confirm that a path or road is safe. Keep using your usual mobility aids and mobility support.';
   if(status)status.textContent='Playing the first-use safety notice.';
-  const utterance=speak(disclaimer,{lang:'en-US',onEnd:()=>{saveSettings({firstRunDisclaimerSpoken:true});handleDeepLinkAction();}});
+  const utterance=speak(disclaimer,{lang:settings.speechLanguage||'en-US',onEnd:()=>{saveSettings({firstRunDisclaimerSpoken:true});handleDeepLinkAction();}});
   if(!utterance){saveSettings({firstRunDisclaimerSpoken:true});handleDeepLinkAction();}
  }else{announce('Privacy notice accepted on this device.');handleDeepLinkAction();}
 });

@@ -1,5 +1,5 @@
-import { getSettings } from './settings.js?v=20261116-access2';
-import { apiFetch } from './api.js?v=20261116-access2';
+import { getSettings } from './settings.js?v=20261117-release1';
+import { apiFetch } from './api.js?v=20261117-release1';
 
 export const VOICE_PRESETS = Object.freeze({
   gentle: { label: 'Gentle · soft and slightly higher', rate: 0.94, pitch: 1.14 },
@@ -28,15 +28,76 @@ export const GEMINI_TTS_VOICES = Object.freeze([
 ]);
 
 let currentAudio=null,currentAudioUrl=null;
+let speechRun=0;
 
 export function detectSpokenLanguage(text) {
   return /[\u0980-\u09ff]/u.test(String(text || '')) ? 'bn-BD' : 'en-US';
 }
 
+export function resolveSpeechLanguage(text, requestedLanguage = 'en-US') {
+  // Full Bangla mode applies to all app speech, including prompts and errors.
+  if (requestedLanguage === 'bn-BD') return 'bn-BD';
+  return detectSpokenLanguage(text) === 'bn-BD' ? 'bn-BD' : requestedLanguage;
+}
+
+export function cleanTextForSpeech(value) {
+  return String(value ?? '')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/https?:\/\/\S+/gi, ' ')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/[*_~#>|]/g, ' ')
+    .replace(/^[\s•\-–—]+/gm, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, ' and ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function splitSpeechText(value, maxLength = 420) {
+  const text = cleanTextForSpeech(value);
+  if (!text) return [];
+  const limit = Math.max(80, Math.min(900, Number(maxLength) || 420));
+  const sentences = text.split(/(?<=[.!?।॥])\s+/u).filter(Boolean);
+  const chunks = [];
+  let current = '';
+  const push = part => { if (part.trim()) chunks.push(part.trim()); };
+  for (const sentence of sentences) {
+    if (sentence.length <= limit) {
+      if (!current) current = sentence;
+      else if ((current + ' ' + sentence).length <= limit) current += ' ' + sentence;
+      else { push(current); current = sentence; }
+      continue;
+    }
+    if (current) { push(current); current = ''; }
+    const clauses = sentence.split(/(?<=[,;:])\s+/u);
+    for (const clause of clauses) {
+      if (clause.length <= limit) {
+        if (!current) current = clause;
+        else if ((current + ' ' + clause).length <= limit) current += ' ' + clause;
+        else { push(current); current = clause; }
+      } else {
+        if (current) { push(current); current = ''; }
+        const words = clause.split(/\s+/u);
+        for (const word of words) {
+          if (!current) current = word;
+          else if ((current + ' ' + word).length <= limit) current += ' ' + word;
+          else { push(current); current = word; }
+        }
+      }
+    }
+  }
+  if (current) push(current);
+  return chunks;
+}
+
 export function getAvailableVoices() {
-  if (!('speechSynthesis' in window)) return [];
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return [];
   return window.speechSynthesis.getVoices();
 }
+
 export function selectVoiceForText(voices, { lang = 'en-US', voiceURI = '', text = '' } = {}) {
   const available = Array.isArray(voices) ? voices : [];
   const wantsBangla = /^bn(?:-|$)/i.test(lang) || detectSpokenLanguage(text) === 'bn-BD';
@@ -48,28 +109,103 @@ export function selectVoiceForText(voices, { lang = 'en-US', voiceURI = '', text
     available.find(languageMatches) || available.find(v => v.default && languageMatches(v)) || null;
 }
 
+function stopDeviceSpeech() {
+  speechRun += 1;
+  try { window.speechSynthesis?.cancel(); } catch {}
+}
+
+function runSpeechQueue(chunks, options, settings, runId, voices) {
+  let index = 0;
+  let firstStarted = false;
+  const requestedLanguage = options.lang || settings.speechLanguage || 'en-US';
+  const voiceURI = options.voiceURI ?? settings.speechVoiceURI;
+  const fail = message => {
+    if (runId !== speechRun) return;
+    options.onError?.(message);
+  };
+  const next = () => {
+    if (runId !== speechRun) return;
+    if (index >= chunks.length) { options.onEnd?.(); return; }
+    const chunk = chunks[index++];
+    const lang = resolveSpeechLanguage(chunk, requestedLanguage);
+    const selectedVoice = selectVoiceForText(voices, { lang, voiceURI, text: chunk });
+    if (/^bn(?:-|$)/i.test(lang) && !selectedVoice) {
+      fail('No Bengali speech voice is installed on this device. Install Bengali voice data in Android Text-to-speech settings, then retry.');
+      return;
+    }
+    try {
+      const utterance = new SpeechSynthesisUtterance(chunk);
+      utterance.lang = selectedVoice?.lang || lang;
+      utterance.rate = options.rate ?? settings.speechRate ?? 1;
+      utterance.pitch = options.pitch ?? settings.speechPitch ?? 1;
+      if (selectedVoice) utterance.voice = selectedVoice;
+      utterance.onstart = () => {
+        if (!firstStarted) { firstStarted = true; options.onStart?.(); }
+      };
+      utterance.onend = () => {
+        if (runId !== speechRun) return;
+        if (index < chunks.length) setTimeout(next, 70);
+        else options.onEnd?.();
+      };
+      utterance.onerror = event => {
+        if (runId !== speechRun) return;
+        fail('Device speech stopped: ' + (event.error || 'unknown speech error') + '.');
+      };
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      fail('Could not start device speech: ' + (error.message || 'unknown error'));
+    }
+  };
+  // Cancelling and speaking in the same browser task can drop the new utterance.
+  setTimeout(next, 40);
+  return { queued: true, cancel: stopDeviceSpeech };
+}
+
 export function speak(text, options = {}) {
-  if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
     options.onError?.('Device speech synthesis is unavailable in this browser.');
     return false;
   }
+  const settings = getSettings();
+  const chunks = splitSpeechText(text);
+  if (!chunks.length) { options.onEnd?.(); return { queued: false }; }
   try {
-    window.speechSynthesis.cancel();
-    if(currentAudio){currentAudio.pause();currentAudio=null;}
-    if(currentAudioUrl){URL.revokeObjectURL(currentAudioUrl);currentAudioUrl=null;}
-    const utterance = new SpeechSynthesisUtterance(String(text)), settings = getSettings();
-    const requestedLang = detectSpokenLanguage(text) === 'bn-BD' ? 'bn-BD' : (options.lang || settings.speechLanguage);
-    utterance.lang = requestedLang;
-    utterance.rate = options.rate ?? settings.speechRate;
-    utterance.pitch = options.pitch ?? settings.speechPitch;
-    const voices = getAvailableVoices();
-    const voiceURI = options.voiceURI ?? settings.speechVoiceURI;
-    const selectedVoice = selectVoiceForText(voices, { lang: requestedLang, voiceURI, text: String(text) });
-    if (selectedVoice) { utterance.voice = selectedVoice; utterance.lang = selectedVoice.lang || requestedLang; }
-    if (options.onEnd) utterance.onend = options.onEnd;
-    if (options.onError) utterance.onerror = options.onError;
-    window.speechSynthesis.speak(utterance);
-    return utterance;
+    stopDeviceSpeech();
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    if (currentAudioUrl) { URL.revokeObjectURL(currentAudioUrl); currentAudioUrl = null; }
+    const runId = speechRun;
+    let voices = getAvailableVoices();
+    if (voices.length) return runSpeechQueue(chunks, options, settings, runId, voices);
+
+    const requestedLanguage = options.lang || settings.speechLanguage || 'en-US';
+    let settled = false;
+    let timer = null;
+    const finish = list => {
+      if (settled || runId !== speechRun) return;
+      settled = true;
+      clearTimeout(timer);
+      window.speechSynthesis.removeEventListener?.('voiceschanged', onVoices);
+      const ready = Array.isArray(list) ? list : [];
+      if (!ready.length && requestedLanguage === 'bn-BD') {
+        options.onError?.('No Bengali speech voices are available. Install Bengali voice data in Android Text-to-speech settings.');
+        return;
+      }
+      if (!ready.length) {
+        // English can still use the system default when a browser does not
+        // enumerate voices; Bengali deliberately fails closed instead.
+        runSpeechQueue(chunks, options, settings, runId, []);
+        return;
+      }
+      voices = ready;
+      runSpeechQueue(chunks, options, settings, runId, voices);
+    };
+    const onVoices = () => {
+      const list = getAvailableVoices();
+      if (list.length) finish(list);
+    };
+    window.speechSynthesis.addEventListener?.('voiceschanged', onVoices);
+    timer = setTimeout(() => finish(getAvailableVoices()), 2600);
+    return { queued: true, cancel: stopDeviceSpeech };
   } catch (error) {
     options.onError?.('Could not start device speech: ' + (error.message || 'unknown error'));
     return false;
@@ -119,7 +255,7 @@ export async function speakResponse(text, options = {}) {
 }
 
 export function stopSpeaking() {
-  window.speechSynthesis?.cancel();
+  stopDeviceSpeech();
   if(currentAudio){currentAudio.pause();currentAudio=null;}
   if(currentAudioUrl){URL.revokeObjectURL(currentAudioUrl);currentAudioUrl=null;}
 }
@@ -133,7 +269,7 @@ function blobToDataUrl(blob) {
   });
 }
 
-async function recordWithGemini({ onResult, onError, onFallback, onEnd, onStatus, onPermission, cancelled = () => false } = {}) {
+async function recordWithGemini({ onResult, onError, onFallback, onEnd, onStatus, onPermission, outputLanguage = 'en-US', saveToHistory = false, cancelled = () => false } = {}) {
   if (!('MediaRecorder' in window)) {
     onError?.('This browser cannot record audio for Gemini transcription. Type your question instead.');
     onEnd?.();
@@ -197,7 +333,7 @@ async function recordWithGemini({ onResult, onError, onFallback, onEnd, onStatus
       const audio=await blobToDataUrl(blob);
       const response=await apiFetch('/api/transcribe',{
         method:'POST',headers:{'content-type':'application/json'},
-        body:JSON.stringify({audio,mimeType:blob.type})
+        body:JSON.stringify({audio,mimeType:blob.type,responseLanguage:outputLanguage,saveToHistory})
       });
       const data=await response.json().catch(()=>({}));
       if(!response.ok)throw new Error(data.error||'Gemini could not transcribe the recording.');
@@ -243,7 +379,9 @@ async function recordWithGemini({ onResult, onError, onFallback, onEnd, onStatus
  */
 export async function listenOnce({
   lang = getSettings().speechInputLanguage || 'bn-BD', preferGemini = true,
-  onResult, onInterim, onError, onEnd, onPermission, onStart, onFallback, onStatus
+  onResult, onInterim, onError, onEnd, onPermission, onStart, onFallback, onStatus,
+  outputLanguage = getSettings().speechLanguage || 'en-US',
+  saveToHistory = getSettings().savePhotoHistory === true
 } = {}) {
   if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
     onError?.('Microphone access requires HTTPS or localhost. This HTTP LAN address is not a secure context.');
@@ -253,7 +391,7 @@ export async function listenOnce({
   const stop = () => { stopped = true; fallbackController?.stop?.(); };
   if (preferGemini) {
     onFallback?.('Listening in multilingual mode. Bangla, English and mixed speech are supported.');
-    fallbackController = await recordWithGemini({ onResult, onError, onEnd, onStatus, onPermission, cancelled: () => stopped });
+    fallbackController = await recordWithGemini({ onResult, onError, onEnd, onStatus, onPermission, outputLanguage, saveToHistory, cancelled: () => stopped });
     return { stop };
   }
   let permissionStream;
@@ -274,7 +412,7 @@ export async function listenOnce({
     if (fallbackStarted || stopped) return;
     fallbackStarted = true;
     onFallback?.('Browser recognition did not return speech. Switching to Gemini multilingual transcription.');
-    fallbackController = await recordWithGemini({ onResult, onError, onEnd, onStatus, cancelled: () => stopped });
+    fallbackController = await recordWithGemini({ onResult, onError, onEnd, onStatus, outputLanguage, saveToHistory, cancelled: () => stopped });
   };
   if (!Recognition) { await startFallback(); return { stop }; }
   try {

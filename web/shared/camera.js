@@ -1,4 +1,63 @@
-import { getSettings } from './settings.js?v=20261116-access2';
+import { getSettings } from './settings.js?v=20261117-release1';
+
+let shutterAudioContext=null;
+export function primeShutterAudio(){
+ try{
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextClass)return false;
+  if(!shutterAudioContext)shutterAudioContext=new AudioContextClass();
+  if(shutterAudioContext.state==='suspended')void shutterAudioContext.resume().catch(()=>{});
+  return true;
+ }catch{return false;}
+}
+export async function playShutterClick(){
+ try{
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextClass)return false;
+  if(!shutterAudioContext)shutterAudioContext=new AudioContextClass();
+  if(shutterAudioContext.state==='suspended')await shutterAudioContext.resume();
+  const length=Math.max(1,Math.floor(shutterAudioContext.sampleRate*.045));
+  const buffer=shutterAudioContext.createBuffer(1,length,shutterAudioContext.sampleRate);
+  const data=buffer.getChannelData(0);
+  for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*(1-i/length);
+  const source=shutterAudioContext.createBufferSource();source.buffer=buffer;
+  const filter=shutterAudioContext.createBiquadFilter();filter.type='highpass';filter.frequency.value=1200;
+  const gain=shutterAudioContext.createGain();gain.gain.setValueAtTime(.18,shutterAudioContext.currentTime);gain.gain.exponentialRampToValueAtTime(.001,shutterAudioContext.currentTime+.045);
+  source.connect(filter);filter.connect(gain);gain.connect(shutterAudioContext.destination);source.start();
+  return true;
+ }catch{return false;}
+}
+
+const canvasBlob=(canvas,type,quality)=>new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('The browser could not compress this photo.')) ,type,quality));
+
+/** Re-encode every selected image locally so EXIF/location metadata is dropped. */
+export async function compressImageToJpeg(input,{maxBytes=3_800_000,maxLongEdge=1920}={}){
+ if(!(input instanceof Blob)||!input.size)throw new Error('Choose a valid photo first.');
+ if(typeof createImageBitmap!=='function')throw new Error('This browser cannot resize photos. Open the app in Chrome for Android and try again.');
+ let bitmap;
+ try{bitmap=await createImageBitmap(input);}catch{
+  throw new Error('This photo format cannot be opened by this browser. Choose a JPEG, PNG or WebP image, or convert the HEIC photo to JPEG first.');
+ }
+ try{
+  const canvas=document.createElement('canvas');
+  const initialScale=Math.min(1,maxLongEdge/Math.max(bitmap.width,bitmap.height));
+  let scale=initialScale;
+  for(let sizeAttempt=0;sizeAttempt<8;sizeAttempt++){
+   canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+   canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+   const context=canvas.getContext('2d',{alpha:false});
+   if(!context)throw new Error('Photo compression is unavailable in this browser.');
+   context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);
+   context.drawImage(bitmap,0,0,canvas.width,canvas.height);
+   for(const quality of [.86,.78,.7,.62,.54]){
+    const blob=await canvasBlob(canvas,'image/jpeg',quality);
+    if(blob.size<maxBytes)return new File([blob],'daredevils-eye-photo.jpg',{type:'image/jpeg',lastModified:Date.now()});
+   }
+   scale*=.78;
+  }
+  throw new Error('This photo is too large to compress below 4 MB. Choose a smaller photo.');
+ }finally{bitmap.close?.();}
+}
 function normalizeAddress(value) {
  let address=String(value||'').trim();
  if(!address) address='192.168.0.104';
@@ -13,6 +72,8 @@ export function captureUrl() {
  return base+'/capture?t='+Date.now();
 }
 async function getFrame() {
+ // One soft synthetic shutter click for each of the up-to-three frame requests.
+ void playShutterClick();
  const url=captureUrl(),controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);
  try{
   const response=await fetch(url,{cache:'no-store',signal:controller.signal});

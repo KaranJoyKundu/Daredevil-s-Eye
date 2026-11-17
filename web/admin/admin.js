@@ -1,7 +1,7 @@
-import {getSettings,saveSettings} from '/shared/settings.js?v=20261116-sos3';
-import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261116-sos3';
-import {captureImage} from '/shared/camera.js?v=20261116-sos3';
-import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261116-sos3';
+import {getSettings,saveSettings} from '/shared/settings.js?v=20261117-release2';
+import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261117-release2';
+import {captureImage} from '/shared/camera.js?v=20261117-release1';
+import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261117-release2';
 
 const $=s=>document.querySelector(s);
 const form=$('#settings-form');
@@ -20,6 +20,8 @@ function normalizeCameraAddress(value){
 function formSettings(){
  return {
   cameraBaseUrl:normalizeCameraAddress($('#camera').value),
+  requirePhotoConfirmation:$('#require-photo-confirmation').checked,
+  savePhotoHistory:$('#save-photo-history').checked,
   emergencyName:$('#contact-name').value.trim(),
   emergencyPhone:$('#contact-phone').value.trim(),
   speechLanguage:$('#language').value,
@@ -49,6 +51,8 @@ $('#save-personal-key').addEventListener('click',()=>{
 });
 $('#remove-personal-key').addEventListener('click',()=>{clearSessionGeminiApiKey();$('#personal-api-key').value='';$('#personal-key-status').textContent='Personal key removed from this tab. Using the project key if configured.';loadModels();});
 $('#camera').value=saved.cameraBaseUrl;
+$('#require-photo-confirmation').checked=saved.requirePhotoConfirmation!==false;
+$('#save-photo-history').checked=saved.savePhotoHistory===true;
 $('#contact-name').value=saved.emergencyName;
 $('#contact-phone').value=saved.emergencyPhone;
 $('#sos-code').value=saved.sosPairingCode;
@@ -136,7 +140,7 @@ async function loadModels(){
   const response=await apiFetch('/api/models');
   const data=await response.json();
   if(!response.ok||!data.ok)throw new Error(data.error||'Could not load models.');
-  const select=$('#model'),selected=select.value||saved.aiModel||data.configuredModel||'gemini-3.8-flash';
+  const select=$('#model'),savedModel=saved.aiModel==='gemini-3.6-flash'?'gemini-3.8-flash':saved.aiModel,selected=select.value==='gemini-3.6-flash'?'gemini-3.8-flash':(select.value||savedModel||data.configuredModel||'gemini-3.8-flash');
   select.replaceChildren();
   for(const model of data.models){
    const option=document.createElement('option');option.value=model.id;
@@ -211,7 +215,7 @@ $('#preview-voice').addEventListener('click',async()=>{
    });
   }else{
    const previewText=options.speechLanguage==='bn-BD'?'হ্যালো। আমি ডেয়ারডেভিলস আই। আমি যা দেখতে পাচ্ছি, তা স্পষ্টভাবে বর্ণনা করব।':'Hello. I am your Daredevil’s Eye assistant. I will describe what is visible clearly and calmly.';
-   speak(previewText,{lang:options.speechLanguage,rate:options.speechRate,pitch:options.speechPitch,voiceURI:options.speechVoiceURI});
+   speak(previewText,{lang:options.speechLanguage,rate:options.speechRate,pitch:options.speechPitch,voiceURI:options.speechVoiceURI,onError:error=>{$('#voice-status').textContent=options.speechLanguage==='bn-BD'?'এই ফোনে বাংলা বলার কণ্ঠস্বর পাওয়া যায়নি। অ্যান্ড্রয়েডের টেক্সট-টু-স্পিচ সেটিংসে বাংলা ভয়েস ডেটা ইনস্টল করুন।':error;}});
   }
   $('#voice-status').textContent='Voice preview playing.';
  }catch(error){$('#voice-status').textContent='Voice preview failed: '+error.message;}

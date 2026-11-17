@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07111f"><link rel="manifest" href="/manifest.webmanifest"><title>Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css?v=20261116-access2"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07111f"><link rel="manifest" href="/manifest.webmanifest"><title>Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css?v=20261117-release4"></head>
 <body><main>
 <header><h1>Daredevil's Eye</h1><p class="subtitle">Your audio-first visual assistant</p></header>
 <p id="status" role="status" aria-live="polite">Ready. Choose an action.</p>
@@ -10,10 +10,27 @@
 <a class="action-card help" href="/help/" aria-label="Help. Instructions and support"><span class="symbol" aria-hidden="true">ⓘ</span><strong>HELP</strong><span>Instructions and support</span></a>
 </section>
 <a id="sos-call-link" class="button" href="#" hidden style="display:none">Call trusted contact</a>
-<label class="button" for="phone-photo">Use phone camera / upload photo</label><input id="phone-photo" type="file" accept="image/*" capture="environment" hidden>
-<form id="question-form"><label for="question">Or type a question</label><input id="question" maxlength="1000" autocomplete="off"><button type="submit">Ask AI</button></form>
+<section class="panel" aria-labelledby="phone-photo-title">
+<h2 id="phone-photo-title">Use a phone photo</h2>
+<div class="field-grid">
+<div><label class="button" for="phone-photo-camera">Use phone camera</label><input id="phone-photo-camera" type="file" accept="image/*" capture="environment" hidden></div>
+<div><label class="button secondary" for="phone-photo-upload">Upload a photo</label><input id="phone-photo-upload" type="file" accept="image/*" hidden></div>
+</div>
+<p class="hint">Large photos are compressed on this device before sending. A preview appears first when the confirmation option is enabled in Admin.</p>
+<div id="photo-preview-panel" hidden>
+<img id="photo-preview" alt="Preview of the exact compressed image ready for AI analysis" hidden style="display:none;max-width:100%;max-height:360px;object-fit:contain;border-radius:12px">
+<p id="photo-details" class="hint" role="status" aria-live="polite">No photo selected.</p>
+</div>
+<form id="question-form"><label for="question">Question for the AI (optional)</label><input id="question" maxlength="1000" autocomplete="off" placeholder="Leave empty for the default scene description">
+<div class="field-grid">
+<button id="photo-ask-ai" type="button" disabled>Ask AI about this photo</button>
+<button id="photo-cancel" type="button" class="secondary" hidden>Remove photo</button>
+<button type="submit">Ask AI</button>
+</div>
+</form>
+</section>
 <section><h2>Response</h2><pre id="result">Your response will appear here and be spoken aloud.</pre></section>
 <nav class="navlinks"><a href="/admin/">Admin / Settings</a><a href="/diagnostics/">Diagnostics</a><a href="/contact/">Contact</a><a href="/sos-receiver/">SOS Receiver</a><a href="/privacy/">Privacy</a></nav>
-<section id="consent-panel"><p><strong>Before using:</strong> camera images are sent to the app backend and Gemini for analysis. Device speech synthesis is recommended. Gemini TTS is not connected in this build. Browser speech recognition may use the browser vendor's recognition service. If browser recognition is unavailable, a short voice recording may be sent to Gemini for transcription. Recordings are not intentionally stored by this app. Do not use descriptions as a guarantee of safety.</p><p id="consent-status" class="hint" role="status" aria-live="polite"></p><button id="consent-accept" type="button">I understand — continue</button><a href="/privacy/">Read privacy details</a></section>
+<section id="consent-panel"><p><strong>Before using:</strong> camera photos and microphone recordings are sent to the app backend and Google Gemini for analysis/transcription. The app compresses phone photos to JPEG below 3.8 MB before sending. Photos and answers are not saved to an app account unless you sign in and enable the optional history switch in Admin. When enabled, the compressed photo, prompt, answer and usage details are saved privately to your account; the saved photo record includes a keyed IP fingerprint (not the raw IP) until you delete it; usage-only fingerprints expire after 90 days. Saved history can be reviewed and deleted from Account & History. Voice recordings are processed for transcription but are not intentionally stored by this app. Do not submit sensitive information or rely on AI descriptions as a guarantee of safety.</p><p id="consent-status" class="hint" role="status" aria-live="polite"></p><button id="consent-accept" type="button">I understand — continue</button><a href="/privacy/">Read privacy details</a></section>
 <button data-action="repeat">Repeat response</button><button data-action="stop">Stop speech</button>
-</main><script type="module" src="/shared/app.js?v=20261116-access2"></script><script type="module" src="/shared/site-nav.js?v=20261116-nav1"></script></body></html>
+</main><script type="module" src="/shared/app.js?v=20261117-release4"></script><script type="module" src="/shared/site-nav.js?v=20261117-release4"></script></body></html>

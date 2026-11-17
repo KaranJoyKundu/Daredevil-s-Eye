@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07111f">
+<title>Account & History · Daredevil's Eye</title>
+<link rel="stylesheet" href="/shared/style.css?v=20261117-release2?v=20261117-release2">
+</head>
+<body>
+<main>
+<header>
+<p class="eyebrow">PRIVATE ACCOUNT</p>
+<h1>Account & History</h1>
+<p class="subtitle">Sign in to keep your Gemini key, review saved photo answers and see your usage on another device.</p>
+</header>
+
+<section id="account-setup" class="panel">
+<h2>Account service status</h2>
+<p id="account-status" class="hint" role="status" aria-live="polite">Checking account service…</p>
+</section>
+
+<section id="auth-panel" class="diagnostic-grid">
+<form id="login-form" class="panel">
+<h2>Sign in</h2>
+<label for="login-email">Email</label>
+<input id="login-email" type="email" autocomplete="username" required>
+<label for="login-password">Password</label>
+<input id="login-password" type="password" autocomplete="current-password" required>
+<button type="submit">Sign in</button>
+<p id="login-status" class="hint" role="status" aria-live="polite"></p>
+</form>
+<form id="signup-form" class="panel">
+<h2>Create account</h2>
+<label for="signup-email">Email</label>
+<input id="signup-email" type="email" autocomplete="email" required>
+<label for="signup-password">Password (at least 12 characters)</label>
+<input id="signup-password" type="password" autocomplete="new-password" minlength="12" required>
+<button type="submit">Create account</button>
+<p id="signup-status" class="hint" role="status" aria-live="polite"></p>
+</form>
+</section>
+
+<section id="account-panel" hidden>
+<div class="panel">
+<div class="field-grid">
+<div><h2>Your account</h2><p id="account-email" class="hint"></p></div>
+<div><button id="logout-button" type="button" class="secondary">Sign out</button></div>
+</div>
+</div>
+
+<section class="panel">
+<h2>Personal Gemini API key</h2>
+<p>Save your own Gemini key securely to this account. The Worker encrypts it at rest and never sends the plaintext back to this page. A key saved here can be used after you sign in on another device.</p>
+<p id="key-state" class="hint" role="status" aria-live="polite">Checking…</p>
+<label for="api-key">Replace saved key</label>
+<input id="api-key" type="password" autocomplete="new-password" maxlength="256" placeholder="Paste Gemini API key">
+<div class="field-grid">
+<button id="save-api-key" type="button">Encrypt and save key</button>
+<button id="remove-api-key" type="button" class="secondary">Delete saved key</button>
+</div>
+</section>
+
+<section class="panel">
+<div class="field-grid">
+<div><h2>Saved photo & answer history</h2><p class="hint">Only photos selected for history after you enabled the Admin setting are saved. Images are private and signed viewing links expire.</p></div>
+<div><button id="refresh-history" type="button" class="secondary">Refresh history</button></div>
+</div>
+<p id="history-status" class="hint" role="status" aria-live="polite"></p>
+<div id="history-list" class="history-list"></div>
+<button id="load-more-history" type="button" class="secondary" hidden>Load older history</button>
+<button id="delete-history" type="button" class="secondary">Delete all my saved history and usage</button>
+</section>
+
+<section class="panel">
+<div class="field-grid">
+<div><h2>Usage history (last 90 days)</h2><p class="hint">Counts by model, token usage and pseudonymous IP fingerprint. Raw IP addresses are not stored.</p></div>
+<div><button id="refresh-usage" type="button" class="secondary">Refresh usage</button></div>
+</div>
+<p id="usage-summary" class="hint" role="status" aria-live="polite"></p>
+<div id="usage-list" class="history-list"></div>
+</section>
+</section>
+
+<section class="panel">
+<h2>Privacy and control</h2>
+<p>Private photo history is optional. Turn on <strong>Save photos and AI answers to my account history</strong> in Admin to store new compressed photos and results. You can delete all saved history and usage from this page. Gemini keys are encrypted using a Worker secret and are never stored as plaintext.</p>
+<p>Raw IP addresses are not saved. A keyed pseudonymous fingerprint is stored with opted-in usage records and expires after 90 days. Do not use this history as a safety record or as proof that an SOS notification was delivered.</p>
+</section>
+
+<nav class="navlinks"><a href="/action/">Home</a><a href="/admin/">Admin / Settings</a><a href="/privacy/">Privacy</a><a href="/help/">Help</a></nav>
+</main>
+<script type="module" src="/account/account.js?v=20261117-release2"></script>
+<script type="module" src="/shared/site-nav.js?v=20261117-release2"></script>
+</body>
+</html>

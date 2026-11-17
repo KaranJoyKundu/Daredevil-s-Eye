@@ -8,11 +8,12 @@ const json = (data, status = 200) => new Response(JSON.stringify(data), {
 });
 
 const USER_KEY_HEADER = 'x-user-gemini-api-key';
+// Prefer Flash models for the free-tier demo. 3.6 Flash is deliberately
+// de-prioritised after the reported mid-answer truncation; Pro is not an
+// automatic fallback because it may not be available on a free key.
 const VISION_MODEL_PRIORITY = [
-  'gemini-3.1-pro-preview',
   'gemini-3.8-flash',
   'gemini-3.7-flash',
-  'gemini-3.6-flash',
   'gemini-3.5-flash',
   'gemini-3.5-flash-lite',
   'gemini-3.1-flash-lite'
@@ -20,24 +21,387 @@ const VISION_MODEL_PRIORITY = [
 const TRANSCRIPTION_MODELS = [
   'gemini-3.1-flash-lite',
   'gemini-3.5-flash-lite',
-  'gemini-3.8-flash',
-  'gemini-3.5-transcribe'
+  'gemini-3.8-flash'
 ];
 const STATIC_VISION_FALLBACKS = VISION_MODEL_PRIORITY.slice(1);
-const LOW_COST_TRANSCRIPTION_MODELS = TRANSCRIPTION_MODELS.slice(0, 2);
-const HIGHER_COST_TRANSCRIPTION_FALLBACKS = TRANSCRIPTION_MODELS.slice(2);
+const LOW_COST_TRANSCRIPTION_MODELS = TRANSCRIPTION_MODELS;
 let visionRotation = 0;
 let transcriptionRotation = 0;
 let modelCache = { tag: '', expiresAt: 0, models: [] };
 
-function providerKey(request, env) {
-  const personal = String(request.headers.get(USER_KEY_HEADER) || '').trim();
-  if (personal) return personal.slice(0, 256);
-  return String(env.GEMINI_API_KEY || '').trim();
-}
-
 function hasPersonalKey(request) {
   return Boolean(String(request.headers.get(USER_KEY_HEADER) || '').trim());
+}
+
+function supabasePublishableKey(env) {
+  return String(env.SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY || '').trim();
+}
+function supabaseSecretKey(env) {
+  return String(env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+}
+function supabaseConfigured(env) {
+  return Boolean(env.SUPABASE_URL && supabasePublishableKey(env) && supabaseSecretKey(env));
+}
+function supabaseServiceHeaders(env, extra = {}) {
+  const secretKey = supabaseSecretKey(env);
+  return {
+    apikey: secretKey,
+    // New sb_secret keys must only be sent via apikey; they are not JWTs.
+    // Keep the Authorization header only for legacy JWT service_role keys.
+    ...(!env.SUPABASE_SECRET_KEY ? { Authorization: 'Bearer ' + secretKey } : {}),
+    ...extra
+  };
+}
+function supabaseBase(env) {
+  return String(env.SUPABASE_URL || '').replace(/\/+$/, '');
+}
+function readCookies(request) {
+  const out = {};
+  for (const part of String(request.headers.get('cookie') || '').split(';')) {
+    const index = part.indexOf('=');
+    if (index < 0) continue;
+    const key = part.slice(0,index).trim();
+    try { out[key] = decodeURIComponent(part.slice(index+1).trim()); } catch {}
+  }
+  return out;
+}
+function sessionCookie(name,value,maxAge) {
+  return name+'='+encodeURIComponent(value||'')+'; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age='+maxAge;
+}
+function withCookies(response,cookies=[]) {
+  for (const cookie of cookies) response.headers.append('Set-Cookie',cookie);
+  return response;
+}
+function accountJson(data,status=200,cookies=[]) {
+  return withCookies(json(data,status),cookies);
+}
+function supabaseHeaders(env,token,extra={}) {
+  return {
+    apikey:supabasePublishableKey(env),
+    ...(token?{Authorization:'Bearer '+token}:{}),
+    ...extra
+  };
+}
+async function supabaseAuthFetch(env,path,{method='GET',body,token}={}) {
+  const headers=supabaseHeaders(env,token,{'content-type':'application/json'});
+  return fetch(supabaseBase(env)+'/auth/v1/'+path,{
+    method,headers,...(body!==undefined?{body:JSON.stringify(body)}:{})
+  });
+}
+async function supabaseRest(env,path,{method='GET',body,prefer='return=minimal'}={}) {
+  const headers=supabaseServiceHeaders(env,{
+    'content-type':'application/json',
+    Prefer:prefer
+  });
+  return fetch(supabaseBase(env)+'/rest/v1/'+path,{
+    method,headers,...(body!==undefined?{body:JSON.stringify(body)}:{})
+  });
+}
+async function getAuthenticatedUser(request,env) {
+  if(!supabaseConfigured(env))return null;
+  const access=readCookies(request).de_access;
+  if(!access)return null;
+  try{
+    const response=await supabaseAuthFetch(env,'user',{token:access});
+    if(!response.ok)return null;
+    const user=await response.json();
+    return user?.id?user:null;
+  }catch{return null;}
+}
+function bytesToBase64(bytes) {
+  let binary='';
+  for(const byte of new Uint8Array(bytes))binary+=String.fromCharCode(byte);
+  return btoa(binary);
+}
+function base64ToBytes(value) {
+  const binary=atob(String(value||''));
+  return Uint8Array.from(binary,ch=>ch.charCodeAt(0));
+}
+async function encryptionKey(env) {
+  if(!env.API_KEY_ENCRYPTION_KEY)throw new Error('API-key encryption is not configured on the Worker.');
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(env.API_KEY_ENCRYPTION_KEY)));
+  return crypto.subtle.importKey('raw',digest,{name:'AES-GCM'},false,['encrypt','decrypt']);
+}
+async function encryptUserApiKey(apiKey,env) {
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const encrypted=await crypto.subtle.encrypt({name:'AES-GCM',iv},await encryptionKey(env),new TextEncoder().encode(apiKey));
+  return {key_ciphertext:bytesToBase64(encrypted),key_iv:bytesToBase64(iv),key_version:1};
+}
+async function decryptUserApiKey(row,env) {
+  const clear=await crypto.subtle.decrypt(
+    {name:'AES-GCM',iv:base64ToBytes(row.key_iv)},
+    await encryptionKey(env),
+    base64ToBytes(row.key_ciphertext)
+  );
+  return new TextDecoder().decode(clear);
+}
+async function getStoredUserApiKey(user,env) {
+  if(!user||!supabaseConfigured(env)||!env.API_KEY_ENCRYPTION_KEY)return '';
+  try{
+    const response=await supabaseRest(env,'user_api_keys?select=key_ciphertext,key_iv,key_version&user_id=eq.'+encodeURIComponent(user.id)+'&limit=1');
+    if(!response.ok)return '';
+    const rows=await response.json();
+    if(!rows[0])return '';
+    return await decryptUserApiKey(rows[0],env);
+  }catch{return '';}
+}
+async function providerKey(request,env) {
+  const personal=String(request.headers.get(USER_KEY_HEADER)||'').trim();
+  if(personal)return personal.slice(0,256);
+  const user=await getAuthenticatedUser(request,env);
+  const saved=await getStoredUserApiKey(user,env);
+  return saved||String(env.GEMINI_API_KEY||'').trim();
+}
+async function keyedIpFingerprint(request,env) {
+  const ip=String(request.headers.get('cf-connecting-ip')||'').trim();
+  if(!ip||!env.IP_HASH_SECRET)return null;
+  try{
+    const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(String(env.IP_HASH_SECRET)),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+    const signature=await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(ip));
+    return Array.from(new Uint8Array(signature).slice(0,12),b=>b.toString(16).padStart(2,'0')).join('');
+  }catch{return null;}
+}
+async function storePrivatePhoto(env,userId,imageDataUrl) {
+  const match=/^data:(image\/jpeg);base64,([A-Za-z0-9+/=]+)$/i.exec(String(imageDataUrl||''));
+  if(!match)throw new Error('The selected photo could not be stored as a supported image.');
+  const bytes=base64ToBytes(match[2]);
+  if(bytes.byteLength>3_800_000)throw new Error('The compressed photo exceeds the private history limit.');
+  const path=userId+'/'+crypto.randomUUID()+'.jpg';
+  const response=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+path,{
+    method:'POST',
+    headers:supabaseServiceHeaders(env,{
+      'content-type':'image/jpeg',
+      'x-upsert':'false'
+    }),
+    body:bytes
+  });
+  if(!response.ok)throw new Error('Private photo storage failed (HTTP '+response.status+').');
+  return {path,size:bytes.byteLength,mime:match[1].toLowerCase()};
+}
+async function storeAccountUsage(env,user,request,{model,requestType,usage,imageSizeBytes}) {
+  if(!user||!supabaseConfigured(env))return;
+  const record={
+    user_id:user.id,request_type:requestType,model:String(model||'unknown'),
+    prompt_tokens:Number.isFinite(usage?.promptTokenCount)?usage.promptTokenCount:null,
+    output_tokens:Number.isFinite(usage?.candidatesTokenCount)?usage.candidatesTokenCount:null,
+    total_tokens:Number.isFinite(usage?.totalTokenCount)?usage.totalTokenCount:null,
+    image_size_bytes:Number.isFinite(imageSizeBytes)?imageSizeBytes:null,
+    ip_fingerprint:await keyedIpFingerprint(request,env)
+  };
+  try{
+    await supabaseRest(env,'api_usage',{method:'POST',body:record});
+    const expiry=new Date().toISOString();
+    await supabaseRest(env,'api_usage?expires_at=lt.'+encodeURIComponent(expiry),{method:'DELETE'});
+  }catch{}
+}
+async function saveAccountHistory(env,user,request,body,result,fullPrompt) {
+  if(!body.saveToHistory)return {saved:false,message:'History saving is switched off.'};
+  if(!supabaseConfigured(env))return {saved:false,message:'Account history is not configured on the Worker yet.'};
+  if(!user)return {saved:false,message:'Sign in to save this photo and answer to your private history.'};
+  let storedPhoto=null;
+  try{
+    storedPhoto=await storePrivatePhoto(env,user.id,body.image);
+    const usage=result.usage||{};
+    const record={
+      user_id:user.id,request_type:request.url.endsWith('/api/ask')?'ask':'describe',
+      question:String(body.question||''),system_prompt:String(fullPrompt||body.customPrompt||''),
+      response_text:String(result.answer||''),model:String(result.model||'unknown'),
+      attempted_models:result.attempted||[],finish_reason:result.finishReason||null,
+      response_language:String(body.responseLanguage||'en-US'),
+      prompt_tokens:Number.isFinite(usage.promptTokenCount)?usage.promptTokenCount:null,
+      output_tokens:Number.isFinite(usage.candidatesTokenCount)?usage.candidatesTokenCount:null,
+      total_tokens:Number.isFinite(usage.totalTokenCount)?usage.totalTokenCount:null,
+      photo_path:storedPhoto.path,photo_mime:storedPhoto.mime,photo_size_bytes:storedPhoto.size,
+      ip_fingerprint:await keyedIpFingerprint(request,env),
+      user_agent:String(request.headers.get('user-agent')||'').slice(0,500)
+    };
+    const response=await supabaseRest(env,'ai_history',{method:'POST',body:record});
+    if(!response.ok)throw new Error('History metadata insert failed (HTTP '+response.status+').');
+    return {saved:true,message:'Photo and answer saved to your account history.'};
+  }catch(error){
+    if(storedPhoto?.path){
+      try{await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+storedPhoto.path,{method:'DELETE',headers:supabaseServiceHeaders(env)});}catch{}
+    }
+    return {saved:false,message:error.message||'History could not be saved.'};
+  }
+}
+
+async function handleAccountApi(request,env,url) {
+  if(['POST','PUT','PATCH','DELETE'].includes(request.method)){
+    const origin=request.headers.get('origin');
+    if(!origin)return json({error:'A same-origin request is required for account changes.'},403);
+    try{if(new URL(origin).origin!==url.origin)return json({error:'Cross-origin account changes are not allowed.'},403);}
+    catch{return json({error:'Invalid request origin.'},403);}
+  }
+  if(!supabaseConfigured(env))return json({ok:false,error:'Account services are not configured yet. Connect Supabase and add the Worker secrets described in the setup guide.'},503);
+  const path=url.pathname;
+  if(path==='/api/account/signup'&&request.method==='POST'){
+    let body;try{body=await request.json();}catch{return json({error:'Invalid sign-up form.'},400);}
+    const email=String(body.email||'').trim().toLowerCase(),password=String(body.password||'');
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||password.length<12||password.length>256)return json({error:'Enter a valid email and a password of at least 12 characters.'},400);
+    try{
+      const response=await supabaseAuthFetch(env,'signup',{method:'POST',body:{email,password}});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)return json({error:response.status===429?'Too many sign-up attempts. Try later.':'Could not create the account. Check the email and password, then try again.'},400);
+      const cookies=data.access_token&&data.refresh_token?[
+        sessionCookie('de_access',data.access_token,Number(data.expires_in)||3600),
+        sessionCookie('de_refresh',data.refresh_token,30*24*60*60)
+      ]:[];
+      return accountJson({ok:true,created:true,authenticated:Boolean(data.access_token),user:data.user?{id:data.user.id,email:data.user.email}:null,email,confirmationRequired:!data.access_token,message:data.access_token?'Account created and signed in.':'Check your email to confirm your account, then sign in.'},200,cookies);
+    }catch{return json({error:'Account service is temporarily unavailable.'},503);}
+  }
+  if(path==='/api/account/login'&&request.method==='POST'){
+    let body;try{body=await request.json();}catch{return json({error:'Invalid login form.'},400);}
+    const email=String(body.email||'').trim().toLowerCase(),password=String(body.password||'');
+    if(!email||!password)return json({error:'Email and password are required.'},400);
+    try{
+      const response=await supabaseAuthFetch(env,'token?grant_type=password',{method:'POST',body:{email,password}});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok||!data.access_token)return json({error:'Email or password is incorrect, or the email is not confirmed.'},401);
+      return accountJson({ok:true,authenticated:true,user:{id:data.user.id,email:data.user.email}},200,[
+        sessionCookie('de_access',data.access_token,Number(data.expires_in)||3600),
+        sessionCookie('de_refresh',data.refresh_token,30*24*60*60)
+      ]);
+    }catch{return json({error:'Account service is temporarily unavailable.'},503);}
+  }
+  if(path==='/api/account/session'&&request.method==='GET'){
+    const cookies=readCookies(request),access=cookies.de_access,refresh=cookies.de_refresh;
+    if(access){
+      try{
+        const response=await supabaseAuthFetch(env,'user',{token:access});
+        if(response.ok){
+          const user=await response.json();
+          return json({ok:true,authenticated:true,user:{id:user.id,email:user.email}});
+        }
+      }catch{}
+    }
+    if(refresh){
+      try{
+        const response=await supabaseAuthFetch(env,'token?grant_type=refresh_token',{method:'POST',body:{refresh_token:refresh}});
+        const data=await response.json().catch(()=>({}));
+        if(response.ok&&data.access_token){
+          return accountJson({ok:true,authenticated:true,user:{id:data.user.id,email:data.user.email}},200,[
+            sessionCookie('de_access',data.access_token,Number(data.expires_in)||3600),
+            sessionCookie('de_refresh',data.refresh_token,30*24*60*60)
+          ]);
+        }
+      }catch{}
+    }
+    return accountJson({ok:true,authenticated:false},200,[
+      sessionCookie('de_access','',0),sessionCookie('de_refresh','',0)
+    ]);
+  }
+  if(path==='/api/account/logout'&&request.method==='POST'){
+    const cookies=readCookies(request);
+    if(cookies.de_access){
+      try{await supabaseAuthFetch(env,'logout',{method:'POST',token:cookies.de_access});}catch{}
+    }
+    return accountJson({ok:true},200,[sessionCookie('de_access','',0),sessionCookie('de_refresh','',0)]);
+  }
+  const user=await getAuthenticatedUser(request,env);
+  if(!user)return json({error:'Sign in to manage your account data.'},401);
+
+  if(path==='/api/account/api-key'&&request.method==='GET'){
+    const response=await supabaseRest(env,'user_api_keys?select=user_id&user_id=eq.'+encodeURIComponent(user.id)+'&limit=1');
+    const rows=response.ok?await response.json().catch(()=>[]):[];
+    return json({ok:true,configured:Boolean(rows[0]),masked:rows[0]?'••••••••':'Not configured'});
+  }
+  if(path==='/api/account/api-key'&&request.method==='PUT'){
+    let body;try{body=await request.json();}catch{return json({error:'Invalid API key form.'},400);}
+    const key=String(body.apiKey||'').trim();
+    if(key.length<20||key.length>256)return json({error:'Enter a valid Gemini API key.'},400);
+    if(!env.API_KEY_ENCRYPTION_KEY)return json({error:'Worker API_KEY_ENCRYPTION_KEY secret is not configured.'},503);
+    try{
+      const encrypted=await encryptUserApiKey(key,env);
+      const response=await supabaseRest(env,'user_api_keys?on_conflict=user_id',{method:'POST',body:{user_id:user.id,...encrypted,updated_at:new Date().toISOString()},prefer:'resolution=merge-duplicates,return=minimal'});
+      if(!response.ok)return json({error:'The API key could not be saved securely.'},502);
+      return json({ok:true,configured:true,masked:'••••••••'});
+    }catch{return json({error:'The API key could not be encrypted or saved.'},503);}
+  }
+  if(path==='/api/account/api-key'&&request.method==='DELETE'){
+    const response=await supabaseRest(env,'user_api_keys?user_id=eq.'+encodeURIComponent(user.id),{method:'DELETE'});
+    if(!response.ok)return json({error:'Could not delete the saved API key.'},502);
+    return json({ok:true,configured:false});
+  }
+  const historyItemId=path.startsWith('/api/account/history/')?path.slice('/api/account/history/'.length):'';
+  if(historyItemId&&request.method==='DELETE'&&/^[0-9a-f-]{36}$/i.test(historyItemId)){
+    const id=historyItemId;
+    const selected=await supabaseRest(env,'ai_history?select=photo_path&id=eq.'+encodeURIComponent(id)+'&user_id=eq.'+encodeURIComponent(user.id));
+    if(!selected.ok)return json({error:'Could not find that history record.'},404);
+    const rows=await selected.json().catch(()=>[]);
+    if(!rows.length)return json({error:'That history record was not found in your account.'},404);
+    for(const row of rows){
+      if(row.photo_path){
+        try{
+          const removed=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:supabaseServiceHeaders(env)});
+          if(!removed.ok&&removed.status!==404)return json({error:'Could not remove one of your private photo files. History records were kept; please retry.'},502);
+        }catch{return json({error:'Private photo storage is unreachable. History records were kept; please retry.'},502);}
+      }
+    }
+    const deleted=await supabaseRest(env,'ai_history?id=eq.'+encodeURIComponent(id)+'&user_id=eq.'+encodeURIComponent(user.id),{method:'DELETE'});
+    if(!deleted.ok)return json({error:'Could not delete that history record.'},502);
+    return json({ok:true,deleted:true});
+  }
+  if(path==='/api/account/history'&&request.method==='GET'){
+    const requestedLimit=Number(url.searchParams.get('limit'));
+    const limit=Number.isInteger(requestedLimit)?Math.max(1,Math.min(100,requestedLimit)):50;
+    const requestedOffset=Number(url.searchParams.get('offset'));
+    const offset=Number.isInteger(requestedOffset)?Math.max(0,Math.min(100000,requestedOffset)):0;
+    const query='ai_history?select=id,request_type,question,response_text,model,attempted_models,response_language,total_tokens,photo_path,photo_size_bytes,ip_fingerprint,user_agent,created_at&user_id=eq.'+encodeURIComponent(user.id)+'&order=created_at.desc&limit='+(limit+1)+'&offset='+offset;
+    const response=await supabaseRest(env,query);
+    if(!response.ok)return json({error:'Could not load history from Supabase.'},502);
+    const rows=await response.json();
+    const hasMore=rows.length>limit;
+    const pageRows=rows.slice(0,limit);
+    const history=[];
+    for(const row of pageRows){
+      let photoUrl=null;
+      if(row.photo_path){
+        try{
+          const signed=await fetch(supabaseBase(env)+'/storage/v1/object/sign/daredevil-history/'+row.photo_path,{
+            method:'POST',headers:supabaseServiceHeaders(env,{'content-type':'application/json'}),
+            body:JSON.stringify({expiresIn:600})
+          });
+          const signedData=await signed.json().catch(()=>({}));
+          if(signed.ok&&signedData.signedURL)photoUrl=signedData.signedURL.startsWith('http')?signedData.signedURL:supabaseBase(env)+'/storage/v1'+signedData.signedURL;
+        }catch{}
+      }
+      history.push({...row,photoUrl});
+    }
+    return json({ok:true,history,hasMore,nextOffset:offset+history.length});
+  }
+  if(path==='/api/account/history'&&request.method==='DELETE'){
+    const userFilter='user_id=eq.'+encodeURIComponent(user.id);
+    let offset=0;
+    while(true){
+      const selected=await supabaseRest(env,'ai_history?select=photo_path&'+userFilter+'&limit=500&offset='+offset);
+      if(!selected.ok)return json({error:'Could not list all saved photos for deletion.'},502);
+      const page=await selected.json().catch(()=>[]);
+      for(const row of page){
+        if(row.photo_path){
+          try{
+            const removed=await fetch(supabaseBase(env)+'/storage/v1/object/daredevil-history/'+row.photo_path,{method:'DELETE',headers:supabaseServiceHeaders(env)});
+            if(!removed.ok&&removed.status!==404)return json({error:'Could not remove one of your private photo files. History records were kept; please retry.'},502);
+          }catch{return json({error:'Private photo storage is unreachable. History records were kept; please retry.'},502);}
+        }
+      }
+      offset+=page.length;
+      if(page.length<500)break;
+    }
+    const deleted=await supabaseRest(env,'ai_history?'+userFilter,{method:'DELETE'});
+    if(!deleted.ok)return json({error:'Could not delete your saved history.'},502);
+    const usageDeleted=await supabaseRest(env,'api_usage?'+userFilter,{method:'DELETE'});
+    if(!usageDeleted.ok)return json({error:'History photos and answers were deleted, but usage records could not be deleted. Please retry the usage deletion.'},502);
+    return json({ok:true,deleted:true});
+  }
+  if(path==='/api/account/usage'&&request.method==='GET'){
+    const liveExpiry=new Date().toISOString();
+    await supabaseRest(env,'api_usage?user_id=eq.'+encodeURIComponent(user.id)+'&expires_at=lt.'+encodeURIComponent(liveExpiry),{method:'DELETE'});
+    const response=await supabaseRest(env,'api_usage?select=request_type,model,prompt_tokens,output_tokens,total_tokens,ip_fingerprint,created_at&user_id=eq.'+encodeURIComponent(user.id)+'&expires_at=gt.'+encodeURIComponent(liveExpiry)+'&order=created_at.desc&limit=1000');
+    if(!response.ok)return json({error:'Could not load usage history.'},502);
+    return json({ok:true,usage:await response.json()});
+  }
+  return json({error:'Account route not found.'},404);
 }
 
 function validPayload(body) {
@@ -51,7 +415,14 @@ function validPayload(body) {
   if (body.responseStyle && !Object.hasOwn(RESPONSE_STYLES, body.responseStyle)) return 'Unsupported response style.';
   if (body.waitSeconds !== undefined && (!Number.isInteger(body.waitSeconds) || body.waitSeconds < 15 || body.waitSeconds > 180)) return 'Wait time must be between 15 and 180 seconds.';
   if (body.responseLanguage && !Object.hasOwn(RESPONSE_LANGUAGES, body.responseLanguage)) return 'Unsupported response language.';
+  if (body.saveToHistory !== undefined && typeof body.saveToHistory !== 'boolean') return 'saveToHistory must be true or false.';
   return null;
+}
+
+function dataUrlByteLength(dataUrl) {
+  const encoded=String(dataUrl||'').split(',')[1]||'';
+  const padding=encoded.endsWith('==')?2:encoded.endsWith('=')?1:0;
+  return Math.max(0,Math.floor(encoded.length*3/4)-padding);
 }
 
 function imageParts(dataUrl) {
@@ -85,7 +456,8 @@ async function fingerprint(value) {
 function modelPriority(id) {
   const index = VISION_MODEL_PRIORITY.indexOf(id);
   if (index >= 0) return index;
-  if (/-pro(?:-|$)/i.test(id)) return 20;
+  if (/-pro(?:-|$)/i.test(id)) return 120;
+  if (/3\.6-flash/i.test(id)) return 90;
   if (/flash-lite/i.test(id)) return 80;
   if (/flash/i.test(id)) return 50;
   return 100;
@@ -93,7 +465,7 @@ function modelPriority(id) {
 
 export function rankVisionModels(models) {
   return (Array.isArray(models) ? models : [])
-    .filter(model => model && model.id && /^gemini-/i.test(model.id))
+    .filter(model => model && model.id && /^gemini-/i.test(model.id) && !/-pro(?:-|$)/i.test(model.id))
     .slice()
     .sort((a, b) => modelPriority(a.id) - modelPriority(b.id) || a.name.localeCompare(b.name))
     .map((model, index) => ({
@@ -108,7 +480,7 @@ export function rankVisionModels(models) {
 export function getTranscriptionModelOrder() {
   const first = LOW_COST_TRANSCRIPTION_MODELS[transcriptionRotation % LOW_COST_TRANSCRIPTION_MODELS.length];
   transcriptionRotation = (transcriptionRotation + 1) % LOW_COST_TRANSCRIPTION_MODELS.length;
-  return [first, ...LOW_COST_TRANSCRIPTION_MODELS.filter(model => model !== first), ...HIGHER_COST_TRANSCRIPTION_FALLBACKS];
+  return [first, ...LOW_COST_TRANSCRIPTION_MODELS.filter(model => model !== first)];
 }
 
 export async function listGeminiModels(apiKey) {
@@ -132,7 +504,7 @@ export async function listGeminiModels(apiKey) {
     .filter(model => model.name && model.supportedGenerationMethods?.includes('generateContent'))
     // This application analyses camera photos. Image-output, TTS, audio-only,
     // video, embedding and robotics models are not compatible with that task.
-    .filter(model => !/(embedding|tts|live|image|imagen|veo|lyria|transcrib|audio|robotics)/i.test(model.name))
+    .filter(model => !/(embedding|tts|live|image|imagen|veo|lyria|transcrib|audio|robotics|pro)/i.test(model.name) && !/gemini-3\.6-flash/i.test(model.name))
     .map(model => ({
       id: String(model.name).replace(/^models\//, ''),
       name: model.displayName || String(model.name).replace(/^models\//, ''),
@@ -148,7 +520,8 @@ export async function listGeminiModels(apiKey) {
 async function modelCandidates(apiKey, selectedModel) {
   let available = [];
   try { available = await listGeminiModels(apiKey); } catch { /* Use known fallbacks if catalogue lookup is unavailable. */ }
-  const availableIds = available.map(model => model.id);
+  // Automatic fallbacks stay on Flash models; Pro remains a deliberate manual choice.
+  const availableIds = available.map(model => model.id).filter(id => !/-pro(?:-|$)/i.test(id));
   const base = availableIds.length ? availableIds : [selectedModel, ...STATIC_VISION_FALLBACKS];
   const unique = [...new Set([selectedModel, ...base].filter(Boolean))];
   const selectedIndex = Math.max(0, unique.indexOf(selectedModel));
@@ -159,9 +532,10 @@ async function modelCandidates(apiKey, selectedModel) {
 
 async function askGemini({ image, prompt, model, waitSeconds }, apiKey) {
   if (!apiKey) throw new Error('Gemini is selected but no API key is available. Add your own key in Admin or configure the Worker secret.');
-  const selectedModel = String(model || 'gemini-3.8-flash').replace(/^models\//, '');
+  const requestedModel = String(model || 'gemini-3.8-flash').replace(/^models\//, '');
+  const selectedModel = /^gemini-3\.6-flash$/i.test(requestedModel) || /-pro(?:-|$)/i.test(requestedModel) ? 'gemini-3.8-flash' : requestedModel;
   const timeoutSeconds = Math.max(15, Math.min(180, Number(waitSeconds) || 120));
-  const candidates = (await modelCandidates(apiKey, selectedModel)).slice(0, 5);
+  const candidates = (await modelCandidates(apiKey, selectedModel)).slice(0, 6);
   const attempted = [];
   let lastFailure = '';
   for (const candidate of candidates) {
@@ -170,16 +544,23 @@ async function askGemini({ image, prompt, model, waitSeconds }, apiKey) {
     const requestBody = {
       system_instruction: { parts: [{ text: SAFETY_CORE }] },
       contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: imageParts(image) }] }],
-      generationConfig: { maxOutputTokens: 260 }
+      generationConfig: {
+        // The old 260-token ceiling was too small for detailed answers and
+        // also counted internal thinking tokens on Gemini 3.x.
+        maxOutputTokens: 4096,
+        temperature: 0.2,
+        ...(candidate.startsWith('gemini-3.') ? { thinkingConfig: { thinkingLevel: 'LOW' } } : {})
+      }
     };
     for (let attempt = 0; attempt < 2; attempt += 1) {
+      if (attempt === 1) requestBody.generationConfig.maxOutputTokens = 8192;
       let response;
       try {
         response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
           body: JSON.stringify(requestBody),
-          signal: AbortSignal.timeout(Math.min(timeoutSeconds, 45) * 1000)
+          signal: AbortSignal.timeout(Math.min(timeoutSeconds, 60) * 1000)
         });
       } catch (error) {
         if (error.name === 'TimeoutError' || error.name === 'AbortError') {
@@ -191,40 +572,53 @@ async function askGemini({ image, prompt, model, waitSeconds }, apiKey) {
       }
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
-        const answer = (data?.candidates?.[0]?.content?.parts || []).map(part => part.text || '').join('').trim();
-        if (!answer) {
-          lastFailure = 'Gemini model ' + candidate + ' returned no readable answer.';
+        const candidateData = data?.candidates?.[0] || {};
+        const answer = (candidateData?.content?.parts || []).map(part => part.text || '').join('').trim();
+        const finishReason = String(candidateData.finishReason || '');
+        if (finishReason === 'MAX_TOKENS') {
+          lastFailure = candidate + ' hit MAX_TOKENS at ' + requestBody.generationConfig.maxOutputTokens + '.';
+          if (attempt === 0) continue;
           break;
         }
-        return { answer, model: candidate, attempted };
+        if (!answer) {
+          lastFailure = 'Gemini model ' + candidate + ' returned no readable answer (' + (finishReason || 'unknown finish reason') + ').';
+          break;
+        }
+        if (finishReason && !['STOP', 'FINISH_REASON_UNSPECIFIED'].includes(finishReason)) {
+          lastFailure = candidate + ' ended with ' + finishReason + '.';
+          break;
+        }
+        return { answer, model: candidate, attempted, finishReason: finishReason || 'unspecified', usage: data.usageMetadata || null };
       }
       const message = data?.error?.message || 'Gemini request failed.';
       if (response.status === 503 && attempt === 0) {
         await wait(900);
         continue;
       }
-      if (response.status === 429 || response.status === 404 || response.status === 503 || response.status === 504) {
+      if ([400, 403, 404, 429, 503, 504].includes(response.status)) {
         lastFailure = candidate + ': ' + message;
         break;
       }
-      if ((response.status === 400 || response.status === 403) && /model|not available|not supported|permission|billing|access/i.test(message)) {
-        lastFailure = candidate + ': ' + message;
-        break;
-      }
-      if (response.status === 401 || response.status === 403) throw new Error('Gemini rejected this API key. Check that the key is valid and its API access is enabled.');
+      if (response.status === 401) throw new Error('Gemini rejected this API key. Check that the key is valid and its API access is enabled.');
       throw new Error(message.slice(0, 300));
     }
   }
-  throw new Error('Automatic model fallback tried ' + attempted.join(', ') + '. ' +
+  throw new Error('No complete answer was returned. Automatic model fallback tried ' + attempted.join(', ') + '. ' +
     (lastFailure || 'No compatible model completed the request.') +
-    ' Google may have exhausted the project-wide quota; changing models cannot bypass a project-wide daily limit. Try your own Gemini key in Admin or wait for Google quota reset.');
+    ' A project-wide Google quota limit cannot be bypassed by switching models. Try a different available Flash model or wait for the quota reset.');
 }
 
-async function transcribeGemini(audio, apiKey) {
+async function transcribeGemini(audio, apiKey, outputLanguage = 'en-US') {
   if (!apiKey) throw new Error('No Gemini API key is available for voice transcription. Add one in Admin.');
   if (typeof audio !== 'string' || audio.length > 2_800_000) throw new Error('Voice recording is too large. Please speak a shorter question.');
   const part = audioParts(audio);
-  const prompt = [
+  const prompt = outputLanguage === 'bn-BD' ? [
+    'Transcribe the spoken question into natural Bangladeshi Bengali, using Bengali script.',
+    'For Bangla-English mixed speech, keep the meaning intact and preserve only unavoidable product names, model numbers and standard technical terms in their usual form.',
+    'Do not translate the whole question into English. Do not write Bengali using Latin letters.',
+    'Recognise Bangladeshi Bengali; do not mistake it for Hindi or Urdu.',
+    'Return only one clean question in Bengali. No labels, explanations, quotation marks or commentary. Omit unclear words rather than inventing them.'
+  ].join(' ') : [
     'Transcribe the spoken question and return only the final question in natural English.',
     'The speaker may use Bangladeshi Bengali (Bangla), English, or natural Bangla-English code-switching in the same sentence.',
     'Recognise Bengali spoken in Bangladesh; do not mistake Bengali for Hindi or Urdu, and do not write Bengali words in Latin transliteration.',
@@ -246,14 +640,24 @@ async function transcribeGemini(audio, apiKey) {
         headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: part }] }],
-          generationConfig: { maxOutputTokens: 300, temperature: 0 }
+          generationConfig: { maxOutputTokens: 1024, temperature: 0, ...(candidate.includes('flash') ? { thinkingConfig: { thinkingLevel: 'LOW' } } : {}) }
         }),
         signal: AbortSignal.timeout(35_000)
       });
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
-        const transcript = (data?.candidates?.[0]?.content?.parts || []).map(item => item.text || '').join('').trim();
-        if (transcript) return { transcript, model: candidate, attempted };
+        const resultCandidate=data?.candidates?.[0]||{};
+        const transcript = (resultCandidate?.content?.parts || []).map(item => item.text || '').join('').trim();
+        const finishReason=String(resultCandidate.finishReason||'');
+        if(finishReason==='MAX_TOKENS'){
+          lastFailure=candidate+' reached MAX_TOKENS during transcription; trying another model.';
+          continue;
+        }
+        if(finishReason&&!['STOP','FINISH_REASON_UNSPECIFIED'].includes(finishReason)){
+          lastFailure=candidate+' ended transcription with '+finishReason+'.';
+          continue;
+        }
+        if (transcript) return { transcript, model: candidate, attempted, finishReason:finishReason||'unspecified', usage: data.usageMetadata || null };
         lastFailure = candidate + ' returned an empty transcript.';
         continue;
       }
@@ -298,9 +702,18 @@ export async function handleApi(request, env = {}) {
   const url = new URL(request.url);
   const mode = getMode(env);
   const model = String(env.GEMINI_MODEL || 'gemini-3.8-flash');
-  const apiKey = providerKey(request, env);
+  if (!url.pathname.startsWith('/api/')) return null;
+
+  const origin = request.headers.get('origin');
+  if (origin) {
+    try { if (new URL(origin).origin !== url.origin) return json({ error: 'Cross-origin API requests are not allowed.' }, 403); }
+    catch { return json({ error: 'Invalid request origin.' }, 403); }
+  }
+
+  if(url.pathname.startsWith('/api/account/')) return handleAccountApi(request,env,url);
 
   if (request.method === 'GET' && url.pathname === '/api/health') {
+    const apiKey = await providerKey(request, env);
     const supportedMode = mode === 'gemini' || mode === 'mock';
     return json({
       ok: supportedMode,
@@ -310,6 +723,7 @@ export async function handleApi(request, env = {}) {
       usingPersonalKey: hasPersonalKey(request),
       providerConfigured: mode === 'gemini' && Boolean(apiKey),
       sosRelayConfigured: Boolean(env.SOS_ROOM && env.SOS_DIRECTORY),
+      sosPushAvailable: Boolean(env.SOS_ROOM && env.SOS_DIRECTORY),
       mockModeExplicitlyEnabled: mode === 'mock',
       message: !supportedMode
         ? 'Unsupported AI_MODE "' + mode + '". Use "gemini" or explicitly "mock".'
@@ -319,18 +733,11 @@ export async function handleApi(request, env = {}) {
     }, supportedMode ? 200 : 503);
   }
 
-  if (!url.pathname.startsWith('/api/')) return null;
-
-  const origin = request.headers.get('origin');
-  if (origin) {
-    try { if (new URL(origin).origin !== url.origin) return json({ error: 'Cross-origin API requests are not allowed.' }, 403); }
-    catch { return json({ error: 'Invalid request origin.' }, 403); }
-  }
-
   const receiverActions = {
     '/api/sos/pair': 'pair',
     '/api/sos/poll': 'poll',
-    '/api/sos/ack': 'ack'
+    '/api/sos/ack': 'ack',
+    '/api/sos/subscribe': 'subscribe'
   };
   if (request.method === 'POST' && receiverActions[url.pathname]) {
     return forwardSos(request, env, receiverActions[url.pathname]);
@@ -338,13 +745,15 @@ export async function handleApi(request, env = {}) {
 
   const sosActions = {
     '/api/sos/invite': 'invite',
-    '/api/sos/trigger': 'trigger'
+    '/api/sos/trigger': 'trigger',
+    '/api/sos/push-key': 'push-key'
   };
   if (request.method === 'POST' && sosActions[url.pathname]) {
     return forwardSos(request, env, sosActions[url.pathname]);
   }
 
   if (request.method === 'GET' && url.pathname === '/api/models') {
+    const apiKey = await providerKey(request, env);
     try {
       return json({
         ok: true,
@@ -368,19 +777,25 @@ export async function handleApi(request, env = {}) {
   }
 
   if (request.method === 'POST' && url.pathname === '/api/transcribe') {
+    const apiKey = await providerKey(request, env);
     let body;
     try { body = await request.json(); } catch { return json({ error: 'Recording data must be valid JSON.' }, 400); }
     if (typeof body.audio !== 'string' || !/^data:audio\//i.test(body.audio)) return json({ error: 'A recorded audio data URL is required.' }, 400);
     if (body.audio.length > 2_800_000) return json({ error: 'Voice recording is too long. Please speak a shorter question.' }, 413);
     try {
-      const result = await transcribeGemini(body.audio, apiKey);
-      return json({ ok: true, transcript: result.transcript, model: result.model, attemptedModels: result.attempted });
+      const result = await transcribeGemini(body.audio, apiKey, Object.hasOwn(RESPONSE_LANGUAGES, body.responseLanguage) ? body.responseLanguage : 'en-US');
+      if(body.saveToHistory===true){
+        const user=await getAuthenticatedUser(request,env);
+        if(user)await storeAccountUsage(env,user,request,{model:result.model,requestType:'transcribe',usage:result.usage,imageSizeBytes:null});
+      }
+      return json({ ok: true, transcript: result.transcript, model: result.model, attemptedModels: result.attempted, usageMetadata:result.usage||null, outputLanguage: Object.hasOwn(RESPONSE_LANGUAGES, body.responseLanguage) ? body.responseLanguage : 'en-US' });
     } catch (error) {
       return json({ error: error.message || 'Voice transcription failed.' }, 502);
     }
   }
 
   if (request.method === 'POST' && ['/api/describe', '/api/ask'].includes(url.pathname)) {
+    const apiKey = await providerKey(request, env);
     let body;
     try { body = await request.json(); } catch { return json({ error: 'Request body must be valid JSON.' }, 400); }
     const invalid = validPayload(body);
@@ -401,9 +816,17 @@ export async function handleApi(request, env = {}) {
     if (mode === 'gemini') {
       try {
         const result = await askGemini({ image: body.image, prompt, model: selectedModel, waitSeconds }, apiKey);
+        const user = body.saveToHistory ? await getAuthenticatedUser(request,env) : null;
+        if(user) await storeAccountUsage(env,user,request,{
+          model:result.model,requestType:url.pathname.endsWith('/ask')?'ask':'describe',
+          usage:result.usage,imageSizeBytes:dataUrlByteLength(body.image)
+        });
+        const history = await saveAccountHistory(env,user,request,body,result,prompt);
         return json({
           ok: true, mock: false, provider: 'Gemini',
           model: result.model, attemptedModels: result.attempted,
+          finishReason: result.finishReason, usageMetadata: result.usage || null,
+          historySaved:history.saved, historyMessage:body.saveToHistory?history.message:null,
           answer: result.answer,
           disclaimer: 'AI can miss objects and hazards. Do not rely on this description alone for mobility or safety decisions.'
         });
