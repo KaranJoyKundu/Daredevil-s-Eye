@@ -150,7 +150,7 @@ async function keyedIpFingerprint(request,env) {
   }catch{return null;}
 }
 async function storePrivatePhoto(env,userId,imageDataUrl) {
-  const match=/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/i.exec(String(imageDataUrl||''));
+  const match=/^data:(image\/jpeg);base64,([A-Za-z0-9+/=]+)$/i.exec(String(imageDataUrl||''));
   if(!match)throw new Error('The selected photo could not be stored as a supported image.');
   const bytes=base64ToBytes(match[2]);
   if(bytes.byteLength>3_800_000)throw new Error('The compressed photo exceeds the private history limit.');
@@ -180,7 +180,7 @@ async function storeAccountUsage(env,user,request,{model,requestType,usage,image
   };
   try{
     await supabaseRest(env,'api_usage',{method:'POST',body:record});
-    const expiry=new Date(Date.now()-90*24*60*60*1000).toISOString();
+    const expiry=new Date().toISOString();
     await supabaseRest(env,'api_usage?expires_at=lt.'+encodeURIComponent(expiry),{method:'DELETE'});
   }catch{}
 }
