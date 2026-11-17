@@ -119,7 +119,9 @@ export function getSettings() {
     if (!merged.cameraBaseUrl || merged.cameraBaseUrl === 'http://192.168.4.1' || merged.cameraBaseUrl === '192.168.0.104') merged.cameraBaseUrl = DEFAULTS.cameraBaseUrl;
     merged.cameraBaseUrl = normalizeCameraAddress(merged.cameraBaseUrl);
     merged.theme = ['refined', 'swiss', 'material', 'clinical', 'tactile', 'night'].includes(merged.theme) ? merged.theme : 'refined';
-    return applyLanguageMode(merged);
+    const resolved = applyLanguageMode(merged);
+    localStorage.setItem(KEY, JSON.stringify(resolved));
+    return resolved;
   } catch {
     return applyLanguageMode({ ...DEFAULTS, cameraBaseUrl: DEFAULTS.cameraBaseUrl });
   }
