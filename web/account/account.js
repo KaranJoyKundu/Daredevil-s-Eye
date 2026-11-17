@@ -138,6 +138,15 @@ async function loadHistory(){
    const answer=make('p','history-answer',item.response_text||'No saved answer.');
    card.append(answer);
    if(item.attempted_models?.length)card.append(make('small','hint','Models tried: '+item.attempted_models.join(' → ')));
+   const deleteButton=make('button','secondary','Delete this record');
+   deleteButton.type='button';
+   deleteButton.addEventListener('click',async()=>{
+    if(!window.confirm('Delete this photo and answer from your account?'))return;
+    deleteButton.disabled=true;
+    try{await api('/api/account/history/'+encodeURIComponent(item.id),{method:'DELETE'});await loadHistory();}
+    catch(error){$('#history-status').textContent=error.message;deleteButton.disabled=false;}
+   });
+   card.append(deleteButton);
    $('#history-list').append(card);
   }
  }catch(error){$('#history-status').textContent=error.message;}
