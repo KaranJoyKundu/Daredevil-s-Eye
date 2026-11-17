@@ -29,7 +29,7 @@ if(protectedPaths.has(currentPath)&&!hasCurrentConsent()&&!document.querySelecto
  gate.innerHTML=`<div class="consent-card">
   <p class="eyebrow">WELCOME</p><h2 id="shared-consent-title">Before you begin</h2>
   <p>Photos and voice requests may be processed by this app, Cloudflare and Google Gemini. After you accept, each photo submitted for AI analysis is saved automatically: signed-in users get private account history, while guests get private history tied to this browser for 30 days. You can turn photo saving off in Admin.</p>
-  <p>This is not a certified navigation aid or emergency service. AI can miss hazards; keep using your usual mobility aids and emergency plan.</p>
+  <p>The Terms &amp; Conditions and Privacy pages contain the complete safety and data details.</p>
   <p>Read the <a href="/terms/">Terms &amp; Conditions</a> and <a href="/privacy/">Privacy details</a>. You can also <a href="/account/">sign in or create an account</a>.</p>
   <label class="consent-check"><input id="shared-consent-check" type="checkbox"> I have read and agree to the Terms &amp; Conditions and Privacy notice.</label>
   <p id="shared-consent-status" class="hint" role="status" aria-live="polite"></p>

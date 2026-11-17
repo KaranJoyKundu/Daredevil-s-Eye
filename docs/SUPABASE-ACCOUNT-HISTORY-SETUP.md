@@ -56,7 +56,7 @@ The Worker issues a random 256-bit de_guest cookie with HttpOnly, Secure, SameSi
 
 Guest photos are saved when the selected/compressed image is submitted for AI analysis, before Gemini runs. Preview-only images cancelled before submission are not saved. If AI analysis fails, the image remains in guest history with a failed status. The Account page can list, show, individually delete and delete all guest records for the current browser.
 
-A daily Cloudflare Cron job deletes guest photo objects and metadata older than 30 days. Clearing browser site data/cookies may remove access to guest records before automatic expiration. Guest rows do not store raw IP address or user-agent. Guest submissions do not create signed-in usage records.
+A daily Cloudflare Cron job deletes guest photo objects and metadata older than 30 days. Clearing browser site data/cookies may remove access to guest records before automatic expiration. Guest photo rows can include a keyed HMAC fingerprint derived from the source IP for aggregate usage counts. Raw IP addresses and guest browser user-agent strings are never stored; the fingerprint is removed with its photo row after 30 days or sooner if deleted. Guest submissions do not create signed-in usage records.
 
 ## Usage and IP privacy
 

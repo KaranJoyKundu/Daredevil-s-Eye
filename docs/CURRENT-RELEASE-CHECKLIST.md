@@ -61,7 +61,7 @@ Do not assume history is live merely because the Worker deployment succeeds. Con
 - Signed-in history belongs to the authenticated user and remains until deleted.
 - Guest history is tied to this browser's random HttpOnly cookie and is deleted automatically after 30 days.
 - The cookie bearer token is never stored in the database; only its SHA-256 digest is stored.
-- Guest rows do not store raw IP address or browser user-agent.
+- Signed-in and guest photo rows may include a keyed HMAC IP fingerprint for aggregate counts; raw IP addresses are never stored. Guest browser user-agent strings are not stored, and the fingerprint is removed with the 30-day guest record.
 - The saved image is the selected/compressed photo submitted to AI. Discarded internal camera frame candidates are not stored.
 - Preview-only photos cancelled before submission are not stored.
 - Audio recordings are not saved to the photo-history database.
