@@ -64,7 +64,7 @@ const UI_COPY = Object.freeze({
   admin_heading: ['অ্যাডমিন / সেটিংস', 'Admin / Settings'],
   admin_subtitle: ['ক্যামেরা, ভাষা, চেহারা, এআই এবং কণ্ঠস্বরের সেটিংস নিয়ন্ত্রণ করুন।', 'Configure the camera, language, appearance, AI and speech behaviour.'],
   appearance_heading: ['চেহারা ও ছয়টি থিম', 'Appearance & six themes'],
-  appearance_description: ['একটি নকশা বেছে নিন। কার্ডে চাপলে সাথে সাথে প্রিভিউ হবে।', 'Choose a design. Selecting a card previews it immediately.'],
+  appearance_description: ['থিম বেছে নিলে সঙ্গে সঙ্গে প্রিভিউ হবে এবং এই ডিভাইসে সংরক্ষিত হবে। অন্য সেটিংস সংরক্ষণ করতে Save all settings চাপুন।', 'Selecting a theme previews it immediately and saves it on this device. Press Save all settings to save the other options.'],
   follow_system: ['ফোনের লাইট / ডার্ক সেটিং অনুসরণ করুন', 'Follow device light / dark setting'],
   text_size: ['অ্যাপের লেখার আকার', 'App text size'],
   text_small: ['ছোট', 'Small'],
