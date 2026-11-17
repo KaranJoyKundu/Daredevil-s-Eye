@@ -30,6 +30,12 @@ test('Blind mode keeps Help outside the four main action buttons and declares ph
  ]);
 });
 
+test('camera capture does not play a synthetic shutter sound',()=>{
+ const camera=readFileSync(new URL('../web/shared/camera.js',import.meta.url),'utf8');
+ assert.doesNotMatch(camera,/playShutterClick|AudioContext|createBufferSource/);
+ assert.match(camera,/Capture silently/);
+});
+
 test('blind-mode action colours meet 4.5:1 white-text contrast target',()=>{
  const css=readFileSync(new URL('../web/shared/style.css',import.meta.url),'utf8');
  const backgrounds=[['blind-describe','#07509b'],['blind-ask','#00665f'],['blind-sos','#8a3700'],['blind-repeat','#4b3292'],['blind-help-button','#132b45']];
@@ -64,10 +70,12 @@ test('shake magnitude supports linear acceleration and gravity-inclusive fallbac
  assert.ok(Math.abs(getShakeMagnitude({accelerationIncludingGravity:{x:0,y:0,z:22.31}})-12.5)<0.02);
  assert.equal(getShakeMagnitude({}),0);
 });
-test('voice SOS requires a distinctive wake phrase and a separate confirmation',()=>{
- assert.equal(matchSosVoiceCommand('SOS'),null);
- assert.equal(matchSosVoiceCommand('Daredevil SOS'),'wake');
- assert.equal(matchSosVoiceCommand('ডেয়ারডেভিল এসওএস'),'wake');
+test('voice SOS uses only the standalone SOS wake word and keeps separate confirmation',()=>{
+ assert.equal(matchSosVoiceCommand('SOS'),'wake');
+ assert.equal(matchSosVoiceCommand(' এসওএস '),'wake');
+ assert.equal(matchSosVoiceCommand('Daredevil SOS'),null);
+ assert.equal(matchSosVoiceCommand('ডেয়ারডেভিল এসওএস'),null);
+ assert.equal(matchSosVoiceCommand('please SOS'),null);
  assert.equal(matchSosVoiceCommand('Confirm SOS','confirm'),'confirm');
  assert.equal(matchSosVoiceCommand('এসওএস পাঠান','confirm'),'confirm');
  assert.equal(matchSosVoiceCommand('confirm SOS'),null);
