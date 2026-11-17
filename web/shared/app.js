@@ -1,4 +1,4 @@
-import { captureImage, blobToDataUrl, compressImageToJpeg, primeShutterAudio } from './camera.js?v=20261117-release5';
+import { captureImage, blobToDataUrl, compressImageToJpeg } from './camera.js?v=20261117-release5';
 import { requestAI } from './api.js?v=20261117-release5';
 import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release5';
 import { getSettings, saveSettings } from './settings.js?v=20261117-release5';
@@ -227,7 +227,6 @@ async function announceAnswer(message,disclaimer=''){
 async function run(mode,question='',imageOverride=null){
  if(!hasCurrentConsent()){announce('Please review and accept the privacy notice before using the camera.');return;}
  actionVibration(mode==='ask'?'ask':'describe');
- if(!imageOverride&&!phonePhoto)primeShutterAudio();
  let wakeLock=null;
  try{
   wakeLock=await acquireWakeLock();
@@ -277,7 +276,7 @@ async function startVoiceQuestion(){
 }
 function speakHelp(){
  actionVibration('help');
- const settings=getSettings();const message=settings.speechLanguage==='bn-BD'?'ডেয়ারডেভিলস আই-এর সহায়িকা। প্রধান চারটি বোতাম হলো বর্ণনা, এআই-কে জিজ্ঞাসা, এসওএস এবং আবার শোনান। বর্ণনা চাপলে ক্যামেরায় যা দেখা যায় তা বলা হবে। এআই-কে জিজ্ঞাসা চাপুন, বাংলায় প্রশ্ন করুন এবং কথা শেষ হলে একটু থামুন। এসওএস পাঠাতে এসওএস বোতাম দুইবার চাপুন। আবার শোনান চাপলে শেষ উত্তরটি শোনা যাবে। অ্যাডমিনে ঐচ্ছিক স্বয়ংক্রিয় এসওএস চালু করলে তিনবার ফোন নাড়ালে আট সেকেন্ডের সতর্কীকরণ সময় শুরু হবে। ভয়েস এসওএস চালু থাকলে “ডেয়ারডেভিল এসওএস” বলুন, তারপর “নিশ্চিত করুন” বলুন। বাতিল করতে “এসওএস বাতিল” বলুন। এটি পরীক্ষামূলক সহায়ক, সাদা ছড়ি বা গাইড কুকুরের বিকল্প নয়। স্বাভাবিক চলাচলের সহায়তা ব্যবহার করতে থাকুন।':'Spoken help for Daredevil’s Eye. The four main buttons are Describe, Ask AI, SOS and Repeat. Tap Describe to hear what the camera can see. Tap Ask AI, ask a question in Bangla, English or a mixture, then pause. Tap SOS once to arm it. Tap SOS again within five seconds to confirm and send an alert to your paired receiver. Tap Repeat to hear the last answer again. Spoken Help is the separate button below the four main actions. If you enable the optional SOS triggers in Admin, three deliberate shakes start an eight-second SOS countdown. The optional voice trigger listens only while Blind mode is visible: say Daredevil SOS, then say Confirm SOS; say Cancel SOS to stop a pending alert. This is an experimental tool, not a cane or guide dog. Continue using your normal mobility aid. To leave Blind mode, edit the browser address and remove the word blind between the slashes.';
+ const settings=getSettings();const message=settings.speechLanguage==='bn-BD'?'ডেয়ারডেভিলস আই-এর সহায়িকা। প্রধান চারটি বোতাম হলো বর্ণনা, এআই-কে জিজ্ঞাসা, এসওএস এবং আবার শোনান। বর্ণনা চাপলে ক্যামেরায় যা দেখা যায় তা বলা হবে। এআই-কে জিজ্ঞাসা চাপুন, বাংলায় প্রশ্ন করুন এবং কথা শেষ হলে একটু থামুন। এসওএস পাঠাতে এসওএস বোতাম দুইবার চাপুন। আবার শোনান চাপলে শেষ উত্তরটি শোনা যাবে। অ্যাডমিনে ঐচ্ছিক স্বয়ংক্রিয় এসওএস চালু করলে তিনবার ফোন নাড়ালে আট সেকেন্ডের সতর্কীকরণ সময় শুরু হবে। ভয়েস এসওএস চালু থাকলে “এসওএস” বলুন, তারপর “নিশ্চিত করুন” বলুন। বাতিল করতে “এসওএস বাতিল” বলুন। এটি পরীক্ষামূলক সহায়ক, সাদা ছড়ি বা গাইড কুকুরের বিকল্প নয়। স্বাভাবিক চলাচলের সহায়তা ব্যবহার করতে থাকুন।':'Spoken help for Daredevil’s Eye. The four main buttons are Describe, Ask AI, SOS and Repeat. Tap Describe to hear what the camera can see. Tap Ask AI, ask a question in Bangla, English or a mixture, then pause. Tap SOS once to arm it. Tap SOS again within five seconds to confirm and send an alert to your paired receiver. Tap Repeat to hear the last answer again. Spoken Help is the separate button below the four main actions. If you enable the optional SOS triggers in Admin, three deliberate shakes start an eight-second SOS countdown. The optional voice trigger listens only while Blind mode is visible: say SOS, then say Confirm SOS; say Cancel SOS to stop a pending alert. This is an experimental tool, not a cane or guide dog. Continue using your normal mobility aid. To leave Blind mode, edit the browser address and remove the word blind between the slashes.';
  if(status)status.textContent='Playing spoken help.';speakSosStatus(message);
 }
 async function deliverSos(){
