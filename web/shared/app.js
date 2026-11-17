@@ -240,14 +240,7 @@ async function run(mode,question='',imageOverride=null){
   const result=await requestAI(mode==='ask'&&question.trim()?'/api/ask':'/api/describe',{image,question:question.trim(),customPrompt:settings.customPrompt,model:settings.aiModel,waitSeconds:settings.waitSeconds,responseStyle:settings.responseStyle,responseLanguage:settings.speechLanguage,saveToHistory:settings.savePhotoHistory===true});
   if(result.mock)throw new Error('AI is in MOCK mode. No image was analysed.');
   if(result.provider!=='Gemini'||!result.answer)throw new Error('The AI backend did not return a verified Gemini answer.');
-  const mentionsSafety=/\b(safe to walk|safe to cross|clear to walk|path is safe|no danger)\b/i.test(result.answer);
-  const safetyNote=mentionsSafety
-   ?(settings.speechLanguage==='bn-BD'?'আমি নিশ্চিত করতে পারি না যে এই পথটি নিরাপদ। আপনার সাদা ছড়ি বা গাইড কুকুর ব্যবহার করতে থাকুন।':' I cannot confirm that this area is safe. Continue using your cane or guide dog.')
-   :'';
-  const disclaimer=settings.speechLanguage==='bn-BD'
-   ?'এআই ভুল করতে পারে এবং বিপদ দেখতে নাও পেতে পারে। চলাচল বা নিরাপত্তার সিদ্ধান্তে শুধু এই বর্ণনার ওপর নির্ভর করবেন না।'
-   :(result.disclaimer||'');
-  await announceAnswer(result.answer,[disclaimer,safetyNote].filter(Boolean).join(' '));
+  await announceAnswer(result.answer);
   if(status){
    const completed=settings.speechLanguage==='bn-BD'
     ?'ছবির বিশ্লেষণ সম্পন্ন হয়েছে। ব্যবহৃত মডেল: '+(result.model||'Gemini')
@@ -389,7 +382,7 @@ if(termsCheck&&acceptButton){
 $('#consent-accept')?.addEventListener('click',()=>{
  if(!termsCheck?.checked){$('#consent-status').textContent='Please tick the box to confirm that you accept the Terms & Conditions.';return;}
  if(!acceptConsent()){$('#consent-status').textContent='Could not save acceptance in this browser. Enable site storage and try again.';return;}
- saveSettings({savePhotoHistory:true,consentAccepted:true});
+ saveSettings({savePhotoHistory:true,consentAccepted:true,speechLanguage:'bn-BD',speechInputLanguage:'bn-BD',sosVoiceLanguage:'bn-BD'});
  $('#consent-panel').remove();
  const settings=getSettings();
  announce(settings.speechLanguage==='bn-BD'?'শর্তাবলি গ্রহণ করা হয়েছে। আপনি এখন অ্যাপ ব্যবহার করতে পারেন।':'Terms accepted. You can now use the app.');
