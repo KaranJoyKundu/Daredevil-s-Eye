@@ -1,7 +1,7 @@
-import {getSettings,saveSettings} from '/shared/settings.js?v=20261117-release2';
-import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261117-release2';
+import {getSettings,saveSettings} from '/shared/settings.js?v=20261117-release5';
+import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261117-release5';
 import {captureImage} from '/shared/camera.js?v=20261117-release1';
-import {speak,speakResponse,getAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261117-release2';
+import {speak,speakResponse,getAvailableVoices,isBengaliVoice,refreshAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261117-release5';
 
 const $=s=>document.querySelector(s);
 const form=$('#settings-form');
@@ -52,7 +52,7 @@ $('#save-personal-key').addEventListener('click',()=>{
 $('#remove-personal-key').addEventListener('click',()=>{clearSessionGeminiApiKey();$('#personal-api-key').value='';$('#personal-key-status').textContent='Personal key removed from this tab. Using the project key if configured.';loadModels();});
 $('#camera').value=saved.cameraBaseUrl;
 $('#require-photo-confirmation').checked=saved.requirePhotoConfirmation!==false;
-$('#save-photo-history').checked=saved.savePhotoHistory===true;
+$('#save-photo-history').checked=saved.savePhotoHistory!==false;
 $('#contact-name').value=saved.emergencyName;
 $('#contact-phone').value=saved.emergencyPhone;
 $('#sos-code').value=saved.sosPairingCode;
@@ -171,25 +171,31 @@ async function loadBasePrompt(){
 }
 loadBasePrompt();
 
-function populateVoices(){
+function populateVoices(available=getAvailableVoices()){
  const select=$('#voice-select'),current=select.value||saved.speechVoiceURI||'';
- const voices=getAvailableVoices().slice().sort((a,b)=>a.lang.localeCompare(b.lang)||a.name.localeCompare(b.name));
+ const voices=(Array.isArray(available)?available:[]).slice().sort((a,b)=>a.lang.localeCompare(b.lang)||a.name.localeCompare(b.name));
  select.replaceChildren();
- const auto=document.createElement('option');auto.value='';auto.textContent='Automatic device voice';select.append(auto);
- for(const voice of voices){
-  const option=document.createElement('option');option.value=voice.voiceURI;
-  option.textContent=voice.name+' · '+voice.lang+(voice.default?' · system default':'');select.append(option);
- }
- select.value=current;
- const hasBangla=voices.some(voice=>/^bn(?:-|$)/i.test(voice.lang||''));
- $('#voice-status').textContent=voices.length
-  ? voices.length+' installed voices found on this device. '+(hasBangla?'A Bengali voice is available.':'No Bengali voice was found; install Bengali speech data in Android settings for Bengali spoken answers.')
-  : 'No system voices found. Check device speech settings and install Bengali speech data if Bangla output is needed.';
+ const auto=document.createElement('option');auto.value='';auto.textContent='Automatic device voice (let Android choose)';select.append(auto);
+ for(const voice of voices){const option=document.createElement('option');option.value=voice.voiceURI;option.textContent=voice.name+' · '+voice.lang+(voice.default?' · system default':'');select.append(option);}
+ select.value=[...select.options].some(option=>option.value===current)?current:'';
+ const hasBangla=voices.some(isBengaliVoice);
+ $('#voice-status').textContent=hasBangla
+  ?'Bengali voice found: '+voices.filter(isBengaliVoice).map(voice=>voice.name+' ('+voice.lang+')').join(', ')+'.'
+  :voices.length
+   ?voices.length+' voices listed, but none is labelled Bengali. Chrome may still route a bn-BD utterance to Android TTS; use Preview selected voice to test it.'
+   :'Chrome has not exposed voice names. The app will still request Bengali directly from Android using bn-BD; use Preview selected voice to test.';
 }
 if('speechSynthesis' in window){
  populateVoices();
- window.speechSynthesis.addEventListener?.('voiceschanged',populateVoices);
+ window.speechSynthesis.addEventListener?.('voiceschanged',()=>populateVoices());
+ refreshAvailableVoices(5000).then(voices=>populateVoices(voices));
 }
+$('#refresh-voices')?.addEventListener('click',async()=>{
+ const button=$('#refresh-voices');button.disabled=true;$('#voice-status').textContent='Waiting for Android / Chrome to refresh speech voices…';
+ try{const voices=await refreshAvailableVoices(6000);populateVoices(voices);$('#voice-status').textContent=voices.some(isBengaliVoice)?'Bengali voice is now listed. Select it and press Preview selected voice.':'No Bengali voice name was exposed after waiting. The app will still ask Android TTS for bn-BD; press Preview selected voice to test playback.';}
+ catch(error){$('#voice-status').textContent='Voice refresh failed: '+error.message;}
+ finally{button.disabled=false;}
+});
 $('#voice-preset').addEventListener('change',()=>{
  const preset=presetValues[$('#voice-preset').value]||presetValues.gentle;
  if($('#voice-preset').value!=='custom'){
