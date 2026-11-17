@@ -231,7 +231,7 @@ async function handleAccountApi(request,env,url) {
         sessionCookie('de_access',data.access_token,Number(data.expires_in)||3600),
         sessionCookie('de_refresh',data.refresh_token,30*24*60*60)
       ]:[];
-      return accountJson({ok:true,created:true,email,confirmationRequired:!data.access_token,message:data.access_token?'Account created and signed in.':'Check your email to confirm your account, then sign in.'},200,cookies);
+      return accountJson({ok:true,created:true,authenticated:Boolean(data.access_token),user:data.user?{id:data.user.id,email:data.user.email}:null,email,confirmationRequired:!data.access_token,message:data.access_token?'Account created and signed in.':'Check your email to confirm your account, then sign in.'},200,cookies);
     }catch{return json({error:'Account service is temporarily unavailable.'},503);}
   }
   if(path==='/api/account/login'&&request.method==='POST'){
