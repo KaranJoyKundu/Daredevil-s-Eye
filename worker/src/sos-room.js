@@ -180,6 +180,7 @@ export class SOSRoom {
       );
       const response = await fetch(subscription.endpoint, {
         method: 'POST',
+        redirect: 'manual',
         headers: {
           Authorization: authorization,
           TTL: '120',
