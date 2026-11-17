@@ -144,6 +144,8 @@ async function loadHistory(append=false){
    }
    const answer=make('p','history-answer',item.response_text||'No saved answer.');
    card.append(answer);
+   if(item.ip_fingerprint)card.append(make('small','hint','Network IP fingerprint (not the raw IP): '+item.ip_fingerprint));
+   if(item.user_agent)card.append(make('small','hint','Browser: '+item.user_agent));
    if(item.attempted_models?.length)card.append(make('small','hint','Models tried: '+item.attempted_models.join(' → ')));
    const deleteButton=make('button','secondary','Delete this record');
    deleteButton.type='button';
