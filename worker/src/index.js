@@ -331,7 +331,7 @@ async function handleAccountApi(request,env,url) {
     const limit=Number.isInteger(requestedLimit)?Math.max(1,Math.min(100,requestedLimit)):50;
     const requestedOffset=Number(url.searchParams.get('offset'));
     const offset=Number.isInteger(requestedOffset)?Math.max(0,Math.min(100000,requestedOffset)):0;
-    const query='ai_history?select=id,request_type,question,response_text,model,attempted_models,response_language,total_tokens,photo_path,photo_size_bytes,created_at&user_id=eq.'+encodeURIComponent(user.id)+'&order=created_at.desc&limit='+(limit+1)+'&offset='+offset;
+    const query='ai_history?select=id,request_type,question,response_text,model,attempted_models,response_language,total_tokens,photo_path,photo_size_bytes,ip_fingerprint,user_agent,created_at&user_id=eq.'+encodeURIComponent(user.id)+'&order=created_at.desc&limit='+(limit+1)+'&offset='+offset;
     const response=await supabaseRest(env,query);
     if(!response.ok)return json({error:'Could not load history from Supabase.'},502);
     const rows=await response.json();
