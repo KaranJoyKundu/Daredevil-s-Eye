@@ -226,7 +226,7 @@ async function createPhotoHistoryDraft(env,user,request,body,fullPrompt,selected
       prompt_tokens:null,output_tokens:null,total_tokens:null,
       photo_path:storedPhoto.path,photo_mime:storedPhoto.mime,
       photo_size_bytes:storedPhoto.size,analysis_status:'pending',analysis_error:null,
-      ip_fingerprint:user?await keyedIpFingerprint(request,env):null,
+      ip_fingerprint:await keyedIpFingerprint(request,env),
       user_agent:user?String(request.headers.get('user-agent')||'').slice(0,500):null
     };
     const response=await supabaseRest(env,'ai_history',{method:'POST',body:record});
