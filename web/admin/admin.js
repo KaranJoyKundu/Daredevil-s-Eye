@@ -1,4 +1,4 @@
-import {getSettings,saveSettings} from '/shared/settings.js?v=20261117-release5';
+import {getSettings,saveSettings,applyDisplaySettings,applyInterfaceLanguage} from '/shared/settings.js?v=20261117-release5';
 import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261117-release5';
 import {captureImage} from '/shared/camera.js?v=20261117-release1';
 import {speak,speakResponse,getAvailableVoices,isBengaliVoice,refreshAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261117-release5';
@@ -18,18 +18,35 @@ function normalizeCameraAddress(value){
  return address;
 }
 function formSettings(){
+ const languageMode=$('#language-mode').value||'bn';
+ const customInterfaceLanguage=$('#custom-interface-language').value||'en';
+ const customSpeechLanguage=$('#language').value;
+ const customSpeechInputMode=$('#speech-input-mode').value;
+ const customSpeechInputLanguage=$('#input-language').value;
+ const customSosVoiceLanguage=$('#sos-voice-language').value;
  return {
   cameraBaseUrl:normalizeCameraAddress($('#camera').value),
   requirePhotoConfirmation:$('#require-photo-confirmation').checked,
   savePhotoHistory:$('#save-photo-history').checked,
+  theme:$('[data-theme-choice][aria-pressed="true"]')?.dataset.themeChoice||saved.theme,
+  followSystemTheme:$('#follow-system-theme').checked,
+  textSize:$('#text-size').value,
+  highContrast:$('#high-contrast').checked,
+  reducedMotion:$('#reduced-motion').checked,
+  languageMode,
+  customInterfaceLanguage,
+  customSpeechLanguage,
+  customSpeechInputMode,
+  customSpeechInputLanguage,
+  customSosVoiceLanguage,
   emergencyName:$('#contact-name').value.trim(),
   emergencyPhone:$('#contact-phone').value.trim(),
-  speechLanguage:$('#language').value,
-  speechInputMode:$('#speech-input-mode').value,
-  speechInputLanguage:$('#input-language').value,
+  speechLanguage:languageMode==='bn'?'bn-BD':languageMode==='en'?'en-US':customSpeechLanguage,
+  speechInputMode:languageMode==='custom'?customSpeechInputMode:'auto',
+  speechInputLanguage:languageMode==='bn'?'bn-BD':languageMode==='en'?'en-US':customSpeechInputLanguage,
   sosShakeEnabled:$('#sos-shake-enabled').checked,
   sosVoiceEnabled:$('#sos-voice-enabled').checked,
-  sosVoiceLanguage:$('#sos-voice-language').value,
+  sosVoiceLanguage:languageMode==='bn'?'bn-BD':languageMode==='en'?'en-US':customSosVoiceLanguage,
   speechPreset:$('#voice-preset').value,
   speechVoiceURI:$('#voice-select').value,
   speechEngine:$('#speech-engine').value,
@@ -51,6 +68,43 @@ $('#save-personal-key').addEventListener('click',()=>{
 });
 $('#remove-personal-key').addEventListener('click',()=>{clearSessionGeminiApiKey();$('#personal-api-key').value='';$('#personal-key-status').textContent='Personal key removed from this tab. Using the project key if configured.';loadModels();});
 $('#camera').value=saved.cameraBaseUrl;
+$('#language-mode').value=saved.languageMode||'bn';
+$('#custom-interface-language').value=saved.customInterfaceLanguage||'en';
+$('#language').value=saved.customSpeechLanguage||saved.speechLanguage;
+$('#speech-input-mode').value=saved.customSpeechInputMode||saved.speechInputMode||'auto';
+$('#input-language').value=saved.customSpeechInputLanguage||saved.speechInputLanguage||'bn-BD';
+$('#sos-voice-language').value=saved.customSosVoiceLanguage||saved.sosVoiceLanguage||'bn-BD';
+$('#follow-system-theme').checked=saved.followSystemTheme!==false;
+$('#text-size').value=saved.textSize||'normal';
+$('#high-contrast').checked=!!saved.highContrast;
+$('#reduced-motion').checked=!!saved.reducedMotion;
+applyDisplaySettings(saved);
+applyInterfaceLanguage(saved);
+function updateThemeChoices(){
+ document.querySelectorAll('[data-theme-choice]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.themeChoice===(getSettings().theme||'refined'))));
+}
+function syncLanguageControls(){
+ const mode=$('#language-mode').value||'bn',custom=mode==='custom';
+ $('#custom-language-controls').hidden=!custom;
+ for(const id of ['custom-interface-language','language','speech-input-mode','input-language','sos-voice-language'])$('#'+id).disabled=!custom;
+ if(mode==='bn'){
+  $('#language').value='bn-BD';$('#speech-input-mode').value='auto';$('#input-language').value='bn-BD';$('#sos-voice-language').value='bn-BD';
+ }else if(mode==='en'){
+  $('#language').value='en-US';$('#speech-input-mode').value='auto';$('#input-language').value='en-US';$('#sos-voice-language').value='en-US';
+ }
+}
+syncLanguageControls();
+updateThemeChoices();
+$('#language-mode').addEventListener('change',()=>{
+ syncLanguageControls();
+ const current={...getSettings(),languageMode:$('#language-mode').value};
+ applyInterfaceLanguage(current);
+});
+document.querySelectorAll('[data-theme-choice]').forEach(button=>button.addEventListener('click',()=>{
+ const next=saveSettings({theme:button.dataset.themeChoice});
+ applyDisplaySettings(next);updateThemeChoices();
+ $('#theme-preview-status').textContent='Live preview: '+button.querySelector('strong').textContent+'. Save all settings to keep it.';
+}));
 $('#require-photo-confirmation').checked=saved.requirePhotoConfirmation!==false;
 $('#save-photo-history').checked=saved.savePhotoHistory!==false;
 $('#contact-name').value=saved.emergencyName;
@@ -233,9 +287,13 @@ form.addEventListener('submit',async event=>{
  submitButton.disabled=true;
  try{
   const next=formSettings();
-  saveSettings(next);
+  const applied=saveSettings(next);
+  applyDisplaySettings(applied);
+  applyInterfaceLanguage(applied);
+  updateThemeChoices();
+  syncLanguageControls();
   $('#camera').value=next.cameraBaseUrl;
-  $('#message').textContent='All settings saved on this device. Generate a fresh SOS invitation whenever you want to pair or replace the receiver.';
+  $('#message').textContent='All settings saved on this device. Language mode and appearance now apply to the app screens in this browser.';
  }catch(error){$('#message').textContent=error.message;}
  finally{submitButton.disabled=false;}
 });
