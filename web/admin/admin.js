@@ -1,7 +1,7 @@
-import {getSettings,saveSettings,applyDisplaySettings,applyInterfaceLanguage} from '/shared/settings.js?v=20261117-release5';
-import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261117-release5';
+import {getSettings,saveSettings,applyDisplaySettings,applyInterfaceLanguage} from '/shared/settings.js?v=20261117-release6';
+import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261117-release6';
 import {captureImage} from '/shared/camera.js?v=20261117-release1';
-import {speak,speakResponse,getAvailableVoices,isBengaliVoice,refreshAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261117-release5';
+import {speak,speakResponse,getAvailableVoices,isBengaliVoice,refreshAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261117-release6';
 
 const $=s=>document.querySelector(s);
 const form=$('#settings-form');
