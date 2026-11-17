@@ -220,7 +220,7 @@ async function run(mode,question='',imageOverride=null){
   wakeLock=await acquireWakeLock();
   if(!imageOverride&&!phonePhoto)announce('Taking several photos. Hold still.');
   const sourceBlob=imageOverride||phonePhoto||await captureImage();
-  const imageBlob=await compressImageToJpeg(sourceBlob);
+  const imageBlob=sourceBlob.type==='image/jpeg'&&sourceBlob.size<3_800_000?sourceBlob:await compressImageToJpeg(sourceBlob);
   const image=await blobToDataUrl(imageBlob);
   const settings=getSettings();
   if(status)status.textContent='Sending the compressed photo for analysis.';
