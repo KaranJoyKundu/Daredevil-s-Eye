@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Privacy · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css?v=20261117-privacy"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Privacy · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css?v=20261117-release1"></head>
 <body><main>
 <header><p class="eyebrow">DATA & PERMISSIONS</p><h1>Privacy</h1><p class="subtitle">What this prototype processes, what it stores, which services receive it and how you can remove saved data.</p></header>
 
@@ -47,11 +47,11 @@
 </section>
 <nav class="navlinks"><a href="/action/">Home</a><a href="/account/">Account & History</a><a href="/blind/">Blind mode</a><a href="/help/">Help</a></nav>
 <script type="module">
-import {resetConsent} from '/shared/consent.js?v=20261117-privacy';
+import {resetConsent} from '/shared/consent.js?v=20261117-release1';
 document.querySelector('#reset-consent').addEventListener('click',()=>{
  const ok=resetConsent();
  document.querySelector('#consent-reset-status').textContent=ok?'Consent reset. The notice will appear the next time you open Home.':'Could not reset consent in this browser.';
 });
 </script>
-<script type="module" src="/shared/site-nav.js?v=20261117-account-link"></script>
+<script type="module" src="/shared/site-nav.js?v=20261117-release1"></script>
 </main></body></html>
