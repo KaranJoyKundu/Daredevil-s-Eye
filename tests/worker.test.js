@@ -36,6 +36,19 @@ test('camera capture does not play a synthetic shutter sound',()=>{
  assert.match(camera,/Capture silently/);
 });
 
+test('Admin provides three forced/custom language modes and all six theme choices',()=>{
+ const settings=readFileSync(new URL('../web/shared/settings.js',import.meta.url),'utf8');
+ const admin=readFileSync(new URL('../web/admin/index.html',import.meta.url),'utf8');
+ const adminJs=readFileSync(new URL('../web/admin/admin.js',import.meta.url),'utf8');
+ for(const mode of ['bn','en','custom'])assert.ok(admin.includes('value="'+mode+'"'));
+ for(const theme of ['refined','swiss','material','clinical','tactile','night']){
+  assert.ok(admin.includes('data-theme-choice="'+theme+'"'));
+  assert.ok(settings.includes("'"+theme+"'"));
+ }
+ assert.match(settings,/settings\.speechLanguage = 'bn-BD'/);
+ assert.match(settings,/settings\.speechLanguage = 'en-US'/);
+ assert.match(adminJs,/customLanguageDraft/);
+});
 test('blind-mode action colours meet 4.5:1 white-text contrast target',()=>{
  const css=readFileSync(new URL('../web/shared/style.css',import.meta.url),'utf8');
  const backgrounds=[['blind-describe','#07509b'],['blind-ask','#00665f'],['blind-sos','#8a3700'],['blind-repeat','#4b3292'],['blind-help-button','#132b45']];
