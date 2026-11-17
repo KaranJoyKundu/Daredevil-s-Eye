@@ -115,7 +115,7 @@ $('#enable-voice-sos').addEventListener('click',async()=>{
   stream.getTracks().forEach(track=>track.stop());stream=null;
   const language=$('#sos-voice-language').value;
   saveSettings({sosVoiceEnabled:true,sosVoiceLanguage:language});
-  $('#sos-voice-status').textContent='Enabled. In visible Blind mode say “Daredevil SOS”, then “Confirm SOS”. Say “Cancel SOS” during the five-second countdown to stop it.';
+  $('#sos-voice-status').textContent='Enabled. In visible Blind mode say “SOS”, then “Confirm SOS”. Say “Cancel SOS” during the five-second countdown to stop it.';
  }catch(error){
   if(stream)stream.getTracks().forEach(track=>track.stop());
   $('#sos-voice-enabled').checked=false;saveSettings({sosVoiceEnabled:false});
