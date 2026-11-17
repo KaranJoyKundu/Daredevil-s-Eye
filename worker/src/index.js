@@ -21,12 +21,10 @@ const VISION_MODEL_PRIORITY = [
 const TRANSCRIPTION_MODELS = [
   'gemini-3.1-flash-lite',
   'gemini-3.5-flash-lite',
-  'gemini-3.8-flash',
-  'gemini-3.5-transcribe'
+  'gemini-3.8-flash'
 ];
 const STATIC_VISION_FALLBACKS = VISION_MODEL_PRIORITY.slice(1);
-const LOW_COST_TRANSCRIPTION_MODELS = TRANSCRIPTION_MODELS.slice(0, 2);
-const HIGHER_COST_TRANSCRIPTION_FALLBACKS = TRANSCRIPTION_MODELS.slice(2);
+const LOW_COST_TRANSCRIPTION_MODELS = TRANSCRIPTION_MODELS;
 let visionRotation = 0;
 let transcriptionRotation = 0;
 let modelCache = { tag: '', expiresAt: 0, models: [] };
@@ -463,7 +461,7 @@ export function rankVisionModels(models) {
 export function getTranscriptionModelOrder() {
   const first = LOW_COST_TRANSCRIPTION_MODELS[transcriptionRotation % LOW_COST_TRANSCRIPTION_MODELS.length];
   transcriptionRotation = (transcriptionRotation + 1) % LOW_COST_TRANSCRIPTION_MODELS.length;
-  return [first, ...LOW_COST_TRANSCRIPTION_MODELS.filter(model => model !== first), ...HIGHER_COST_TRANSCRIPTION_FALLBACKS];
+  return [first, ...LOW_COST_TRANSCRIPTION_MODELS.filter(model => model !== first)];
 }
 
 export async function listGeminiModels(apiKey) {
