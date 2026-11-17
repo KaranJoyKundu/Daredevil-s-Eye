@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="/shared/style.css?v=20261117-release5">
 </head>
 <body><main>
-<header><p class="eyebrow">DEVICE SETTINGS</p><h1>Admin / Settings</h1><p class="subtitle">Tune the camera, AI behaviour and spoken voice. Settings stay in this browser on this device.</p></header>
+<header><p class="eyebrow">DEVICE SETTINGS</p><h1 data-i18n="admin_heading">Admin / Settings</h1><p class="subtitle" data-i18n="admin_subtitle">Tune the camera, AI behaviour and spoken voice. Settings stay in this browser on this device.</p></header>
 
 <nav class="quick-jump" aria-label="Admin shortcuts"><a href="#camera-settings">📷 <span>Camera & SOS</span></a><a href="#ai-settings">✨ <span>AI models</span></a><a href="#voice-settings">🎙 <span>Voice</span></a><a href="#image-lab">🧪 <span>Image tester</span></a><a href="/diagnostics/">✅ <span>Diagnostics</span></a><a href="/account/">👤 <span>Account & History</span></a><a href="#stored-data">🗃 <span>Stored data</span></a><a href="/action/">⌂ <span>Home</span></a></nav>
 <section class="panel settings-section" id="stored-data">
@@ -21,8 +21,8 @@
 </section>
 <form id="settings-form">
 <section id="appearance-settings" class="panel settings-section">
-<h2>Appearance &amp; six themes</h2>
-<p>Choose a design. Selecting a card previews it immediately; Save all settings keeps your choice on this device.</p>
+<h2 data-i18n="appearance_heading">Appearance &amp; six themes</h2>
+<p data-i18n="appearance_description">Choose a design. Selecting a card previews it immediately. Theme selection is saved when you press Save all settings.</p>
 <div id="theme-picker" class="theme-picker" role="group" aria-label="Choose an app theme">
 <button type="button" class="theme-choice" data-theme-choice="refined"><strong>1 · Refined Daredevil</strong><span class="theme-swatches"><i style="background:#07111f"></i><i style="background:#0e1d33"></i><i style="background:#f5b942"></i></span><small>Dark navy, amber and the current identity</small></button>
 <button type="button" class="theme-choice" data-theme-choice="swiss"><strong>2 · Swiss Accessibility</strong><span class="theme-swatches"><i style="background:#fafaf7"></i><i style="background:#111"></i><i style="background:#d71920"></i></span><small>Warm white, strict grid and red accents</small></button>
@@ -32,31 +32,31 @@
 <button type="button" class="theme-choice" data-theme-choice="night"><strong>6 · Night Navigation</strong><span class="theme-swatches"><i style="background:#0a0e14"></i><i style="background:#171f29"></i><i style="background:#ffb454"></i></span><small>Low-glare charcoal and warm amber</small></button>
 </div>
 <div class="field-grid">
-<div><label class="inline-checkbox" for="follow-system-theme"><input id="follow-system-theme" type="checkbox"> Follow device light / dark setting</label></div>
-<div><label for="text-size">App text size</label><select id="text-size"><option value="small">Small</option><option value="normal">Normal</option><option value="large">Large</option></select></div>
-<div><label class="inline-checkbox" for="high-contrast"><input id="high-contrast" type="checkbox"> Extra high contrast</label></div>
-<div><label class="inline-checkbox" for="reduced-motion"><input id="reduced-motion" type="checkbox"> Reduce motion and transitions</label></div>
+<div><label class="inline-checkbox" for="follow-system-theme"><input id="follow-system-theme" type="checkbox"> <span data-i18n="follow_system">Follow device light / dark setting</span></label></div>
+<div><label for="text-size" data-i18n="text_size">App text size</label><select id="text-size"><option value="small" data-i18n="text_small">Small</option><option value="normal" data-i18n="text_normal">Normal</option><option value="large" data-i18n="text_large">Large</option></select></div>
+<div><label class="inline-checkbox" for="high-contrast"><input id="high-contrast" type="checkbox"> <span data-i18n="high_contrast">Extra high contrast</span></label></div>
+<div><label class="inline-checkbox" for="reduced-motion"><input id="reduced-motion" type="checkbox"> <span data-i18n="reduce_motion">Reduce motion and transitions</span></label></div>
 </div>
-<p class="hint" id="theme-preview-status" role="status" aria-live="polite">Current theme preview is applied to this page.</p>
+<p class="hint" id="theme-preview-status" role="status" aria-live="polite" data-i18n="theme_preview">Current theme preview is applied to this page.</p>
 </section>
 <section id="language-settings" class="panel settings-section">
-<h2>App language</h2>
-<label for="language-mode">Language mode</label>
-<select id="language-mode"><option value="bn">বাংলা — force the app into Bangla</option><option value="en">English — force the app into English</option><option value="custom">Custom — choose each language yourself</option></select>
-<p class="hint">Bangla and English modes set the AI answer, spoken responses and recognition languages to match. Custom mode lets you choose each setting separately.</p>
+<h2 data-i18n="language_heading">App language</h2>
+<label for="language-mode" data-i18n="language_mode_label">Language mode</label>
+<select id="language-mode"><option value="bn" data-i18n="mode_bn">বাংলা — force the app into Bangla</option><option value="en" data-i18n="mode_en">English — force the app into English</option><option value="custom" data-i18n="mode_custom">Custom — choose each language yourself</option></select>
+<p class="hint" data-i18n="language_mode_description">Bangla and English modes set the AI answer, spoken responses and recognition languages to match. Custom mode lets you choose each setting separately.</p>
 <div id="custom-language-controls" class="language-custom-controls">
-<label for="custom-interface-language">Interface language</label>
+<label for="custom-interface-language" data-i18n="interface_language">Interface language</label>
 <select id="custom-interface-language"><option value="en">English</option><option value="bn">বাংলা</option></select>
-<label for="language">AI response language</label>
+<label for="language" data-i18n="ai_response_language">AI response language</label>
 <select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
-<label for="speech-input-mode">Voice input mode</label>
-<select id="speech-input-mode"><option value="auto">Automatic multilingual detection (Gemini)</option><option value="browser">Browser speech recognition first</option></select>
-<label for="input-language">Browser recognition language</label>
+<label for="speech-input-mode" data-i18n="voice_input_mode">Voice input mode</label>
+<select id="speech-input-mode"><option value="auto" data-i18n="auto_multilingual">Automatic multilingual detection (Gemini)</option><option value="browser" data-i18n="browser_first">Browser speech recognition first</option></select>
+<label for="input-language" data-i18n="browser_recognition_language">Browser recognition language</label>
 <select id="input-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
-<label for="sos-voice-language">Voice SOS recognition language</label>
+<label for="sos-voice-language" data-i18n="sos_recognition_language">Voice SOS recognition language</label>
 <select id="sos-voice-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
 </div>
-<small>Automatic mode uses Gemini for Bangla, English and mixed speech. Browser mode starts with the selected language and falls back when available.</small>
+<small data-i18n="language_help">Automatic mode uses Gemini for Bangla, English and mixed speech. Browser mode starts with the selected language and falls back when available.</small>
 </section>
 
 <section id="camera-settings" class="panel settings-section">
