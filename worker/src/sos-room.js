@@ -103,6 +103,16 @@ function isSupportedPushEndpoint(value) {
   }
 }
 
+function isValidSubscriptionKeys(keys) {
+  try {
+    const publicKey=decodeBase64Url(keys?.p256dh||'');
+    const auth=decodeBase64Url(keys?.auth||'');
+    return publicKey.length===65&&publicKey[0]===4&&auth.length===16;
+  } catch {
+    return false;
+  }
+}
+
 function safeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
   let mismatch = a.length ^ b.length;
@@ -248,9 +258,9 @@ export class SOSRoom {
     if (action === 'subscribe') {
       const subscription = body.subscription;
       if (!subscription || typeof subscription.endpoint !== 'string' ||
+          subscription.endpoint.length>2048 ||
           !isSupportedPushEndpoint(subscription.endpoint) ||
-          typeof subscription.keys?.p256dh !== 'string' ||
-          typeof subscription.keys?.auth !== 'string') {
+          !isValidSubscriptionKeys(subscription.keys)) {
         return json({ ok: false, error: 'A valid browser push subscription is required.' }, 400);
       }
       await this.state.storage.put('pushSubscription', {
