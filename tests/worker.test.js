@@ -840,7 +840,7 @@ test('guest photo history saves submitted photos privately, shows them in this b
   throw new Error('Unexpected guest test fetch: '+url.href);
  };
  const env={
-  AI_MODE:'gemini',GEMINI_API_KEY:'test-gemini-key-for-guest-history',
+  AI_MODE:'gemini',GEMINI_API_KEY:'test-gemini-key-for-guest-history',IP_HASH_SECRET:'test-guest-ip-fingerprint-secret',
   SUPABASE_URL:'https://supabase.example.test',
   SUPABASE_PUBLISHABLE_KEY:'sb_publishable_test-public-key',
   SUPABASE_SECRET_KEY:'sb_secret_test-server-key'
@@ -855,7 +855,7 @@ test('guest photo history saves submitted photos privately, shows them in this b
  assert.match(cookieHeader,/SameSite=Lax/i);
  const analysis=await handleApi(req('/api/describe',{
   image,model:'gemini-3.8-flash',responseStyle:'concise',responseLanguage:'bn-BD'
- },{Origin:'https://local.test',Cookie:'de_guest='+token}),env);
+ },{Origin:'https://local.test',Cookie:'de_guest='+token,'cf-connecting-ip':'203.0.113.45'}),env);
  const data=await analysis.json();
  assert.equal(analysis.status,200);
  assert.equal(data.historySaved,true);
@@ -864,6 +864,8 @@ test('guest photo history saves submitted photos privately, shows them in this b
  assert.equal(historyRows[0].user_id,null);
  assert.match(historyRows[0].guest_session_hash,/^[a-f0-9]{64}$/);
  assert.notEqual(historyRows[0].guest_session_hash,token,'the raw guest cookie token is not stored');
+ assert.match(historyRows[0].ip_fingerprint,/^[a-f0-9]{24}$/,'guest photo row stores a keyed pseudonymous IP fingerprint');
+ assert.notEqual(historyRows[0].ip_fingerprint,'203.0.113.45','the raw guest IP is never stored');
  assert.ok(historyRows[0].photo_path.startsWith('guest-'+historyRows[0].guest_session_hash+'/'));
  assert.equal(historyRows[0].analysis_status,'completed');
  assert.equal(historyRows[0].response_text,'A doorway is visible.');
