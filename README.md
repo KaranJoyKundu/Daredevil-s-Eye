@@ -53,9 +53,9 @@ Daredevil's Eye takes a photo from a phone or an ESP32-CAM, sends it to Google G
 ## How it works
 
 ```mermaid
-flowchart LR
-  P[Phone browser / installed app] -- photo, audio, text --> W[Cloudflare Worker]
-  E[ESP32-CAM on local Wi-Fi] -- JPEG --> P
+flowchart TD
+  E[ESP32-CAM on local Wi-Fi] -- JPEG --> P[Phone browser / installed app]
+  P -- photo, audio, text --> W[Cloudflare Worker]
   W -- vision, transcription, speech --> G[Google Gemini API]
   W -- private history --> S[(Supabase: Postgres + private storage)]
   W -- SOS rooms --> D[(Durable Objects)]

@@ -72,8 +72,6 @@ Do not assume history is live merely because the Worker deployment succeeds. Con
 - Preview-only photos cancelled before submission are not stored.
 - Audio recordings are not saved to the photo-history database.
 
-## Branch and release record
-
 ## Completed merge and deployment record
 
 - PR #7 merged to main as 7f5b3ad8c45fc5516559357c0f4268d3e0819015. CI run #447 passed 72/72 tests; main production deployment #448 succeeded and uploaded the Supabase URL, modern publishable/secret keys, encryption key and IP-hash secret.
