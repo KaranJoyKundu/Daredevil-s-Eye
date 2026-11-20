@@ -1,5 +1,6 @@
 import {hasCurrentConsent,acceptConsent,rejectConsent} from './consent.js?v=20261117-release5';
 import {saveSettings} from './settings.js?v=20261117-release5';
+import {mountLanguageSwitch} from './language.js?v=20261117-release5';
 
 const links = [
   ['Home','/action/'],['Blind mode','/blind/'],['Admin / Settings','/admin/'],
@@ -17,6 +18,7 @@ for(const [label,href] of links){
   menu.append(link);
 }
 document.body.prepend(bar);
+mountLanguageSwitch(bar);
 
 // Require the same explicit consent before any app surface can be used,
 // including direct visits to Admin, Diagnostics, Account and the SOS receiver.
@@ -41,7 +43,7 @@ if(protectedPaths.has(currentPath)&&!hasCurrentConsent()&&!document.querySelecto
  accept.addEventListener('click',()=>{
   if(!check.checked){status.textContent='Please tick the box to accept the terms.';return;}
   if(!acceptConsent()){status.textContent='Could not save acceptance in this browser. Enable site storage and try again.';return;}
-  saveSettings({savePhotoHistory:true,consentAccepted:true,speechLanguage:'bn-BD',speechInputLanguage:'bn-BD',sosVoiceLanguage:'bn-BD'});
+  saveSettings({savePhotoHistory:true,consentAccepted:true});
   gate.remove();
  });
  gate.querySelector('#shared-consent-reject').addEventListener('click',()=>{

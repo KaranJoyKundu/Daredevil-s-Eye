@@ -32,7 +32,7 @@ test('Blind mode keeps Help outside the four main action buttons and declares ph
 
 test('blind-mode action colours meet 4.5:1 white-text contrast target',()=>{
  const css=readFileSync(new URL('../web/shared/style.css',import.meta.url),'utf8');
- const backgrounds=[['blind-describe','#07509b'],['blind-ask','#00665f'],['blind-sos','#8a3700'],['blind-repeat','#4b3292'],['blind-help-button','#132b45']];
+ const backgrounds=[['blind-describe','#1f5446'],['blind-ask','#22496b'],['blind-sos','#9a2f1f'],['blind-repeat','#5b4a1f'],['blind-help-button','#252e2b']];
  const linear=value=>{const channel=value/255;return channel<=0.04045?channel/12.92:((channel+0.055)/1.055)**2.4;};
  const luminance=hex=>.2126*linear(parseInt(hex.slice(1,3),16))+.7152*linear(parseInt(hex.slice(3,5),16))+.0722*linear(parseInt(hex.slice(5,7),16));
  for(const [selector,background] of backgrounds){

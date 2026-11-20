@@ -4,7 +4,9 @@ import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, v
 import { getSettings, saveSettings } from './settings.js?v=20261117-release5';
 import { hasCurrentConsent, acceptConsent, rejectConsent } from './consent.js?v=20261117-release5';
 import { createShakeSequenceTracker, getShakeMagnitude, matchSosVoiceCommand } from './sos-triggers.js?v=20261117-release1';
+import { mountLanguageSwitch } from './language.js?v=20261117-release5';
 const $=selector=>document.querySelector(selector),status=$('#status');
+mountLanguageSwitch($('.blind-utility'));
 let activeRecognition=null,voiceStarting=false,phonePhoto=null,phonePhotoUrl=null,revealRun=0,lastAnswer='';
 let sosArmedUntil=0,sosArmTimer=null,deepLinkHandled=false;
 const requestedAction=new URLSearchParams(location.search).get('action');
@@ -94,6 +96,10 @@ function localizeSpeech(message){
   'Sign in to save this photo and answer to your private history.':'এই ছবি ও উত্তর ব্যক্তিগত ইতিহাসে সংরক্ষণ করতে আপনার অ্যাকাউন্টে প্রবেশ করুন।',
   'Account history is not configured on the Worker yet.':'অ্যাকাউন্টের ইতিহাস সংরক্ষণের ব্যবস্থা সার্ভারে এখনো চালু হয়নি।',
   'History saving is switched off.':'ছবি ও উত্তর সংরক্ষণের ব্যবস্থা বন্ধ আছে।',
+  'Requesting microphone permission…':'মাইক্রোফোনের অনুমতি চাওয়া হচ্ছে…',
+  'Microphone permission granted. Listening…':'মাইক্রোফোনের অনুমতি পাওয়া গেছে। শুনছি…',
+  'Playing spoken help.':'কথ্য সহায়তা শোনানো হচ্ছে।',
+  'Speech stopped.':'কথা বলা বন্ধ করা হয়েছে।',
   'Photo ready. Review it, then press Ask AI to send it.':'ছবিটি প্রস্তুত। দেখে নিয়ে পাঠাতে “এআই-কে জিজ্ঞাসা” বোতাম চাপুন।'
  };
  if(exact[message])return exact[message];
@@ -109,6 +115,8 @@ function localizeSpeech(message){
  if(/blur|dark|unclear|image quality/i.test(message))return 'ছবিটি যথেষ্ট পরিষ্কার নয়। ক্যামেরা স্থির রাখুন এবং ভালো আলোতে আবার ছবি তুলুন।';
  return 'দুঃখিত, কাজটি সম্পন্ন করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
 }
+// Status line in the chosen answer language (only for messages localizeSpeech knows; others fall back to its generic error).
+function show(message){if(status)status.textContent=getSettings().speechLanguage==='bn-BD'?localizeSpeech(message):message;}
 function speakSosStatus(message){
  const settings=getSettings();
  const resume=()=>{if(isBlindMode&&settings.sosVoiceEnabled&&!document.hidden&&!sosVoiceBlocked&&!sosDispatching)startSosVoiceListener();};
@@ -126,7 +134,7 @@ async function cancelSosCountdown(){
  clearTimeout(sosCountdownTimer);sosCountdownTimer=null;setSosCancelVisibility(false);sosVoiceMode='wake';
  if(sosVoiceModeTimer){clearTimeout(sosVoiceModeTimer);sosVoiceModeTimer=null;}
  const lock=sosCountdownWakeLock;sosCountdownWakeLock=null;await releaseWakeLock(lock);
- if(status)status.textContent='SOS countdown cancelled. No alert was sent.';
+ show('SOS countdown cancelled. No alert was sent.');
  speakSosStatus('SOS cancelled. No alert was sent.');return true;
 }
 async function finishSosCountdown(){
@@ -218,7 +226,7 @@ function revealWords(element,message,runId){
 async function announceAnswer(message,disclaimer=''){
  stopSosVoiceListener();
  const answer=String(message||'').trim();if(!answer){announce('There is no answer to repeat yet.');return;}lastAnswer=answer;
- if(status)status.textContent='Speaking the answer. The written response is appearing as I speak…';
+ show('Speaking the answer. The written response is appearing as I speak…');
  const settings=getSettings(),spokenLanguage=settings.speechLanguage==='bn-BD'?'bn-BD':detectSpokenLanguage(answer),output=$('#result'),runId=++revealRun;
  if(output)output.textContent=disclaimer?disclaimer+'\n\n':'';
  const displayPromise=revealWords(output,answer,runId);
@@ -238,7 +246,7 @@ async function run(mode,question='',imageOverride=null){
   const imageBlob=sourceBlob.type==='image/jpeg'&&sourceBlob.size<3_800_000?sourceBlob:await compressImageToJpeg(sourceBlob);
   const image=await blobToDataUrl(imageBlob);
   const settings=getSettings();
-  if(status)status.textContent='Sending the compressed photo for analysis.';
+  show('Sending the compressed photo for analysis.');
   const result=await requestAI(mode==='ask'&&question.trim()?'/api/ask':'/api/describe',{image,question:question.trim(),customPrompt:settings.customPrompt,model:settings.aiModel,waitSeconds:settings.waitSeconds,responseStyle:settings.responseStyle,responseLanguage:settings.speechLanguage,saveToHistory:settings.savePhotoHistory===true});
   if(result.mock)throw new Error('AI is in MOCK mode. No image was analysed.');
   if(result.provider!=='Gemini'||!result.answer)throw new Error('The AI backend did not return a verified Gemini answer.');
@@ -263,15 +271,15 @@ async function startVoiceQuestion(){
  let resultHandled=false,resumed=false;
  const resume=()=>{if(resumed)return;resumed=true;startSosVoiceListener();};
  try{
-  try{activeRecognition?.stop();}catch{}activeRecognition=null;if(status)status.textContent='Requesting microphone permission…';
+  try{activeRecognition?.stop();}catch{}activeRecognition=null;show('Requesting microphone permission…');
   const settings=getSettings();
   activeRecognition=await listenOnce({lang:settings.speechInputLanguage||'bn-BD',outputLanguage:settings.speechLanguage||'en-US',preferGemini:settings.speechInputMode!=='browser',
-   onPermission:()=>{if(status)status.textContent='Microphone permission granted. Listening…';},
-   onStart:()=>{if(status)status.textContent='Browser recognition connected. Speak Bangla, English or mixed speech.';},
-   onInterim:text=>{if(status)status.textContent='I heard: '+text;},
+   onPermission:()=>show('Microphone permission granted. Listening…'),
+   onStart:()=>{if(status)status.textContent=settings.speechLanguage==='bn-BD'?'শুনছি। বাংলা, ইংরেজি বা দুটো মিশিয়ে বলুন।':'Browser recognition connected. Speak Bangla, English or mixed speech.';},
+   onInterim:text=>{if(status)status.textContent=(getSettings().speechLanguage==='bn-BD'?'শুনেছি: ':'I heard: ')+text;},
    onFallback:message=>{if(status)status.textContent=message;},onStatus:message=>{if(status)status.textContent=message;},
    onResult:question=>{resultHandled=true;run('ask',question).finally(resume);},
-   onError:message=>{if(status)status.textContent=message;speakSosStatus(spokenError(message));},
+   onError:message=>{show(message);speakSosStatus(spokenError(message));},
    onEnd:()=>{if(!resultHandled){if(status?.textContent.startsWith('Listening')||status?.textContent.startsWith('The browser'))announce('No speech was recognised. Please try again.');resume();}}
   });
   if(!activeRecognition&&!resultHandled)resume();
@@ -280,7 +288,7 @@ async function startVoiceQuestion(){
 function speakHelp(){
  actionVibration('help');
  const settings=getSettings();const message=settings.speechLanguage==='bn-BD'?'ডেয়ারডেভিলস আই-এর সহায়িকা। প্রধান চারটি বোতাম হলো বর্ণনা, এআই-কে জিজ্ঞাসা, এসওএস এবং আবার শোনান। বর্ণনা চাপলে ক্যামেরায় যা দেখা যায় তা বলা হবে। এআই-কে জিজ্ঞাসা চাপুন, বাংলায় প্রশ্ন করুন এবং কথা শেষ হলে একটু থামুন। এসওএস পাঠাতে এসওএস বোতাম দুইবার চাপুন। আবার শোনান চাপলে শেষ উত্তরটি শোনা যাবে। অ্যাডমিনে ঐচ্ছিক স্বয়ংক্রিয় এসওএস চালু করলে তিনবার ফোন নাড়ালে আট সেকেন্ডের সতর্কীকরণ সময় শুরু হবে। ভয়েস এসওএস চালু থাকলে “ডেয়ারডেভিল এসওএস” বলুন, তারপর “নিশ্চিত করুন” বলুন। বাতিল করতে “এসওএস বাতিল” বলুন। এটি পরীক্ষামূলক সহায়ক, সাদা ছড়ি বা গাইড কুকুরের বিকল্প নয়। স্বাভাবিক চলাচলের সহায়তা ব্যবহার করতে থাকুন।':'Spoken help for Daredevil’s Eye. The four main buttons are Describe, Ask AI, SOS and Repeat. Tap Describe to hear what the camera can see. Tap Ask AI, ask a question in Bangla, English or a mixture, then pause. Tap SOS once to arm it. Tap SOS again within five seconds to confirm and send an alert to your paired receiver. Tap Repeat to hear the last answer again. Spoken Help is the separate button below the four main actions. If you enable the optional SOS triggers in Admin, three deliberate shakes start an eight-second SOS countdown. The optional voice trigger listens only while Blind mode is visible: say Daredevil SOS, then say Confirm SOS; say Cancel SOS to stop a pending alert. This is an experimental tool, not a cane or guide dog. Continue using your normal mobility aid. To leave Blind mode, edit the browser address and remove the word blind between the slashes.';
- if(status)status.textContent='Playing spoken help.';speakSosStatus(message);
+ show('Playing spoken help.');speakSosStatus(message);
 }
 async function deliverSos(){
  if(sosDispatching)return;
@@ -322,7 +330,7 @@ document.addEventListener('click',event=>{
  if(button.dataset.action==='ask'){stopSosVoiceListener();const settings=getSettings();const prompt=settings.speechLanguage==='bn-BD'?'আপনি কী জানতে চান? বাংলায় আপনার প্রশ্ন বলুন, তারপর একটু থামুন।':'What would you like to know? Speak your question, then pause.';const utterance=speak(prompt,{lang:settings.speechLanguage||'en-US',onEnd:startVoiceQuestion,onError:startVoiceQuestion});if(!utterance)startVoiceQuestion();}
  if(button.dataset.action==='sos')armSos();if(button.dataset.action==='repeat')repeatAnswer();if(button.dataset.action==='help')speakHelp();
  if(button.dataset.action==='cancel-sos-trigger')cancelSosCountdown();
- if(button.dataset.action==='stop'){stopSpeaking();try{activeRecognition?.stop();}catch{}revealRun++;if(status)status.textContent='Speech stopped.';}
+ if(button.dataset.action==='stop'){stopSpeaking();try{activeRecognition?.stop();}catch{}revealRun++;show('Speech stopped.');}
 });
 async function preparePhonePhoto(file,source){
  if(!file)return;
@@ -384,7 +392,7 @@ if(termsCheck&&acceptButton){
 $('#consent-accept')?.addEventListener('click',()=>{
  if(!termsCheck?.checked){$('#consent-status').textContent='Please tick the box to confirm that you accept the Terms & Conditions.';return;}
  if(!acceptConsent()){$('#consent-status').textContent='Could not save acceptance in this browser. Enable site storage and try again.';return;}
- saveSettings({savePhotoHistory:true,consentAccepted:true,speechLanguage:'bn-BD',speechInputLanguage:'bn-BD',sosVoiceLanguage:'bn-BD'});
+ saveSettings({savePhotoHistory:true,consentAccepted:true});
  $('#consent-panel').remove();
  const settings=getSettings();
  announce(settings.speechLanguage==='bn-BD'?'শর্তাবলি গ্রহণ করা হয়েছে। আপনি এখন অ্যাপ ব্যবহার করতে পারেন।':'Terms accepted. You can now use the app.');

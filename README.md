@@ -10,7 +10,8 @@ Daredevil's Eye explores how a camera, a phone browser and vision-language AI ca
 
 | Page | Address | Purpose |
 |---|---|---|
-| Home | / or /action/ | Main actions and phone-photo workflow |
+| Landing page | / | Project overview for visitors and judges; links to the app and Blind mode |
+| Home | /action/ | Main actions and phone-photo workflow |
 | Blind mode | /blind/ | Describe, Ask AI, SOS, Repeat and spoken Help |
 | Admin | /admin/ | Camera, SOS, AI, voice, photo-history and image-test settings |
 | Diagnostics | /diagnostics/ | Device/browser and backend tests |
