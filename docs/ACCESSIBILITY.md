@@ -19,7 +19,9 @@ Daredevil's Eye is an experimental audio-first interface. It is not accessibilit
 - Recommended Automatic mode records a short clip and sends it to the Worker/Gemini transcription path for language identification and transcription. It is intended to support Bangladeshi Bengali, English and mixed Bangla-English.
 - Browser-first mode is optional. It uses a separately selected locale and switches to Gemini if the service fails, language support is missing, or no speech is returned.
 - Audio is externally processed in Automatic mode and may be externally processed in browser-first fallback mode. Do not speak passwords or confidential information.
-- For Bengali answers, the speech layer prefers an installed bn-BD or other bn-* device voice. If none is installed, device speech synthesis may pronounce Bengali incorrectly or fail; install Bengali TTS data on the phone.
+- For Bengali answers, the app prefers an installed bn-BD or other bn-* device voice. On Android it asks for bn-BD even when Chrome does not list one. On desktops with no Bengali voice (for example Windows), it uses the Gemini cloud voice through `/api/speech`. If both fail, install Bengali text-to-speech data on the device.
+- The English / বাংলা switch changes the visible text, the accessible labels and the spoken messages together. The switch message is spoken in the newly chosen language.
+- Each photo capture plays one short shutter click, so the user knows the photo was taken.
 - Speech input quality, Bengali translation, mixed-language recognition, voice-SOS phrase accuracy and pronunciation have not yet been confirmed on the target Android device.
 - Three-shake sensitivity, false-positive resistance and voice-SOS reliability require real-phone evaluation. Do not rely on either automatic trigger as the only way to call for help.
 

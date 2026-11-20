@@ -2,17 +2,20 @@
 
 ## Assets
 
-- Server-side Gemini project key and optional visitor-supplied Gemini key.
-- Camera image content, audio recordings sent for fallback transcription and returned AI text.
+- The server-side Gemini project key, a visitor's own Gemini key for the tab, and encrypted saved keys for signed-in users.
+- Camera images, audio sent for transcription, text sent for speech, and the AI's answers.
+- Private photo history in Supabase, the guest cookie, and usage counts based on a keyed hash of the IP address.
 - SOS invitation codes, receiver tokens and alert state.
-- Local device settings, user-provided camera address and emergency contact.
-- Future (not-yet-collected) account identity and usage data.
+- Settings in the browser, including the custom system prompt, the camera address and the emergency contact.
+- Account identity (email) handled by Supabase Auth.
 
 ## Trust boundaries
 
 - Browser to same-origin Worker API.
 - Worker to Google Gemini.
 - Worker to Cloudflare Durable Objects.
+- Worker to Supabase (Auth, Postgres, private storage).
+- Worker to the push service, for SOS web push.
 - Sender browser to receiver browser via invitation/token.
 - Browser to ESP32-CAM over a local network.
 - User-supplied API key from Admin to Worker request header.
@@ -28,10 +31,14 @@
 - Receiver receives a random 256-bit token; only its hash is stored in the room.
 - Pairing a replacement receiver revokes the old receiver token.
 - App code does not intentionally persist camera/audio payloads.
+- Saved personal keys are encrypted with a Worker secret. Guest cookies are stored only as SHA-256 hashes. IP addresses are stored only as keyed hashes.
+- Supabase row-level security blocks direct access from the browser. Photos are kept in a private bucket.
+- A custom system prompt is limited to 4,000 characters, and `SAFETY_CORE` is always added on the server.
 
 ## Residual risks
 
-- Public AI routes can consume the shared Gemini project quota. There is no account login, per-user usage quota or general Cloudflare API rate limiter in the current prototype.
+- Public AI routes, including `/api/speech`, can use up the shared Gemini project quota. There is no per-user quota or general API rate limiter.
+- A custom system prompt can make answers less useful or try to override the scene rules. The safety rules are still added, but they cannot guarantee safe output.
 - A user-supplied API key is visible to the user in browser developer tools and sent to this site's Worker. Users must only enter keys they own and should remove them after a demo.
 - SessionStorage limits persistence but does not make a key a secure account vault.
 - Model rotation is per Worker isolate and best-effort; concurrent isolates do not share a rotation counter.

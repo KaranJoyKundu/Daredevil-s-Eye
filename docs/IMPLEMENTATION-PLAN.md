@@ -2,6 +2,8 @@
 
 > **Current update (17 November 2026):** Use [CURRENT-RELEASE-CHECKLIST.md](CURRENT-RELEASE-CHECKLIST.md) as the authoritative checklist. It supersedes earlier status rows below for Bangla defaults, Gemini 3.8 Flash, Account UI and signed-in/guest photo history. Earlier rows remain as historical context.
 
+> **Historical record (20 November 2026):** this plan was merged and deployed in PRs #7–#9. Item 7 has since changed: each capture now plays one recorded shutter click, not three generated clicks. The test counts below are from that time; `main` now passes 80 tests.
+
 
 Target device: **Samsung Galaxy A55 5G, Android 16 / One UI 8**. Other Android 16 Samsung models are compatibility targets, not presumed identical.
 

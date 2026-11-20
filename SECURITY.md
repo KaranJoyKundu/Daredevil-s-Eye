@@ -2,7 +2,7 @@
 
 ## Scope
 
-Daredevil's Eye is an experimental assistive-vision prototype. It is not approved for safety-critical or unsupervised use. The public demo has no account login or general API rate limiter. Google provider quotas apply.
+Daredevil's Eye is an experimental assistive-vision prototype. It is not approved for safety-critical or unsupervised use. The app can be used without signing in. Accounts are optional and only enable private history and a saved key. There is no general API rate limiter, but Google's quotas still apply.
 
 ## Reporting a vulnerability
 
@@ -24,10 +24,14 @@ Include the affected file or route, impact, reproduction steps and suggested mit
 ## Image and audio data
 
 - Camera images are forwarded to Google Gemini for analysis.
-- If native browser speech recognition cannot connect, a short audio recording may be sent to Gemini for transcription. Browser-native recognition may separately use the browser vendor's service.
-- App code does not intentionally retain image/audio request payloads. Provider processing, retention and data-use terms still apply.
+- In the default voice mode, a short audio recording is sent to Gemini for transcription. The optional browser-first mode may use the browser maker's own recognition service.
+- When a desktop has no Bengali voice, the answer text is sent to Gemini text-to-speech through `/api/speech`.
+- When photo history is turned on, the submitted JPEG and its answer are stored in a private Supabase bucket and table. Signed-in records stay until the user deletes them; guest records are deleted after 30 days. Audio is never stored.
+- The app does not store audio or text-to-speech data on purpose. Google's processing, retention and data-use terms still apply.
 - Google states that content submitted through the Gemini API free tier may be used to improve its products. Do not send sensitive/confidential material through the shared free-tier project key.
 
-## Before enabling accounts
+## Accounts and stored data
 
-Email OTP, guest detection quotas, profile usage history and an admin usage dashboard are not implemented. Before collecting names, email addresses, phone numbers or IP-derived usage signals, add server-side authorisation, data minimisation, explicit notice/consent, retention/deletion rules, administrator access controls and audit logs. IP addresses must not be used as the only identity signal.
+- Signed-in users can save a personal Gemini key. The Worker encrypts it with `API_KEY_ENCRYPTION_KEY` before storing it and never returns it in plain text.
+- Supabase tables have row-level security on. Only the Worker, using the server-side secret key, can read or write them, after checking who owns each record.
+- Not built yet: email OTP, guest quotas and an admin usage dashboard. Before collecting more personal data (for example names or phone numbers), add explicit notice and consent, rules for keeping and deleting data, admin access controls and audit logs. Do not use an IP address as the only way to identify a person.

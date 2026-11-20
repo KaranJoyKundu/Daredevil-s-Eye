@@ -1,6 +1,16 @@
 # Changelog
 
-## Unreleased — landing page, brand restyle and language switch
+## 20 November 2026 — hackathon release (PRs #14–#24)
+
+- Fixed overlapping landing-page sections and footer on short desktop screens (#14).
+- Bangla across the whole interface: navigation, Admin, Diagnostics, Account, Help, status lines and camera errors (`web/shared/bn-text.js`) (#16, #18).
+- Bangla speech on Windows and other desktops: if the device has no Bengali voice, answers are spoken by Gemini text-to-speech through `POST /api/speech`. Only the text to be spoken is sent (#16, #18).
+- Switching to বাংলা now says "বাংলা চালু করা হয়েছে…", a direct translation of the English message (#18).
+- Admin: the system prompt can now be edited (up to 4,000 characters, and the safety rules are always added). Added presets: All-in-one, Single object, Medicine (Bangladeshi brand and generic names), Read text, Taka, Colour and Custom (#16, #20).
+- The app can be installed from Chrome to the home screen: web manifest, service worker, icons and shortcuts for Describe, Ask AI and SOS (#16).
+- Camera: each capture plays one recorded shutter click (`web/shared/shutter.mp3`) instead of three generated clicks (#18, #22, #24).
+
+## 20 November 2026 — landing page, brand restyle and language switch (#12)
 
 - Added a landing page at `/` (previously a redirect to `/action/`), built with the taste-skill kit (`web/assets/`, unchanged kit files).
 - Restyled the app pages to the same green-black-bone palette and Familjen Grotesk / Noto Sans Bengali type; replaced emoji icons with Lucide SVG icons; new app icon (PNG 192/512 + SVG). Blind-mode tiles keep white-text contrast of 4.5:1 or more (test updated).
@@ -8,14 +18,20 @@
 - Fixed: accepting the consent notice no longer resets the chosen language to Bangla; more status lines now follow the chosen language.
 - Fixed: Admin save button lookup; Bangla text passed to `localizeSpeech` is kept as-is.
 
-## Unreleased — optional hands-free SOS triggers
+## 17 November 2026 — Bangla defaults, account history and guest photos (#7–#9)
+
+- Bangla (Bangladesh) became the default language for answers, speech and input. Gemini 3.8 Flash became the default model.
+- Private photo history for signed-in users and guests, using Supabase. Guest data is deleted after 30 days by a daily cron job.
+- Usage counts use a keyed hash of the IP address (HMAC). Raw IP addresses are never stored.
+
+## Optional hands-free SOS triggers
 
 - Added opt-in three-shake SOS detection with distinct motion peaks and an eight-second cancellation countdown.
 - Added opt-in continuous voice SOS monitoring in visible Blind mode, with a distinctive wake phrase, a separate spoken confirmation and a cancellation phrase.
 - Added Admin permission/setup controls, Bengali/English recognition-language selection, privacy disclosures and trigger-detection tests.
 - Both triggers are disabled by default; phone sensor and speech recognition behavior still require physical testing.
 
-## Previous unreleased — voice-first blind controls and multilingual input
+## Voice-first blind controls and multilingual input
 
 - Replaced the Blind mode Help tile with Repeat; moved Help to a separate spoken-help button outside the four main actions.
 - Added a spoken first-use safety notice, concise spoken failure messages, haptic cues, and screen wake lock during active camera/AI/SOS actions where supported.
@@ -27,7 +43,7 @@
 - Added URL actions and Android home-screen shortcuts for Describe, Ask and confirmation-only SOS.
 - Updated documentation and added a ten-scene scorecard template. No real test results are pre-filled.
 
-## Previous unreleased — blind-first and voice resilience
+## Blind-first and voice resilience
 
 - Added the Blind mode foundation, shared navigation, Admin quick-jump cards, BYOK, Gemini transcription fallback, ranked vision-model failover, and progressive response reveal.
 - Updated project documentation, deployment address and privacy disclosures.
