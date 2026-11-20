@@ -13,6 +13,23 @@ const get=(path,headers={})=>new Request('https://local.test'+path,{headers});
 const health=()=>new Request('https://local.test/api/health');
 const image='data:image/jpeg;base64,AAAA';
 
+test('/api/speech returns playable WAV from Gemini TTS PCM and asks for Bangla',async t=>{
+ const originalFetch=globalThis.fetch;t.after(()=>{globalThis.fetch=originalFetch;});
+ let prompt='';
+ globalThis.fetch=async (input,options)=>{
+  if(String(input).includes('/models?'))return Response.json({models:[{name:'models/gemini-9-pro-tts'},{name:'models/gemini-9-flash-tts'}]});
+  assert.match(String(input),/gemini-9-flash-tts:generateContent/);
+  prompt=JSON.parse(options.body).contents[0].parts[0].text;
+  return Response.json({candidates:[{content:{parts:[{inlineData:{mimeType:'audio/L16;codec=pcm;rate=24000',data:btoa('\x01\x02\x03\x04')}}]}}]});
+ };
+ const r=await handleApi(req('/api/speech',{text:'সামনে একটি দরজা',language:'bn-BD'}),{GEMINI_API_KEY:'k'});
+ assert.equal(r.headers.get('content-type'),'audio/wav');
+ const wav=new Uint8Array(await r.arrayBuffer());
+ assert.equal(new TextDecoder().decode(wav.slice(0,4)),'RIFF');assert.equal(wav.length,48);
+ assert.match(prompt,/Bangla/);
+ assert.equal((await handleApi(req('/api/speech',{text:''}),{GEMINI_API_KEY:'k'})).status,400);
+});
+
 test('Blind mode keeps Help outside the four main action buttons and declares phone shortcuts',()=>{
  const html=readFileSync(new URL('../web/blind/index.html',import.meta.url),'utf8');
  const mainStart=html.indexOf('<main');
@@ -179,9 +196,12 @@ test('Bangla response language is accepted by Worker validation',async()=>{
  const r=await handleApi(req('/api/describe',{image,responseLanguage:'bn-BD'}),{AI_MODE:'mock'});
  assert.equal(r.status,200);
 });
-test('custom prompt is capped at 1000 characters',async()=>{
- const r=await handleApi(req('/api/describe',{image,customPrompt:'x'.repeat(1001)}),{AI_MODE:'mock'});
- assert.equal(r.status,400);
+test('custom and system prompts are capped at 4000 characters',async()=>{
+ for(const field of ['customPrompt','systemPrompt']){
+  const r=await handleApi(req('/api/describe',{image,[field]:'x'.repeat(4001)}),{AI_MODE:'mock'});
+  assert.equal(r.status,400);
+ }
+ assert.equal((await handleApi(req('/api/describe',{image,systemPrompt:'x'.repeat(4000)}),{AI_MODE:'mock'})).status,200);
 });
 test('camera routes require an image',async()=>{
  const r=await handleApi(req('/api/describe',{}),{AI_MODE:'mock'});

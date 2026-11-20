@@ -40,6 +40,7 @@ function formSettings(){
   aiModel:$('#model').value||'gemini-3.8-flash',
   waitSeconds:Number($('#wait-seconds').value),
   responseStyle:$('#response-style').value,
+  systemPrompt:systemPromptValue(),
   customPrompt:$('#prompt').value.trim()
  };
 }
@@ -163,12 +164,18 @@ async function loadModels(){
 $('#refresh-models').addEventListener('click',loadModels);
 loadModels();
 
+let defaultSystemPrompt='';
+// Empty means "use the built-in prompt", so an unchanged default is stored as ''.
+function systemPromptValue(){const value=$('#base-prompt').value.trim();return value===defaultSystemPrompt.trim()?'':value;}
 async function loadBasePrompt(){
+ const box=$('#base-prompt');box.value=saved.systemPrompt||'';
  try{
   const response=await apiFetch('/api/config'),data=await response.json();
-  $('#base-prompt').value=response.ok&&data.basePrompt?data.basePrompt:'The built-in camera scene prompt could not be loaded.';
- }catch{$('#base-prompt').value='The built-in camera scene prompt could not be loaded.';}
+  if(response.ok&&data.basePrompt){defaultSystemPrompt=data.basePrompt;if(!box.value)box.value=defaultSystemPrompt;}
+ }catch{}
+ if(!box.value)box.placeholder='The built-in prompt could not be loaded. Leave this empty to use it.';
 }
+$('#reset-base-prompt').addEventListener('click',()=>{$('#base-prompt').value=defaultSystemPrompt;$('#base-prompt').dispatchEvent(new Event('input',{bubbles:true}));});
 loadBasePrompt();
 
 function populateVoices(available=getAvailableVoices()){
@@ -290,7 +297,7 @@ $('#download-selected-image').addEventListener('click',()=>{
 $('#test-image-button').addEventListener('click',async()=>{
  if(!selectedFile)return;
  const button=$('#test-image-button');button.disabled=true;
- const selected={aiModel:$('#model').value||'gemini-3.8-flash',waitSeconds:Number($('#wait-seconds').value),responseStyle:$('#response-style').value,customPrompt:$('#prompt').value.trim()};
+ const selected={aiModel:$('#model').value||'gemini-3.8-flash',waitSeconds:Number($('#wait-seconds').value),responseStyle:$('#response-style').value,systemPrompt:systemPromptValue(),customPrompt:$('#prompt').value.trim()};
  $('#test-status').textContent='Sending to '+selected.aiModel+'. Waiting up to '+selected.waitSeconds+' seconds…';$('#test-result').textContent='';
  try{
   const dataUrl=await new Promise((resolve,reject)=>{
@@ -298,7 +305,7 @@ $('#test-image-button').addEventListener('click',async()=>{
   });
   const question=$('#test-question').value.trim();
   const result=await requestAI(question?'/api/ask':'/api/describe',{
-   image:dataUrl,question,customPrompt:selected.customPrompt,model:selected.aiModel,
+   image:dataUrl,question,systemPrompt:selected.systemPrompt,customPrompt:selected.customPrompt,model:selected.aiModel,
    waitSeconds:selected.waitSeconds,responseStyle:selected.responseStyle,responseLanguage:getSettings().speechLanguage
   });
   if(result.mock)throw new Error('Mock mode is enabled. No image analysis was performed.');

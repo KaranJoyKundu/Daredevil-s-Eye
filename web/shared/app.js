@@ -4,7 +4,7 @@ import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, v
 import { getSettings, saveSettings } from './settings.js?v=20261117-release5';
 import { hasCurrentConsent, acceptConsent, rejectConsent } from './consent.js?v=20261117-release5';
 import { createShakeSequenceTracker, getShakeMagnitude, matchSosVoiceCommand } from './sos-triggers.js?v=20261117-release1';
-import { mountLanguageSwitch } from './language.js?v=20261117-release5';
+import { mountLanguageSwitch, toBangla } from './language.js?v=20261117-release5';
 const $=selector=>document.querySelector(selector),status=$('#status');
 mountLanguageSwitch($('.blind-utility'));
 let activeRecognition=null,voiceStarting=false,phonePhoto=null,phonePhotoUrl=null,revealRun=0,lastAnswer='';
@@ -103,6 +103,7 @@ function localizeSpeech(message){
   'Photo ready. Review it, then press Ask AI to send it.':'ছবিটি প্রস্তুত। দেখে নিয়ে পাঠাতে “এআই-কে জিজ্ঞাসা” বোতাম চাপুন।'
  };
  if(exact[message])return exact[message];
+ const known=toBangla(message);if(known)return known;
  if(/^Completed with /i.test(message))return 'ছবির বিশ্লেষণ সম্পন্ন হয়েছে।';
  if(/^Sending the compressed photo/i.test(message))return 'সংকুচিত ছবিটি বিশ্লেষণের জন্য পাঠানো হচ্ছে।';
  if(/^Speaking the answer/i.test(message))return 'উত্তরটি বলা হচ্ছে।';
@@ -247,7 +248,7 @@ async function run(mode,question='',imageOverride=null){
   const image=await blobToDataUrl(imageBlob);
   const settings=getSettings();
   show('Sending the compressed photo for analysis.');
-  const result=await requestAI(mode==='ask'&&question.trim()?'/api/ask':'/api/describe',{image,question:question.trim(),customPrompt:settings.customPrompt,model:settings.aiModel,waitSeconds:settings.waitSeconds,responseStyle:settings.responseStyle,responseLanguage:settings.speechLanguage,saveToHistory:settings.savePhotoHistory===true});
+  const result=await requestAI(mode==='ask'&&question.trim()?'/api/ask':'/api/describe',{image,question:question.trim(),systemPrompt:settings.systemPrompt||'',customPrompt:settings.customPrompt,model:settings.aiModel,waitSeconds:settings.waitSeconds,responseStyle:settings.responseStyle,responseLanguage:settings.speechLanguage,saveToHistory:settings.savePhotoHistory===true});
   if(result.mock)throw new Error('AI is in MOCK mode. No image was analysed.');
   if(result.provider!=='Gemini'||!result.answer)throw new Error('The AI backend did not return a verified Gemini answer.');
   await announceAnswer(result.answer);

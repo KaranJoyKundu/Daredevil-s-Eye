@@ -38,12 +38,13 @@ export const RESPONSE_LANGUAGES = Object.freeze({
   'bn-BD': 'Answer entirely in natural Bangladeshi Bengali (বাংলা), using Bengali script from the first word to the last. This is the full Bangla mode: never switch to English for headings, status phrases, instructions, camera guidance, labels or explanations. Use everyday spoken Bangladeshi wording, not Latin transliteration. Keep technical product names/model numbers only when translating them would make them unrecognisable; explain them in Bangla. Keep the answer concise and easy to understand when spoken aloud.'
 });
 
-export function buildPrompt({ mode = 'describe', question = '', customPrompt = '', responseStyle = 'concise', responseLanguage = 'en-US' } = {}) {
+/** systemPrompt (user-editable in Admin) replaces SCENE_RULES; SAFETY_CORE is always appended. */
+export function buildPrompt({ mode = 'describe', question = '', systemPrompt = '', customPrompt = '', responseStyle = 'concise', responseLanguage = 'en-US' } = {}) {
   const selected = DEFAULT_MODES[mode] ?? DEFAULT_MODES.describe;
   const style = RESPONSE_STYLES[responseStyle] ?? RESPONSE_STYLES.concise;
   const language = RESPONSE_LANGUAGES[responseLanguage] ?? RESPONSE_LANGUAGES['en-US'];
   return [
-    selected.usesCamera ? SCENE_RULES : '',
+    selected.usesCamera ? (systemPrompt.trim() || SCENE_RULES) : '',
     selected.prompt,
     language,
     style,

@@ -5,7 +5,13 @@ import {readFileSync} from 'node:fs';
 // Runs the real localizeSpeech from app.js (a browser module) with a stubbed getSettings.
 const app=readFileSync(new URL('../web/shared/app.js',import.meta.url),'utf8');
 const src=app.slice(app.indexOf('function localizeSpeech('),app.indexOf('function speakSosStatus('));
-const load=lang=>new Function('getSettings',src+'\nreturn localizeSpeech;')(()=>({speechLanguage:lang}));
+globalThis.localStorage??={getItem:()=>null,setItem(){},removeItem(){}};
+const {toBangla}=await import('../web/shared/language.js');
+const load=lang=>new Function('getSettings','toBangla',src+'\nreturn localizeSpeech;')(()=>({speechLanguage:lang}),toBangla);
+
+test('English UI text from the page dictionary is spoken in Bangla',()=>{
+ assert.match(load('bn-BD')('Reset privacy consent on this device'),/[\u0980-\u09FF]/);
+});
 
 test('Bangla status text is spoken as-is, not replaced by the generic failure line',()=>{
  const localize=load('bn-BD');
