@@ -1,7 +1,7 @@
 import { getSettings } from './settings.js?v=20261117-release1';
 
 let shutterAudioContext=null,shutterSound=null;
-// Real recorded shutter (AOSP camera_click.ogg, Apache-2.0), decoded once; synthetic click is the fallback.
+// Real recorded shutter (Mixkit "Camera shutter hard click" #1430, Mixkit free license), decoded once; synthetic click is the fallback.
 function loadShutterSound(){
  if(!shutterSound)shutterSound=fetch('/shared/shutter.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject(new Error('shutter'))).then(b=>shutterAudioContext.decodeAudioData(b)).catch(()=>{shutterSound=null;return null;});
  return shutterSound;
