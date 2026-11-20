@@ -1,31 +1,45 @@
 *{box-sizing:border-box}
+/* Author CSS (e.g. button{display:block}) otherwise overrides the hidden attribute. */
+[hidden]{display:none!important}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 :root{color-scheme:dark;--blue:#078cf0;--teal:#08c6b6;--orange:#f59e0b;--purple:#8851ed;--navy:#07111f;--panel:#101f32}
 body{margin:0;background:radial-gradient(ellipse at top,#142a43 0%,var(--navy) 58%);color:#f5f8ff;font:18px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
 main{max-width:760px;margin:auto;padding:24px}
-h1{font-size:clamp(1.8rem,6vw,2.5rem);margin:.35em 0}
+h1,h2,h3{text-wrap:balance}
+h1{font-size:clamp(1.8rem,6vw,2.5rem);margin:.35em 0;letter-spacing:-.02em}
 h2{font-size:1.25rem}
 .subtitle{color:#c4d4e7;margin-top:-8px}
 .actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:22px 0}
-.action-card{display:flex;min-height:160px;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px 12px;border:0;border-radius:20px;color:#fff;text-align:center;text-decoration:none;font:inherit;box-shadow:0 8px 22px #0005;transition:transform .12s,filter .12s}
+.action-card{display:flex;min-height:160px;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px 12px;border:1px solid #ffffff1f;border-radius:20px;color:#fff;text-align:center;text-decoration:none;font:inherit;box-shadow:0 1px 0 #ffffff14 inset,0 8px 22px #0005;transition:transform .12s,filter .12s}
+.action-card:hover{filter:brightness(1.12)}
 .action-card:active{transform:scale(.98);filter:brightness(.92)}
 .action-card strong{font-size:1.25rem;letter-spacing:.02em}
 .action-card span{font-size:.96rem;font-weight:600}
 .action-card .symbol{font-size:2rem;line-height:1}
-.describe{background:linear-gradient(135deg,#078cf0,#0877d8)}
-.ask{background:linear-gradient(135deg,#08c6b6,#00a99d)}
-.sos{background:linear-gradient(135deg,#ffad22,#f08b00)}
-.help{background:linear-gradient(135deg,#a06af5,#7745df)}
+/* Same palette as blind mode: white text passes WCAG AA (the old teal/orange were ~2:1). */
+.describe{background:#07509b}
+.ask{background:#00665f}
+.sos{background:#8a3700}
+.help{background:#4b3292}
 button,.button{cursor:pointer}
-button:not(.action-card),.button:not(.action-card){display:block;width:100%;min-height:56px;margin:12px 0;padding:13px;border:1px solid #41617e;border-radius:12px;background:#19334d;color:white;font:700 1rem system-ui;text-align:center;text-decoration:none}
+button:not(.action-card),.button:not(.action-card){display:block;width:100%;min-height:56px;margin:12px 0;padding:13px;border:1px solid #41617e;border-radius:12px;background:#19334d;color:white;font:700 1rem system-ui;text-align:center;text-decoration:none;transition:filter .15s,transform .15s}
+button:not(.action-card):not(:disabled):hover,.button:not(.action-card):hover{filter:brightness(1.18)}
+button:not(.action-card):not(:disabled):active,.button:not(.action-card):active{transform:scale(.98)}
+button:disabled{opacity:.5;cursor:not-allowed}
 button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:4px solid #facc15;outline-offset:3px}
 input,textarea{width:100%;min-height:52px;font:inherit;padding:10px;border-radius:10px;border:1px solid #526b85;background:#0c1b2d;color:#fff}
 textarea{min-height:130px}
 label{display:block;margin:12px 0 5px;font-weight:650}
-pre,.panel,#status{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--panel);padding:16px;border-radius:12px}
+/* pre-wrap only where JS writes multi-line text; on .panel it rendered HTML line breaks as large gaps. */
+pre,.panel,#status{overflow-wrap:anywhere;background:var(--panel);padding:16px;border-radius:12px}
+pre,#status,.panel [role=status]{white-space:pre-wrap}
+pre{font:inherit;line-height:1.55}
+.panel>h2:first-child{margin-top:0}
 #status{border-left:4px solid var(--teal);min-height:60px}
 #consent-panel{border:1px solid #e8ad36;padding:14px;border-radius:12px;background:#1b2635}
 a{color:#9bd7ff}
-.navlinks{display:flex;gap:16px;flex-wrap:wrap;margin:18px 0}
+.navlinks{display:flex;gap:4px 16px;flex-wrap:wrap;margin:18px 0}
+.navlinks a{display:inline-flex;align-items:center;min-height:44px}
 @media(max-width:480px){main{padding:16px}.actions{gap:9px}.action-card{min-height:138px;border-radius:16px}.action-card strong{font-size:1.1rem}.action-card span{font-size:.88rem}}
 
 /* Admin and diagnostics controls */
@@ -50,10 +64,10 @@ input[type=file]{min-height:48px;padding:8px;font-size:.9rem}
 .diagnostic-card strong{font-size:1.12rem}
 .diagnostic-card small{color:#f1f7ffdd}
 .diag-icon{font-size:1.8rem;line-height:1.2}
-.diag-blue{background:linear-gradient(135deg,#078cf0,#0864c2)}
-.diag-teal{background:linear-gradient(135deg,#08c6b6,#078f8c)}
-.diag-purple{background:linear-gradient(135deg,#9660f3,#6940c7)}
-.diag-orange{background:linear-gradient(135deg,#f5a623,#c66a0c)}
+.diag-blue{background:#07509b}
+.diag-teal{background:#00665f}
+.diag-purple{background:#4b3292}
+.diag-orange{background:#8a3700}
 .diag-slate{background:linear-gradient(135deg,#526d89,#293d55)}
 .diagnostic-panel{margin:18px 0;scroll-margin-top:18px;border:1px solid #2d4a67}
 .diagnostic-panel h2{margin-top:0}
@@ -100,7 +114,7 @@ input[type=file]{min-height:48px;padding:8px;font-size:.9rem}
 .blind-repeat{background:#4b3292}
 .blind-tile:focus-visible,.blind-help-button:focus-visible{outline:5px solid #ffeb3b;outline-offset:-7px}
 .blind-utility{height:66px;padding:7px;display:flex;align-items:center;justify-content:center}
-.blind-page .blind-tile{width:100%;height:100%;min-height:0;margin:0;padding:12px 6px;border:0}
+.blind-page .blind-tile{display:flex;width:100%;height:100%;min-height:0;margin:0;padding:12px 6px;border:0}
 .blind-page .blind-describe{background:#07509b}
 .blind-page .blind-ask{background:#00665f}
 .blind-page .blind-sos{background:#8a3700}
@@ -133,7 +147,7 @@ input[type=file]{min-height:48px;padding:8px;font-size:.9rem}
 @media(max-width:520px){.consent-card{padding:18px}.consent-actions{grid-template-columns:1fr}}
 
 .admin-save-actions{margin:26px 0 8px;padding-top:18px;border-top:1px solid #35506d}
-.admin-save-actions button{min-height:64px;font-size:1.1rem;background:linear-gradient(135deg,#078cf0,#0864c2)}
+.admin-save-actions button{min-height:64px;font-size:1.1rem;background:#07509b}
 
 
 /* Account & History refresh — scoped so the other app surfaces retain their layout. */
@@ -220,7 +234,7 @@ input[type=file]{min-height:48px;padding:8px;font-size:.9rem}
   display:inline-flex!important;align-items:center;justify-content:center;
   width:auto!important;min-height:44px!important;margin:0!important;padding:10px 16px!important;
   border:1px solid #2877ab!important;border-radius:11px!important;
-  background:linear-gradient(135deg,#078cf0,#076ab8)!important;
+  background:#07509b!important;
   color:#fff!important;font-size:.9rem!important;font-weight:750!important;
   line-height:1.2!important;text-align:center!important;text-decoration:none!important;
 }

@@ -62,6 +62,8 @@ function startSosVoiceListener(){
 function localizeSpeech(message){
  const settings=getSettings();
  if(settings.speechLanguage!=='bn-BD')return String(message||'');
+ // Callers may pass already-Bangla text; without this it fell through to the generic failure line.
+ if(/[\u0980-\u09FF]/.test(String(message||'')))return String(message);
  const exact={
   'SOS countdown cancelled. No alert was sent.':'এসওএস বাতিল করা হয়েছে। কোনো সতর্কবার্তা পাঠানো হয়নি।',
   'SOS cancelled. No alert was sent.':'এসওএস বাতিল করা হয়েছে। কোনো সতর্কবার্তা পাঠানো হয়নি।',
