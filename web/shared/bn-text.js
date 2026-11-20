@@ -657,7 +657,8 @@ export const BN={"Main actions":"প্রধান কাজগুলো",
 "ESP32-CAM address":"ESP32-CAM ঠিকানা",
 "Gemini voice library":"Gemini কণ্ঠের তালিকা",
 "Gemini voice delivery":"Gemini কণ্ঠের ধরন",
-"Gemini response will appear here.":"Gemini-এর উত্তর এখানে দেখা যাবে।"};
+"Gemini response will appear here.":"Gemini-এর উত্তর এখানে দেখা যাবে।",
+"Camera /capture timed out after 20 seconds. Test http://192.168.0.104/capture directly.":"ক্যামেরা ২০ সেকেন্ডে সাড়া দেয়নি। সরাসরি http://192.168.0.104/capture পরীক্ষা করুন।"};
 export const BN_PREFIX=[["Using the device voice because the selected speech service failed:","ডিভাইসের ভয়েস ব্যবহার করা হচ্ছে, কারণ বাছাই করা স্পিচ সেবা ব্যর্থ হয়েছে:"],
 ["Android version (user-agent hint; may be a compatibility value):","অ্যান্ড্রয়েড সংস্করণ (ইউজার-এজেন্টের ইঙ্গিত; সামঞ্জস্যের মান হতে পারে):"],
 ["Receiver connected with foreground polling only.","রিসিভার শুধু সামনে খোলা পাতার যাচাইয়ে সংযুক্ত।"],

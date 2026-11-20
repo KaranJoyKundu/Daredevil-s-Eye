@@ -26,7 +26,7 @@ test('/api/speech returns playable WAV from Gemini TTS PCM and asks for Bangla',
  assert.equal(r.headers.get('content-type'),'audio/wav');
  const wav=new Uint8Array(await r.arrayBuffer());
  assert.equal(new TextDecoder().decode(wav.slice(0,4)),'RIFF');assert.equal(wav.length,48);
- assert.match(prompt,/Bangla/);
+ assert.equal(prompt,'সামনে একটি দরজা'); // only the words, so no instructions get read aloud
  assert.equal((await handleApi(req('/api/speech',{text:''}),{GEMINI_API_KEY:'k'})).status,400);
 });
 
