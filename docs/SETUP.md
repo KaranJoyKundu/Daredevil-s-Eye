@@ -34,7 +34,15 @@ Admin → Camera & SOS defaults to `http://192.168.0.104`; the app appends `/cap
 
 ## Voice and language
 
-ASK AI first tries native browser SpeechRecognition. If that service is unavailable/network-blocked, it records a short clip using MediaRecorder and asks Gemini to transcribe it. The transcription prompt converts Bengali words to English and preserves English speech regardless of accent. This uses provider quota and sends audio to Google. Use HTTPS or localhost, allow the microphone and avoid speaking confidential details.
+Use the English / বাংলা switch at the top of each page. Bangla is the default.
+
+In the default Automatic mode, ASK AI records a short clip with MediaRecorder and Gemini transcribes it into the selected language. The optional browser-first mode (Admin) tries native SpeechRecognition first. Both use your quota and send audio to Google. Use HTTPS or localhost, allow the microphone, and don't say anything confidential.
+
+Answers are spoken with the device voice. On Windows or another desktop with no Bengali voice, Bangla answers are spoken by Gemini through `/api/speech`, which also uses your quota.
+
+## Assistant mode and system prompt
+
+In Admin → AI, choose a preset (All-in-one, Single object, Medicine, Read text, Taka, Colour) or Custom, and edit the system prompt (up to 4,000 characters). Reset restores the default. The settings are saved in this browser only, and the safety rules are always added on the server.
 
 ## BYOK
 
@@ -46,7 +54,11 @@ Generate a fresh invitation in Admin. The receiver opens `/sos-receiver/`, enter
 
 ## Blind mode
 
-Open `/blind/`. To leave, edit the URL and remove `/blind/` or navigate to `/action/`.
+Open `/blind/`. It has no menu on purpose. To leave, change the address to `/action/`.
+
+## Install as an app
+
+On Android Chrome, open the site and choose ⋮ → Install app (or Add to Home screen). The installed app opens Blind mode. Long-press its icon for the Describe, Ask AI and SOS shortcuts.
 
 ## Secrets
 

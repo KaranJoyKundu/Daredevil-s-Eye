@@ -43,6 +43,8 @@ The web manifest declares these three shortcuts. Launcher and browser support va
 ## Not included yet
 
 - Direct volume-key handling inside a native Android application.
+
+Requested by the team for a future native app: **Volume Up = Describe, Volume Down = Ask AI, Up and Down together = SOS (still with confirmation)**. A web page or installed web app cannot receive these phone buttons in Android Chrome. Until a native app exists, the closest option is MacroDroid or Tasker: map a Volume Up trigger to the Describe URL and a Volume Down trigger to the Ask AI URL.
 - A background Accessibility Service for locked-screen shortcuts.
 - Bluetooth earbud play/pause/next/previous mappings. Media Session behavior varies and is not dependable enough to enable as an emergency control.
 

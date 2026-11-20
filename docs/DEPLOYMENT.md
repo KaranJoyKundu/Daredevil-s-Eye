@@ -15,8 +15,11 @@ In GitHub, open Settings → Secrets and variables → Actions and add:
 | CLOUDFLARE_API_TOKEN | Scoped Cloudflare API token for Workers deployment |
 | CLOUDFLARE_ACCOUNT_ID | Cloudflare account ID |
 | GEMINI_API_KEY | Gemini API key for the server-side demo project |
+| SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY | Optional. Turns on account and guest photo history |
+| API_KEY_ENCRYPTION_KEY, IP_HASH_SECRET | Optional. Encrypts saved personal keys and creates the keyed IP hash |
+| SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY | Optional older alternative to the publishable and secret key pair |
 
-The workflow uploads only `GEMINI_API_KEY` as a Worker secret. Never place values in workflow source, frontend code, commits or logs. Follow Cloudflare's current least-privilege guidance for API tokens.
+The workflow always uploads `GEMINI_API_KEY` as a Worker secret, and uploads the Supabase, encryption and IP-hash secrets only when all of them are set. VAPID keys for SOS web push are generated and stored by the SOS Durable Object, so they need no secret. Never put secret values in workflow files, front-end code, commits or logs. Follow Cloudflare's current least-privilege guidance for API tokens.
 
 ## Release flow
 
@@ -28,6 +31,8 @@ The workflow uploads only `GEMINI_API_KEY` as a Worker secret. Never place value
 6. Confirm the Worker deployment job succeeds and test the live site.
 
 A green test job on a feature branch does not update production. Do not treat CI as physical device verification.
+
+Every push to `main` redeploys, including pushes that change only documentation. The workflow has no `paths` filter.
 
 ## API keys and quotas
 

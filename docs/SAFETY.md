@@ -5,7 +5,8 @@
 - Never invent distances, directions or measurements.
 - Keep descriptions factual, concise and uncertainty-aware.
 - Do not identify people or infer sensitive personal traits.
-- Camera images are forwarded to Gemini for analysis. A short voice recording may be forwarded to Gemini for transcription when native browser recognition cannot connect.
+- Camera images are sent to Gemini for analysis. In the default voice mode, a short voice recording is sent to Gemini for transcription. On desktops without a Bengali voice, the answer text is sent to Gemini to be spoken.
+- Users can replace the scene instructions with their own system prompt or a preset (for example Medicine or Taka). `SAFETY_CORE` is always added. Medicine and money answers are best guesses: check them with a person or the label before acting on them.
 - Browser speech recognition may also send audio to the browser vendor's recognition service.
 - Personal Gemini keys are sent to the same-origin Worker in a request header and kept only in the current browser tab's session storage. Never share a screenshot containing a key.
 - App code does not intentionally retain image/audio payloads, but providers process requests under their own terms.

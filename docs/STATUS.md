@@ -1,10 +1,18 @@
 # Daredevil's Eye — implementation status
 
-Updated: 17 November 2026  
+Updated: 20 November 2026  
 Production URL: https://daredevils-eye.karanjoykundu.workers.dev/  
 Target handset: Samsung Galaxy A55 5G, Android 16 / One UI 8.
 
-## Current production state
+## Current production state (20 November 2026)
+
+- `main` is at 6a9f3bf (merge of PR #24). Main deployment run #470 succeeded, and the CI run for that PR (#469) passed 80/80 tests and the syntax check.
+- Released on 20 November: the landing page at `/` (#12, #14); the full Bangla interface, Bangla speech through Gemini on desktop, the editable system prompt and the installable app (#16); the fixed Bangla switch message and a single shutter click (#18); the assistant-mode presets (#20); the recorded shutter sound (#22, #24).
+- Checked in Chrome: the live site at desktop, tablet and mobile sizes, the Bangla interface, the app install check, and that the deployed `shutter.mp3` matches the repository file.
+- Not yet checked on real devices: the shutter sound on a phone, Gemini Bangla speech on Windows, the quality of each preset's answers, installing on a real Android phone, and a native speaker's review of the Bangla text.
+- Open item: the source and licence of `web/shared/shutter.mp3` (from a "Camera shutter sound effect 007" clip) are not recorded. Confirm them, or replace the file, before any public release beyond the hackathon.
+
+## Production state on 17 November 2026 (history)
 
 PR #7 and PR #8 are merged to main. The current main commit is b6a6ffc25b15dcee76518cdb46069df52170d00a.
 

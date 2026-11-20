@@ -2,6 +2,18 @@
 
 This roadmap replaces the old token/rate-limit checklist, which no longer describes the current public demo. “Implemented” means source/configuration exists; it does not mean a real user or device test has passed.
 
+## Hackathon release — 20 November 2026 (done)
+
+- [x] Landing page at `/`, with the app restyled using a shared palette, type and Lucide icons.
+- [x] Full English / বাংলা interface switch; Bangla is the default.
+- [x] Bangla speech on desktop through the Gemini cloud voice (`/api/speech`).
+- [x] Editable system prompt and assistant presets (All-in-one, Single object, Medicine, Read text, Taka, Colour, Custom).
+- [x] Installable app with home-screen shortcuts.
+- [x] One recorded shutter click per capture.
+- [x] Account and guest photo history (Supabase) with 30-day guest cleanup (17 November).
+- [ ] Real-device checks: listed in the [release checklist](CURRENT-RELEASE-CHECKLIST.md).
+- [ ] Native Android app for hardware volume-button shortcuts (Up = Describe, Down = Ask AI, both = SOS).
+
 ## Phase 0 — working public prototype foundation
 
 - [x] Cloudflare Worker serves the web app, API and Durable Objects.
@@ -17,7 +29,7 @@ This roadmap replaces the old token/rate-limit checklist, which no longer descri
 - [x] GitHub Actions test/syntax workflow and conditional Cloudflare deployment.
 - [x] Public Cloudflare URL deployed: https://daredevils-eye.karanjoykundu.workers.dev/
 
-## Phase 1 — blind-first and voice-resilience improvements (feature branch)
+## Phase 1 — blind-first and voice-resilience improvements (merged)
 
 - [x] Dedicated Blind mode at /blind/ with four main actions (Describe, Ask AI, SOS, Repeat), separate spoken Help and no visible exit button.
 - [x] Shared navigation menu and brand link on standard pages.
@@ -71,7 +83,7 @@ The web app cannot reliably intercept Android hardware volume keys. MacroDroid/T
 
 ## Phase 4 — accounts, guest trial and usage tracking
 
-This is a future backend project. No account, signup, IP counter or user database is present in the current branch.
+Partly done. Email and password accounts, private photo history, guest history, encrypted saved keys and keyed-hash IP usage counts are live (see [Supabase setup](SUPABASE-ACCOUNT-HISTORY-SETUP.md)). The items below are still open.
 
 - [ ] Choose a transactional database and email provider; define secrets and deployment environments.
 - [ ] On first visit, show a sign-in / sign-up option and a clearly labelled guest path with **10 free image detections**.

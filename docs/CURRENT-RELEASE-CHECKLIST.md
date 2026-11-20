@@ -1,6 +1,6 @@
 # Daredevil's Eye — current release checklist
 
-Updated: 17 November 2026  
+Updated: 20 November 2026  
 Target handset: Samsung Galaxy A55 5G, Android 16 / One UI 8  
 Production URL: https://daredevils-eye.karanjoykundu.workers.dev/
 
@@ -10,6 +10,12 @@ This document is the current checklist. It supersedes older status text where th
 
 | Area | Current behavior | Verification still required |
 |---|---|---|
+| Landing page | `/` is the project landing page. `/action/` is the main app and `/blind/` is Blind mode. | None. Checked in Chrome at desktop, tablet and mobile sizes. |
+| Language switch | The English / বাংলা switch changes the interface, spoken messages and AI answers. The Bangla switch message is a direct translation of the English one. | A native speaker's review of the Bangla text. |
+| Bangla speech on desktop | If the device has no Bengali voice (for example Windows), answers are spoken by Gemini text-to-speech through `/api/speech`. Android uses its own bn-BD voice. | Listen on a Windows PC. Check quota use. |
+| Assistant modes | Admin presets: All-in-one, Single object, Medicine, Read text, Taka, Colour and Custom. The system prompt can be edited (up to 4,000 characters), and the safety rules are always added. | Check answer quality for each preset with real photos. |
+| Installable app | Web manifest, service worker, icons and three home-screen shortcuts. | Install and launch on the Galaxy A55. |
+| Shutter sound | One recorded click (`web/shared/shutter.mp3`) for each capture. | Check that it is audible on a phone. Confirm the file's licence. |
 | Gemini model | Gemini 3.8 Flash is the default. Old saved Gemini 3.6 Flash selections migrate to 3.8 Flash. | Live-key quality/quota test. |
 | Bangla defaults | Bangla (Bangladesh) is the default for AI replies, device speech, input preference and SOS voice language. Current Terms acceptance writes these defaults to existing browser settings. | Bengali TTS and speech-input testing on the A55. |
 | Repeated safety warnings | Generic hazard warnings are removed from every AI response. Safety limits remain in Terms, Privacy and the consent screen. | Confirm fresh assets load after deployment. |
@@ -52,7 +58,7 @@ Do not assume history is live merely because the Worker deployment succeeds. Con
 | P1 | Account UI/accessibility | Test small-screen layout, TalkBack focus, labels, live regions, large targets and delete confirmations. |
 | P1 | Camera-history semantics | Confirm submitted compressed image is saved; preview-only cancelled image is not saved; failed Gemini analysis still leaves the image record. |
 | P1 | Screen-off SOS | Pair a second phone, lock it, send SOS and verify actual notification visibility/sound/vibration. |
-| P2 | ESP32-CAM/shutter/compression | Test LAN access, selected frame, audible shutter sounds and JPEG size under 4 MB on actual hardware. |
+| P2 | ESP32-CAM/shutter/compression | Test LAN access, the selected frame, the single shutter click and JPEG size under 4 MB on real hardware. |
 | P2 | Accessibility/security review | Test TalkBack, false-positive SOS behavior and re-run Supabase security/performance advisors after final schema changes. |
 | Optional | Buy Me a Coffee | Add a creator page only when one exists; no placeholder payment URL is published. |
 
