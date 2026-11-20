@@ -229,15 +229,16 @@ $('#preview-voice').addEventListener('click',async()=>{
 
 form.addEventListener('submit',async event=>{
  event.preventDefault();
- const submitButton=form.querySelector('button[type="submit"]');
- submitButton.disabled=true;
+ // The Save button sits outside <form> (form="settings-form"); form.elements includes it, querySelector does not.
+ const submitButton=[...form.elements].find(el=>el.type==='submit');
+ if(submitButton)submitButton.disabled=true;
  try{
   const next=formSettings();
   saveSettings(next);
   $('#camera').value=next.cameraBaseUrl;
   $('#message').textContent='All settings saved on this device. Generate a fresh SOS invitation whenever you want to pair or replace the receiver.';
  }catch(error){$('#message').textContent=error.message;}
- finally{submitButton.disabled=false;}
+ finally{if(submitButton)submitButton.disabled=false;}
 });
 
 let selectedFile=null,previewUrl=null;

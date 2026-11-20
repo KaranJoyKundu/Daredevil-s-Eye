@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — landing page, brand restyle and language switch
+
+- Added a landing page at `/` (previously a redirect to `/action/`), built with the taste-skill kit (`web/assets/`, unchanged kit files).
+- Restyled the app pages to the same green-black-bone palette and Familjen Grotesk / Noto Sans Bengali type; replaced emoji icons with Lucide SVG icons; new app icon (PNG 192/512 + SVG). Blind-mode tiles keep white-text contrast of 4.5:1 or more (test updated).
+- Added an English | বাংলা answer-language switch (`web/shared/language.js`) in the site nav and Blind mode; tile labels and aria-labels switch with it.
+- Fixed: accepting the consent notice no longer resets the chosen language to Bangla; more status lines now follow the chosen language.
+- Fixed: Admin save button lookup; Bangla text passed to `localizeSpeech` is kept as-is.
+
 ## Unreleased — optional hands-free SOS triggers
 
 - Added opt-in three-shake SOS detection with distinct motion peaks and an eight-second cancellation countdown.
