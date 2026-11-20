@@ -17,6 +17,13 @@ test('immutable safety core is appended after user-controlled text',()=>{
  const p=buildPrompt({customPrompt:'custom text'});
  assert.ok(p.indexOf('custom text')<p.indexOf(SAFETY_CORE));
 });
+test('user system prompt replaces the scene rules but keeps the safety core',()=>{
+ const p=buildPrompt({mode:'ask',systemPrompt:'You read medicine labels aloud.',question:'Which pill?'});
+ assert.ok(p.startsWith('You read medicine labels aloud.'));
+ assert.ok(!p.includes(SCENE_RULES));
+ assert.ok(p.endsWith(SAFETY_CORE));
+ assert.equal(buildPrompt({systemPrompt:'   '}),buildPrompt({}));
+});
 test('concise response style is the default',()=>{
  const p=buildPrompt({mode:'describe'});
  assert.ok(p.includes(RESPONSE_STYLES.concise));

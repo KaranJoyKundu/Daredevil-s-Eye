@@ -158,7 +158,7 @@ async function runAiTest(){
   const question=$('#diag-ai-question').value.trim();
   const result=await requestAI(question?'/api/ask':'/api/describe',{
    image,question,model:settings.aiModel,waitSeconds:settings.waitSeconds,
-   responseStyle:settings.responseStyle,customPrompt:settings.customPrompt,responseLanguage:settings.speechLanguage
+   responseStyle:settings.responseStyle,systemPrompt:settings.systemPrompt||'',customPrompt:settings.customPrompt,responseLanguage:settings.speechLanguage
   });
   if(result.mock)throw new Error('Mock mode returned no real image analysis.');
   $('#ai-output').textContent=(result.disclaimer||'')+'\n\n'+result.answer;

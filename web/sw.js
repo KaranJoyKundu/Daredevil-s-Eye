@@ -1,3 +1,8 @@
+// A working fetch handler makes the app installable (Add to Home screen); pages stay network-first.
+self.addEventListener('fetch',event=>{
+ if(event.request.mode!=='navigate')return;
+ event.respondWith(fetch(event.request).catch(()=>new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline</title><p style="font:20px/1.5 system-ui;padding:24px">আপনি অফলাইনে আছেন। Daredevil\'s Eye ব্যবহারে ইন্টারনেট লাগে।<br>You are offline. Daredevil\'s Eye needs the internet.</p>',{headers:{'content-type':'text/html; charset=utf-8'}})));
+});
 self.addEventListener('push',event=>{
  const message=event.data?event.data.text():'An SOS alert has been received.';
  const title='DAREDEVIL’S EYE · SOS';

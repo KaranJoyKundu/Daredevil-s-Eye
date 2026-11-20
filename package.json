@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "check": "node --check worker/src/index.js && node --check worker/src/prompts.js && node --check worker/src/sos-room.js && node --check worker/src/sos-directory.js && node --check web/shared/app.js && node --check web/shared/api.js && node --check web/shared/camera.js && node --check web/shared/consent.js && node --check web/shared/speech.js && node --check web/shared/settings.js && node --check web/shared/site-nav.js && node --check web/shared/language.js && node --check web/admin/admin.js && node --check web/diagnostics/diagnostics.js && node --check web/sos-receiver/receiver.js && node --check web/account/account.js && node --check web/sw.js"
+    "check": "node --check worker/src/index.js && node --check worker/src/prompts.js && node --check worker/src/sos-room.js && node --check worker/src/sos-directory.js && node --check web/shared/app.js && node --check web/shared/api.js && node --check web/shared/camera.js && node --check web/shared/consent.js && node --check web/shared/speech.js && node --check web/shared/settings.js && node --check web/shared/site-nav.js && node --check web/shared/language.js && node --check web/admin/admin.js && node --check web/diagnostics/diagnostics.js && node --check web/sos-receiver/receiver.js && node --check web/account/account.js && node --check web/sw.js && node --check web/shared/bn-text.js"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"

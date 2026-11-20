@@ -208,9 +208,13 @@ export function speak(text, options = {}) {
     if (currentAudioUrl) { URL.revokeObjectURL(currentAudioUrl); currentAudioUrl = null; }
     const runId = speechRun;
     let voices = getAvailableVoices();
-    if (voices.length) return runSpeechQueue(chunks, options, settings, runId, voices);
-
     const requestedLanguage = options.lang || settings.speechLanguage || 'en-US';
+    // Windows/desktop Chrome has no Bengali system voice; Android resolves bn-BD itself, so only desktop goes to the cloud voice.
+    const needsCloud = list => !options.noCloud && !/Android/i.test(navigator.userAgent || '') && !list.some(isBengaliVoice) &&
+      (/^bn(?:-|$)/i.test(requestedLanguage) || detectSpokenLanguage(text) === 'bn-BD');
+    const start = list => needsCloud(list) ? speakResponse(text, { ...options, engine: 'gemini' }) : runSpeechQueue(chunks, options, settings, runId, list);
+    if (voices.length) return start(voices);
+
     let settled = false;
     let timer = null;
     const finish = list => {
@@ -220,8 +224,7 @@ export function speak(text, options = {}) {
       window.speechSynthesis.removeEventListener?.('voiceschanged', onVoices);
       const ready = Array.isArray(list) ? list : [];
       // Let Android resolve a requested locale even when Chrome exposes no voices.
-      voices = ready;
-      runSpeechQueue(chunks, options, settings, runId, voices);
+      start(ready);
     };
     const onVoices = () => {
       const list = getAvailableVoices();
@@ -240,6 +243,7 @@ export async function speakResponse(text, options = {}) {
   const settings=getSettings(),engine=options.engine||settings.speechEngine;
   if(engine!=='gemini')return speak(text,options);
   stopSpeaking();
+  const run=speechRun;
   try{
     const response=await apiFetch('/api/speech',{
       method:'POST',headers:{'content-type':'application/json'},
@@ -255,6 +259,7 @@ export async function speakResponse(text, options = {}) {
       throw new Error(data.error||'Gemini voice request failed.');
     }
     const blob=await response.blob();
+    if(run!==speechRun)return null; // a newer speak() started while this audio was downloading
     currentAudioUrl=URL.createObjectURL(blob);
     currentAudio=new Audio(currentAudioUrl);
     currentAudio.onended=()=>{
@@ -274,7 +279,7 @@ export async function speakResponse(text, options = {}) {
     if(currentAudioUrl){URL.revokeObjectURL(currentAudioUrl);currentAudioUrl=null;}
     if(options.fallback===false)throw error;
     options.onFallback?.(error);
-    return speak(text,options);
+    return speak(text,{...options,noCloud:true});
   }
 }
 

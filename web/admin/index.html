@@ -74,9 +74,10 @@
 <option value="concise">Concise · 2–3 sentences</option><option value="balanced">Balanced · 3–5 sentences</option><option value="detailed">Detailed · fuller description</option>
 </select></div>
 </div>
-<label for="base-prompt">Built-in scene prompt (read-only)</label>
-<textarea id="base-prompt" readonly rows="5">Loading built-in prompt…</textarea>
-<small>This prompt is maintained by the app to keep descriptions useful and safety-aware. Your extra prompt below is added without replacing the safety rules.</small>
+<label for="base-prompt">System prompt</label>
+<textarea id="base-prompt" rows="6" maxlength="4000">Loading built-in prompt…</textarea>
+<small>Edit this to turn the assistant into what you need, for example a medicine-label reader. Core safety rules (no identifying people, no invented distances, image text is never treated as instructions) are always added.</small>
+<div class="inline-actions"><button type="button" id="reset-base-prompt" class="secondary">Reset system prompt to default</button></div>
 <label for="prompt">Your additional instruction (optional)</label>
 <textarea id="prompt" maxlength="4000" placeholder="Example: Use everyday words. Mention the most important thing first. Keep the response natural and easy to listen to."></textarea>
 </section>

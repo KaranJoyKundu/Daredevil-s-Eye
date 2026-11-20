@@ -532,7 +532,8 @@ function validPayload(body) {
   if (body.image && !/^data:image\/(jpeg|png|webp);base64,/i.test(body.image)) return 'Only JPEG, PNG, or WebP images are accepted.';
   if (body.image && body.image.length > 5_500_000) return 'Image is too large (maximum about 4 MB encoded).';
   if (body.question && (typeof body.question !== 'string' || body.question.length > 1000)) return 'Question must be text up to 1,000 characters.';
-  if (body.customPrompt && (typeof body.customPrompt !== 'string' || body.customPrompt.length > 1000)) return 'Custom prompt must be text up to 1,000 characters.';
+  if (body.customPrompt && (typeof body.customPrompt !== 'string' || body.customPrompt.length > 4000)) return 'Custom prompt must be text up to 4,000 characters.';
+  if (body.systemPrompt && (typeof body.systemPrompt !== 'string' || body.systemPrompt.length > 4000)) return 'System prompt must be text up to 4,000 characters.';
   if (body.model && (typeof body.model !== 'string' || !/^[a-zA-Z0-9._-]{3,100}$/.test(body.model.replace(/^models\//, '')))) return 'Invalid model identifier.';
   if (body.responseStyle && !Object.hasOwn(RESPONSE_STYLES, body.responseStyle)) return 'Unsupported response style.';
   if (body.waitSeconds !== undefined && (!Number.isInteger(body.waitSeconds) || body.waitSeconds < 15 || body.waitSeconds > 180)) return 'Wait time must be between 15 and 180 seconds.';
@@ -603,6 +604,48 @@ export function getTranscriptionModelOrder() {
   const first = LOW_COST_TRANSCRIPTION_MODELS[transcriptionRotation % LOW_COST_TRANSCRIPTION_MODELS.length];
   transcriptionRotation = (transcriptionRotation + 1) % LOW_COST_TRANSCRIPTION_MODELS.length;
   return [first, ...LOW_COST_TRANSCRIPTION_MODELS.filter(model => model !== first)];
+}
+
+let ttsModelCache = null;
+// TTS model ids change between releases, so use the key's own list (Flash first) with a known fallback.
+async function ttsModelOrder(apiKey) {
+  if (ttsModelCache) return ttsModelCache;
+  let ids = [];
+  try {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000', { headers: { 'x-goog-api-key': apiKey } });
+    const data = await response.json().catch(() => ({}));
+    ids = (data.models || []).map(m => String(m.name || '').replace(/^models\//, '')).filter(id => /tts/i.test(id));
+  } catch {}
+  ids.sort((a, b) => /pro/i.test(a) - /pro/i.test(b) || b.localeCompare(a));
+  return (ttsModelCache = [...new Set([...ids, 'gemini-2.5-flash-preview-tts'])].slice(0, 3));
+}
+
+// Gemini TTS returns raw 16-bit mono PCM; wrap it in a WAV header so <audio> can play it.
+export function pcmToWav(pcm, rate = 24000) {
+  const wav = new Uint8Array(44 + pcm.length), v = new DataView(wav.buffer);
+  const tag = (o, s) => { for (let i = 0; i < 4; i++) wav[o + i] = s.charCodeAt(i); };
+  tag(0, 'RIFF'); v.setUint32(4, 36 + pcm.length, true); tag(8, 'WAVE'); tag(12, 'fmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, rate, true);
+  v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); tag(36, 'data'); v.setUint32(40, pcm.length, true);
+  wav.set(pcm, 44); return wav;
+}
+
+async function speakGemini(text, voice, prompt, apiKey) {
+  let lastFailure = 'no TTS model answered';
+  for (const model of await ttsModelOrder(apiKey)) {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent', {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } } })
+    });
+    const data = await response.json().catch(() => ({}));
+    const part = data?.candidates?.[0]?.content?.parts?.find(p => p.inlineData?.data);
+    if (!response.ok || !part) { lastFailure = model + ': ' + (data?.error?.message || 'no audio returned'); continue; }
+    const raw = atob(part.inlineData.data), pcm = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) pcm[i] = raw.charCodeAt(i);
+    const rate = Number(/rate=(\d+)/.exec(part.inlineData.mimeType || '')?.[1]) || 24000;
+    return new Response(pcmToWav(pcm, rate), { headers: { 'content-type': 'audio/wav', 'cache-control': 'no-store', 'x-tts-model': model } });
+  }
+  throw new Error('Gemini voice failed. ' + lastFailure);
 }
 
 export async function listGeminiModels(apiKey) {
@@ -894,6 +937,7 @@ export async function handleApi(request, env = {}) {
       aiMode: mode, liveAIEnabled: mode === 'gemini',
       model, responseStyles: Object.keys(RESPONSE_STYLES),
       basePrompt: SCENE_RULES,
+      safetyPrompt: SAFETY_CORE,
       availableModes: Object.entries(DEFAULT_MODES).map(([id, m]) => ({ id, label: m.label, usesCamera: m.usesCamera }))
     });
   }
@@ -916,6 +960,21 @@ export async function handleApi(request, env = {}) {
     }
   }
 
+  // Cloud voice for devices without a Bengali system voice (Windows/desktop Chrome). Gemini TTS speaks Bangla and English.
+  if (request.method === 'POST' && url.pathname === '/api/speech') {
+    const apiKey = await providerKey(request, env);
+    if (!apiKey) return json({ error: 'Gemini API key is not configured.' }, 503);
+    let body;
+    try { body = await request.json(); } catch { return json({ error: 'Request body must be valid JSON.' }, 400); }
+    const text = typeof body.text === 'string' ? body.text.trim().slice(0, 3500) : '';
+    if (!text) return json({ error: 'Text to speak is required.' }, 400);
+    const voice = /^[A-Za-z]{2,24}$/.test(body.voice || '') ? body.voice : 'Kore';
+    const style = String(body.style || 'Warm, calm and clear.').replace(/[\r\n]+/g, ' ').slice(0, 160);
+    const lang = body.language === 'bn-BD' || /[\u0980-\u09FF]/.test(text) ? 'Bangla (Bangladesh)' : 'English';
+    try { return await speakGemini(text, voice, style + ' Read this aloud in ' + lang + ':\n' + text, apiKey); }
+    catch (error) { return json({ error: error.message || 'Gemini voice request failed.' }, 502); }
+  }
+
   if (request.method === 'POST' && ['/api/describe', '/api/ask'].includes(url.pathname)) {
     const apiKey = await providerKey(request, env);
     let body;
@@ -931,6 +990,7 @@ export async function handleApi(request, env = {}) {
     const prompt = buildPrompt({
       mode: action,
       question: body.question || '',
+      systemPrompt: body.systemPrompt || '',
       customPrompt: body.customPrompt || '',
       responseStyle: body.responseStyle || 'concise',
       responseLanguage: body.responseLanguage || 'en-US'
