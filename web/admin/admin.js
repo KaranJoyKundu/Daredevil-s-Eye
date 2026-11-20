@@ -165,6 +165,15 @@ $('#refresh-models').addEventListener('click',loadModels);
 loadModels();
 
 let defaultSystemPrompt='';
+const PROMPT_PRESETS={
+ object:'Identify the single main object in front of the camera: the one nearest the centre and most in focus. Say its most likely name first in a few words, then one short sentence with the visible details that support it, such as brand, printed text, colour or shape. If you are not certain, still give the best match and say "possibly". Ignore background objects unless the user asks about them.',
+ medicine:'You recognise Bangladeshi medicine names. Use the visible box, strip or bottle label in the photo and any medicine name the user speaks. Account for Bangladeshi pronunciation and accents, local pharmaceutical brands and generic names, phonetically similar medicine names, and mispronunciation, unclear speech and variations in pronunciation. If the exact name is unclear, make your best guess based on similar-sounding medicines commonly available in Bangladesh. Return ONLY the most likely medicine name. No explanations, no confidence scores, no alternative names, no additional text.',
+ text:'Read the visible text for a blind user. Start with the most important text, such as a heading, product name, price, date or warning, then read the rest in natural reading order. Read words exactly; do not summarise unless the text is very long. Say when text is cut off, blurry or too small to read.',
+ taka:'Identify Bangladeshi taka banknotes and coins in the image. Say the value of each note or coin, then the total amount. If a note is folded, covered or unclear, say which one and give your best guess. Do not describe anything else unless the user asks.',
+ colour:'Help a blind user with colours. Name the main colours and any pattern of the main item, usually clothing or fabric, using everyday colour words such as navy blue, light grey or dark red. If several items are visible, say whether their colours go well together. Mention stains or marks only when clearly visible.'
+};
+// The mode is derived from the saved prompt text, so no extra setting is stored.
+function promptMode(value){const v=value.trim();if(!v||v===defaultSystemPrompt.trim())return 'all';return Object.keys(PROMPT_PRESETS).find(key=>PROMPT_PRESETS[key]===v)||'custom';}
 // Empty means "use the built-in prompt", so an unchanged default is stored as ''.
 function systemPromptValue(){const value=$('#base-prompt').value.trim();return value===defaultSystemPrompt.trim()?'':value;}
 async function loadBasePrompt(){
@@ -174,8 +183,15 @@ async function loadBasePrompt(){
   if(response.ok&&data.basePrompt){defaultSystemPrompt=data.basePrompt;if(!box.value)box.value=defaultSystemPrompt;}
  }catch{}
  if(!box.value)box.placeholder='The built-in prompt could not be loaded. Leave this empty to use it.';
+ $('#prompt-preset').value=promptMode(box.value);
 }
 $('#reset-base-prompt').addEventListener('click',()=>{$('#base-prompt').value=defaultSystemPrompt;$('#base-prompt').dispatchEvent(new Event('input',{bubbles:true}));});
+$('#prompt-preset').addEventListener('change',event=>{
+ const box=$('#base-prompt'),mode=event.target.value;
+ if(mode==='custom'){box.focus();return;}
+ box.value=mode==='all'?defaultSystemPrompt:PROMPT_PRESETS[mode];box.dispatchEvent(new Event('input',{bubbles:true}));
+});
+$('#base-prompt').addEventListener('input',()=>{$('#prompt-preset').value=promptMode($('#base-prompt').value);});
 loadBasePrompt();
 
 function populateVoices(available=getAvailableVoices()){

@@ -74,6 +74,17 @@
 <option value="concise">Concise · 2–3 sentences</option><option value="balanced">Balanced · 3–5 sentences</option><option value="detailed">Detailed · fuller description</option>
 </select></div>
 </div>
+<label for="prompt-preset">Assistant mode</label>
+<select id="prompt-preset">
+<option value="all">All-in-one · best for everyday use (default)</option>
+<option value="object">Object finder · best match for the one object in front</option>
+<option value="medicine">Medicine name · Bangladeshi brands and generics</option>
+<option value="text">Text reader · reads labels, signs and documents</option>
+<option value="taka">Money · counts Bangladeshi taka</option>
+<option value="colour">Colour helper · clothes and colours</option>
+<option value="custom">Custom · write your own prompt</option>
+</select>
+<small>Picking a mode fills the system prompt below. Edit it freely; any edit becomes Custom.</small>
 <label for="base-prompt">System prompt</label>
 <textarea id="base-prompt" rows="6" maxlength="4000">Loading built-in prompt…</textarea>
 <small>Edit this to turn the assistant into what you need, for example a medicine-label reader. Core safety rules (no identifying people, no invented distances, image text is never treated as instructions) are always added.</small>
