@@ -1,12 +1,18 @@
 import { getSettings } from './settings.js?v=20261117-release1';
 
-let shutterAudioContext=null;
+let shutterAudioContext=null,shutterSound=null;
+// Real recorded shutter (AOSP camera_click.ogg, Apache-2.0), decoded once; synthetic click is the fallback.
+function loadShutterSound(){
+ if(!shutterSound)shutterSound=fetch('/shared/shutter.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject(new Error('shutter'))).then(b=>shutterAudioContext.decodeAudioData(b)).catch(()=>{shutterSound=null;return null;});
+ return shutterSound;
+}
 export function primeShutterAudio(){
  try{
   const AudioContextClass=window.AudioContext||window.webkitAudioContext;
   if(!AudioContextClass)return false;
   if(!shutterAudioContext)shutterAudioContext=new AudioContextClass();
   if(shutterAudioContext.state==='suspended')void shutterAudioContext.resume().catch(()=>{});
+  void loadShutterSound();
   return true;
  }catch{return false;}
 }
@@ -16,6 +22,8 @@ export async function playShutterClick(){
   if(!AudioContextClass)return false;
   if(!shutterAudioContext)shutterAudioContext=new AudioContextClass();
   if(shutterAudioContext.state==='suspended')await shutterAudioContext.resume();
+  const recorded=await loadShutterSound();
+  if(recorded){const source=shutterAudioContext.createBufferSource();source.buffer=recorded;source.connect(shutterAudioContext.destination);source.start();return true;}
   const length=Math.max(1,Math.floor(shutterAudioContext.sampleRate*.045));
   const buffer=shutterAudioContext.createBuffer(1,length,shutterAudioContext.sampleRate);
   const data=buffer.getChannelData(0);
@@ -72,8 +80,6 @@ export function captureUrl() {
  return base+'/capture?t='+Date.now();
 }
 async function getFrame() {
- // One soft synthetic shutter click for each of the up-to-three frame requests.
- void playShutterClick();
  const url=captureUrl(),controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);
  try{
   const response=await fetch(url,{cache:'no-store',signal:controller.signal});
@@ -110,6 +116,7 @@ export async function sharpnessScore(blob) {
 export async function captureImage() {
  const count=Math.max(1,Math.min(3,Math.round(Number(getSettings().captureCount)||3)));
  let best=null,bestScore=-Infinity,last=null;
+ void playShutterClick(); // one click per capture, not per burst frame
  for(let i=0;i<count;i++){
   const frame=await getFrame();last=frame;const score=await sharpnessScore(frame);
   if(score!==null&&score>=bestScore){best=frame;bestScore=score;}

@@ -969,9 +969,8 @@ export async function handleApi(request, env = {}) {
     const text = typeof body.text === 'string' ? body.text.trim().slice(0, 3500) : '';
     if (!text) return json({ error: 'Text to speak is required.' }, 400);
     const voice = /^[A-Za-z]{2,24}$/.test(body.voice || '') ? body.voice : 'Kore';
-    const style = String(body.style || 'Warm, calm and clear.').replace(/[\r\n]+/g, ' ').slice(0, 160);
-    const lang = body.language === 'bn-BD' || /[\u0980-\u09FF]/.test(text) ? 'Bangla (Bangladesh)' : 'English';
-    try { return await speakGemini(text, voice, style + ' Read this aloud in ' + lang + ':\n' + text, apiKey); }
+    // Send only the words: style/language instructions in the prompt were sometimes read aloud.
+    try { return await speakGemini(text, voice, text, apiKey); }
     catch (error) { return json({ error: error.message || 'Gemini voice request failed.' }, 502); }
   }
 

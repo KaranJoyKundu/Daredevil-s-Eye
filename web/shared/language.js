@@ -78,7 +78,7 @@ export function setLanguage(lang,{announce=true}={}){
  saveSettings({speechLanguage:next});
  applyPageLanguage();
  const select=document.querySelector('#language');if(select)select.value=next;
- if(announce)speak(next===BN?'বাংলা চালু হয়েছে। উত্তর বাংলায় শোনানো হবে।':'English is on. Answers will be spoken in English.',{lang:next});
+ if(announce)speak(next===BN?'বাংলা চালু করা হয়েছে। উত্তর বাংলায় শোনানো হবে।':'English is on. Answers will be spoken in English.',{lang:next});
 }
 
 export function mountLanguageSwitch(container){
