@@ -879,9 +879,9 @@ export async function handleApi(request, env = {}) {
   if(url.pathname.startsWith('/api/rfid/')){
     if(!env.RFID_DIRECTORY)return json({ok:false,error:'RFID relay is not configured.'},503);
     const directory=env.RFID_DIRECTORY.get(env.RFID_DIRECTORY.idFromName('rfid-directory'));
-    const userRequired=['/api/rfid/pair/start','/api/rfid/events','/api/rfid/events/ack','/api/rfid/devices','/api/rfid/devices/revoke'];
-    const user=userRequired.includes(url.pathname)?await getAuthenticatedUser(request,env):null;
-    if(userRequired.includes(url.pathname)&&!user)return json({ok:false,error:'Sign in to manage RFID devices.'},401);
+    const userRequired=['/api/rfid/pair/start','/api/rfid/events','/api/rfid/events/ack','/api/rfid/devices'].includes(url.pathname)||(request.method==='DELETE'&&url.pathname.startsWith('/api/rfid/devices/'));
+    const user=userRequired?await getAuthenticatedUser(request,env):null;
+    if(userRequired&&!user)return json({ok:false,error:'Sign in to manage RFID devices.'},401);
     if(request.method==='GET'&&url.pathname==='/api/rfid/events'){
       return directory.fetch(new Request('https://rfid.internal/event/poll',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:user.id})}));
     }
