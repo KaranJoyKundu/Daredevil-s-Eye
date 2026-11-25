@@ -32,3 +32,11 @@ class_name = "SOSDirectory"
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["SOSDirectory"]
+
+[[durable_objects.bindings]]
+name = "RFID_DIRECTORY"
+class_name = "RFIDDirectory"
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["RFIDDirectory"]
