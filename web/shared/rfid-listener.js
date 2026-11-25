@@ -1,5 +1,6 @@
 import {speak} from './speech.js?v=20261126-rfid1';
 import {getSettings} from './settings.js?v=20261117-release5';
+import {hasCurrentConsent} from './consent.js?v=20261117-release5';
 
 const ENABLED_KEY='de_rfid_listener_enabled_v1';
 let timer=null,busy=false,speaking=false,lastErrorAt=0;
@@ -9,11 +10,12 @@ async function acknowledge(eventId){
  return response.ok;
 }
 async function poll(){
- if(busy||speaking||!enabled()||document.hidden)return;
+ if(busy||speaking||!enabled()||!hasCurrentConsent()||document.hidden)return;
  busy=true;
  try{
   const response=await fetch('/api/rfid/events',{credentials:'same-origin',cache:'no-store'});
-  if(response.status===401||response.status===503)return;
+  if(response.status===401){await fetch('/api/account/session',{credentials:'same-origin',cache:'no-store'}).catch(()=>{});return;}
+  if(response.status===503)return;
   if(!response.ok)throw new Error('Could not check medicine events.');
   const data=await response.json();
   const event=Array.isArray(data.events)?data.events[0]:null;
