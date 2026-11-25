@@ -4,7 +4,15 @@ import {setRFIDListenerEnabled,isRFIDListenerEnabled} from '../shared/rfid-liste
 
 const $=id=>document.getElementById(id);
 const status=(id,message)=>{const el=$(id);if(el)el.textContent=message;};
+const visualPreview=location.hostname.endsWith('.vercel.app');
+if(visualPreview){
+ $('generate-code').disabled=true;$('listener-enabled').disabled=true;$('refresh-devices').disabled=true;
+ status('pair-status','Visual-only Vercel preview. Use the Cloudflare-hosted app to pair a real ESP32.');
+ status('listener-status','The real-time Worker API is not connected to this static Vercel preview.');
+ $('device-list').textContent='Layout preview only — account, pairing and device APIs run on the Cloudflare-hosted Daredevil’s Eye app.';
+}
 async function api(path,options={}){
+ if(visualPreview)throw new Error('This is a visual-only Vercel preview. Open the Cloudflare-hosted app to use device APIs.');
  const response=await fetch(path,{credentials:'same-origin',cache:'no-store',...options,headers:{'content-type':'application/json',...(options.headers||{})}});
  const data=await response.json().catch(()=>({}));
  if(!response.ok)throw new Error(data.error||'Request failed ('+response.status+').');
@@ -23,7 +31,7 @@ async function loadDevices(){
    strong.textContent='RFID reader · '+device.deviceId.slice(0,8);
    small.textContent=device.lastSeenAt?'Last scan: '+new Date(device.lastSeenAt).toLocaleString():'Paired '+new Date(device.createdAt).toLocaleString();
    button.type='button';button.textContent='Revoke';
-   button.addEventListener('click',async()=>{if(!confirm('Revoke this RFID reader? Its saved token will stop working.'))return;try{await api('/api/rfid/devices/'+device.deviceId,{method:'DELETE'});status('device-status','Device revoked.');loadDevices();}catch(e){status('device-status',e.message);}});
+   button.addEventListener('click',async()=>{if(!confirm('Revoke this RFID reader? Its saved token will stop working.'))return;try{await api('/api/rfid/devices/'+device.deviceId,{method:'DELETE'});status('device-status','Device revoked.');if(!visualPreview)loadDevices();}catch(e){status('device-status',e.message);}});
    info.append(strong,small);row.append(info,button);list.append(row);
   }
  }catch(error){$('device-list').textContent=error.message;status('device-status',error.message);}
