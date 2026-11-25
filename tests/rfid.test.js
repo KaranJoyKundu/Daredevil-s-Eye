@@ -36,6 +36,8 @@ test('RFID events are authenticated, account-scoped, deduplicated and acknowledg
  assert.equal(sent.accepted,true);
  const duplicate=await (await post('event/submit',{uid:'A1618C04',medicine:'Napa One',eventId:'0123456789abcdef0123456789abcdef'},device.deviceToken)).json();
  assert.equal(duplicate.duplicate,true);
+ const forged=await post('event/submit',{uid:'A1618C04',medicine:'Fake Medicine'},device.deviceToken);
+ assert.equal(forged.status,400);
  const pending=await (await post('event/poll',{userId})).json();
  assert.equal(pending.events.length,1);assert.equal(pending.events[0].medicine,'Napa One');
  assert.equal((await post('event/ack',{userId,eventId:sent.eventId})).status,200);
@@ -56,6 +58,8 @@ test('medicine page is a separate nav destination and global listener is loaded 
  const page=readFileSync(new URL('../web/medicine/index.html',import.meta.url),'utf8');
  assert.match(nav,/\['Medicine RFID','\/medicine\/']/);
  assert.match(nav,/startRFIDListener/);
+ const app=readFileSync(new URL('../web/shared/app.js',import.meta.url),'utf8');
+ assert.match(app,/startRFIDListener/);
  assert.match(page,/generate-code/);
  assert.match(page,/listener-enabled/);
 });
