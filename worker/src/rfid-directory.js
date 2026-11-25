@@ -1,5 +1,6 @@
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const encoder=new TextEncoder();
+const MEDICINE_CARDS=Object.freeze({'A1618C04':'Napa One','1474D505':'Monus 10'});
 const randomHex=(bytes=32)=>Array.from(crypto.getRandomValues(new Uint8Array(bytes)),b=>b.toString(16).padStart(2,'0')).join('');
 const digest=async value=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',encoder.encode(value))),b=>b.toString(16).padStart(2,'0')).join('');
 const same=(a,b)=>{if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a.charCodeAt(i)^b.charCodeAt(i);return diff===0;};
@@ -62,6 +63,8 @@ export class RFIDDirectory {
     if(!device)return json({ok:false,error:'Device token is invalid or revoked.'},401);
     if(typeof uid!=='string'||!/^([a-f0-9]{8}|[a-f0-9]{14}|[a-f0-9]{20})$/i.test(uid))return json({ok:false,error:'Invalid RFID UID.'},400);
     if(typeof medicine!=='string'||!medicine.trim()||medicine.length>100)return json({ok:false,error:'Invalid medicine name.'},400);
+    const expectedMedicine=MEDICINE_CARDS[uid.toUpperCase()];
+    if(!expectedMedicine||medicine.trim()!==expectedMedicine)return json({ok:false,error:'RFID UID and medicine mapping are not registered.'},400);
     const id=/^[a-f0-9-]{16,64}$/i.test(String(eventId||''))?String(eventId):randomHex(16);
     const events=(await this.storage.get('events')||[]).filter(item=>Date.now()-Date.parse(item.createdAt)<24*60*60*1000);
     if(events.some(item=>item.id===id))return json({ok:true,accepted:true,duplicate:true,eventId:id});
