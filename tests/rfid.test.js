@@ -20,7 +20,7 @@ function fixture(){
 test('RFID pairing is single-use, account-bound, and returns a device token only once',async()=>{
  const {post}=fixture(),userId='d9b3f6e0-1d2a-4f2c-9a8a-7c5b6d4e3f21';
  const started=await (await post('pair/start',{userId})).json();
- assert.equal(started.ok,true);assert.match(started.code,/^\\d{6}$/);
+ assert.equal(started.ok,true);assert.match(started.code,/^\d{6}$/);
  const claimed=await (await post('pair/claim',{code:started.code})).json();
  assert.equal(claimed.ok,true);assert.match(claimed.deviceToken,/^[a-f0-9]{64}$/);
  assert.match(claimed.deviceId,/^[a-f0-9]{32}$/);
@@ -39,7 +39,8 @@ test('RFID events are authenticated, account-scoped, deduplicated and acknowledg
  const pending=await (await post('event/poll',{userId})).json();
  assert.equal(pending.events.length,1);assert.equal(pending.events[0].medicine,'Napa One');
  assert.equal((await post('event/ack',{userId,eventId:sent.eventId})).status,200);
- assert.equal((await post('event/poll',{userId})).json().then(x=>x.events.length),0);
+ const afterAck=await (await post('event/poll',{userId})).json();
+ assert.equal(afterAck.events.length,0);
 });
 
 test('revoking an RFID reader invalidates its device token',async()=>{
@@ -53,7 +54,7 @@ test('revoking an RFID reader invalidates its device token',async()=>{
 test('medicine page is a separate nav destination and global listener is loaded from shared navigation',()=>{
  const nav=readFileSync(new URL('../web/shared/site-nav.js',import.meta.url),'utf8');
  const page=readFileSync(new URL('../web/medicine/index.html',import.meta.url),'utf8');
- assert.match(nav,/\\['Medicine RFID','\\/medicine\\/']/);
+ assert.match(nav,/\['Medicine RFID','\/medicine\/']/);
  assert.match(nav,/startRFIDListener/);
  assert.match(page,/generate-code/);
  assert.match(page,/listener-enabled/);
@@ -64,5 +65,5 @@ test('ESP32 firmware refuses unverified TLS and contains both registered UID map
  assert.match(firmware,/A1618C04.*Napa One/);
  assert.match(firmware,/1474D505.*Monus 10/);
  assert.match(firmware,/setCACert/);
- assert.doesNotMatch(firmware,/setInsecure\\s*\\(/);
+ assert.doesNotMatch(firmware,/setInsecure\s*\(/);
 });
