@@ -53,4 +53,4 @@ $('test-speech').addEventListener('click',()=>{
  status('listener-status','Playing test announcement…');
 });
 $('refresh-devices').addEventListener('click',loadDevices);
-loadDevices();
+if(!visualPreview)loadDevices();
