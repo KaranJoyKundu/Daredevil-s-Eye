@@ -11,7 +11,7 @@ const same=(a,b)=>{if(a.length!==b.length)return false;let diff=0;for(let i=0;i<
 export class RFIDDirectory {
   constructor(state){this.state=state;this.storage=state.storage;}
   async fetch(request){
-    const url=new URL(request.url),action=url.pathname.replace(/^\\//,'');
+    const url=new URL(request.url),action=url.pathname.slice(1);
     if(request.method!=='POST')return json({ok:false,error:'Method not allowed.'},405);
     let body;try{body=await request.json();}catch{return json({ok:false,error:'Invalid RFID request.'},400);}
     if(action==='pair/start')return this.startPairing(body);
