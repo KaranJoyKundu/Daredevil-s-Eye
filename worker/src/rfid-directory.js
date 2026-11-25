@@ -26,7 +26,7 @@ export class RFIDDirectory {
   async startPairing({userId}){
     if(typeof userId!=='string'||!/^[0-9a-f-]{36}$/i.test(userId))return json({ok:false,error:'A signed-in account is required.'},401);
     const code=String(crypto.getRandomValues(new Uint32Array(1))[0]%1000000).padStart(6,'0');
-    const record={codeHash:await digest(code),userId,expiresAt:Date.now()+10*60*1000};
+    const record={codeHash:await digest(code),userId,expiresAt:Date.now()+10*60*1000,attempts:0};
     await this.storage.put('pairing',record);
     return json({ok:true,code,expiresInSeconds:600});
   }
@@ -34,7 +34,17 @@ export class RFIDDirectory {
     const value=String(code||'').trim();
     if(!/^\\d{6}$/.test(value))return json({ok:false,error:'Enter the six-digit pairing code.'},400);
     const pairing=await this.storage.get('pairing');
-    if(!pairing||pairing.expiresAt<Date.now()||!same(await digest(value),pairing.codeHash)){
+    if(!pairing||pairing.expiresAt<Date.now()){
+      await this.storage.delete('pairing');
+      return json({ok:false,error:'Pairing code is invalid or expired.'},401);
+    }
+    if(pairing.attempts>=10){
+      await this.storage.delete('pairing');
+      return json({ok:false,error:'Pairing attempt limit reached. Generate a new code.'},429);
+    }
+    if(!same(await digest(value),pairing.codeHash)){
+      pairing.attempts+=1;
+      await this.storage.put('pairing',pairing);
       return json({ok:false,error:'Pairing code is invalid or expired.'},401);
     }
     const token=randomHex(32),deviceId=randomHex(16),devices=await this.storage.get('devices')||[];
@@ -53,7 +63,7 @@ export class RFIDDirectory {
     if(typeof uid!=='string'||!/^([a-f0-9]{8}|[a-f0-9]{14}|[a-f0-9]{20})$/i.test(uid))return json({ok:false,error:'Invalid RFID UID.'},400);
     if(typeof medicine!=='string'||!medicine.trim()||medicine.length>100)return json({ok:false,error:'Invalid medicine name.'},400);
     const id=/^[a-f0-9-]{16,64}$/i.test(String(eventId||''))?String(eventId):randomHex(16);
-    const events=await this.storage.get('events')||[];
+    const events=(await this.storage.get('events')||[]).filter(item=>Date.now()-Date.parse(item.createdAt)<24*60*60*1000);
     if(events.some(item=>item.id===id))return json({ok:true,accepted:true,duplicate:true,eventId:id});
     const event={id,deviceId:device.deviceId,userId:device.userId,uid:uid.toUpperCase(),medicine:medicine.trim(),createdAt:new Date().toISOString()};
     events.push(event);
@@ -64,7 +74,8 @@ export class RFIDDirectory {
   }
   async pollEvents({userId}){
     if(typeof userId!=='string'||!/^[0-9a-f-]{36}$/i.test(userId))return json({ok:false,error:'A signed-in account is required.'},401);
-    const events=await this.storage.get('events')||[];
+    const events=(await this.storage.get('events')||[]).filter(item=>Date.now()-Date.parse(item.createdAt)<24*60*60*1000);
+    await this.storage.put('events',events);
     return json({ok:true,events:events.filter(item=>item.userId===userId).slice(0,20).map(({userId,...item})=>item)});
   }
   async ackEvent({userId,eventId}){
