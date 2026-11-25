@@ -1,6 +1,6 @@
 /*
  * Daredevil's Eye — ESP32 + RC522 Medicine RFID reader
- * Stage-gated diagnostics. Uses HTTPS with certificate validation; never use setInsecure().
+ * Stage-gated diagnostics. Uses certificate-verified HTTPS.
  *
  * Libraries: MFRC522 (Miguel Balboa), Arduino ESP32 core.
  * Board: ESP32 Dev Module / compatible ESP32.
