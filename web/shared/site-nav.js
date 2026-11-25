@@ -24,7 +24,7 @@ startRFIDListener();
 
 // Require the same explicit consent before any app surface can be used,
 // including direct visits to Admin, Diagnostics, Account and the SOS receiver.
-const protectedPaths=new Set(['/','/action/','/blind/','/admin/','/diagnostics/','/account/','/help/','/sos-receiver/']);
+const protectedPaths=new Set(['/','/action/','/blind/','/admin/','/diagnostics/','/account/','/help/','/sos-receiver/','/medicine/']);
 const currentPath=location.pathname.replace(/\/?$/,'/');
 if(protectedPaths.has(currentPath)&&!hasCurrentConsent()&&!document.querySelector('#consent-panel')){
  const gate=document.createElement('section');
