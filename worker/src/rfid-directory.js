@@ -32,7 +32,7 @@ export class RFIDDirectory {
   }
   async claimPairing({code}){
     const value=String(code||'').trim();
-    if(!/^\\d{6}$/.test(value))return json({ok:false,error:'Enter the six-digit pairing code.'},400);
+    if(!/^\d{6}$/.test(value))return json({ok:false,error:'Enter the six-digit pairing code.'},400);
     const pairing=await this.storage.get('pairing');
     if(!pairing||pairing.expiresAt<Date.now()){
       await this.storage.delete('pairing');
