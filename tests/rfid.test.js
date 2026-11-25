@@ -56,12 +56,15 @@ test('revoking an RFID reader invalidates its device token',async()=>{
 test('medicine page is a separate nav destination and global listener is loaded from shared navigation',()=>{
  const nav=readFileSync(new URL('../web/shared/site-nav.js',import.meta.url),'utf8');
  const page=readFileSync(new URL('../web/medicine/index.html',import.meta.url),'utf8');
+ const pageScript=readFileSync(new URL('../web/medicine/rfid.js',import.meta.url),'utf8');
  assert.match(nav,/\['Medicine RFID','\/medicine\/']/);
  assert.match(nav,/startRFIDListener/);
  const app=readFileSync(new URL('../web/shared/app.js',import.meta.url),'utf8');
  assert.match(app,/startRFIDListener/);
  assert.match(page,/generate-code/);
  assert.match(page,/listener-enabled/);
+ assert.match(pageScript,/visual-only Vercel preview/i);
+ assert.match(pageScript,/generate-code.*disabled/s);
 });
 
 test('ESP32 firmware refuses unverified TLS and contains both registered UID mappings',()=>{
