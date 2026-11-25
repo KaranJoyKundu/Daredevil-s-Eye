@@ -1,6 +1,7 @@
 import { buildPrompt, DEFAULT_MODES, RESPONSE_STYLES, RESPONSE_LANGUAGES, SAFETY_CORE, SCENE_RULES } from './prompts.js';
 export { SOSRoom } from './sos-room.js';
 export { SOSDirectory } from './sos-directory.js';
+export { RFIDDirectory } from './rfid-directory.js';
 
 const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status,
@@ -873,6 +874,37 @@ export async function handleApi(request, env = {}) {
   if (origin) {
     try { if (new URL(origin).origin !== url.origin) return json({ error: 'Cross-origin API requests are not allowed.' }, 403); }
     catch { return json({ error: 'Invalid request origin.' }, 403); }
+  }
+
+  if(url.pathname.startsWith('/api/rfid/')){
+    if(!env.RFID_DIRECTORY)return json({ok:false,error:'RFID relay is not configured.'},503);
+    const directory=env.RFID_DIRECTORY.get(env.RFID_DIRECTORY.idFromName('rfid-directory'));
+    const userRequired=['/api/rfid/pair/start','/api/rfid/events','/api/rfid/events/ack','/api/rfid/devices','/api/rfid/devices/revoke'];
+    const user=userRequired.includes(url.pathname)?await getAuthenticatedUser(request,env):null;
+    if(userRequired.includes(url.pathname)&&!user)return json({ok:false,error:'Sign in to manage RFID devices.'},401);
+    if(request.method==='GET'&&url.pathname==='/api/rfid/events'){
+      return directory.fetch(new Request('https://rfid.internal/event/poll',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:user.id})}));
+    }
+    if(request.method==='GET'&&url.pathname==='/api/rfid/devices'){
+      return directory.fetch(new Request('https://rfid.internal/devices/list',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:user.id})}));
+    }
+    if(request.method==='POST'&&url.pathname==='/api/rfid/pair/start'){
+      return directory.fetch(new Request('https://rfid.internal/pair/start',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:user.id})}));
+    }
+    if(request.method==='POST'&&url.pathname==='/api/rfid/pair/claim'){
+      return directory.fetch(new Request('https://rfid.internal/pair/claim',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(await request.json().catch(()=>({}))) }));
+    }
+    if(request.method==='POST'&&url.pathname==='/api/rfid/events'){
+      return directory.fetch(new Request('https://rfid.internal/event/submit',{method:'POST',headers:{'content-type':'application/json','authorization':request.headers.get('authorization')||''},body:JSON.stringify(await request.json().catch(()=>({}))) }));
+    }
+    if(request.method==='POST'&&url.pathname==='/api/rfid/events/ack'){
+      return directory.fetch(new Request('https://rfid.internal/event/ack',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...await request.json().catch(()=>({})),userId:user.id})}));
+    }
+    if(request.method==='DELETE'&&url.pathname.startsWith('/api/rfid/devices/')){
+      const deviceId=url.pathname.split('/').pop();
+      return directory.fetch(new Request('https://rfid.internal/devices/revoke',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:user.id,deviceId})}));
+    }
+    return json({ok:false,error:'RFID route not found.'},404);
   }
 
   if(url.pathname.startsWith('/api/account/')||url.pathname.startsWith('/api/guest/')) return handleAccountApi(request,env,url);
