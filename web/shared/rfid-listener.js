@@ -2,14 +2,14 @@ import {speak} from './speech.js?v=20261126-rfid1';
 import {getSettings} from './settings.js?v=20261117-release5';
 
 const ENABLED_KEY='de_rfid_listener_enabled_v1';
-let timer=null,busy=false,lastErrorAt=0;
+let timer=null,busy=false,speaking=false,lastErrorAt=0;
 const enabled=()=>{try{return localStorage.getItem(ENABLED_KEY)==='1';}catch{return false;}};
 async function acknowledge(eventId){
  const response=await fetch('/api/rfid/events/ack',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({eventId})});
  return response.ok;
 }
 async function poll(){
- if(busy||!enabled()||document.hidden)return;
+ if(busy||speaking||!enabled()||document.hidden)return;
  busy=true;
  try{
   const response=await fetch('/api/rfid/events',{credentials:'same-origin',cache:'no-store'});
@@ -20,13 +20,14 @@ async function poll(){
   if(!event?.id||!event?.medicine)return;
   const settings=getSettings();
   const text='Medicine: '+String(event.medicine).slice(0,100);
-  let completed=false;
+  speaking=true;
+  const finish=()=>{speaking=false;};
   const result=speak(text,{
    lang:settings.speechLanguage||'bn-BD',
-   onEnd:()=>{completed=true;acknowledge(event.id).catch(()=>{});},
-   onError:()=>{completed=false;}
+   onEnd:()=>{finish();acknowledge(event.id).catch(()=>{});},
+   onError:finish
   });
-  if(result===false)return;
+  if(result===false)speaking=false;
   // speech.js callbacks are asynchronous; release the poll lock immediately.
  }catch(error){
   if(Date.now()-lastErrorAt>30000){lastErrorAt=Date.now();console.warn('[RFID listener]',error.message);}
