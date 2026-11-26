@@ -138,6 +138,10 @@ test('medicine page exposes personal card management and shared listener speaks 
  assert.match(page,/medicine-form/);assert.match(page,/medicine-uid/);assert.match(page,/medicine-expiry/);
  assert.match(pageScript,/api\/rfid\/medicines/);assert.match(page,/Custom spoken message/);
  assert.match(listener,/event\.speechText\|\|event\.medicine/);
+ assert.match(listener,/localStorage\\.getItem\\(ENABLED_KEY\\)!=='0'/);
+ assert.match(listener,/addEventListener\\('scroll',onUserActivity/);
+ assert.match(page,/listener-enabled.*checked/);
+ assert.match(pageScript,/field\\('uid'\\)\\.readOnly=false/);
  assert.ok(pageScript.includes('/api/rfid/devices/provision'));
 });
 
