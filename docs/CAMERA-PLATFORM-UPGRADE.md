@@ -180,15 +180,15 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - [ ] Confirm current CI baseline on feature branch.
 
 ### Phase 1 — device setup and camera foundation
-- [ ] First-visit device selector after consent.
-- [ ] Persist source selection per device.
-- [ ] Persistent phone camera stream and visible preview.
-- [ ] Capture frame from existing phone stream.
-- [ ] Preserve upload-only fallback.
-- [ ] Centralize ESP32 endpoint construction and set default IP to 192.168.0.100.
-- [ ] Add ESP32 connection diagnostics.
+- [x] First-visit device selector after consent (initial UI and local state; requires browser QA).
+- [x] Persist source selection per device.
+- [x] Persistent phone camera stream and visible preview (foreground session; permission remains user-controlled).
+- [x] Capture frame from existing phone stream and route Describe through it.
+- [x] Preserve upload-only fallback.
+- [x] Centralize ESP32 endpoint construction and set default IP to 192.168.0.100.
+- [x] Add ESP32 /capture connection test in Admin.
 - [ ] Ensure cleanup on source change/page lifecycle.
-- [ ] Tests for settings migration, URL validation, capture routing and stream cleanup.
+- [x] Add static regression tests for camera setup, phone capture, ESP32 endpoint generation and Admin controls.
 
 ### Phase 2 — ESP32 controls
 - [ ] Live stream preview.
@@ -236,7 +236,7 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - `npm test` and `npm run check` pass on the exact PR SHA.
 - Manual test results on a physical Android phone and ESP32 are recorded separately.
 
-## 12. Continue-work instructions for a future session
+### Work completed on 2026-11-26\n\n- Added this plan and repository handoff document.\n- Created fresh backup and feature branch.\n- Added per-device camera source/setup settings and migrated the legacy ESP32 default IP to 192.168.0.100.\n- Added shared phone/ESP32 camera manager: persistent phone MediaStream, canvas still capture, stream cleanup, configurable ESP32 endpoints, LED brightness, flash/no-flash capture and connection test.\n- Added first-time camera selector after consent and phone camera preview/enable flow to Action page.\n- Routed Describe to the selected phone stream or ESP32 still capture; upload-only selection triggers the existing upload flow.\n- Added Admin ESP32 connection test, LED brightness and stream start/stop controls.\n- Added camera-manager regression tests and syntax-check coverage.\n- Not yet verified on a physical phone or ESP32; browser local-network permission/CORS behaviour remains a manual test.\n\n## 12. Continue-work instructions for a future session
 
 1. Read this document first.
 2. Check GitHub current main SHA, feature branch SHA, PR status and latest CI.
