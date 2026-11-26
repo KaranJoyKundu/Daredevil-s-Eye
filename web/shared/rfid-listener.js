@@ -21,7 +21,7 @@ async function poll(){
   const event=Array.isArray(data.events)?data.events[0]:null;
   if(!event?.id||!event?.medicine)return;
   const settings=getSettings();
-  const text=String(event.medicine).slice(0,100);
+  const text=String(event.speechText||event.medicine).slice(0,1200);
   speaking=true;
   const finish=()=>{speaking=false;};
   const result=speak(text,{
