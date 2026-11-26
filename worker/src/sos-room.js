@@ -300,6 +300,8 @@ export class SOSRoom {
     }
 
     if (action === 'invalidate') {
+      const video = await this.state.storage.get('videoSession');
+      if (video?.active) await this.state.storage.put('videoSession', { ...video, active: false, stoppedAt: Date.now(), stopReason: 'receiver_invalidated' });
       await this.state.storage.delete('receiverTokenHash');
       await this.state.storage.delete('activeEvent');
       await this.state.storage.delete('pushSubscription');
@@ -308,6 +310,8 @@ export class SOSRoom {
     }
 
     if (action === 'pair') {
+      const video = await this.state.storage.get('videoSession');
+      if (video?.active) await this.state.storage.put('videoSession', { ...video, active: false, stoppedAt: Date.now(), stopReason: 'receiver_repaired' });
       const receiverToken = await randomToken();
       await this.state.storage.put('receiverTokenHash', await hashSecret(receiverToken));
       await this.state.storage.put('pairedAt', Date.now());
@@ -350,6 +354,8 @@ export class SOSRoom {
     }
 
     if (action === 'revoke') {
+      const video = await this.state.storage.get('videoSession');
+      if (video?.active) await this.state.storage.put('videoSession', { ...video, active: false, stoppedAt: Date.now(), stopReason: 'receiver_revoked' });
       await this.state.storage.delete('receiverTokenHash');
       await this.state.storage.delete('activeEvent');
       await this.state.storage.delete('pushSubscription');
