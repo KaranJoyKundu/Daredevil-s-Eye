@@ -30,7 +30,7 @@ async function poll(forceRetry=false){
   const text=String(event.speechText||event.medicine).slice(0,1200);
   speaking=true;
   clearTimeout(speakingWatchdog);
-  speakingWatchdog=setTimeout(()=>{speaking=false;},25000);
+  speakingWatchdog=setTimeout(()=>{speaking=false;failedEventId=event.id;},25000);
   const finish=()=>{clearTimeout(speakingWatchdog);speaking=false;};
   const result=speak(text,{
    lang:settings.speechLanguage||'bn-BD',
