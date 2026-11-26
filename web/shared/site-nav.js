@@ -1,4 +1,4 @@
-import {hasCurrentConsent,acceptConsent,rejectConsent,isGrandfatheredReturningUser,grantLegacyAccountAccess} from './consent.js?v=20261117-release5';
+import {hasCurrentConsent,acceptConsent,rejectConsent,isGrandfatheredReturningUser,grantLegacyAccountAccess} from './consent.js?v=20261126-returning1';
 import {saveSettings} from './settings.js?v=20261117-release5';
 import {mountLanguageSwitch} from './language.js?v=20261117-release5';
 import {startRFIDListener} from './rfid-listener.js?v=20261126-bg2';
