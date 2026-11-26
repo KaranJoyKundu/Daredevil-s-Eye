@@ -465,7 +465,7 @@ async function handleRecordingApi(request, env, url) {
         try {
           const object = await env.INCIDENT_RECORDINGS.get(row.object_prefix + String(index).padStart(4, '0') + '.part');
           if (!object) throw new Error('A video segment is missing.');
-          controller.enqueue(await object.arrayBuffer());
+          controller.enqueue(new Uint8Array(await object.arrayBuffer()));
           index += 1;
         } catch (error) { controller.error(error); }
       }
