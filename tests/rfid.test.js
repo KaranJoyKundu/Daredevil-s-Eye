@@ -61,10 +61,11 @@ test('medicine page is a separate nav destination and global listener is loaded 
  assert.match(nav,/startRFIDListener/);
  const app=readFileSync(new URL('../web/shared/app.js',import.meta.url),'utf8');
  assert.match(app,/startRFIDListener/);
- assert.match(page,/generate-code/);
+ assert.match(page,/scan-napa/);
  assert.match(page,/listener-enabled/);
- assert.match(pageScript,/visual-only Vercel preview/i);
- assert.match(pageScript,/generate-code.*disabled/s);
+ assert.match(pageScript,/scan-napa/);
+ assert.doesNotMatch(page,/generate-code|pair-code/);
+ assert.match(page,/temporarily bypassed for this page test/);
 });
 
 test('ESP32 firmware refuses unverified TLS and contains both registered UID mappings',()=>{
