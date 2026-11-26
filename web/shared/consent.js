@@ -1,6 +1,15 @@
 const CONSENT_KEY = 'daredevils-eye.privacy-consent.v2';
 const CONSENT_VERSION = 5;
 const SETTINGS_KEY = 'daredevils-eye.device-settings.v1';
+const LEGACY_ACCESS_KEY = 'daredevils-eye.legacy-returning-access.v1';
+
+// Snapshot this before app startup creates fresh default settings for first-time visitors.
+const HAD_PREVIOUS_DEVICE_DATA = (() => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
+    return Boolean(saved && typeof saved === 'object' && Object.keys(saved).length);
+  } catch { return false; }
+})();
 
 export function getConsentRecord() {
   try {
@@ -9,7 +18,21 @@ export function getConsentRecord() {
   } catch { return null; }
 }
 
+export function isGrandfatheredReturningUser() {
+  if (HAD_PREVIOUS_DEVICE_DATA) return true;
+  try { return localStorage.getItem(LEGACY_ACCESS_KEY) === 'true'; }
+  catch { return false; }
+}
+
+export function grantLegacyAccountAccess() {
+  try { localStorage.setItem(LEGACY_ACCESS_KEY, 'true'); return true; }
+  catch { return false; }
+}
+
 export function hasCurrentConsent() {
+  // Returning devices and authenticated pre-existing accounts are grandfathered
+  // past the blocking first-run gate. This does not create or falsify a consent record.
+  if (isGrandfatheredReturningUser()) return true;
   let raw;
   try { raw = localStorage.getItem(CONSENT_KEY); } catch { return false; }
   // A prior versioned record exists: do not silently migrate an old boolean
