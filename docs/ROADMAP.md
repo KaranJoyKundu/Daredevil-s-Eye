@@ -118,10 +118,19 @@ The owner approved a native Capacitor application for Samsung Galaxy A55 5G on A
 - [x] Add Capacitor configuration, Android native source overlay and debug APK CI workflow.
 - [x] Add native foreground volume-key handling and optional global Accessibility Service source.
 - [x] Add native-to-web event bridge and Android settings controls.
-- [ ] Verify Android build and installable debug APK.
+- [x] Verify Android build and installable debug APK (CI run 45755955230; artifact 15086769593).
 - [ ] Test foreground, background, lock screen and screen-off key delivery on the actual Galaxy A55.
 - [ ] Validate TalkBack coexistence, Bangla/English speech, ESP32 camera, RFID and SOS.
 - [ ] Configure protected release signing secrets and publish signed APK to GitHub Releases.
 - [ ] Later: evaluate Google Play distribution.
 
 Do not claim screen-off operation is guaranteed. The optional Accessibility Service is user-enabled and may conflict with TalkBack; background camera/microphone startup remains subject to Android restrictions.
+
+
+### Native Android release checkpoint — 26 November 2026
+
+- [x] PR #64 merged and production Worker deployed (run 45756257754).
+- [x] Android debug APK built and uploaded (run 45755955230; artifact 15086769593).
+- [x] Documentation page published at `/documentation/`.
+- [ ] Install and validate on the physical Galaxy A55.
+- [ ] Configure persistent release keystore secrets and publish signed GitHub Release.
