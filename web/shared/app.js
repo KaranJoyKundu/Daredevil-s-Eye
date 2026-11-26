@@ -326,7 +326,7 @@ function handleDeepLinkAction(){
  else if(requestedAction==='repeat')repeatAnswer();else speakHelp();
  syncSosAutomation();
 }
-function updateConsentPanel(){const panel=$('#consent-panel');if(panel&&hasCurrentConsent())panel.remove();}
+function updateConsentPanel(){const panel=$('#consent-panel');if(panel&&hasCurrentConsent())panel.remove();if(hasCurrentConsent())showCameraSetup();}
 updateConsentPanel();
 document.addEventListener('click',event=>{
  const button=event.target.closest('[data-action]');if(!button)return;
@@ -388,6 +388,56 @@ $('#question-form')?.addEventListener('submit',event=>{
  if(question){run('ask',question);return;}
  run('describe');
 });
+
+const cameraSetupPanel=$('#camera-setup-panel');
+const phoneCameraPanel=$('#phone-camera-panel');
+const phoneCameraPreview=$('#phone-camera-preview');
+const cameraSetupStatus=$('#camera-setup-status');
+function renderCameraPanels(){
+ const settings=getSettings();
+ if(cameraSetupPanel)cameraSetupPanel.hidden=!hasCurrentConsent()||settings.cameraSetupComplete;
+ if(phoneCameraPanel)phoneCameraPanel.hidden=!hasCurrentConsent()||!settings.cameraSetupComplete||settings.cameraSource!=='phone';
+}
+function showCameraSetup(){
+ if(!hasCurrentConsent())return;
+ renderCameraPanels();
+ if(cameraSetupPanel&&!getSettings().cameraSetupComplete){
+  cameraSetupPanel.hidden=false;
+  cameraSetupPanel.scrollIntoView?.({behavior:'smooth',block:'nearest'});
+ }
+}
+async function chooseCameraSource(source){
+ if(!['phone','esp32','upload'].includes(source))return;
+ stopPhoneCamera();
+ saveSettings({cameraSource:source,cameraSetupComplete:true});
+ renderCameraPanels();
+ if(source==='phone'){
+  if(cameraSetupStatus)cameraSetupStatus.textContent='Phone camera selected. Press Enable phone camera to grant permission and start the preview.';
+  if(phoneCameraPanel)phoneCameraPanel.hidden=false;
+  if(phoneCameraPreview)phoneCameraPreview.srcObject=null;
+ }else if(cameraSetupStatus){
+  cameraSetupStatus.textContent=source==='esp32'?'ESP32-CAM selected. Confirm its address in Admin, then test the connection.':'Upload-only selected. You can choose a photo whenever you describe a scene.';
+ }
+}
+document.querySelectorAll('[data-camera-source]').forEach(button=>button.addEventListener('click',()=>chooseCameraSource(button.dataset.cameraSource)));
+$('#enable-phone-camera')?.addEventListener('click',async()=>{
+ const button=$('#enable-phone-camera');button.disabled=true;
+ try{
+  await startPhoneCamera(phoneCameraPreview,{facingMode:getSettings().phoneCameraFacingMode||'environment'});
+  if(cameraSetupStatus)cameraSetupStatus.textContent='Phone camera is active. Keep this page visible; press Describe to capture a frame.';
+  show('Phone camera is active.');
+ }catch(error){if(cameraSetupStatus)cameraSetupStatus.textContent=error.message;show(error.message);}
+ finally{button.disabled=false;}
+});
+$('#change-camera-source')?.addEventListener('click',()=>{
+ stopPhoneCamera();saveSettings({cameraSetupComplete:false});showCameraSetup();
+});
+renderCameraPanels();
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden){stopPhoneCamera();}
+});
+window.addEventListener('pagehide',()=>stopPhoneCamera());
+
 const termsCheck=$('#consent-terms-check'),acceptButton=$('#consent-accept');
 if(termsCheck&&acceptButton){
  const syncAccept=()=>{acceptButton.disabled=!termsCheck.checked;};
