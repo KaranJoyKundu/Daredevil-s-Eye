@@ -41,7 +41,7 @@ Status meanings: `DONE IN CODE` is not the same as device-tested or production-r
 - Existing UI uses MJPEG `/stream` on port 81 in an image element; still capture uses `/capture`.
 - **DONE IN CODE:** Android now requests JPEG snapshots through a native bridge restricted to private IPv4 addresses and the exact `/capture` endpoint; the Action preview polls at a controlled interval and tears down on page/stream teardown. This avoids HTTPS-to-HTTP mixed-content and browser CORS for the preview path.
 - **DEVICE TEST REQUIRED:** inspect A55 local-network permission behavior, image freshness, frame rate, network errors and camera contention. A snapshot preview is not full-motion MJPEG video.
-- **CI:** Android debug build passed on commit `ebb7aba00144d7a36c4140083a281430a71b1948` (run `45867985691`); artifact `15141243178` verified.
+- **CI:** latest Android debug build passed (run `45870190784`, commit `5310e454643b42811a4bddb0298d191e7a790b4c`); artifact `15142052564` downloaded and APK verified. APK SHA-256: `b176389ee6bcbd62ed8044777ca4cba459e75245b5d0fcac7f27c8bdbab041a5`.
 - Acceptance: ESP32 on same Wi-Fi and phone hotspot; test stream contention, reconnect and screen rotation.
 
 ### [x] MediaStore photo save hardened
