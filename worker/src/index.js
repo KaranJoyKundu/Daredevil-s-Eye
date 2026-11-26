@@ -1121,7 +1121,7 @@ export default {
     // /blind/ and /action/ bound to their own HTML and script references.
     if (request.method === 'GET' || request.method === 'HEAD') {
       const url = new URL(request.url);
-      const page = url.pathname.replace(/\\/+$/, '');
+      const page = url.pathname.replace(/\/+$/, '');
       if (page === '/blind' || page === '/action') {
         url.pathname = page + '/index.html';
         const asset = await env.ASSETS.fetch(new Request(url, request));
