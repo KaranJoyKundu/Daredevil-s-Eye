@@ -85,10 +85,14 @@ public class MainActivity extends BridgeActivity {
         if (prefs.getBoolean("accessibility_prompt_shown", false)) return;
         prefs.edit().putBoolean("accessibility_prompt_shown", true).apply();
         new AlertDialog.Builder(this)
-            .setTitle("Enable volume-button shortcuts?")
-            .setMessage("Optional: enable Daredevil's Eye in Android Accessibility settings to use the volume buttons while another app is open. The service only observes Volume Up and Volume Down. It does not read screen content. TalkBack compatibility must be tested on this phone.")
-            .setPositiveButton("Open settings", (dialog, which) -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)))
-            .setNegativeButton("Not now", null)
+            .setTitle("Optional background volume shortcuts")
+            .setMessage("Foreground volume shortcuts work while Daredevil's Eye is open. To use them over other apps, Android requires an optional Accessibility Service. On some phones, Android blocks this permission for sideloaded apps. If blocked, open App info > ⋮ > Allow restricted settings, then return to Accessibility > Installed apps > Daredevil's Eye. This permission is never required for the main camera, voice or SOS features.")
+            .setPositiveButton("Open app info", (dialog, which) -> {
+                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    android.net.Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+            })
+            .setNegativeButton("Later", null)
             .show();
     }
 
@@ -196,14 +200,26 @@ public class MainActivity extends BridgeActivity {
             }
         }, attempt == 0 ? 450L : 500L);
     }
-    /** Android system Back first navigates within the WebView, keeping secondary pages reachable. */
+    /** Back follows web history, then returns secondary app routes to the Action page. */
     @Override
     public void onBackPressed() {
-        if (getBridge() != null && getBridge().getWebView() != null && getBridge().getWebView().canGoBack()) {
-            getBridge().getWebView().goBack();
+        if (getBridge() == null || getBridge().getWebView() == null) {
+            moveTaskToBack(true);
             return;
         }
-        super.onBackPressed();
+        android.webkit.WebView webView = getBridge().getWebView();
+        String current = webView.getUrl() == null ? "" : webView.getUrl();
+        if (webView.canGoBack()) {
+            webView.goBack();
+            return;
+        }
+        android.net.Uri uri = android.net.Uri.parse(current);
+        String path = uri.getPath() == null ? "/" : uri.getPath();
+        if (!path.equals("/") && !path.equals("/action/")) {
+            webView.loadUrl("https://daredevils-eye.karanjoykundu.workers.dev/action/");
+            return;
+        }
+        moveTaskToBack(true);
     }
 
 }
