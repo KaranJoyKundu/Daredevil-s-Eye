@@ -3,7 +3,7 @@ import { startPhoneCamera, capturePhoneFrame, stopPhoneCamera, captureEsp32Photo
 import { requestAI } from './api.js?v=20261117-release5';
 import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release5';
 import { getSettings, saveSettings } from './settings.js?v=20261117-release5';
-import { hasCurrentConsent, getConsentRecord, acceptConsent, rejectConsent, isGrandfatheredReturningUser } from './consent.js?v=20261126-returning3';
+import { hasCurrentConsent } from './consent.js?v=20261126-open-access1';
 import { createShakeSequenceTracker, getShakeMagnitude, matchSosVoiceCommand } from './sos-triggers.js?v=20261117-release1';
 import { mountLanguageSwitch, toBangla } from './language.js?v=20261117-release5';
 import { startRFIDListener } from './rfid-listener.js?v=20261126-dedup1';
@@ -245,7 +245,7 @@ async function announceAnswer(message,disclaimer=''){
  await Promise.allSettled([displayPromise,speechPromise]);
 }
 async function run(mode,question='',imageOverride=null){
- if(!hasCurrentConsent()){announce('Please review and accept the privacy notice before using the camera.');return;}
+ 
  actionVibration(mode==='ask'?'ask':'describe');
  if(!imageOverride&&!phonePhoto)primeShutterAudio();
  const cameraSettings=getSettings();
@@ -340,7 +340,7 @@ function armSos({shortcut=false}={}){
 }
 function repeatAnswer(){actionVibration('repeat');if(lastAnswer)announceAnswer(lastAnswer);else announce('There is no answer to repeat yet.');}
 function handleDeepLinkAction(){
- if(!hasCurrentConsent())return;
+ 
  if(deepLinkHandled){syncSosAutomation();return;}
  if(!['describe','ask','sos','repeat','help'].includes(requestedAction)){syncSosAutomation();return;}
  deepLinkHandled=true;
@@ -350,7 +350,7 @@ function handleDeepLinkAction(){
  else if(requestedAction==='repeat')repeatAnswer();else speakHelp();
  syncSosAutomation();
 }
-function updateConsentPanel(){const panel=$('#consent-panel');const alreadyAccepted=Boolean(getConsentRecord());if(panel&&alreadyAccepted)panel.remove();if(hasCurrentConsent())showCameraSetup();}
+function updateConsentPanel(){const panel=$('#consent-panel');if(panel)panel.remove();showCameraSetup();}
 updateConsentPanel();
 document.addEventListener('click',event=>{
  const button=event.target.closest('[data-action]');if(!button)return;
@@ -430,9 +430,9 @@ function syncPhoneTorchControl(){
 }
 function renderCameraPanels(){
  const settings=getSettings();
- if(cameraSetupPanel)cameraSetupPanel.hidden=!hasCurrentConsent()||settings.cameraSetupComplete;
- if(phoneCameraPanel)phoneCameraPanel.hidden=!hasCurrentConsent()||!settings.cameraSetupComplete||settings.cameraSource!=='phone';
- if(esp32CameraPanel)esp32CameraPanel.hidden=!hasCurrentConsent()||!settings.cameraSetupComplete||settings.cameraSource!=='esp32';
+ if(cameraSetupPanel)cameraSetupPanel.hidden=settings.cameraSetupComplete;
+ if(phoneCameraPanel)phoneCameraPanel.hidden=!settings.cameraSetupComplete||settings.cameraSource!=='phone';
+ if(esp32CameraPanel)esp32CameraPanel.hidden=!settings.cameraSetupComplete||settings.cameraSource!=='esp32';
 }
 function showCameraSetup(){
  if(!hasCurrentConsent())return;
@@ -498,24 +498,5 @@ document.addEventListener('visibilitychange',()=>{
 window.addEventListener('pagehide',()=>{stopPhoneCamera();stopEsp32Stream(esp32StreamPreview);syncPhoneTorchControl();});
 
 
-const termsCheck=$('#consent-terms-check'),acceptButton=$('#consent-accept');
-// Keep returning users' prior accepted status if this panel is shown after an update.
-// The button remains enabled; its click handler provides validation feedback if unchecked.
-if(termsCheck&&acceptButton)termsCheck.checked=isGrandfatheredReturningUser();
-$('#consent-accept')?.addEventListener('click',()=>{
- if(!termsCheck?.checked){$('#consent-status').textContent='Please tick the box to confirm that you accept the Terms & Conditions.';return;}
- if(!acceptConsent()){$('#consent-status').textContent='Could not save acceptance in this browser. Enable site storage and try again.';return;}
- saveSettings({savePhotoHistory:true,consentAccepted:true});
- $('#consent-panel').remove();
- const settings=getSettings();
- announce(settings.speechLanguage==='bn-BD'?'শর্তাবলি গ্রহণ করা হয়েছে। আপনি এখন অ্যাপ ব্যবহার করতে পারেন।':'Terms accepted. You can now use the app.');
- handleDeepLinkAction();
-});
-$('#consent-reject')?.addEventListener('click',()=>{
- rejectConsent();stopSosVoiceListener();stopSpeaking();
- if(termsCheck)termsCheck.checked=false;
- if(acceptButton)acceptButton.disabled=true;
- const message=$('#consent-status');
- if(message)message.textContent='You declined the Terms & Conditions. The app remains locked. Close this page, or return and accept if you change your mind.';
-});
+
 handleDeepLinkAction();
