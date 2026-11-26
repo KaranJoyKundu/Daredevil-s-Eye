@@ -60,3 +60,5 @@ See CURRENT-RELEASE-CHECKLIST.md for detailed acceptance criteria and device-tes
 - Capacitor configuration, Android native source overlay, volume-key Activity/Accessibility Service, JavaScript event bridge and debug APK workflow have been added to the feature branch.
 - Android CI is being debugged. No APK artifact is verified yet. Global key interception, TalkBack coexistence and screen-off behaviour have not been physically tested on the A55.
 - Release signing still needs protected Android keystore secrets. Do not upload a debug-signed build as a production release or claim that it can be updated with a future release key.
+
+- Android signing guide: `docs/ANDROID-RELEASE-SETUP.md` explains persistent keystore creation and the four GitHub Actions secrets required for a signed GitHub Release.
