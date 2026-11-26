@@ -1,5 +1,5 @@
 const CONSENT_KEY = 'daredevils-eye.privacy-consent.v2';
-const CONSENT_VERSION = 5;
+const CONSENT_VERSION = 6;
 const SETTINGS_KEY = 'daredevils-eye.device-settings.v1';
 
 export function getConsentRecord() {
