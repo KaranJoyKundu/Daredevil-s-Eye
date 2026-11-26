@@ -151,7 +151,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     private void dispatchToWeb(String action, String eventId, int attempt) {
-        if (attempt >= 12 || isFinishing()) return;
+        if (attempt >= 60 || isFinishing()) return;
         handler.postDelayed(() -> {
             SharedPreferences pendingPrefs = getSharedPreferences(VolumeKeyAccessibilityService.PREFS, MODE_PRIVATE);
             if (!eventId.equals(pendingPrefs.getString("pending_event_id", ""))) return;
@@ -163,7 +163,7 @@ public class MainActivity extends BridgeActivity {
                     getBridge().triggerJSEvent("deeVolumeAction", "window", data.toString());
                 }
             } catch (Exception ignored) {}
-            if (attempt < 11) dispatchToWeb(action, eventId, attempt + 1);
+            if (attempt < 59) dispatchToWeb(action, eventId, attempt + 1);
             else {
                 SharedPreferences prefs = getSharedPreferences(VolumeKeyAccessibilityService.PREFS, MODE_PRIVATE);
                 if (eventId.equals(prefs.getString("pending_event_id", ""))) {
