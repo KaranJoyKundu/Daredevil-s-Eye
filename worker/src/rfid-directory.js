@@ -168,12 +168,14 @@ export class RFIDDirectory {
       return json({ok:true,events:[]});
     }
     if(active)await this.storage.delete(activeKey);
-    const pending=events.filter(item=>item.userId===userId).sort((a,b)=>Date.parse(b.createdAt)-Date.parse(a.createdAt));
-    const selected=pending[0]||null;
+    // The storage array is append-ordered. Timestamps can share the same
+    // millisecond, so use insertion order rather than sorting by createdAt.
+    const pending=events.filter(item=>item.userId===userId);
+    const selected=pending[pending.length-1]||null;
     if(selected){
       // Keep only the newest pending scan for this account. Older scans are
       // stale context, not a playback queue to read aloud after recovery.
-      const discarded=new Set(pending.slice(1).map(item=>item.id));
+      const discarded=new Set(pending.slice(0,-1).map(item=>item.id));
       events=events.filter(item=>!discarded.has(item.id));
       await this.storage.put(activeKey,{eventId:selected.id,leaseUntil:now+45000});
     }
