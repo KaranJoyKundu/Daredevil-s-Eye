@@ -245,6 +245,7 @@ async function run(mode,question='',imageOverride=null){
   wakeLock=await acquireWakeLock();
   if(!imageOverride&&!phonePhoto)announce('Taking several photos. Hold still.');
   const cameraSettings=getSettings();
+  if(!imageOverride&&!phonePhoto&&cameraSettings.cameraSetupComplete&&cameraSettings.cameraSource==='upload'){$('#phone-photo-upload')?.click();return;}
   const sourceBlob=imageOverride||phonePhoto||(cameraSettings.cameraSetupComplete&&cameraSettings.cameraSource==='phone'?await capturePhoneFrame():cameraSettings.cameraSetupComplete&&cameraSettings.cameraSource==='esp32'?await captureEsp32Photo():await captureImage());
   const imageBlob=sourceBlob.type==='image/jpeg'&&sourceBlob.size<3_800_000?sourceBlob:await compressImageToJpeg(sourceBlob);
   const image=await blobToDataUrl(imageBlob);
@@ -397,6 +398,7 @@ $('#consent-accept')?.addEventListener('click',()=>{
  if(!acceptConsent()){$('#consent-status').textContent='Could not save acceptance in this browser. Enable site storage and try again.';return;}
  saveSettings({savePhotoHistory:true,consentAccepted:true});
  $('#consent-panel').remove();
+ showCameraSetup();
  const settings=getSettings();
  announce(settings.speechLanguage==='bn-BD'?'শর্তাবলি গ্রহণ করা হয়েছে। আপনি এখন অ্যাপ ব্যবহার করতে পারেন।':'Terms accepted. You can now use the app.');
  handleDeepLinkAction();
