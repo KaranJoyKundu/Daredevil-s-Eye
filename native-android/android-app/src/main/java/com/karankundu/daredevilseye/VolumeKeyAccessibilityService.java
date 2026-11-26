@@ -22,8 +22,7 @@ public class VolumeKeyAccessibilityService extends AccessibilityService {
     private static final long SOS_HOLD_MS = 700L;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private boolean upDown, downDown, chordConsumed;
-    private boolean upPending;
+    private boolean upDown, downDown, chordConsumed, upPending;
     private long lastUpRelease;
     private Runnable describeRunnable, sosRunnable;
 
@@ -42,8 +41,8 @@ public class VolumeKeyAccessibilityService extends AccessibilityService {
             if (key == KeyEvent.KEYCODE_VOLUME_DOWN) downDown = true;
             if (upDown && downDown && !chordConsumed) {
                 cancelDescribe();
-                chordConsumed = true;
                 upPending = false;
+                chordConsumed = true;
                 sosRunnable = () -> dispatch("sos");
                 handler.postDelayed(sosRunnable, SOS_HOLD_MS);
             }
@@ -90,19 +89,20 @@ public class VolumeKeyAccessibilityService extends AccessibilityService {
     }
 
     private void dispatch(String action) {
+        String eventId = Long.toString(System.currentTimeMillis()) + "-" + action;
         getSharedPreferences(PREFS, MODE_PRIVATE).edit()
-            .putString(KEY_PENDING_ACTION, action)
+            .putString(KEY_PENDING_ACTION, action).putString("pending_event_id", eventId)
             .putLong("pending_at", System.currentTimeMillis()).apply();
 
         Intent broadcast = new Intent(ACTION_VOLUME_ACTION);
         broadcast.setPackage(getPackageName());
         broadcast.putExtra("action", action);
+        broadcast.putExtra("eventId", eventId);
         sendBroadcast(broadcast);
-
-        showActionNotification(action);
+        showActionNotification(action, eventId);
     }
 
-    private void showActionNotification(String action) {
+    private void showActionNotification(String action, String eventId) {
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager == null) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
