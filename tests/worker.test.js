@@ -920,6 +920,7 @@ test('guest-history retention removes expired private photo objects before delet
  globalThis.fetch=async(input,init={})=>{
   const url=new URL(String(input));
   calls.push({url:url.href,method:init.method||'GET'});
+  if(url.origin==='https://supabase.example.test'&&url.pathname==='/rest/v1/scene_memory_entries'&&init.method==='DELETE')return new Response(null,{status:204});
   if(url.origin==='https://supabase.example.test'&&url.pathname==='/rest/v1/ai_history'){
    if(init.method==='DELETE')return new Response(null,{status:204});
    const offset=Number(url.searchParams.get('offset')||0);
