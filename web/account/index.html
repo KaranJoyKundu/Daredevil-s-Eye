@@ -44,6 +44,15 @@
   <p class="account-footnote">Guest history is tied to a secure browser cookie. Clearing this browser's site data may remove your access to these records before automatic deletion.</p>
 </section>
 
+<section id="recordings-panel" class="account-card">
+  <div class="account-section-heading">
+    <div><p class="account-kicker">PRIVATE SOS RECORDINGS</p><h2>Emergency video recordings</h2><p class="account-muted">Only completed recordings saved by this account or this private guest browser are listed here. Files expire automatically after 30 days.</p></div>
+    <span class="account-retention">30-day retention</span>
+  </div>
+  <div class="account-toolbar"><p id="recordings-status" class="account-inline-status" role="status" aria-live="polite">Loading private recordings…</p><div class="account-toolbar-actions"><button id="refresh-recordings" type="button" class="account-button account-button-light">Refresh recordings</button></div></div>
+  <div id="recordings-list" class="account-history-grid"></div>
+</section>
+
 <section id="auth-panel" class="account-auth-grid">
   <form id="login-form" class="account-card account-auth-card">
     <p class="account-kicker">WELCOME BACK</p>
@@ -145,7 +154,7 @@
   <a href="/action/">Home</a><a href="/admin/">Admin / Settings</a><a href="/terms/">Terms &amp; Conditions</a><a href="/privacy/">Privacy</a><a href="/support/">Support</a>
 </nav>
 </main>
-<script type="module" src="/account/account.js?v=20261117-account1"></script>
+<script type="module" src="/account/account.js?v=20261126-recordings1"></script>
 <script type="module" src="/shared/site-nav.js?v=20261126-bg2"></script>
 </body>
 </html>
