@@ -59,9 +59,9 @@ const field=name=>$(fieldId(name));
 const normalizedUid=value=>String(value||'').replace(/[\s:-]/g,'').toUpperCase();
 function medicineMessage(item){
  const today=new Date().toISOString().slice(0,10);
- if(item.expiryDate&&item.expiryDate<today)return item.expiredText||'Warning! This medicine has expired.';
+ if(item.expiryDate&&item.expiryDate<today.slice(0,7))return item.expiredText||'Warning! This medicine has expired.';
  if(item.announcementText)return item.announcementText;
- return [item.name,item.strength,item.expiryDate?'Expiry date: '+new Date(item.expiryDate+'T00:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'}):'',item.instructions].filter(Boolean).join('. ')||'Add a medicine name to preview the announcement.';
+ return [item.name,item.strength,item.expiryDate?'Expiry date: '+new Date(item.expiryDate+'-01T00:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'}):'',item.instructions].filter(Boolean).join('. ')||'Add a medicine name to preview the announcement.';
 }
 function updateMedicinePreview(){
  const item=Object.fromEntries(medicineFields.map(name=>[name,name==='uid'?normalizedUid(field(name)?.value):String(field(name)?.value||'').trim()]));
