@@ -65,7 +65,7 @@ function medicineMessage(item){
  const medicineName=[item.name,item.strength].filter(Boolean).join(' ');
  const expiry=item.expiryDate?'Expiry date: '+new Date(item.expiryDate+'-01T00:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'}):'';
  const instruction=String(item.instructions||'').trim();
- const prescription=instruction?( /^your registered prescription says\\b/i.test(instruction)?instruction:'Your registered prescription says '+instruction):'';
+ const prescription=instruction?( /^your registered prescription says\b/i.test(instruction)?instruction:'Your registered prescription says '+instruction):'';
  return [medicineName,expiry,prescription].filter(Boolean).join('. ')||'Add a medicine name to preview the announcement.';
 }
 function updateMedicinePreview(){
