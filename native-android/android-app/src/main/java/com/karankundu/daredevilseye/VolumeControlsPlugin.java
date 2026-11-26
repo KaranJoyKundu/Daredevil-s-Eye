@@ -57,7 +57,8 @@ public class VolumeControlsPlugin extends Plugin {
 
     @PluginMethod public void speakText(PluginCall call) {
         String text=call.getString("text",""), language=call.getString("language","en-US");
-        Double rateValue=call.getDouble("rate",1.0), pitchValue=call.getDouble("pitch",1.0);\n        float rate=rateValue==null?1.0f:rateValue.floatValue(), pitch=pitchValue==null?1.0f:pitchValue.floatValue();
+        Double rateValue=call.getDouble("rate",1.0), pitchValue=call.getDouble("pitch",1.0);
+        float rate=rateValue==null?1.0f:rateValue.floatValue(), pitch=pitchValue==null?1.0f:pitchValue.floatValue();
         if(text.trim().isEmpty()){call.reject("No text to speak.");return;}
         if(!ttsReady||textToSpeech==null){call.reject("Android speech engine is still starting. Try again shortly.");return;}
         Locale locale=language.toLowerCase().startsWith("bn")?new Locale("bn","BD"):Locale.US;
