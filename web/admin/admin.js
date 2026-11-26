@@ -32,7 +32,7 @@ function formSettings(){
   sosShakeEnabled:$('#sos-shake-enabled').checked,
   sosVoiceEnabled:$('#sos-voice-enabled').checked,
   sosVideoEnabled:$('#sos-video-enabled').checked,
-  sosRecordingEnabled:$('#sos-recording-enabled').checked,
+  sosRecordingEnabled:$('#sos-video-enabled').checked&&$('#sos-recording-enabled').checked,
   sosVoiceLanguage:$('#sos-voice-language').value,
   speechPreset:$('#voice-preset').value,
   speechVoiceURI:$('#voice-select').value,
@@ -98,6 +98,16 @@ $('#sos-shake-enabled').checked=!!saved.sosShakeEnabled;
 $('#sos-voice-enabled').checked=!!saved.sosVoiceEnabled;
 $('#sos-video-enabled').checked=!!saved.sosVideoEnabled;
 $('#sos-recording-enabled').checked=!!saved.sosRecordingEnabled;
+$('#sos-recording-enabled').disabled=!$('#sos-video-enabled').checked;
+const syncSosVideoOptions=()=>{
+ const live=$('#sos-video-enabled').checked;
+ $('#sos-recording-enabled').disabled=!live;
+ if(!live)$('#sos-recording-enabled').checked=false;
+ $('#sos-video-settings-status').textContent=live?'Live video opt-in is enabled. Recording '+($('#sos-recording-enabled').checked?'is also enabled.':'remains disabled.'):'Live video and recording are disabled.';
+};
+$('#sos-video-enabled').addEventListener('change',syncSosVideoOptions);
+$('#sos-recording-enabled').addEventListener('change',syncSosVideoOptions);
+syncSosVideoOptions();
 $('#sos-video-settings-status').textContent=saved.sosVideoEnabled?'Live video opt-in is enabled. Recording '+(saved.sosRecordingEnabled?'is also enabled.':'remains disabled.'):'Live video and recording are disabled.';
 $('#sos-voice-language').value=saved.sosVoiceLanguage||'bn-BD';
 $('#voice-preset').value=saved.speechPreset;
