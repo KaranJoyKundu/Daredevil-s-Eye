@@ -26,7 +26,18 @@ a{color:#b8ddce}button{padding:10px 14px;border-radius:10px;border:1px solid #ff
 <p>Samsung Galaxy A55 5G · Android 16 / One UI 8 · Capacitor + native Android</p>
 <p>This is the permanent progress page for the native Android app. Tick off tasks as they are completed on this device. Your checklist is saved in this browser. The linked Markdown plan in GitHub is the authoritative project record.</p>
 <div class="progress"><span id="bar"></span></div><p id="count" class="muted">0 of 0 tasks checked</p>
-<div class="actions"><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/blob/feat/native-android-capacitor-a55/docs/NATIVE-ANDROID-APP.md">Open full technical plan in GitHub</a><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/tree/feat/native-android-capacitor-a55">Implementation branch</a></div>
+<div class="actions"><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/blob/main/docs/NATIVE-ANDROID-APP.md">Open full technical plan in GitHub</a><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/tree/main">Implementation branch</a></div>
+</section>
+<section class="panel">
+<h2>Latest verified build</h2>
+<p><span class="status">Android debug APK built</span> <span class="status">Production bridge deployed</span></p>
+<p><strong>APK:</strong> 4.5 MB · debug-signed · SHA-256 recorded in the master plan. This is an installable test build, not the permanent release-signed APK.</p>
+<ul>
+<li><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/45755955230">Download the Android debug APK artifact</a> from the successful build run</li>
+<li><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/45756257754">Production deployment — successful</a></li>
+<li><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/64">PR #64 — merged</a></li>
+</ul>
+<p class="warning">Still to do: install on the Galaxy A55, test the four gestures, screen-off behaviour, TalkBack, Bangla speech, camera, RFID and SOS. A permanent signed GitHub Release still needs the owner's keystore and protected Actions secrets.</p>
 </section>
 <section class="panel"><h2>Approved physical controls</h2>
 <table><tr><th>Button press</th><th>Action</th><th>Safety</th></tr>
@@ -45,9 +56,9 @@ a{color:#b8ddce}button{padding:10px 14px;border-radius:10px;border:1px solid #ff
 <label class="task"><input type="checkbox" id="foreground-shortcuts" checked><span><strong>Use volume shortcuts while Daredevil's Eye is open</strong><small>Turn this off to restore normal volume adjustment while the app is in front.</small></span></label>
 <label class="task"><input type="checkbox" id="global-shortcuts" checked><span><strong>Allow global volume shortcuts</strong><small>When the Accessibility Service is enabled, allow the same shortcuts while other apps are open. Android and TalkBack restrictions still apply.</small></span></label>
 </section>
-<section class="panel"><h2>Release requirements</h2><p><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/blob/feat/native-android-capacitor-a55/docs/ANDROID-RELEASE-SETUP.md">Windows signing-key setup and GitHub Release guide</a></p><ul>
+<section class="panel"><h2>Release requirements</h2><p><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/blob/main/docs/ANDROID-RELEASE-SETUP.md">Windows signing-key setup and GitHub Release guide</a></p><ul>
 <li>Signed APK through GitHub Releases first.</li><li>SHA-256 checksum and release notes.</li><li>Install/upgrade test on the Galaxy A55.</li><li>Play Store is a later phase.</li></ul>
-<p class="muted">No APK is downloadable until a successful Android build and release upload have been verified.</p></section>
+<p class="muted">A debug APK has been built and is available from the successful Actions run above. A permanent updateable signed APK will appear in GitHub Releases after the owner configures the signing keystore secrets.</p></section>
 <section class="panel"><h2>Useful project links</h2><ul>
 <li><a href="https://daredevils-eye.karanjoykundu.workers.dev/blind/">Live Blind Mode</a></li>
 <li><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions">GitHub Actions builds</a></li>
