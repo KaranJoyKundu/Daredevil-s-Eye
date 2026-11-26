@@ -42,10 +42,8 @@ The web manifest declares these three shortcuts. Launcher and browser support va
 
 ## Not included yet
 
-- Direct volume-key handling inside a native Android application.
-
-Requested by the team for a future native app: **Volume Up = Describe, Volume Down = Ask AI, Up and Down together = SOS (still with confirmation)**. A web page or installed web app cannot receive these phone buttons in Android Chrome. Until a native app exists, the closest option is MacroDroid or Tasker: map a Volume Up trigger to the Describe URL and a Volume Down trigger to the Ask AI URL.
-- A background Accessibility Service for locked-screen shortcuts.
+- Native Android volume-key handling is now under implementation in the Capacitor companion. See [Native Android app plan](NATIVE-ANDROID-APP.md).
+- A native Accessibility Service for global shortcuts is being implemented; locked-screen delivery is not yet verified on the Galaxy A55.
 - Bluetooth earbud play/pause/next/previous mappings. Media Session behavior varies and is not dependable enough to enable as an emergency control.
 
 A native Android wrapper can be planned later if these web integrations prove too unreliable. The web app's SOS is a best-effort paired-device alert, not emergency-service dispatch.
@@ -65,3 +63,19 @@ Recommended first-pass setup on the A55:
 6. Test with the phone unlocked before trying home-screen installation. Install the PWA only after the browser tests pass.
 
 The phone check reports the model and Android version only when the browser exposes them. Samsung firmware and rollout timing vary by exact model code, country and carrier. Confirm the actual OS in **Settings → About phone → Software information**. A successful motion reading is not evidence that shake SOS has safe sensitivity; that requires supervised tuning and false-positive testing.
+
+
+## Native Android companion — implementation in progress
+
+The owner approved a native Capacitor Android app for the Galaxy A55. The agreed mapping is:
+
+- **One Volume Up:** Describe (single press waits briefly to distinguish a double press).
+- **One Volume Down:** Ask AI.
+- **Double Volume Up:** Repeat the last answer.
+- **Hold Volume Up + Volume Down:** open the SOS confirmation flow. Holding the keys does not send an alert by itself.
+
+The Android Activity handles keys while the app is open. An optional Accessibility Service is being added for global key handling and must be enabled manually in Android Settings. It observes only the two volume keys and does not read screen contents. Compatibility with TalkBack and other key-filtering services must be tested.
+
+When a key event arrives while the app cannot safely perform the action, the native layer stores a pending action and can show a notification asking the user to reopen/unlock the app. Android may block camera or microphone startup from the background. Screen-off camera, microphone and SOS behaviour are not guaranteed. A notification or queued event is not proof an SOS was sent.
+
+The first wrapper loads the existing HTTPS Worker app to preserve same-origin API routes and session cookies. It therefore requires internet access for cloud AI. A signed APK is planned through GitHub Releases; Play Store distribution is later. Track progress in the in-app [Documentation page](/documentation/) and the full [master plan](NATIVE-ANDROID-APP.md).
