@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="describe" android:enabled="true" android:icon="@drawable/ic_launcher_legacy" android:shortcutShortLabel="Describe" android:shortcutLongLabel="Describe surroundings">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.karankundu.daredevilseye" android:targetClass="com.karankundu.daredevilseye.MainActivity">
+            <extra android:name="dee_shortcut_action" android:value="describe" />
+        </intent>
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+    <shortcut android:shortcutId="ask" android:enabled="true" android:icon="@drawable/ic_launcher_legacy" android:shortcutShortLabel="Ask AI" android:shortcutLongLabel="Ask the AI a question">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.karankundu.daredevilseye" android:targetClass="com.karankundu.daredevilseye.MainActivity">
+            <extra android:name="dee_shortcut_action" android:value="ask" />
+        </intent>
+    </shortcut>
+    <shortcut android:shortcutId="repeat" android:enabled="true" android:icon="@drawable/ic_launcher_legacy" android:shortcutShortLabel="Repeat" android:shortcutLongLabel="Repeat last answer">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.karankundu.daredevilseye" android:targetClass="com.karankundu.daredevilseye.MainActivity">
+            <extra android:name="dee_shortcut_action" android:value="repeat" />
+        </intent>
+    </shortcut>
+    <shortcut android:shortcutId="sos" android:enabled="true" android:icon="@drawable/ic_launcher_legacy" android:shortcutShortLabel="SOS" android:shortcutLongLabel="Open SOS confirmation">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.karankundu.daredevilseye" android:targetClass="com.karankundu.daredevilseye.MainActivity">
+            <extra android:name="dee_shortcut_action" android:value="sos" />
+        </intent>
+    </shortcut>
+</shortcuts>
