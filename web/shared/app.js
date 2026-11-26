@@ -375,8 +375,8 @@ function handleDeepLinkAction(){
  else if(requestedAction==='repeat')repeatAnswer();else speakHelp();
  syncSosAutomation();
 }
-function updateConsentPanel(){const panel=$('#consent-panel');if(panel)panel.remove();showCameraSetup();}
-updateConsentPanel();
+// Consent UI was removed. Do not call showCameraSetup here: its panel bindings
+// are initialized later in this module. Camera panels are rendered after setup below.
 document.addEventListener('click',event=>{
  const button=event.target.closest('[data-action]');if(!button)return;
  if(button.dataset.action==='describe')run('describe');
