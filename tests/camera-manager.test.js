@@ -50,7 +50,7 @@ test('Action camera setup is wired to the camera manager and persists device cho
   assert.match(app, /data-camera-source/);
   assert.match(app, /saveSettings\(\{cameraSource:source,cameraSetupComplete:true\}\)/);
   assert.match(app, /startPhoneCamera\(phoneCameraPreview/);
-  assert.match(app, /window\.addEventListener\('pagehide',\(\)=>\{stopPhoneCamera\(\);syncPhoneTorchControl\(\);\}\)/);
+  assert.match(app, /window\.addEventListener\('pagehide',\(\)=>\{stopPhoneCamera\(\);stopEsp32Stream\(esp32StreamPreview\);syncPhoneTorchControl\(\);\}\)/);
   assert.match(app, /document\.addEventListener\('visibilitychange'/);
 });
 
@@ -66,7 +66,7 @@ test('phone torch is exposed only when the active camera track advertises suppor
   assert.match(manager, /getCapabilities\?\.\(\)/);
   assert.match(manager, /applyConstraints\(\{ advanced: \[\{ torch: Boolean\(enabled\) \}\] \}\)/);
   assert.match(action, /id="phone-camera-torch"/);
-  assert.match(app, /camera-manager\.js\?v=20261126-camera3/);
+  assert.match(app, /camera-manager\.js\?v=20261126-camera4/);
   assert.match(app, /syncPhoneTorchControl\(\)/);
 });
 
@@ -75,4 +75,16 @@ test('Admin camera settings markup closes labels and shows the current ESP32 def
   assert.match(adminHtml, /Current camera address: http:\/\/192\.168\.0\.100/);
   assert.doesNotMatch(adminHtml, /<\/small<div/);
   assert.doesNotMatch(adminHtml, /border-radius:12px">>/);
+});
+
+
+test('Action page exposes ESP32 live preview and independent still capture controls', () => {
+  assert.match(action, /id="esp32-camera-panel"/);
+  assert.match(action, /id="action-esp32-stream-preview"/);
+  assert.match(action, /id="esp32-action-stream-start"/);
+  assert.match(action, /id="esp32-action-stream-stop"/);
+  assert.match(action, /data-action="describe">Capture and describe/);
+  assert.match(app, /getEsp32Endpoints\(\)\.stream/);
+  assert.match(app, /stopEsp32Stream\(esp32StreamPreview\)/);
+  assert.match(app, /captureEsp32Photo\(\)/);
 });
