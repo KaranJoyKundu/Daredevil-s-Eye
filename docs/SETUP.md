@@ -30,7 +30,7 @@ Open the local URL printed by Wrangler. Use `http://localhost:8791` for micropho
 
 ## Camera
 
-Admin → Camera & SOS defaults to `http://192.168.0.104`; the app appends `/capture`. The browser and ESP32-CAM must be on a network that allows fetch access. A hosted HTTPS page cannot reach a private camera IP from outside its LAN. Use the phone-photo upload path when remote.
+In Admin → Camera & SOS, enter the ESP32-CAM's current LAN address; its IP can change between networks or router leases. The app appends `/capture`. The browser and ESP32-CAM must be on a network that allows fetch access. A hosted HTTPS page cannot reach a private camera IP from outside its LAN. Use the phone-photo upload path when remote.
 
 ## Voice and language
 
@@ -56,9 +56,9 @@ Generate a fresh invitation in Admin. The receiver opens `/sos-receiver/`, enter
 
 Open `/blind/`. It has no menu on purpose. To leave, change the address to `/action/`.
 
-## Install as an app
+## Install as a web app
 
-On Android Chrome, open the site and choose ⋮ → Install app (or Add to Home screen). The installed app opens Blind mode. Long-press its icon for the Describe, Ask AI and SOS shortcuts.
+On Android Chrome, open the site and choose ⋮ → Install app (or Add to Home screen). The installed web app opens Blind mode. Long-press its icon for the Describe, Ask AI and SOS shortcuts.
 
 ## Secrets
 
