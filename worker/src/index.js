@@ -1,4 +1,5 @@
 import { buildPrompt, DEFAULT_MODES, RESPONSE_STYLES, RESPONSE_LANGUAGES, SAFETY_CORE, SCENE_RULES } from './prompts.js';
+import { buildSceneMemoryPrompt, buildMemoryQuestionPrompt, normalizeSceneMemoryOutput } from './scene-memory.js';
 export { SOSRoom } from './sos-room.js';
 export { SOSDirectory } from './sos-directory.js';
 export { RFIDDirectory } from './rfid-directory.js';
@@ -271,6 +272,74 @@ async function completePhotoHistory(env,draft,result,error) {
   }catch{return {...draft,saved:true,message:'Photo is saved, but its AI result status could not be updated.'};}
 }
 
+
+function sceneMemoryOwnerFilter(owner) {
+  return owner.user
+    ? 'user_id=eq.' + encodeURIComponent(owner.user.id) + '&guest_session_hash=is.null'
+    : 'guest_session_hash=eq.' + encodeURIComponent(owner.guestHash) + '&user_id=is.null';
+}
+async function resolveSceneMemoryOwner(request, env) {
+  const user = await getAuthenticatedUser(request, env);
+  const guestHash = user ? null : await guestSessionHash(request);
+  return user || guestHash ? { user, guestHash } : null;
+}
+async function listSceneMemory(env, owner) {
+  const response = await supabaseRest(env, 'scene_memory_entries?select=id,scene_summary,facts,question,answer,source_camera,created_at&' + sceneMemoryOwnerFilter(owner) + '&order=created_at.desc&limit=5');
+  if (!response.ok) throw new Error('Could not load visual memory.');
+  return await response.json();
+}
+async function saveSceneMemory(env, owner, observation) {
+  const record = {
+    user_id: owner.user?.id || null,
+    guest_session_hash: owner.guestHash,
+    scene_summary: observation.sceneSummary,
+    facts: observation.facts,
+    question: String(observation.question || '').slice(0, 1000),
+    answer: observation.answer,
+    source_camera: ['phone','esp32','upload'].includes(observation.sourceCamera) ? observation.sourceCamera : 'unknown'
+  };
+  const response = await supabaseRest(env, 'scene_memory_entries', { method: 'POST', body: record });
+  return response.ok;
+}
+async function handleSceneMemoryApi(request, env, url) {
+  if (['POST','PUT','PATCH','DELETE'].includes(request.method)) {
+    const origin = request.headers.get('origin');
+    if (!origin) return json({ error: 'A same-origin request is required for visual-memory changes.' }, 403);
+    try { if (new URL(origin).origin !== url.origin) return json({ error: 'Cross-origin visual-memory changes are not allowed.' }, 403); }
+    catch { return json({ error: 'Invalid request origin.' }, 403); }
+  }
+  if (!supabaseConfigured(env)) return json({ error: 'Visual memory is not configured on the Worker.' }, 503);
+  const owner = await resolveSceneMemoryOwner(request, env);
+  if (!owner) return json({ error: 'Create a private guest session or sign in before using visual memory.' }, 401);
+  if (url.pathname === '/api/memory' && request.method === 'GET') {
+    try { return json({ ok: true, enabled: true, limit: 5, observations: await listSceneMemory(env, owner) }); }
+    catch (error) { return json({ error: error.message || 'Could not load visual memory.' }, 502); }
+  }
+  if (url.pathname === '/api/memory' && request.method === 'DELETE') {
+    const response = await supabaseRest(env, 'scene_memory_entries?' + sceneMemoryOwnerFilter(owner), { method: 'DELETE' });
+    if (!response.ok) return json({ error: 'Could not clear visual memory.' }, 502);
+    return json({ ok: true, cleared: true });
+  }
+  if (url.pathname === '/api/memory/ask' && request.method === 'POST') {
+    let body; try { body = await request.json(); } catch { return json({ error: 'Invalid memory question.' }, 400); }
+    const question = String(body.question || '').trim();
+    if (body.memoryEnabled !== true) return json({ error: 'Enable visual memory in Admin before asking about earlier photos.' }, 403);
+    if (!question || question.length > 1000) return json({ error: 'Enter a question up to 1,000 characters.' }, 400);
+    if (body.responseLanguage && !Object.hasOwn(RESPONSE_LANGUAGES, body.responseLanguage)) return json({ error: 'Unsupported response language.' }, 400);
+    const apiKey = await providerKey(request, env);
+    if (getMode(env) !== 'gemini') return json({ error: 'Visual-memory questions require live Gemini mode.' }, 503);
+    try {
+      const observations = await listSceneMemory(env, owner);
+      if (!observations.length) return json({ error: 'There are no saved photo observations yet. Use Describe with visual memory enabled first.' }, 404);
+      const prompt = buildMemoryQuestionPrompt(question, body.responseLanguage || 'bn-BD', observations);
+      const result = await askGemini({ image: null, prompt, model: body.model || env.GEMINI_MODEL, waitSeconds: body.waitSeconds || 120 }, apiKey);
+      if (owner.user) await storeAccountUsage(env, owner.user, request, { model: result.model, requestType: 'memory_ask', usage: result.usage, imageSizeBytes: null });
+      return json({ ok: true, answer: result.answer, model: result.model, memoryCount: observations.length, memoryOnly: true });
+    } catch (error) { return json({ error: error.message || 'Could not answer from visual memory.' }, 502); }
+  }
+  return json({ error: 'Visual-memory route not found.' }, 404);
+}
+
 async function handleAccountApi(request,env,url) {
   if(['POST','PUT','PATCH','DELETE'].includes(request.method)){
     const origin=request.headers.get('origin');
@@ -540,6 +609,8 @@ function validPayload(body) {
   if (body.waitSeconds !== undefined && (!Number.isInteger(body.waitSeconds) || body.waitSeconds < 15 || body.waitSeconds > 180)) return 'Wait time must be between 15 and 180 seconds.';
   if (body.responseLanguage && !Object.hasOwn(RESPONSE_LANGUAGES, body.responseLanguage)) return 'Unsupported response language.';
   if (body.saveToHistory !== undefined && typeof body.saveToHistory !== 'boolean') return 'saveToHistory must be true or false.';
+  if (body.memoryEnabled !== undefined && typeof body.memoryEnabled !== 'boolean') return 'memoryEnabled must be true or false.';
+  if (body.cameraSource !== undefined && !['phone','esp32','upload','unknown'].includes(body.cameraSource)) return 'Unsupported camera source.';
   return null;
 }
 
@@ -696,7 +767,7 @@ async function modelCandidates(apiKey, selectedModel) {
   return unique.slice(startIndex).concat(unique.slice(0, startIndex));
 }
 
-async function askGemini({ image, prompt, model, waitSeconds }, apiKey) {
+async function askGemini({ image, prompt, model, waitSeconds, structuredOutput = false }, apiKey) {
   if (!apiKey) throw new Error('Gemini is selected but no API key is available. Add your own key in Admin or configure the Worker secret.');
   const requestedModel = String(model || 'gemini-3.8-flash').replace(/^models\//, '');
   const selectedModel = /^gemini-3\.6-flash$/i.test(requestedModel) || /-pro(?:-|$)/i.test(requestedModel) ? 'gemini-3.8-flash' : requestedModel;
@@ -709,13 +780,14 @@ async function askGemini({ image, prompt, model, waitSeconds }, apiKey) {
     const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(candidate) + ':generateContent';
     const requestBody = {
       system_instruction: { parts: [{ text: SAFETY_CORE }] },
-      contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: imageParts(image) }] }],
+      contents: [{ role: 'user', parts: [{ text: prompt }, ...(image ? [{ inline_data: imageParts(image) }] : [])] }],
       generationConfig: {
         // The old 260-token ceiling was too small for detailed answers and
         // also counted internal thinking tokens on Gemini 3.x.
         maxOutputTokens: 4096,
         temperature: 0.2,
-        ...(candidate.startsWith('gemini-3.') ? { thinkingConfig: { thinkingLevel: 'LOW' } } : {})
+        ...(candidate.startsWith('gemini-3.') ? { thinkingConfig: { thinkingLevel: 'LOW' } } : {}),
+        ...(structuredOutput ? { responseMimeType: 'application/json', responseSchema: { type: 'OBJECT', properties: { spoken_answer: { type: 'STRING' }, scene_summary: { type: 'STRING' }, facts: { type: 'ARRAY', items: { type: 'OBJECT', properties: { object: { type: 'STRING' }, color: { type: 'STRING' }, location: { type: 'STRING' }, observation: { type: 'STRING' }, confidence: { type: 'STRING', enum: ['high','medium','low'] } }, required: ['object','observation'] } } }, required: ['spoken_answer','scene_summary','facts'] } } : {})
       }
     };
     for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -921,6 +993,7 @@ export async function handleApi(request, env = {}) {
     }
     return json({ok:false,error:'RFID route not found.'},404);
   }
+  if(url.pathname.startsWith('/api/memory')) return handleSceneMemoryApi(request,env,url);
   if(url.pathname.startsWith('/api/account/')||url.pathname.startsWith('/api/guest/')) return handleAccountApi(request,env,url);
 
   if (request.method === 'GET' && url.pathname === '/api/health') {
@@ -1033,7 +1106,7 @@ export async function handleApi(request, env = {}) {
     if (mode !== 'gemini' && mode !== 'mock') return json({ error: 'Unsupported AI_MODE "' + mode + '".' }, 503);
     const selectedModel = String(body.model || model).replace(/^models\//, '');
     const waitSeconds = body.waitSeconds || 120;
-    const prompt = buildPrompt({
+    const basePrompt = buildPrompt({
       mode: action,
       question: body.question || '',
       systemPrompt: body.systemPrompt || '',
@@ -1041,6 +1114,15 @@ export async function handleApi(request, env = {}) {
       responseStyle: body.responseStyle || 'concise',
       responseLanguage: body.responseLanguage || 'en-US'
     });
+    const memoryEnabled = body.memoryEnabled === true;
+    const memoryOwner = memoryEnabled ? await resolveSceneMemoryOwner(request, env) : null;
+    if (memoryEnabled && !memoryOwner) return json({ error: 'Visual memory needs a private guest session or a signed-in account. Refresh and try again.' }, 401);
+    let previousObservations = [];
+    if (memoryEnabled) {
+      try { previousObservations = await listSceneMemory(env, memoryOwner); }
+      catch (error) { return json({ error: error.message || 'Could not load visual memory.' }, 502); }
+    }
+    const prompt = memoryEnabled ? buildSceneMemoryPrompt(basePrompt, previousObservations) : basePrompt;
     if (mode === 'gemini') {
       const saveRequested=body.saveToHistory!==false;
       const user=saveRequested?await getAuthenticatedUser(request,env):null;
@@ -1048,7 +1130,15 @@ export async function handleApi(request, env = {}) {
         ?await createPhotoHistoryDraft(env,user,request,body,prompt,selectedModel,action)
         :{saved:false,message:'Photo history is switched off.'};
       try {
-        const result = await askGemini({ image: body.image, prompt, model: selectedModel, waitSeconds }, apiKey);
+        const result = await askGemini({ image: body.image, prompt, model: selectedModel, waitSeconds, structuredOutput: memoryEnabled }, apiKey);
+        let memorySaved = false;
+        if (memoryEnabled) {
+          const observation = normalizeSceneMemoryOutput(result.answer);
+          if (observation) {
+            result.answer = observation.answer;
+            memorySaved = await saveSceneMemory(env, memoryOwner, { ...observation, question: body.question || '', sourceCamera: body.cameraSource || 'unknown' });
+          }
+        }
         if(user) await storeAccountUsage(env,user,request,{
           model:result.model,requestType:action,
           usage:result.usage,imageSizeBytes:dataUrlByteLength(body.image)
@@ -1059,7 +1149,7 @@ export async function handleApi(request, env = {}) {
           model:result.model,attemptedModels:result.attempted,
           finishReason:result.finishReason,usageMetadata:result.usage||null,
           historySaved:Boolean(history.saved),historyMessage:saveRequested?history.message:null,
-          historyId:history.id||null,answer:result.answer
+          historyId:history.id||null,answer:result.answer,memoryEnabled,memorySaved,memoryCount:memoryEnabled?Math.min(5,previousObservations.length+(memorySaved?1:0)):0
         });
       } catch(error) {
         const failedHistory=await completePhotoHistory(env,historyDraft,null,error);
