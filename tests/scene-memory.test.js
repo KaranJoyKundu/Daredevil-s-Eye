@@ -26,8 +26,8 @@ test('scene memory rejects malformed or incomplete structured output', () => {
 
 test('photo prompt includes only five previous observations in chronological order', () => {
   const observations = Array.from({ length: 7 }, (_, index) => ({
-    created_at: String(index + 1),
-    scene_summary: 'Scene ' + (index + 1),
+    created_at: String(7 - index),
+    scene_summary: 'Scene ' + (7 - index),
     facts: []
   }));
   const prompt = buildSceneMemoryPrompt('Base prompt', observations);
