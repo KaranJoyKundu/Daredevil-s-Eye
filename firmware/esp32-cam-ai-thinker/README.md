@@ -36,4 +36,4 @@ Use the actual IP printed by the board in Daredevil's Eye camera settings. Keep 
 
 ## Source and validation
 
-The camera web UI and pin mapping are from Espressif's Arduino ESP32 CameraWebServer example. The capture routes and Daredevil's Eye-specific Wi-Fi setup are maintained here. This source upload has not yet been compiled or flashed on the target board; do that validation before using it in a demo or release.
+The camera web UI and pin mapping are from Espressif's Arduino ESP32 CameraWebServer example. The capture routes and Daredevil's Eye-specific Wi-Fi setup are maintained here. Hardware report (2026-11-26): the owner confirms that the ESP32-CAM live MJPEG stream and normal JPEG capture work on the physical board. This report does not verify the `/capture-flash` endpoint, LED brightness control, or that the currently committed source exactly matches the flashed firmware. Record the flashed firmware revision and test those remaining controls before release.
