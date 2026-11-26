@@ -36,7 +36,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(VolumeControlsPlugin.class);
         super.onCreate(savedInstanceState);
         if (getBridge() != null && getBridge().getWebView() != null) {
-            View webView = getBridge().getWebView();
+            android.webkit.WebView webView = getBridge().getWebView();
             webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
             final int initialLeft = webView.getPaddingLeft();
             final int initialTop = webView.getPaddingTop();
