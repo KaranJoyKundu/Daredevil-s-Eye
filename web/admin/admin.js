@@ -23,6 +23,7 @@ function formSettings(){
   cameraBaseUrl:normalizeCameraAddress($('#camera').value),
   requirePhotoConfirmation:$('#require-photo-confirmation').checked,
   savePhotoHistory:$('#save-photo-history').checked,
+  sceneMemoryEnabled:$('#scene-memory-enabled').checked,
   emergencyName:$('#contact-name').value.trim(),
   emergencyPhone:$('#contact-phone').value.trim(),
   speechLanguage:$('#language').value,
@@ -66,6 +67,13 @@ $('#esp32-stream-start')?.addEventListener('click',()=>{
 $('#esp32-stream-stop')?.addEventListener('click',()=>{stopEsp32Stream(esp32Preview);esp32Preview.hidden=true;esp32Preview.style.display='none';if(esp32Status)esp32Status.textContent='Stream connection closed. The ESP32 firmware has no separate stream-off endpoint.';});
 window.addEventListener('pagehide',()=>stopEsp32Stream(esp32Preview));
 
+$('#clear-scene-memory')?.addEventListener('click',async()=>{
+ if(!window.confirm('Permanently clear the five saved visual observations for this account or browser?'))return;
+ const button=$('#clear-scene-memory');button.disabled=true;$('#scene-memory-status').textContent='Clearing visual memory…';
+ try{const response=await apiFetch('/api/memory',{method:'DELETE',credentials:'same-origin'});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'Could not clear visual memory.');$('#scene-memory-status').textContent='Saved visual memory cleared.';}
+ catch(error){$('#scene-memory-status').textContent=error.message;}
+ finally{button.disabled=false;}
+});
 $('#personal-api-key').value=getSessionGeminiApiKey();
 $('#personal-key-status').textContent=getSessionGeminiApiKey()?'A personal key is active for this tab.':'No personal key is set in this tab.';
 $('#save-personal-key').addEventListener('click',()=>{
@@ -76,6 +84,8 @@ $('#remove-personal-key').addEventListener('click',()=>{clearSessionGeminiApiKey
 $('#camera').value=saved.cameraBaseUrl;
 $('#require-photo-confirmation').checked=saved.requirePhotoConfirmation!==false;
 $('#save-photo-history').checked=saved.savePhotoHistory!==false;
+$('#scene-memory-enabled').checked=saved.sceneMemoryEnabled===true;
+$('#scene-memory-status').textContent=saved.sceneMemoryEnabled?'Enabled. The latest five text observations are available to this account/browser.':'Disabled. No new observations will be stored.';
 $('#contact-name').value=saved.emergencyName;
 $('#contact-phone').value=saved.emergencyPhone;
 $('#sos-code').value=saved.sosPairingCode;
