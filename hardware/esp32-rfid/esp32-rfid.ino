@@ -34,12 +34,6 @@ const unsigned long SCAN_COOLDOWN_MS = 1800;
 const unsigned long QUEUE_RETRY_MS = 5000;
 const uint8_t MAX_PENDING_EVENTS = 5;
 
-struct MedicineCard { const char *uid; const char *name; };
-const MedicineCard MEDICINES[] = {
-  {"A1618C04", "Napa One"},
-  {"1474D505", "Monus 10"}
-};
-
 String stageError(const char *code, const String &detail) {
   Serial.printf("[FAIL] %s: %s\n", code, detail.c_str());
   return String(code);
@@ -207,8 +201,8 @@ bool flushPendingEvent() {
   return true;
 }
 
-bool sendMedicine(const String &uid, const String &medicine) {
-  const String body = "{\"uid\":\"" + uid + "\",\"medicine\":\"" + medicine + "\",\"eventId\":\"" + randomEventId() + "\"}";
+bool sendMedicine(const String &uid) {
+  const String body = "{\"uid\":\"" + uid + "\",\"eventId\":\"" + randomEventId() + "\"}";
   if (!flushPendingEvent() || loadPendingQueue().length()) {
     enqueuePendingEvent(body);
     lastQueueRetryAt = millis();
