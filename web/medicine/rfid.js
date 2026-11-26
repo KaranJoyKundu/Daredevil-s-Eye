@@ -114,3 +114,5 @@ medicineForm.addEventListener('submit',async event=>{
  finally{save.disabled=false;}
 });
 loadMedicines();
+
+$('medicine-preview-speak').addEventListener('click',()=>announceMedicine($('medicine-preview').textContent));
