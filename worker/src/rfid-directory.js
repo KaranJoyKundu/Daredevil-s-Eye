@@ -16,6 +16,7 @@ export class RFIDDirectory {
     if(request.method!=='POST')return json({ok:false,error:'Method not allowed.'},405);
     let body;try{body=await request.json();}catch{return json({ok:false,error:'Invalid RFID request.'},400);}
     if(action==='pair/start')return this.startPairing(body);
+    if(action==='devices/provision')return this.provisionDevice(body);
     if(action==='pair/claim')return this.claimPairing(body);
     if(action==='event/submit')return this.submitEvent(request,body);
     if(action==='event/poll')return this.pollEvents(body);
@@ -30,6 +31,13 @@ export class RFIDDirectory {
     const record={codeHash:await digest(code),userId,expiresAt:Date.now()+10*60*1000,attempts:0};
     await this.storage.put('pairing',record);
     return json({ok:true,code,expiresInSeconds:600});
+  }
+  async provisionDevice({userId}){
+    if(typeof userId!=='string'||!/^[0-9a-f-]{36}$/i.test(userId))return json({ok:false,error:'A signed-in account is required.'},401);
+    const token=randomHex(32),deviceId=randomHex(16),devices=await this.storage.get('devices')||[];
+    devices.push({deviceId,userId,tokenHash:await digest(token),createdAt:new Date().toISOString(),lastSeenAt:null});
+    await this.storage.put('devices',devices);
+    return json({ok:true,deviceId,deviceToken:token});
   }
   async claimPairing({code}){
     const value=String(code||'').trim();
