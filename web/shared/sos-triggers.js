@@ -44,7 +44,8 @@ export function matchSosVoiceCommand(transcript, phase = 'wake') {
     const banglaConfirm = text.includes('নিশ্চিত') || (hasSos && (text.includes('পাঠান') || text.includes('হ্যাঁ')));
     return englishConfirm || banglaConfirm ? 'confirm' : null;
   }
-  const englishWake = (text.includes('daredevil') || text.includes('dare devil')) && hasSos;
-  const banglaWake = hasSos && (text.includes('ডেয়ার') || text.includes('দেয়ার') || text.includes('সাহায্য'));
+  // One SOS utterance is enough to start the spoken cancellation countdown.
+  const englishWake = hasSos && (text.includes('daredevil') || text.includes('dare devil') || text.includes('emergency') || text.includes('help'));
+  const banglaWake = hasSos || text.includes('সাহায্য') || text.includes('জরুরি');
   return englishWake || banglaWake ? 'wake' : null;
 }

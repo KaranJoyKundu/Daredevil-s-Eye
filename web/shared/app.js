@@ -198,13 +198,10 @@ function handleSosVoiceCommand(transcript){
   sosVoiceMode='cancel';startSosCountdown('voice');return;
  }
  if(sosVoiceMode==='wake'&&command==='wake'){
-  sosVoiceMode='confirm';
-  if(sosVoiceModeTimer)clearTimeout(sosVoiceModeTimer);
-  sosVoiceModeTimer=setTimeout(()=>{
-   sosVoiceModeTimer=null;
-   if(sosVoiceMode==='confirm'){sosVoiceMode='wake';speakSosStatus('Voice SOS confirmation timed out. No alert was sent.');}
-  },12000);
-  speakSosStatus('SOS wake phrase heard. To send an alert, say confirm SOS within twelve seconds. Say cancel SOS to cancel.');
+  // A single spoken SOS phrase starts the existing cancellable countdown.
+  sosVoiceMode='cancel';
+  if(sosVoiceModeTimer){clearTimeout(sosVoiceModeTimer);sosVoiceModeTimer=null;}
+  startSosCountdown('voice');
  }
 }
 function handleDeviceMotion(event){
