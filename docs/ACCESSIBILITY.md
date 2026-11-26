@@ -31,7 +31,7 @@ Daredevil's Eye is an experimental audio-first interface. It is not accessibilit
 - The page requests a screen wake lock while camera/AI/SOS actions run, when the browser supports it. It releases the lock when the action completes; the operating system may still suspend the page.
 - Camera capture can take up to three frames spaced 250 ms apart and selects the sharpest frame using a small-image Laplacian-variance estimate.
 - Spoken error messages identify common camera, connection, timeout, quota and microphone failures.
-- The first-use safety disclaimer is spoken once after the user accepts consent, when device speech is available.
+- The app provides an informational privacy notice. Do not reintroduce a blocking consent popup, Accept button, checkbox or photo-history opt-in toggle. Spoken safety feedback, where present, is separate from privacy controls.
 
 ## Required evaluation
 
@@ -51,7 +51,7 @@ Browser speech recognition, microphone permission, synthesis, vibration, wake lo
 
 ## Android 16 / Samsung Galaxy target
 
-The first handset validation target is Galaxy A55 5G on Android 16 / One UI 8. This is a browser/PWA target, not a native Android application. Use current Chrome for the baseline run, then repeat on Samsung Internet to identify browser-specific differences.
+The first handset validation target is Galaxy A55 5G on Android 16 / One UI 8. Test both the browser/PWA and the native Capacitor Android companion as separate clients. Use current Chrome for the browser baseline, then repeat on Samsung Internet to identify browser-specific differences.
 
 - Microphone, speech recognition and speech synthesis must be tested independently. An API being present does not prove that the device's speech service is installed, reachable or accurate.
 - Bengali TTS is considered available only when the browser reports an installed `bn` voice and a human listener confirms pronunciation. A voice-list entry alone is not acceptance.
@@ -62,9 +62,9 @@ The first handset validation target is Galaxy A55 5G on Android 16 / One UI 8. T
 
 ## Native Android companion — Galaxy A55
 
-The native app is being implemented with Capacitor and native Android code. The approved physical controls are Volume Up = Describe, Volume Down = Ask AI, double Volume Up = Repeat, and holding both = open SOS confirmation. Single Volume Up is delayed briefly so it can be distinguished from a double press.
+The native companion is implemented in the repository with Capacitor and native Android code; a CI-built debug APK exists. Physical Galaxy A55 acceptance remains outstanding. The approved physical controls are Volume Up = Describe, Volume Down = Ask AI, double Volume Up = Repeat, and holding both = open SOS confirmation. Single Volume Up is delayed briefly so it can be distinguished from a double press.
 
-Global controls require the user to explicitly enable Daredevil's Eye in Android Accessibility settings. The service is intended to observe only volume key events; it does not request window-content access. Android accessibility key filtering may conflict with TalkBack or another service that filters key events. This must be tested, not assumed.
+Global controls require the user to explicitly enable Daredevil's Eye in Android Accessibility settings. The service is designed to observe volume-key events only; it must not inspect other apps' screen contents. Verify the actual manifest/service configuration and TalkBack coexistence on the handset before claiming compatibility. Android accessibility key filtering may conflict with TalkBack or another service that filters key events. This must be tested, not assumed.
 
 The strongest supported background behaviour is best-effort: store a pending action, surface a notification and resume the app when Android allows it. Android background-start restrictions and foreground-service rules can prevent immediate camera or microphone use while locked. Phone-camera capture and microphone recording are not promised with the display off. SOS always requires confirmation and backend acknowledgement before the UI may say it was sent.
 
