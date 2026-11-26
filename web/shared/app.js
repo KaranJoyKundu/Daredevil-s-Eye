@@ -499,12 +499,9 @@ window.addEventListener('pagehide',()=>{stopPhoneCamera();stopEsp32Stream(esp32S
 
 
 const termsCheck=$('#consent-terms-check'),acceptButton=$('#consent-accept');
-if(termsCheck&&acceptButton){
- const syncAccept=()=>{acceptButton.disabled=!termsCheck.checked;};
- // Keep returning users' prior accepted status if this panel is shown after an update.
- termsCheck.checked=isGrandfatheredReturningUser();
- termsCheck.addEventListener('change',syncAccept);syncAccept();
-}
+// Keep returning users' prior accepted status if this panel is shown after an update.
+// The button remains enabled; its click handler provides validation feedback if unchecked.
+if(termsCheck&&acceptButton)termsCheck.checked=isGrandfatheredReturningUser();
 $('#consent-accept')?.addEventListener('click',()=>{
  if(!termsCheck?.checked){$('#consent-status').textContent='Please tick the box to confirm that you accept the Terms & Conditions.';return;}
  if(!acceptConsent()){$('#consent-status').textContent='Could not save acceptance in this browser. Enable site storage and try again.';return;}
