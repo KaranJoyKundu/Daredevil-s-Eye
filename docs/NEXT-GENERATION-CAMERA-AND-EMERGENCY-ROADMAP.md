@@ -537,7 +537,7 @@ Before the first implementation PR:
 - Scene memory is off by default and stores only sanitized text observations. Account and guest scopes are separated. A database trigger enforces a five-entry maximum.
 - Emergency video and recording are separately opt-in and off by default. WebRTC sessions are paired-token protected, expire after five minutes and support optional TURN credentials. Recording is limited to five minutes / 50 MB and expires after 30 days.
 - A fresh backup branch of current main was created: backup/main-2026-11-26-before-camera-emergency-merge (base 57ff340). The Supabase migrations are applied and verified. The R2 bucket and TURN secrets have not yet been provisioned. No production Worker deployment has been performed for PR #52.
-- PR #52 exact-head GitHub Actions passed in run 45749717683 (tests, syntax checks, Worker bundle and Durable Object migration validation). Supabase migration is applied and verified. R2 deployment validation and physical Android/ESP32 tests remain required. Do not check the milestones complete until those pass.
+- PR #52 exact-head GitHub Actions passed in run 45750076584 (tests, syntax checks, Worker bundle and Durable Object migration validation). Supabase migration is applied and verified. R2 deployment validation and physical Android/ESP32 tests remain required. Do not check the milestones complete until those pass.
 
 ## Progress tracker
 
