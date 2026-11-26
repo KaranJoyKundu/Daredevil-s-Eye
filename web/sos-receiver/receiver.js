@@ -1,4 +1,4 @@
-import {requestPublic} from '/shared/api.js?v=20261117-release1';
+import {requestPublic} from '/shared/api.js?v=20261126-recording1';
 
 const $=selector=>document.querySelector(selector);
 const DEVICE_KEY='daredevils-eye.receiver.device.v2';
