@@ -69,6 +69,20 @@ public class VolumeControlsPlugin extends Plugin {
         call.resolve(result);
     }
 
+
+    @PluginMethod
+    public void getShortcutSettings(PluginCall call) {
+        android.content.SharedPreferences foreground = getContext().getSharedPreferences("dee_native_setup", Context.MODE_PRIVATE);
+        android.content.SharedPreferences global = getContext().getSharedPreferences(VolumeKeyAccessibilityService.PREFS, Context.MODE_PRIVATE);
+        JSObject result = new JSObject();
+        result.put("foregroundEnabled", foreground.getBoolean("foreground_shortcuts_enabled", true));
+        result.put("globalEnabled", global.getBoolean("global_shortcuts_enabled", true));
+        String expected = getContext().getPackageName() + "/" + VolumeKeyAccessibilityService.class.getName();
+        String enabled = Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        result.put("accessibilityEnabled", !TextUtils.isEmpty(enabled) && enabled.toLowerCase().contains(expected.toLowerCase()));
+        call.resolve(result);
+    }
+
     @PluginMethod
     public void setForegroundShortcutsEnabled(PluginCall call) {
         boolean enabled = call.getBoolean("enabled", true);
