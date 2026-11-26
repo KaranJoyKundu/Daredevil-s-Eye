@@ -53,3 +53,9 @@ test('Action camera setup is wired to the camera manager and persists device cho
   assert.match(app, /window\.addEventListener\('pagehide',\(\)=>stopPhoneCamera\(\)\)/);
   assert.match(app, /document\.addEventListener\('visibilitychange'/);
 });
+
+test('Admin image lab can capture an ESP32 flash photo', () => {
+  assert.match(admin, /id="capture-flash-camera-button"/);
+  const adminScript = readFileSync(new URL('../web/admin/admin.js', import.meta.url), 'utf8');
+  assert.match(adminScript, /captureEsp32Photo\(\{flash:true\}\)/);
+});
