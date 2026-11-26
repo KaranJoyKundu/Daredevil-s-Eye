@@ -5,14 +5,16 @@ import {setRFIDListenerEnabled,isRFIDListenerEnabled} from '../shared/rfid-liste
 const $=id=>document.getElementById(id);
 const status=(id,message)=>{const el=$(id);if(el)el.textContent=message;};
 const visualPreview=location.hostname.endsWith('.vercel.app');
+const liveAppUrl='https://daredevils-eye.karanjoykundu.workers.dev/medicine/';
 if(visualPreview){
- $('generate-code').disabled=true;$('listener-enabled').disabled=true;$('refresh-devices').disabled=true;
- status('pair-status','Visual-only Vercel preview. Use the Cloudflare-hosted app to pair a real ESP32.');
- status('listener-status','The real-time Worker API is not connected to this static Vercel preview.');
- $('device-list').textContent='Layout preview only — account, pairing and device APIs run on the Cloudflare-hosted Daredevil’s Eye app.';
+ $('generate-code').textContent='Open secure pairing page';
+ $('listener-enabled').disabled=true;$('refresh-devices').disabled=true;
+ status('pair-status','Pairing is securely handled by the Cloudflare app. Open it to generate your code.');
+ status('listener-status','Enable announcements from the Cloudflare-hosted app.');
+ $('device-list').textContent='Device management is available in the Cloudflare-hosted Daredevil’s Eye app.';
 }
 async function api(path,options={}){
- if(visualPreview)throw new Error('This is a visual-only Vercel preview. Open the Cloudflare-hosted app to use device APIs.');
+ if(visualPreview)throw new Error('Open the Cloudflare-hosted app to use device APIs.');
  const response=await fetch(path,{credentials:'same-origin',cache:'no-store',...options,headers:{'content-type':'application/json',...(options.headers||{})}});
  const data=await response.json().catch(()=>({}));
  if(!response.ok)throw new Error(data.error||'Request failed ('+response.status+').');
@@ -37,7 +39,9 @@ async function loadDevices(){
  }catch(error){$('device-list').textContent=error.message;status('device-status',error.message);}
 }
 $('generate-code').addEventListener('click',async()=>{
- const button=$('generate-code');button.disabled=true;status('pair-status','Generating a secure one-time code…');
+ const button=$('generate-code');
+ if(visualPreview){status('pair-status','Opening the secure pairing page…');location.href=liveAppUrl;return;}
+ button.disabled=true;status('pair-status','Generating a secure one-time code…');
  try{const data=await api('/api/rfid/pair/start',{method:'POST',body:'{}'});$('pair-code').textContent=data.code;status('pair-status','Code expires in 10 minutes. Enter it into the ESP32 serial monitor.');}
  catch(error){$('pair-code').textContent='------';status('pair-status',error.message);}
  finally{button.disabled=false;}
