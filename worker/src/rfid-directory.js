@@ -64,7 +64,7 @@ export class RFIDDirectory {
       const medicines=await this.storage.get('medicines')||[];
       for(const item of DEFAULT_MEDICINES){
         if(!medicines.some(existing=>existing.userId===userId&&existing.uid===item.uid))
-          medicines.push({...item,strength:'',expiryDate:'',instructions:'',announcementText:'',expiredText:'',userId,defaultCard:true,updatedAt:new Date().toISOString()});
+          medicines.push({...item,strength:'',expiryDate:'',instructions:'',announcementText:'',expiredText:'Warning! This medicine has expired.',userId,defaultCard:true,updatedAt:new Date().toISOString()});
       }
       await this.storage.put('medicines',medicines);
       await this.storage.put(seededKey,true);
@@ -111,13 +111,21 @@ export class RFIDDirectory {
     const medicine=medicines.find(item=>item.userId===device.userId&&item.uid===normalized)|| (LEGACY_MEDICINES[normalized]?{uid:normalized,name:LEGACY_MEDICINES[normalized],strength:'',expiryDate:'',instructions:'',announcementText:'',expiredText:''}:null);
     if(!medicine)return json({ok:false,error:'This RFID UID is not registered to your account. Add it on the Medicine RFID page.'},404);
     const id=/^[a-f0-9-]{16,64}$/i.test(String(eventId||''))?String(eventId):randomHex(16);
-    const events=(await this.storage.get('events')||[]).filter(item=>Date.now()-Date.parse(item.createdAt)<86400000);
+    const now=Date.now();
+    const events=(await this.storage.get('events')||[]).filter(item=>now-Date.parse(item.createdAt)<86400000);
     if(events.some(item=>item.id===id))return json({ok:true,accepted:true,duplicate:true,eventId:id});
+    // ESP32 can report the same physical card twice with different random event IDs.
+    // Deduplicate by reader + UID as well, including after the first event was acknowledged.
+    const recentScans=(await this.storage.get('recentScans')||[]).filter(item=>now-item.scannedAt<60000);
+    const recentDuplicate=recentScans.find(item=>item.deviceId===device.deviceId&&item.uid===normalized&&now-item.scannedAt<6000);
+    if(recentDuplicate)return json({ok:true,accepted:true,duplicate:true,eventId:recentDuplicate.eventId});
     const today=new Date().toISOString().slice(0,10),expired=Boolean(medicine.expiryDate&&medicine.expiryDate<today.slice(0,7));
     const generated=[medicine.name,medicine.strength,medicine.expiryDate?'Expiry date: '+dateLabel(medicine.expiryDate):'',medicine.instructions].filter(Boolean).join('. ');
     const speechText=expired?(medicine.expiredText||'Warning! This medicine has expired.'):(medicine.announcementText||generated||medicine.name);
     const event={id,deviceId:device.deviceId,userId:device.userId,uid:normalized,medicine:medicine.name,speechText,expired,createdAt:new Date().toISOString()};
     events.push(event);await this.storage.put('events',events.slice(-100));
+    recentScans.push({deviceId:device.deviceId,uid:normalized,eventId:id,scannedAt:now});
+    await this.storage.put('recentScans',recentScans.slice(-100));
     device.lastSeenAt=event.createdAt;await this.storage.put('devices',devices);
     return json({ok:true,accepted:true,eventId:id});
   }
