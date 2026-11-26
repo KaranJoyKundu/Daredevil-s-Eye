@@ -319,3 +319,10 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - PR #43's exact integration head passed GitHub Actions run 45743354907. The current local checkout later reported 105 passing tests and `npm run check` success on main commit `8cfcfa5`.
 - No production deployment occurred; the deployment job was skipped.
 - Firmware source is present in the repository, but the physical board's flashed revision has not yet been matched to the committed source.
+
+
+### Current-main integration status — 2026-11-26
+
+- PR #43 integrated the camera platform and ESP32 firmware into main; PR #49 then added the Action-page live MJPEG preview and independent still capture and is merged.
+- Owner-reported physical test confirms the ESP32 /stream and /capture endpoints work. Flash LED capture, LED brightness, Android Local Network Access and end-to-end Action-page AI analysis still need hands-on verification.
+- The next feature branch PR #52 adds scene memory, paired WebRTC SOS video and private R2 recordings. Its deployment prerequisites are documented in docs/EMERGENCY-VIDEO-DEPLOYMENT.md.
