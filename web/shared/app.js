@@ -1,10 +1,10 @@
 import { captureImage, blobToDataUrl, compressImageToJpeg, primeShutterAudio } from './camera.js?v=20261117-release5';
 import { startPhoneCamera, capturePhoneFrame, stopPhoneCamera, captureEsp32Photo, getPhoneTorchState, setPhoneTorch, getEsp32Endpoints, stopEsp32Stream, getPhoneCameraStream } from './camera-manager.js?v=20261126-camera5';
-import { requestAI } from './api.js?v=20261117-release5';
+import { requestAI } from './api.js?v=20261126-recording1';
 import { startEmergencyVideo, createEsp32CanvasStream, stopEmergencyVideo } from './emergency-video.js?v=20261126-video1';
 import { startIncidentRecording } from './recording-manager.js?v=20261126-recording1';
 import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release5';
-import { getSettings, saveSettings } from './settings.js?v=20261117-release5';
+import { getSettings, saveSettings } from './settings.js?v=20261126-recording1';
 import { hasCurrentConsent, acceptConsent, rejectConsent } from './consent.js?v=20261117-release5';
 import { createShakeSequenceTracker, getShakeMagnitude, matchSosVoiceCommand } from './sos-triggers.js?v=20261117-release1';
 import { mountLanguageSwitch, toBangla } from './language.js?v=20261117-release5';
