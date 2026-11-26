@@ -1,7 +1,7 @@
 import {hasCurrentConsent,acceptConsent,rejectConsent} from './consent.js?v=20261117-release5';
 import {saveSettings} from './settings.js?v=20261117-release5';
 import {mountLanguageSwitch} from './language.js?v=20261117-release5';
-import {startRFIDListener} from './rfid-listener.js?v=20261126-medicine1';
+import {startRFIDListener} from './rfid-listener.js?v=20261126-rfid3';
 
 const links = [
   ['Home','/action/'],['Medicine RFID','/medicine/'],['Blind mode','/blind/'],['Admin / Settings','/admin/'],
