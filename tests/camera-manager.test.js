@@ -59,3 +59,12 @@ test('Admin image lab can capture an ESP32 flash photo', () => {
   const adminScript = readFileSync(new URL('../web/admin/admin.js', import.meta.url), 'utf8');
   assert.match(adminScript, /captureEsp32Photo\(\{flash:true\}\)/);
 });
+
+test('phone torch is exposed only when the active camera track advertises support', () => {
+  assert.match(manager, /export function getPhoneTorchState/);
+  assert.match(manager, /export async function setPhoneTorch/);
+  assert.match(manager, /getCapabilities\?\.\(\)/);
+  assert.match(manager, /applyConstraints\(\{ advanced: \[\{ torch: Boolean\(enabled\) \}\] \}\)/);
+  assert.match(action, /id="phone-camera-torch"/);
+  assert.match(app, /syncPhoneTorchControl\(\)/);
+});
