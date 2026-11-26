@@ -105,7 +105,7 @@ test('medicine page exposes personal card management and shared listener speaks 
  const listener=readFileSync(new URL('../web/shared/rfid-listener.js',import.meta.url),'utf8');
  assert.match(nav,/startRFIDListener/);
  assert.match(page,/medicine-form/);assert.match(page,/medicine-uid/);assert.match(page,/medicine-expiry/);
- assert.match(pageScript,/api\\/rfid\\/medicines/);assert.match(pageScript,/Custom spoken message/);
+ assert.match(pageScript,/api\\/rfid\\/medicines/);assert.match(page,/Custom spoken message/);
  assert.match(listener,/event\\.speechText\\|\\|event\\.medicine/);
  assert.ok(pageScript.includes('/api/rfid/devices/provision'));
 });
