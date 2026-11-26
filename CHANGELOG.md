@@ -1,10 +1,11 @@
+# Changelog
+
 ## 26 November 2026 — Documentation layout and project documentation
 
 - PR #71 refreshed the Android documentation page styling; PR #72 corrected oversized sections inherited from the shared site stylesheet.
 - PR #72 merged to main; production deployment workflow #45843735382 succeeded.
 - Project documentation overhaul is tracked separately from application code.
 
-# Changelog
 
 ## 26 November 2026 — Preserve visible action feedback when speech fails (PR #69 merged)
 
