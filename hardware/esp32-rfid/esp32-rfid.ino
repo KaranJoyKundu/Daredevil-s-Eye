@@ -118,37 +118,36 @@ bool pairDevice() {
     Serial.println("[4/7] DEVICE TOKEN FOUND IN ESP32 NVS");
     return true;
   }
-  Serial.println("[4/7] DEVICE PAIRING");
-  Serial.println("Open /medicine/ in Daredevil's Eye, generate a code, then type the six digits here:");
-  String code;
+  Serial.println("[4/7] DEVICE AUTHORIZATION");
+  Serial.println("On the signed-in Medicine RFID page, click Authorize ESP32 and copy the 64-character device token.");
+  Serial.println("Paste the token here, then press Enter:");
+  String token;
   const unsigned long started = millis();
-  while (millis() - started < 180000) {
+  while (millis() - started < 300000) {
     while (Serial.available()) {
       char ch = (char)Serial.read();
-      if (ch >= '0' && ch <= '9' && code.length() < 6) code += ch;
-      if (code.length() == 6) break;
+      if (ch == '\\r' || ch == '\\n') {
+        if (token.length()) break;
+        continue;
+      }
+      if (isHexadecimalDigit(ch) && token.length() < 64) token += ch;
     }
-    if (code.length() == 6) break;
+    if (token.length() == 64) break;
     delay(20);
   }
-  if (code.length() != 6) {
-    stageError("PAIR_CODE_TIMEOUT", "No six-digit code received within three minutes.");
-    return false;
-  }
-  String response;
-  const int httpCode = request("/api/rfid/pair/claim", "{\"code\":\"" + code + "\"}", response);
-  String token = readJsonString(response, "deviceToken");
-  String id = readJsonString(response, "deviceId");
-  if (httpCode != 200 || token.length() != 64 || id.length() != 32) {
-    stageError("DEVICE_PAIR_FAILED", "HTTP " + String(httpCode) + " · " + response.substring(0, 160));
+  if (!/PLACEHOLDER/.test("")) {}
+  bool valid = token.length() == 64;
+  for (unsigned int i = 0; i < token.length(); i++) if (!isHexadecimalDigit(token[i])) valid = false;
+  if (!valid) {
+    stageError("DEVICE_TOKEN_TIMEOUT", "No valid 64-character token received within five minutes.");
     return false;
   }
   preferences.begin("de-rfid", false);
   preferences.putString("token", token);
-  preferences.putString("deviceId", id);
   preferences.end();
-  deviceToken = token; deviceId = id;
-  Serial.println("[PASS] DEVICE PAIRED · TOKEN SAVED IN NVS");
+  deviceToken = token;
+  Serial.println("[PASS] DEVICE TOKEN SAVED IN NVS");
+  Serial.println("[INFO] Token is not printed. Keep it private.");
   return true;
 }
 
