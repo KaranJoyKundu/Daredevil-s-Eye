@@ -2,9 +2,9 @@
 
 **Project:** Daredevil's Eye  
 **Repository:** KaranJoyKundu/Daredevil-s-Eye  
-**Status:** Camera foundation implemented on current `main`; phone torch added; firmware patch prepared separately; physical device validation remains open.  
+**Status:** Camera foundation and ESP32 controls are implemented on `main`. Owner reports that live MJPEG streaming and normal JPEG capture work on the physical ESP32-CAM (2026-11-26). Flash capture, LED brightness, Android Chrome Local Network Access, scene memory, SOS live video and incident recording remain unverified or unimplemented as detailed below.  
 **Plan date:** 2026-11-26  
-**Production baseline:** `47618f8445a10ffc28e65f37fbabe21149f5aa2f`
+**Production baseline at this handoff:** `8cfcfa53e0515f61da2eb901f1b24e928cdbffa1`
 
 This document is the handoff source of truth. Read it before continuing work. Update the status/checklists and decision log as implementation progresses. Do not assume a planned feature is implemented merely because it appears here.
 
@@ -191,14 +191,15 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - [x] Add static regression tests for camera setup, phone capture, ESP32 endpoint generation and Admin controls.
 
 ### Phase 2 — ESP32 controls
-- [x] Live stream preview UI in Admin.
-- [x] Stream start/stop by attaching/removing the MJPEG image URL.
+- [x] Live stream preview UI in Admin and Action page (Action preview added in this continuation).
+- [x] Stream start/stop by attaching/removing the MJPEG image URL, with cleanup on page hide/navigation.
 - [x] LED brightness and off controls (0..255).
-- [x] No-flash and flash capture paths; Admin Image Lab now exposes a flash-capture action.
-- [ ] Validate all ESP32 controls on physical hardware.
+- [x] Normal still capture from the selected ESP32 camera is wired to Describe; Admin Image Lab also exposes flash-capture action.
+- [x] Owner-confirmed physical hardware test: `:81/stream` live MJPEG stream and `/capture` still JPEG both work (2026-11-26; user report).
+- [ ] Validate LED brightness, flash-off and `/capture-flash` on physical hardware.
 - [x] Inspect the supplied firmware's existing GET CORS headers; no legacy PNA preflight code is needed for the current simple GET requests.
 - [x] Prepare a separate `app_httpd.cpp` patch registering `/capture-flash` and restoring the previous LED brightness after capture. This patch is not part of the web repository and has not been flashed.
-- [ ] Compile and flash the firmware patch; verify `/capture-flash`, `/capture`, LED brightness and `:81/stream` on the physical board.
+- [ ] Compile and flash the firmware patch; verify `/capture-flash` and LED brightness on the physical board. `/capture` and `:81/stream` are owner-reported working; record firmware SHA and exact test setup on the next hardware pass.
 - [ ] Validate Chrome Local Network Access permission and same-Wi-Fi access on the target Android Chrome.
 - [x] Phone torch capability detection and guarded UI control (shown only when the active phone-camera track advertises torch support).
 
@@ -251,7 +252,7 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - Added Admin ESP32 connection test, LED brightness and stream start/stop controls.
 - Added camera-manager regression tests and syntax-check coverage.
 - Not yet verified on a physical phone or ESP32; browser local-network permission/CORS behaviour remains a manual test.
-n### Port onto current main on 2026-11-26
+### Port onto current main on 2026-11-26
 
 - Main advanced by 60 commits after the original camera branch was created. The original PR #30 is now 60 commits behind and is not mergeable; it remains a draft reference and must not be merged.
 - Created `feat/camera-platform-current-main` from current main commit `47618f8445a10ffc28e65f37fbabe21149f5aa2f` and selectively ported camera changes without replacing current RFID/medicine integration.
@@ -276,7 +277,7 @@ n### Port onto current main on 2026-11-26
 3. Read the current versions of every file to be changed; do not rely on this document's code descriptions as source.
 4. Check PR #10 patches for any useful independent work before touching overlapping modules. Port selectively; never merge its stale base.
 5. Continue Phase 2 hardware validation, then design Phase 3 scene memory on an isolated Supabase development environment.
-6. Keep web changes on `feat/camera-platform-current-main` / PR #31 until the camera phase is accepted.
+6. The current Action-page ESP32 live-preview continuation is isolated in PR #49 (`feat/complete-camera-memory-emergency`). Do not merge it until its exact-head checks and a browser test pass. Keep scene memory, WebRTC and recording work in separate reviewed milestones.
 7. Run tests/checks and inspect GitHub Actions on the exact pushed SHA.
 8. Update this document's checklist, status and decisions before ending the session.
 
@@ -299,10 +300,22 @@ n### Port onto current main on 2026-11-26
 - Physical torch behaviour still requires a real Android Chrome test; not every Galaxy A55/browser build exposes the torch constraint.
 
 
-### Current-main camera validation update — 2026-11-26
+### Action-page ESP32 preview — 2026-11-26
 
-- PR #31 includes guarded phone torch detection and UI control. The control is shown only when the active camera track exposes torch support.
+- Added an ESP32 live-preview panel to `/action/` when ESP32-CAM is selected. Users can explicitly start/stop the MJPEG stream, see connection feedback, and invoke Describe to capture a separate JPEG still.
+- Stopping the preview closes the image stream connection and does not disable `/capture`; the preview is also stopped when the page is hidden or unloaded.
+- The stream preview uses the browser's image element and does not claim canvas access or video recording support.
+
+### Physical camera report — 2026-11-26
+
+- Owner confirmed the ESP32-CAM live MJPEG stream and still-image capture are working. This validates the stream and normal capture path only.
+- Still pending: flash-assisted capture, LED brightness control, browser CORS/canvas access, Chrome Local Network Access permission on Android, and full Action-page Describe flow using the configured ESP32.
+- The actual board IP and firmware binary/source hash were not included in the report; keep the app's per-device address configurable and do not infer the IP from this test.
+
+### Historical current-main camera validation — 2026-11-26 (PR #31, later superseded)
+
+- PR #31 introduced guarded phone torch detection and UI control; PR #43 later integrated the current camera platform into `main`.
 - Fixed malformed Admin camera markup and stale ESP32 address guidance.
-- Added two regression tests; exact PR head passed 95/95 tests, JavaScript syntax checks and Worker/Durable Object validation in GitHub Actions run 45733994019.
+- PR #43's exact integration head passed GitHub Actions run 45743354907. The current local checkout later reported 105 passing tests and `npm run check` success on main commit `8cfcfa5`.
 - No production deployment occurred; the deployment job was skipped.
-- The separate ESP32 firmware patch is available as a handoff ZIP, but remains uncompiled and unflashed.
+- Firmware source is present in the repository, but the physical board's flashed revision has not yet been matched to the committed source.

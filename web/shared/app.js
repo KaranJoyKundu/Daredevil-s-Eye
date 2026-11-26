@@ -1,5 +1,5 @@
 import { captureImage, blobToDataUrl, compressImageToJpeg, primeShutterAudio } from './camera.js?v=20261117-release5';
-import { startPhoneCamera, capturePhoneFrame, stopPhoneCamera, captureEsp32Photo, getPhoneTorchState, setPhoneTorch } from './camera-manager.js?v=20261126-camera3';
+import { startPhoneCamera, capturePhoneFrame, stopPhoneCamera, captureEsp32Photo, getPhoneTorchState, setPhoneTorch, getEsp32Endpoints, stopEsp32Stream } from './camera-manager.js?v=20261126-camera4';
 import { requestAI } from './api.js?v=20261117-release5';
 import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release5';
 import { getSettings, saveSettings } from './settings.js?v=20261117-release5';
@@ -413,6 +413,9 @@ $('#question-form')?.addEventListener('submit',event=>{
 });
 const cameraSetupPanel=$('#camera-setup-panel');
 const phoneCameraPanel=$('#phone-camera-panel');
+const esp32CameraPanel=$('#esp32-camera-panel');
+const esp32StreamPreview=$('#action-esp32-stream-preview');
+const esp32CameraStatus=$('#esp32-camera-status');
 const phoneCameraPreview=$('#phone-camera-preview');
 const cameraSetupStatus=$('#camera-setup-status');
 const phoneCameraStatus=$('#phone-camera-status');
@@ -428,6 +431,7 @@ function renderCameraPanels(){
  const settings=getSettings();
  if(cameraSetupPanel)cameraSetupPanel.hidden=!hasCurrentConsent()||settings.cameraSetupComplete;
  if(phoneCameraPanel)phoneCameraPanel.hidden=!hasCurrentConsent()||!settings.cameraSetupComplete||settings.cameraSource!=='phone';
+ if(esp32CameraPanel)esp32CameraPanel.hidden=!hasCurrentConsent()||!settings.cameraSetupComplete||settings.cameraSource!=='esp32';
 }
 function showCameraSetup(){
  if(!hasCurrentConsent())return;
@@ -440,6 +444,8 @@ function showCameraSetup(){
 async function chooseCameraSource(source){
  if(!['phone','esp32','upload'].includes(source))return;
  stopPhoneCamera();
+ stopEsp32Stream(esp32StreamPreview);
+ if(esp32StreamPreview){esp32StreamPreview.hidden=true;}
  saveSettings({cameraSource:source,cameraSetupComplete:true});
  renderCameraPanels();
  if(source==='phone'){
@@ -448,8 +454,9 @@ async function chooseCameraSource(source){
   if(phoneCameraPanel)phoneCameraPanel.hidden=false;
   if(phoneCameraPreview)phoneCameraPreview.srcObject=null;
  }else if(cameraSetupStatus){
-  cameraSetupStatus.textContent=source==='esp32'?'ESP32-CAM selected. Confirm its address in Admin, then test the connection.':'Upload-only selected. You can choose a photo whenever you describe a scene.';
+  cameraSetupStatus.textContent=source==='esp32'?'ESP32-CAM selected. Start its live preview below; Describe captures a still image from the same camera. Confirm the address in Admin if needed.':'Upload-only selected. You can choose a photo whenever you describe a scene.';
  }
+ if(source==='esp32'&&esp32CameraStatus)esp32CameraStatus.textContent='ESP32-CAM selected. Start live preview when ready. Describe will capture a separate JPEG still.';
 }
 document.querySelectorAll('[data-camera-source]').forEach(button=>button.addEventListener('click',()=>chooseCameraSource(button.dataset.cameraSource)));
 $('#enable-phone-camera')?.addEventListener('click',async()=>{
@@ -462,14 +469,32 @@ $('#enable-phone-camera')?.addEventListener('click',async()=>{
  }catch(error){if(cameraSetupStatus)cameraSetupStatus.textContent=error.message;if(phoneCameraStatus)phoneCameraStatus.textContent=error.message;show(error.message);}
  finally{button.disabled=false;}
 });
-$('#change-camera-source')?.addEventListener('click',()=>{
- stopPhoneCamera();saveSettings({cameraSetupComplete:false});showCameraSetup();
+const resetCameraSource=()=>{
+ stopPhoneCamera();stopEsp32Stream(esp32StreamPreview);if(esp32StreamPreview)esp32StreamPreview.hidden=true;
+ saveSettings({cameraSetupComplete:false});showCameraSetup();
+};
+$('#change-camera-source')?.addEventListener('click',resetCameraSource);
+$('#esp32-change-camera-source')?.addEventListener('click',resetCameraSource);
+$('#esp32-action-stream-start')?.addEventListener('click',()=>{
+ try{
+  const url=getEsp32Endpoints().stream;
+  if(esp32StreamPreview){esp32StreamPreview.hidden=false;esp32StreamPreview.src=url;}
+  if(esp32CameraStatus)esp32CameraStatus.textContent='Connecting to ESP32 live stream. If Chrome asks, allow local-network access.';
+ }catch(error){if(esp32CameraStatus)esp32CameraStatus.textContent=error.message;}
 });
+$('#esp32-action-stream-stop')?.addEventListener('click',()=>{
+ stopEsp32Stream(esp32StreamPreview);if(esp32StreamPreview)esp32StreamPreview.hidden=true;
+ if(esp32CameraStatus)esp32CameraStatus.textContent='Live stream stopped. Describe still captures remain available.';
+});
+if(esp32StreamPreview){
+ esp32StreamPreview.addEventListener('load',()=>{if(esp32CameraStatus)esp32CameraStatus.textContent='ESP32 live preview is active. Press Describe to capture a still image for AI analysis.';});
+ esp32StreamPreview.addEventListener('error',()=>{if(!esp32StreamPreview.getAttribute('src'))return;if(esp32CameraStatus)esp32CameraStatus.textContent='Live preview could not connect. Check the ESP32 IP, Wi-Fi and Chrome Local Network Access. Still-photo capture can be tested separately.';});
+}
 renderCameraPanels();
 document.addEventListener('visibilitychange',()=>{
- if(document.hidden){stopPhoneCamera();}
+ if(document.hidden){stopPhoneCamera();stopEsp32Stream(esp32StreamPreview);if(esp32StreamPreview)esp32StreamPreview.hidden=true;}
 });
-window.addEventListener('pagehide',()=>{stopPhoneCamera();syncPhoneTorchControl();});
+window.addEventListener('pagehide',()=>{stopPhoneCamera();stopEsp32Stream(esp32StreamPreview);syncPhoneTorchControl();});
 
 
 const termsCheck=$('#consent-terms-check'),acceptButton=$('#consent-accept');
