@@ -19,6 +19,7 @@ async function ensureSessionFresh(){
 }
 async function api(path,{method='GET',body}={}) {
  if(!['/api/account/session','/api/account/login','/api/account/signup'].includes(path))await ensureSessionFresh();
+ if(path==='/api/recordings'||path.startsWith('/api/recordings/'))if(!currentUser)await ensureGuestSession();
  if(path==='/api/account/session')sessionCheckedAt=Date.now();
  const response=await fetch(path,{
   method,credentials:'same-origin',cache:'no-store',
@@ -80,6 +81,7 @@ function createRecordingCard(item){
  return card;
 }
 async function loadRecordings(){
+ if(!currentUser)await ensureGuestSession();
  $('#recordings-status').textContent='Loading private emergency recordings…';
  $('#recordings-list').replaceChildren();
  try{
