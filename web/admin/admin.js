@@ -1,6 +1,7 @@
 import {getSettings,saveSettings} from '/shared/settings.js?v=20261117-release5';
 import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261117-release5';
 import {captureImage} from '/shared/camera.js?v=20261117-release1';
+import { getEsp32Endpoints, setEsp32LedBrightness, testEsp32Connection, stopEsp32Stream } from '/shared/camera-manager.js?v=20261126-camera1';
 import {speak,speakResponse,getAvailableVoices,isBengaliVoice,refreshAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261117-release5';
 
 const $=s=>document.querySelector(s);
@@ -44,6 +45,28 @@ function formSettings(){
   customPrompt:$('#prompt').value.trim()
  };
 }
+
+const esp32Status=$('#esp32-status'),esp32Preview=$('#esp32-stream-preview');
+$('#esp32-brightness')?.addEventListener('input',event=>{$('#esp32-brightness-value').textContent=event.target.value;});
+$('#esp32-test')?.addEventListener('click',async()=>{
+ const button=$('#esp32-test');button.disabled=true;if(esp32Status)esp32Status.textContent='Testing ESP32 /capture…';
+ try{const result=await testEsp32Connection();if(esp32Status)esp32Status.textContent='Connected to '+result.address+'. /capture returned an image'+(result.bytes?' ('+result.bytes+' bytes).':'.');}
+ catch(error){if(esp32Status)esp32Status.textContent=error.message;}
+ finally{button.disabled=false;}
+});
+$('#esp32-set-brightness')?.addEventListener('click',async()=>{
+ const button=$('#esp32-set-brightness');button.disabled=true;
+ try{const value=await setEsp32LedBrightness($('#esp32-brightness').value);if(esp32Status)esp32Status.textContent='ESP32 LED brightness set to '+value+'.';}
+ catch(error){if(esp32Status)esp32Status.textContent=error.message;}
+ finally{button.disabled=false;}
+});
+$('#esp32-stream-start')?.addEventListener('click',()=>{
+ try{const url=getEsp32Endpoints().stream;esp32Preview.src=url;esp32Preview.hidden=false;esp32Preview.style.display='block';if(esp32Status)esp32Status.textContent='Connecting to '+url+'.';}
+ catch(error){if(esp32Status)esp32Status.textContent=error.message;}
+});
+$('#esp32-stream-stop')?.addEventListener('click',()=>{stopEsp32Stream(esp32Preview);esp32Preview.hidden=true;esp32Preview.style.display='none';if(esp32Status)esp32Status.textContent='Stream connection closed. The ESP32 firmware has no separate stream-off endpoint.';});
+window.addEventListener('pagehide',()=>stopEsp32Stream(esp32Preview));
+
 $('#personal-api-key').value=getSessionGeminiApiKey();
 $('#personal-key-status').textContent=getSessionGeminiApiKey()?'A personal key is active for this tab.':'No personal key is set in this tab.';
 $('#save-personal-key').addEventListener('click',()=>{

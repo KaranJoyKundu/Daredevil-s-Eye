@@ -8,7 +8,11 @@ function createDeviceId() {
 }
 
 const DEFAULTS = Object.freeze({
-  cameraBaseUrl: 'http://192.168.0.104',
+  cameraBaseUrl: 'http://192.168.0.100',
+  cameraSource: 'upload',
+  cameraSetupComplete: false,
+  phoneCameraFacingMode: 'environment',
+  sceneMemoryEnabled: false,
   captureCount: 3,
   requirePhotoConfirmation: true,
   savePhotoHistory: true,
@@ -48,7 +52,7 @@ export function getSettings() {
     const merged = { ...DEFAULTS, ...saved };
     if (merged.aiModel === 'gemini-3.6-flash') merged.aiModel = 'gemini-3.8-flash';
     if (!merged.deviceId) merged.deviceId = createDeviceId();
-    if (!merged.cameraBaseUrl || merged.cameraBaseUrl === 'http://192.168.4.1' || merged.cameraBaseUrl === '192.168.0.104') merged.cameraBaseUrl = DEFAULTS.cameraBaseUrl;
+    if (!merged.cameraBaseUrl || ['http://192.168.4.1', '192.168.0.104', 'http://192.168.0.104'].includes(merged.cameraBaseUrl)) merged.cameraBaseUrl = DEFAULTS.cameraBaseUrl;
     merged.cameraBaseUrl = normalizeCameraAddress(merged.cameraBaseUrl);
     localStorage.setItem(KEY, JSON.stringify(merged));
     return merged;
