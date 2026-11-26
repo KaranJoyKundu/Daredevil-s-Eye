@@ -121,8 +121,9 @@ function safeEqual(a, b) {
 }
 
 export class SOSRoom {
-  constructor(state) {
+  constructor(state, env = {}) {
     this.state = state;
+    this.env = env || {};
     this.serial = Promise.resolve();
   }
 
@@ -135,6 +136,8 @@ export class SOSRoom {
   async alarm() {
     const event = await this.state.storage.get('activeEvent');
     if (event?.active && event.expiresAt <= Date.now()) await this.state.storage.delete('activeEvent');
+    const video = await this.state.storage.get('videoSession');
+    if (video?.active && video.expiresAt <= Date.now()) await this.state.storage.put('videoSession', { ...video, active: false, stoppedAt: Date.now(), stopReason: 'expired' });
   }
 
   async getVapidKeys() {
