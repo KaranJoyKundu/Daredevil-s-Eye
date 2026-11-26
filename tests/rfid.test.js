@@ -16,78 +16,109 @@ function fixture(){
  }));
  return {directory,values,post};
 }
+const USER='d9b3f6e0-1d2a-4f2c-9a8a-7c5b6d4e3f21';
+const medicine=(overrides={})=>({uid:'A1618C04',name:'Paracetamol',strength:'500 mg',expiryDate:'2027-12-31',instructions:'Your registered prescription says one tablet after food.',...overrides});
 
 test('RFID pairing is single-use, account-bound, and returns a device token only once',async()=>{
- const {post}=fixture(),userId='d9b3f6e0-1d2a-4f2c-9a8a-7c5b6d4e3f21';
- const started=await (await post('pair/start',{userId})).json();
- assert.equal(started.ok,true);assert.match(started.code,/^\d{6}$/);
+ const {post}=fixture();
+ const started=await (await post('pair/start',{userId:USER})).json();
+ assert.equal(started.ok,true);assert.match(started.code,/^\\d{6}$/);
  const claimed=await (await post('pair/claim',{code:started.code})).json();
  assert.equal(claimed.ok,true);assert.match(claimed.deviceToken,/^[a-f0-9]{64}$/);
  assert.match(claimed.deviceId,/^[a-f0-9]{32}$/);
  assert.equal((await post('pair/claim',{code:started.code})).status,401);
 });
 
-test('direct device provisioning creates an account-bound credential without a six-digit code',async()=>{
- const {post}=fixture(),userId='d9b3f6e0-1d2a-4f2c-9a8a-7c5b6d4e3f21';
- const provisioned=await (await post('devices/provision',{userId})).json();
+test('medicine cards are validated and isolated to the owning account',async()=>{
+ const {post}=fixture();
+ assert.equal((await post('medicines/save',{userId:USER,medicine:medicine()})).status,200);
+ const other='d9b3f6e0-1d2a-4f2c-9a8a-7c5b6d4e3f22';
+ assert.equal((await (await post('medicines/list',{userId:other})).json()).medicines.length,0);
+ const listed=await (await post('medicines/list',{userId:USER})).json();
+ assert.equal(listed.medicines.length,1);assert.equal(listed.medicines[0].uid,'A1618C04');
+ assert.equal((await post('medicines/save',{userId:USER,medicine:medicine({uid:'not-a-uid'})})).status,400);
+});
+
+test('direct device provisioning sends UID-only scans into personalized account announcements',async()=>{
+ const {post}=fixture();
+ const provisioned=await (await post('devices/provision',{userId:USER})).json();
  assert.equal(provisioned.ok,true);assert.match(provisioned.deviceToken,/^[a-f0-9]{64}$/);
- assert.equal((await post('event/submit',{uid:'A1618C04',medicine:'Napa One'},provisioned.deviceToken)).status,200);
- const pending=await (await post('event/poll',{userId})).json();
- assert.equal(pending.events.length,1);assert.equal(pending.events[0].medicine,'Napa One');
+ await post('medicines/save',{userId:USER,medicine:medicine()});
+ const accepted=await (await post('event/submit',{uid:'A1 61 8C 04',eventId:'abcdef0123456789abcdef0123456789'},provisioned.deviceToken)).json();
+ assert.equal(accepted.accepted,true);
+ const pending=await (await post('event/poll',{userId:USER})).json();
+ assert.equal(pending.events.length,1);
+ assert.equal(pending.events[0].medicine,'Paracetamol');
+ assert.match(pending.events[0].speechText,/500 mg/);
+ assert.match(pending.events[0].speechText,/one tablet after food/);
+});
+
+test('expired medicine speaks the warning instead of normal prescription instructions',async()=>{
+ const {post}=fixture();
+ const device=await (await post('devices/provision',{userId:USER})).json();
+ await post('medicines/save',{userId:USER,medicine:medicine({expiryDate:'2000-01-01',expiredText:'Warning! This medicine has expired.'})});
+ await post('event/submit',{uid:'A1618C04'},device.deviceToken);
+ const events=(await (await post('event/poll',{userId:USER})).json()).events;
+ assert.equal(events[0].expired,true);
+ assert.equal(events[0].speechText,'Warning! This medicine has expired.');
+ assert.doesNotMatch(events[0].speechText,/one tablet after food/);
+});
+
+test('custom spoken text overrides the generated medicine announcement',async()=>{
+ const {post}=fixture();
+ const device=await (await post('devices/provision',{userId:USER})).json();
+ await post('medicines/save',{userId:USER,medicine:medicine({announcementText:'Take this only at bedtime.'})});
+ await post('event/submit',{uid:'A1618C04'},device.deviceToken);
+ const events=(await (await post('event/poll',{userId:USER})).json()).events;
+ assert.equal(events[0].speechText,'Take this only at bedtime.');
 });
 
 test('RFID events are authenticated, account-scoped, deduplicated and acknowledged',async()=>{
- const {post}=fixture(),userId='d9b3f6e0-1d2a-4f2c-9a8a-7c5b6d4e3f21';
- const pair=await (await post('pair/start',{userId})).json();
+ const {post}=fixture();
+ const pair=await (await post('pair/start',{userId:USER})).json();
  const device=await (await post('pair/claim',{code:pair.code})).json();
- assert.equal((await post('event/submit',{uid:'A1618C04',medicine:'Napa One',eventId:'0123456789abcdef0123456789abcdef'})).status,401);
- const sent=await (await post('event/submit',{uid:'A1618C04',medicine:'Napa One',eventId:'0123456789abcdef0123456789abcdef'},device.deviceToken)).json();
+ assert.equal((await post('event/submit',{uid:'A1618C04'})).status,401);
+ await post('medicines/save',{userId:USER,medicine:medicine()});
+ const id='0123456789abcdef0123456789abcdef';
+ const sent=await (await post('event/submit',{uid:'A1618C04',eventId:id},device.deviceToken)).json();
  assert.equal(sent.accepted,true);
- const duplicate=await (await post('event/submit',{uid:'A1618C04',medicine:'Napa One',eventId:'0123456789abcdef0123456789abcdef'},device.deviceToken)).json();
+ const duplicate=await (await post('event/submit',{uid:'A1618C04',eventId:id},device.deviceToken)).json();
  assert.equal(duplicate.duplicate,true);
- const forged=await post('event/submit',{uid:'A1618C04',medicine:'Fake Medicine'},device.deviceToken);
- assert.equal(forged.status,400);
- const pending=await (await post('event/poll',{userId})).json();
- assert.equal(pending.events.length,1);assert.equal(pending.events[0].medicine,'Napa One');
- assert.equal((await post('event/ack',{userId,eventId:sent.eventId})).status,200);
- const afterAck=await (await post('event/poll',{userId})).json();
- assert.equal(afterAck.events.length,0);
+ assert.equal((await post('event/submit',{uid:'1474D505'},device.deviceToken)).status,404);
+ const pending=await (await post('event/poll',{userId:USER})).json();
+ assert.equal(pending.events.length,1);assert.equal(pending.events[0].medicine,'Paracetamol');
+ assert.equal((await post('event/ack',{userId:USER,eventId:sent.eventId})).status,200);
+ assert.equal((await (await post('event/poll',{userId:USER})).json()).events.length,0);
 });
 
 test('revoking an RFID reader invalidates its device token',async()=>{
- const {post}=fixture(),userId='d9b3f6e0-1d2a-4f2c-9a8a-7c5b6d4e3f21';
- const pair=await (await post('pair/start',{userId})).json();
- const device=await (await post('pair/claim',{code:pair.code})).json();
- assert.equal((await post('devices/revoke',{userId,deviceId:device.deviceId})).status,200);
- assert.equal((await post('event/submit',{uid:'1474D505',medicine:'Monus 10'},device.deviceToken)).status,401);
+ const {post}=fixture();
+ const device=await (await post('devices/provision',{userId:USER})).json();
+ assert.equal((await post('devices/revoke',{userId:USER,deviceId:device.deviceId})).status,200);
+ assert.equal((await post('event/submit',{uid:'A1618C04'},device.deviceToken)).status,401);
 });
 
-test('medicine page is a separate nav destination and global listener is loaded from shared navigation',()=>{
+test('medicine page exposes personal card management and shared listener speaks event text',()=>{
  const nav=readFileSync(new URL('../web/shared/site-nav.js',import.meta.url),'utf8');
  const page=readFileSync(new URL('../web/medicine/index.html',import.meta.url),'utf8');
  const pageScript=readFileSync(new URL('../web/medicine/rfid.js',import.meta.url),'utf8');
- assert.match(nav,/\['Medicine RFID','\/medicine\/']/);
+ const listener=readFileSync(new URL('../web/shared/rfid-listener.js',import.meta.url),'utf8');
  assert.match(nav,/startRFIDListener/);
- const app=readFileSync(new URL('../web/shared/app.js',import.meta.url),'utf8');
- assert.match(app,/startRFIDListener/);
- assert.match(page,/scan-napa/);
- assert.match(page,/listener-enabled/);
- assert.match(pageScript,/scan-napa/);
- assert.doesNotMatch(page,/generate-code|pair-code/);
- assert.match(page,/Authorize ESP32/);
+ assert.match(page,/medicine-form/);assert.match(page,/medicine-uid/);assert.match(page,/medicine-expiry/);
+ assert.match(pageScript,/api\\/rfid\\/medicines/);assert.match(pageScript,/Custom spoken message/);
+ assert.match(listener,/event\\.speechText\\|\\|event\\.medicine/);
  assert.ok(pageScript.includes('/api/rfid/devices/provision'));
 });
 
-test('ESP32 firmware refuses unverified TLS and contains both registered UID mappings',()=>{
+test('ESP32 firmware sends arbitrary card UIDs and never contains a fixed medicine map',()=>{
  const firmware=readFileSync(new URL('../hardware/esp32-rfid/esp32-rfid.ino',import.meta.url),'utf8');
- assert.match(firmware,/A1618C04.*Napa One/);
- assert.match(firmware,/1474D505.*Monus 10/);
+ assert.match(firmware,/sendMedicine\\(const String &uid\\)/);
+ assert.match(firmware,/\\\"uid\\\":\\\"/);
  assert.match(firmware,/useBuiltinCACertBundle/);
  assert.match(firmware,/MAX_PENDING_EVENTS = 5/);
  assert.match(firmware,/savePendingQueue/);
- assert.match(firmware,/DEVICE_AUTH_FAILED/);
  assert.match(firmware,/64-character device token/);
- assert.doesNotMatch(firmware,/six digits here/);
- assert.match(firmware,/preferences.remove\("token"\)/);
- assert.doesNotMatch(firmware,/setInsecure\s*\(/);
+ assert.doesNotMatch(firmware,/MEDICINES\\[\\]/);
+ assert.doesNotMatch(firmware,/UNKNOWN_CARD/);
+ assert.doesNotMatch(firmware,/setInsecure\\s*\\(/);
 });
