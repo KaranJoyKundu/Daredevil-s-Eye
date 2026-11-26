@@ -530,15 +530,14 @@ Before the first implementation PR:
 
 ---
 
-### Scene memory implementation update — 2026-11-26
+### Implementation handoff — 2026-11-26
 
-- Added opt-in five-photo memory helpers with strict JSON validation and text/fact sanitization.
-- Added same-origin Worker routes to list, clear and ask questions about saved observations. Account and guest data are isolated using the existing authenticated user ID or HttpOnly guest-session hash.
-- Photo Describe/Ask can request structured Gemini JSON when memory is enabled; the spoken answer is separated from the structured scene facts.
-- Added Admin enable/clear controls and an Action-page memory-only question form. Memory is disabled by default and does not store image bytes.
-- Added an additive Supabase migration for scene_memory_entries and emergency_recordings; it is committed on the feature branch but has not yet been applied to the live database.
-- Automated helper tests are added. Exact branch CI and a live Supabase migration test remain required before merging.
-- Emergency WebRTC signalling and R2 recording APIs/UI are still pending; do not mark Milestones 4 or 5 complete.
+- The camera platform foundation and Action-page ESP32 MJPEG preview are merged into main. Owner-reported hardware checks confirm /stream and /capture work on the physical ESP32-CAM; flash LED, Android Local Network Access and the full Action-page AI capture flow still need a hands-on test.
+- Feature branch feat/scene-memory-sos-video-recordings (PR #52) now contains the five-photo visual-memory APIs/UI, the paired SOS WebRTC signalling protocol and sender/receiver clients, private chunked R2 recording APIs/client, account playback/download/delete UI, the additive Supabase migration, consent/privacy disclosures and deployment guide.
+- Scene memory is off by default and stores only sanitized text observations. Account and guest scopes are separated. A database trigger enforces a five-entry maximum.
+- Emergency video and recording are separately opt-in and off by default. WebRTC sessions are paired-token protected, expire after five minutes and support optional TURN credentials. Recording is limited to five minutes / 50 MB and expires after 30 days.
+- The Supabase migration has not yet been applied. The R2 bucket and TURN secrets have not yet been provisioned. No production Worker deployment has been performed for PR #52.
+- PR #52 exact-head CI, Supabase migration validation, R2 deployment validation and physical Android/ESP32 tests remain required. Do not check the milestones complete until those pass.
 
 ## Progress tracker
 
