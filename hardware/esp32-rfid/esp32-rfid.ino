@@ -31,7 +31,10 @@ Preferences preferences;
 String deviceToken;
 String deviceId;
 unsigned long lastScanAt = 0;
+unsigned long lastQueueRetryAt = 0;
 const unsigned long SCAN_COOLDOWN_MS = 1800;
+const unsigned long QUEUE_RETRY_MS = 5000;
+const uint8_t MAX_PENDING_EVENTS = 5;
 
 struct MedicineCard { const char *uid; const char *name; };
 const MedicineCard MEDICINES[] = {
@@ -160,12 +163,66 @@ bool pairDevice() {
   return true;
 }
 
-bool sendMedicine(const String &uid, const String &medicine) {
-  const String body = "{\"uid\":\"" + uid + "\",\"medicine\":\"" + medicine + "\",\"eventId\":\"" + randomEventId() + "\"}";
+String loadPendingQueue() {
+  preferences.begin("de-rfid", true);
+  String queue = preferences.getString("pending", "");
+  preferences.end();
+  return queue;
+}
+
+void savePendingQueue(const String &queue) {
+  preferences.begin("de-rfid", false);
+  preferences.putString("pending", queue);
+  preferences.end();
+}
+
+bool enqueuePendingEvent(const String &body) {
+  String queue = loadPendingQueue();
+  uint8_t count = queue.length() ? 1 : 0;
+  for (unsigned int i = 0; i < queue.length(); i++) if (queue[i] == '\n') count++;
+  if (count >= MAX_PENDING_EVENTS || queue.length() + body.length() + 1 > 3000) {
+    stageError("OFFLINE_QUEUE_FULL", "Five unsent medicine events are already stored. Keep the device online before scanning more cards.");
+    return false;
+  }
+  if (queue.length()) queue += '\n';
+  queue += body;
+  savePendingQueue(queue);
+  Serial.printf("[QUEUED] EVENT SAVED OFFLINE · %u/%u\n", count + 1, MAX_PENDING_EVENTS);
+  return true;
+}
+
+bool transmitPayload(const String &body) {
   String response;
   const int code = request("/api/rfid/events", body, response, deviceToken);
   if (code != 200 || response.indexOf("\"accepted\":true") < 0) {
     stageError(code == 401 ? "DEVICE_AUTH_FAILED" : "EVENT_TRANSMISSION_FAILED", "HTTP " + String(code) + " · " + response.substring(0, 160));
+    return false;
+  }
+  return true;
+}
+
+bool flushPendingEvent() {
+  String queue = loadPendingQueue();
+  if (!queue.length()) return true;
+  int separator = queue.indexOf('\n');
+  String first = separator < 0 ? queue : queue.substring(0, separator);
+  if (!transmitPayload(first)) return false;
+  String remaining = separator < 0 ? "" : queue.substring(separator + 1);
+  savePendingQueue(remaining);
+  Serial.println("[PASS] STORED OFFLINE EVENT DELIVERED");
+  return true;
+}
+
+bool sendMedicine(const String &uid, const String &medicine) {
+  const String body = "{\"uid\":\"" + uid + "\",\"medicine\":\"" + medicine + "\",\"eventId\":\"" + randomEventId() + "\"}";
+  if (!flushPendingEvent()) {
+    enqueuePendingEvent(body);
+    lastQueueRetryAt = millis();
+    return false;
+  }
+  if (!transmitPayload(body)) {
+    enqueuePendingEvent(body);
+    lastQueueRetryAt = millis();
     return false;
   }
   Serial.printf("[PASS] EVENT ACCEPTED · %s · UID %s\n", medicine.c_str(), uid.c_str());
@@ -203,6 +260,10 @@ void loop() {
     Serial.println("[WARN] WIFI DISCONNECTED · reconnecting");
     if (!connectWiFi()) { delay(3000); return; }
     if (!checkServer()) { delay(3000); return; }
+  }
+  if (millis() - lastQueueRetryAt >= QUEUE_RETRY_MS) {
+    lastQueueRetryAt = millis();
+    flushPendingEvent();
   }
   if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) { delay(20); return; }
   if (millis() - lastScanAt < SCAN_COOLDOWN_MS) {
