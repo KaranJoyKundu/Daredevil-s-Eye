@@ -99,7 +99,7 @@ export class RFIDDirectory {
     const id=/^[a-f0-9-]{16,64}$/i.test(String(eventId||''))?String(eventId):randomHex(16);
     const events=(await this.storage.get('events')||[]).filter(item=>Date.now()-Date.parse(item.createdAt)<86400000);
     if(events.some(item=>item.id===id))return json({ok:true,accepted:true,duplicate:true,eventId:id});
-    const today=new Date().toISOString().slice(0,10),expired=Boolean(medicine.expiryDate&&medicine.expiryDate<today);
+    const today=new Date().toISOString().slice(0,10),expired=Boolean(medicine.expiryDate&&medicine.expiryDate<today.slice(0,7));
     const generated=[medicine.name,medicine.strength,medicine.expiryDate?'Expiry date: '+dateLabel(medicine.expiryDate):'',medicine.instructions].filter(Boolean).join('. ');
     const speechText=expired?(medicine.expiredText||'Warning! This medicine has expired.'):(medicine.announcementText||generated||medicine.name);
     const event={id,deviceId:device.deviceId,userId:device.userId,uid:normalized,medicine:medicine.name,speechText,expired,createdAt:new Date().toISOString()};
