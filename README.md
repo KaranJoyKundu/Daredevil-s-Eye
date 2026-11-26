@@ -30,7 +30,7 @@ Daredevil's Eye takes a photo from a phone or an ESP32-CAM, sends it to Google G
 | Bangla and English | An English / বাংলা switch changes the whole interface, every spoken message and the AI's answers. |
 | Voice output | Uses the phone's own voice. On computers with no Bengali voice installed (for example Windows), Bangla is spoken by a Gemini cloud voice instead. |
 | Assistant modes | In Admin, pick a preset: All-in-one, Single object, Medicine, Read text, Taka (banknotes) or Colour. You can also write your own instructions, up to 4,000 characters. The built-in safety rules are always added. |
-| Camera | Persistent phone-camera preview, upload fallback and ESP32-CAM live MJPEG preview on the Action page. Describe captures a separate ESP32 JPEG still. Admin controls the ESP32 address, stream, LED brightness and flash capture. Photos are shrunk to a JPEG under 4 MB on the device. |
+| Camera | Persistent phone-camera preview, upload fallback, ESP32-CAM live MJPEG preview, and opt-in five-photo text-only visual memory. Describe captures a separate ESP32 JPEG still. Admin controls the ESP32 address, stream, LED brightness and flash capture. Photos are shrunk to a JPEG under 4 MB on the device. |
 | Blind mode | Four large tiles (Describe, Ask AI, SOS, Repeat), spoken help, vibration patterns and a screen that stays on while working. |
 | SOS | Alerts a trusted person on a paired second phone through a web push notification. SOS needs two taps to confirm. Shake SOS and voice-phrase SOS are optional and off by default. |
 | History | Optional private photo-and-answer history: kept for signed-in users until they delete it; guest history is deleted after 30 days. |

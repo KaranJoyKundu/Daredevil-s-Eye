@@ -50,7 +50,7 @@ test('Action camera setup is wired to the camera manager and persists device cho
   assert.match(app, /data-camera-source/);
   assert.match(app, /saveSettings\(\{cameraSource:source,cameraSetupComplete:true\}\)/);
   assert.match(app, /startPhoneCamera\(phoneCameraPreview/);
-  assert.match(app, /window\.addEventListener\('pagehide',\(\)=>\{stopPhoneCamera\(\);stopEsp32Stream\(esp32StreamPreview\);syncPhoneTorchControl\(\);\}\)/);
+  assert.match(app, /window\.addEventListener\('pagehide',\(\)=>\{void stopEmergencySharing\(\);stopPhoneCamera\(\);stopEsp32Stream\(esp32StreamPreview\);syncPhoneTorchControl\(\);\}\)/);
   assert.match(app, /document\.addEventListener\('visibilitychange'/);
 });
 
@@ -66,7 +66,7 @@ test('phone torch is exposed only when the active camera track advertises suppor
   assert.match(manager, /getCapabilities\?\.\(\)/);
   assert.match(manager, /applyConstraints\(\{ advanced: \[\{ torch: Boolean\(enabled\) \}\] \}\)/);
   assert.match(action, /id="phone-camera-torch"/);
-  assert.match(app, /camera-manager\.js\?v=20261126-camera4/);
+  assert.match(app, /camera-manager\.js\?v=20261126-camera5/);
   assert.match(app, /syncPhoneTorchControl\(\)/);
 });
 

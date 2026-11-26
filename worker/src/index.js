@@ -1,4 +1,5 @@
 import { buildPrompt, DEFAULT_MODES, RESPONSE_STYLES, RESPONSE_LANGUAGES, SAFETY_CORE, SCENE_RULES } from './prompts.js';
+import { buildSceneMemoryPrompt, buildMemoryQuestionPrompt, normalizeSceneMemoryOutput } from './scene-memory.js';
 export { SOSRoom } from './sos-room.js';
 export { SOSDirectory } from './sos-directory.js';
 export { RFIDDirectory } from './rfid-directory.js';
@@ -271,6 +272,223 @@ async function completePhotoHistory(env,draft,result,error) {
   }catch{return {...draft,saved:true,message:'Photo is saved, but its AI result status could not be updated.'};}
 }
 
+
+function sceneMemoryOwnerFilter(owner) {
+  return owner.user
+    ? 'user_id=eq.' + encodeURIComponent(owner.user.id) + '&guest_session_hash=is.null'
+    : 'guest_session_hash=eq.' + encodeURIComponent(owner.guestHash) + '&user_id=is.null';
+}
+async function resolveSceneMemoryOwner(request, env) {
+  const user = await getAuthenticatedUser(request, env);
+  const guestHash = user ? null : await guestSessionHash(request);
+  return user || guestHash ? { user, guestHash } : null;
+}
+async function listSceneMemory(env, owner) {
+  const response = await supabaseRest(env, 'scene_memory_entries?select=id,scene_summary,facts,question,answer,source_camera,created_at&' + sceneMemoryOwnerFilter(owner) + '&order=created_at.desc&limit=5');
+  if (!response.ok) throw new Error('Could not load visual memory.');
+  return await response.json();
+}
+async function saveSceneMemory(env, owner, observation) {
+  const record = {
+    user_id: owner.user?.id || null,
+    guest_session_hash: owner.guestHash,
+    scene_summary: observation.sceneSummary,
+    facts: observation.facts,
+    question: String(observation.question || '').slice(0, 1000),
+    answer: observation.answer,
+    source_camera: ['phone','esp32','upload'].includes(observation.sourceCamera) ? observation.sourceCamera : 'unknown'
+  };
+  const response = await supabaseRest(env, 'scene_memory_entries', { method: 'POST', body: record });
+  return response.ok;
+}
+async function handleSceneMemoryApi(request, env, url) {
+  if (['POST','PUT','PATCH','DELETE'].includes(request.method)) {
+    const origin = request.headers.get('origin');
+    if (!origin) return json({ error: 'A same-origin request is required for visual-memory changes.' }, 403);
+    try { if (new URL(origin).origin !== url.origin) return json({ error: 'Cross-origin visual-memory changes are not allowed.' }, 403); }
+    catch { return json({ error: 'Invalid request origin.' }, 403); }
+  }
+  if (!supabaseConfigured(env)) return json({ error: 'Visual memory is not configured on the Worker.' }, 503);
+  const owner = await resolveSceneMemoryOwner(request, env);
+  if (!owner) return json({ error: 'Create a private guest session or sign in before using visual memory.' }, 401);
+  if (url.pathname === '/api/memory' && request.method === 'GET') {
+    try { return json({ ok: true, enabled: true, limit: 5, observations: await listSceneMemory(env, owner) }); }
+    catch (error) { return json({ error: error.message || 'Could not load visual memory.' }, 502); }
+  }
+  if (url.pathname === '/api/memory' && request.method === 'DELETE') {
+    const response = await supabaseRest(env, 'scene_memory_entries?' + sceneMemoryOwnerFilter(owner), { method: 'DELETE' });
+    if (!response.ok) return json({ error: 'Could not clear visual memory.' }, 502);
+    return json({ ok: true, cleared: true });
+  }
+  if (url.pathname === '/api/memory/ask' && request.method === 'POST') {
+    let body; try { body = await request.json(); } catch { return json({ error: 'Invalid memory question.' }, 400); }
+    const question = String(body.question || '').trim();
+    if (body.memoryEnabled !== true) return json({ error: 'Enable visual memory in Admin before asking about earlier photos.' }, 403);
+    if (!question || question.length > 1000) return json({ error: 'Enter a question up to 1,000 characters.' }, 400);
+    if (body.responseLanguage && !Object.hasOwn(RESPONSE_LANGUAGES, body.responseLanguage)) return json({ error: 'Unsupported response language.' }, 400);
+    const apiKey = await providerKey(request, env);
+    if (getMode(env) !== 'gemini') return json({ error: 'Visual-memory questions require live Gemini mode.' }, 503);
+    try {
+      const observations = await listSceneMemory(env, owner);
+      if (!observations.length) return json({ error: 'There are no saved photo observations yet. Use Describe with visual memory enabled first.' }, 404);
+      const prompt = buildMemoryQuestionPrompt(question, body.responseLanguage || 'bn-BD', observations);
+      const result = await askGemini({ image: null, prompt, model: body.model || env.GEMINI_MODEL, waitSeconds: body.waitSeconds || 120 }, apiKey);
+      if (owner.user) await storeAccountUsage(env, owner.user, request, { model: result.model, requestType: 'memory_ask', usage: result.usage, imageSizeBytes: null });
+      return json({ ok: true, answer: result.answer, model: result.model, memoryCount: observations.length, memoryOnly: true });
+    } catch (error) { return json({ error: error.message || 'Could not answer from visual memory.' }, 502); }
+  }
+  return json({ error: 'Visual-memory route not found.' }, 404);
+}
+
+
+function recordingOwnerFilter(owner) {
+  return owner.user
+    ? 'user_id=eq.' + encodeURIComponent(owner.user.id) + '&guest_session_hash=is.null'
+    : 'guest_session_hash=eq.' + encodeURIComponent(owner.guestHash) + '&user_id=is.null';
+}
+async function getOwnedRecording(env, owner, id) {
+  const query = 'emergency_recordings?select=id,object_prefix,status,total_bytes,chunk_count,mime_type,duration_seconds,created_at,expires_at,camera_source&' + recordingOwnerFilter(owner) + '&id=eq.' + encodeURIComponent(id) + '&limit=1';
+  const response = await supabaseRest(env, query);
+  if (!response.ok) throw new Error('Could not load the emergency recording.');
+  const rows = await response.json().catch(() => []);
+  return rows[0] || null;
+}
+async function deleteRecordingObjects(bucket, prefix) {
+  let cursor;
+  do {
+    const page = await bucket.list({ prefix, ...(cursor ? { cursor } : {}) });
+    const keys = (page.objects || []).map(item => item.key);
+    if (keys.length) await bucket.delete(keys);
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+}
+async function readRequestBodyUpTo(request, maximumBytes) {
+  if (!request.body) return new ArrayBuffer(0);
+  const reader = request.body.getReader();
+  const chunks = [];
+  let size = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > maximumBytes) {
+      try { await reader.cancel(); } catch {}
+      throw new Error('The uploaded recording chunk exceeds the size limit.');
+    }
+    chunks.push(value);
+  }
+  const output = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) { output.set(chunk, offset); offset += chunk.byteLength; }
+  return output.buffer;
+}
+async function handleRecordingApi(request, env, url) {
+  if (['POST','DELETE'].includes(request.method)) {
+    const origin = request.headers.get('origin');
+    if (!origin) return json({ error: 'A same-origin request is required for emergency recording changes.' }, 403);
+    try { if (new URL(origin).origin !== url.origin) return json({ error: 'Cross-origin emergency recording changes are not allowed.' }, 403); }
+    catch { return json({ error: 'Invalid request origin.' }, 403); }
+  }
+  if (!supabaseConfigured(env) || !env.INCIDENT_RECORDINGS) {
+    return json({ error: 'Private emergency recording storage is not configured. The live SOS alert and video share can still work.' }, 503);
+  }
+  const owner = await resolveSceneMemoryOwner(request, env);
+  if (!owner) return json({ error: 'Sign in or create a private guest session before recording.' }, 401);
+  if (url.pathname === '/api/recordings' && request.method === 'GET') {
+    const query = 'emergency_recordings?select=id,camera_source,mime_type,status,duration_seconds,total_bytes,chunk_count,created_at,completed_at,expires_at&' + recordingOwnerFilter(owner) + '&order=created_at.desc&limit=50';
+    const response = await supabaseRest(env, query);
+    if (!response.ok) return json({ error: 'Could not load emergency recordings.' }, 502);
+    return json({ ok: true, recordings: await response.json() });
+  }
+  if (url.pathname === '/api/recordings' && request.method === 'POST') {
+    let body; try { body = await request.json(); } catch { return json({ error: 'Invalid emergency recording request.' }, 400); }
+    const deviceId = String(body.deviceId || '').toLowerCase();
+    const cameraSource = String(body.cameraSource || '');
+    const mimeType = String(body.mimeType || 'video/webm').toLowerCase();
+    if (!/^[a-f0-9]{32}$/.test(deviceId) || !['phone','esp32'].includes(cameraSource) || !/^video\/(?:webm|mp4)(?:;codecs=[a-z0-9,._-]+)?$/.test(mimeType)) {
+      return json({ error: 'Invalid recording device, camera source or video format.' }, 400);
+    }
+    const id = crypto.randomUUID();
+    const ownerKey = owner.user ? owner.user.id : 'guest-' + owner.guestHash;
+    const record = {
+      id, user_id: owner.user?.id || null, guest_session_hash: owner.guestHash,
+      device_id: deviceId, camera_source: cameraSource, mime_type: mimeType,
+      object_prefix: 'incidents/' + ownerKey + '/' + id + '/',
+      status: 'recording', duration_seconds: 0, total_bytes: 0, chunk_count: 0
+    };
+    const response = await supabaseRest(env, 'emergency_recordings', { method: 'POST', body: record });
+    if (!response.ok) return json({ error: 'Could not create private emergency recording metadata.' }, 502);
+    return json({ ok: true, recordingId: id, maxDurationSeconds: 300, retentionDays: 30 });
+  }
+  const match = /^\/api\/recordings\/([0-9a-f-]{36})(?:\/(?:chunks\/(\d+)|complete))?$/.exec(url.pathname);
+  if (!match) return json({ error: 'Emergency recording route not found.' }, 404);
+  const id = match[1], chunkIndex = match[2] === undefined ? null : Number(match[2]);
+  let row;
+  try { row = await getOwnedRecording(env, owner, id); }
+  catch (error) { return json({ error: error.message }, 502); }
+  if (!row) return json({ error: 'This recording does not exist in your private history.' }, 404);
+  if (request.method === 'POST' && chunkIndex !== null) {
+    if (row.status !== 'recording') return json({ error: 'This recording is no longer accepting video chunks.' }, 409);
+    if (!Number.isInteger(chunkIndex) || chunkIndex < 0 || chunkIndex >= 120) return json({ error: 'Invalid recording chunk number.' }, 400);
+    let bytes; try { bytes = await readRequestBodyUpTo(request, 1_000_000); }
+    catch (error) { return json({ error: error.message }, 413); }
+    if (!bytes.byteLength) return json({ error: 'Each recording chunk must be at least 1 byte.' }, 400);
+    const key = row.object_prefix + String(chunkIndex).padStart(4, '0') + '.part';
+    if (chunkIndex < row.chunk_count) {
+      const existing = await env.INCIDENT_RECORDINGS.head(key);
+      if (existing) return json({ ok: true, duplicate: true, chunkCount: row.chunk_count });
+      return json({ error: 'A previously uploaded recording chunk is missing. Stop this recording and retry.' }, 409);
+    }
+    if (chunkIndex !== row.chunk_count) return json({ error: 'Recording chunks must be uploaded in order.' }, 409);
+    if (Number(row.total_bytes || 0) + bytes.byteLength > 50 * 1024 * 1024) return json({ error: 'The five-minute recording reached its 50 MB storage limit.' }, 413);
+    await env.INCIDENT_RECORDINGS.put(key, bytes, { httpMetadata: { contentType: 'application/octet-stream' } });
+    const patch = { total_bytes: Number(row.total_bytes || 0) + bytes.byteLength, chunk_count: Number(row.chunk_count || 0) + 1 };
+    const updated = await supabaseRest(env, 'emergency_recordings?id=eq.' + encodeURIComponent(id) + '&' + recordingOwnerFilter(owner), { method: 'PATCH', body: patch });
+    if (!updated.ok) { await env.INCIDENT_RECORDINGS.delete(key); return json({ error: 'Video chunk was uploaded but its metadata could not be updated.' }, 502); }
+    return json({ ok: true, chunkCount: patch.chunk_count, totalBytes: patch.total_bytes });
+  }
+  if (request.method === 'POST' && url.pathname.endsWith('/complete')) {
+    let body; try { body = await request.json(); } catch { return json({ error: 'Invalid recording completion request.' }, 400); }
+    const duration = Math.max(1, Math.min(300, Math.floor(Number(body.durationSeconds) || 0)));
+    if (row.status !== 'recording' || !row.chunk_count) return json({ error: 'No uploaded video chunks are available to complete.' }, 409);
+    const patch = { status: 'complete', duration_seconds: duration, completed_at: new Date().toISOString() };
+    const updated = await supabaseRest(env, 'emergency_recordings?id=eq.' + encodeURIComponent(id) + '&' + recordingOwnerFilter(owner), { method: 'PATCH', body: patch });
+    if (!updated.ok) return json({ error: 'Could not mark the emergency recording complete.' }, 502);
+    return json({ ok: true, recordingId: id, durationSeconds: duration });
+  }
+  if (request.method === 'GET' && chunkIndex === null && !url.pathname.endsWith('/complete')) {
+    if (row.status !== 'complete' || !row.chunk_count) return json({ error: 'This recording is not ready for playback yet.' }, 409);
+    let index = 0;
+    const stream = new ReadableStream({
+      async pull(controller) {
+        if (index >= row.chunk_count) { controller.close(); return; }
+        try {
+          const object = await env.INCIDENT_RECORDINGS.get(row.object_prefix + String(index).padStart(4, '0') + '.part');
+          if (!object) throw new Error('A video segment is missing.');
+          controller.enqueue(new Uint8Array(await object.arrayBuffer()));
+          index += 1;
+        } catch (error) { controller.error(error); }
+      }
+    });
+    const download = url.searchParams.get('download') === '1';
+    return new Response(stream, { headers: {
+      'content-type': row.mime_type || 'video/webm',
+      'content-length': String(row.total_bytes || 0),
+      'content-disposition': (download ? 'attachment' : 'inline') + '; filename="daredevils-eye-incident-' + id + '.' + (String(row.mime_type).includes('mp4') ? 'mp4' : 'webm') + '"',
+      'cache-control': 'private, no-store',
+      'x-content-type-options': 'nosniff'
+    }});
+  }
+  if (request.method === 'DELETE' && chunkIndex === null && !url.pathname.endsWith('/complete')) {
+    try { await deleteRecordingObjects(env.INCIDENT_RECORDINGS, row.object_prefix); }
+    catch { return json({ error: 'Could not delete all private video chunks. The recording record was kept so deletion can be retried.' }, 502); }
+    const deleted = await supabaseRest(env, 'emergency_recordings?id=eq.' + encodeURIComponent(id) + '&' + recordingOwnerFilter(owner), { method: 'DELETE' });
+    if (!deleted.ok) return json({ error: 'Video files were removed, but the metadata could not be deleted.' }, 502);
+    return json({ ok: true, deleted: true });
+  }
+  return json({ error: 'Unsupported emergency recording method.' }, 405);
+}
+
 async function handleAccountApi(request,env,url) {
   if(['POST','PUT','PATCH','DELETE'].includes(request.method)){
     const origin=request.headers.get('origin');
@@ -540,6 +758,8 @@ function validPayload(body) {
   if (body.waitSeconds !== undefined && (!Number.isInteger(body.waitSeconds) || body.waitSeconds < 15 || body.waitSeconds > 180)) return 'Wait time must be between 15 and 180 seconds.';
   if (body.responseLanguage && !Object.hasOwn(RESPONSE_LANGUAGES, body.responseLanguage)) return 'Unsupported response language.';
   if (body.saveToHistory !== undefined && typeof body.saveToHistory !== 'boolean') return 'saveToHistory must be true or false.';
+  if (body.memoryEnabled !== undefined && typeof body.memoryEnabled !== 'boolean') return 'memoryEnabled must be true or false.';
+  if (body.cameraSource !== undefined && !['phone','esp32','upload','unknown'].includes(body.cameraSource)) return 'Unsupported camera source.';
   return null;
 }
 
@@ -696,7 +916,7 @@ async function modelCandidates(apiKey, selectedModel) {
   return unique.slice(startIndex).concat(unique.slice(0, startIndex));
 }
 
-async function askGemini({ image, prompt, model, waitSeconds }, apiKey) {
+async function askGemini({ image, prompt, model, waitSeconds, structuredOutput = false }, apiKey) {
   if (!apiKey) throw new Error('Gemini is selected but no API key is available. Add your own key in Admin or configure the Worker secret.');
   const requestedModel = String(model || 'gemini-3.8-flash').replace(/^models\//, '');
   const selectedModel = /^gemini-3\.6-flash$/i.test(requestedModel) || /-pro(?:-|$)/i.test(requestedModel) ? 'gemini-3.8-flash' : requestedModel;
@@ -709,13 +929,14 @@ async function askGemini({ image, prompt, model, waitSeconds }, apiKey) {
     const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(candidate) + ':generateContent';
     const requestBody = {
       system_instruction: { parts: [{ text: SAFETY_CORE }] },
-      contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: imageParts(image) }] }],
+      contents: [{ role: 'user', parts: [{ text: prompt }, ...(image ? [{ inline_data: imageParts(image) }] : [])] }],
       generationConfig: {
         // The old 260-token ceiling was too small for detailed answers and
         // also counted internal thinking tokens on Gemini 3.x.
         maxOutputTokens: 4096,
         temperature: 0.2,
-        ...(candidate.startsWith('gemini-3.') ? { thinkingConfig: { thinkingLevel: 'LOW' } } : {})
+        ...(candidate.startsWith('gemini-3.') ? { thinkingConfig: { thinkingLevel: 'LOW' } } : {}),
+        ...(structuredOutput ? { responseMimeType: 'application/json', responseSchema: { type: 'OBJECT', properties: { spoken_answer: { type: 'STRING' }, scene_summary: { type: 'STRING' }, facts: { type: 'ARRAY', items: { type: 'OBJECT', properties: { object: { type: 'STRING' }, color: { type: 'STRING' }, location: { type: 'STRING' }, observation: { type: 'STRING' }, confidence: { type: 'STRING', enum: ['high','medium','low'] } }, required: ['object','observation'] } } }, required: ['spoken_answer','scene_summary','facts'] } } : {})
       }
     };
     for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -842,6 +1063,12 @@ async function transcribeGemini(audio, apiKey, outputLanguage = 'en-US') {
 }
 
 async function forwardSos(request, env, action) {
+  if (action.startsWith('video-')) {
+    const origin = request.headers.get('origin');
+    if (!origin) return json({ ok: false, error: 'A same-origin request is required for emergency video.' }, 403);
+    try { if (new URL(origin).origin !== new URL(request.url).origin) return json({ ok: false, error: 'Cross-origin emergency video is not allowed.' }, 403); }
+    catch { return json({ ok: false, error: 'Invalid request origin.' }, 403); }
+  }
   let body;
   try { body = await request.json(); } catch { return json({ ok: false, error: 'Invalid SOS request.' }, 400); }
   const ip = request.headers.get('cf-connecting-ip') || 'local-development';
@@ -921,6 +1148,8 @@ export async function handleApi(request, env = {}) {
     }
     return json({ok:false,error:'RFID route not found.'},404);
   }
+  if(url.pathname.startsWith('/api/memory')) return handleSceneMemoryApi(request,env,url);
+  if(url.pathname.startsWith('/api/recordings')) return handleRecordingApi(request,env,url);
   if(url.pathname.startsWith('/api/account/')||url.pathname.startsWith('/api/guest/')) return handleAccountApi(request,env,url);
 
   if (request.method === 'GET' && url.pathname === '/api/health') {
@@ -958,7 +1187,16 @@ export async function handleApi(request, env = {}) {
   const sosActions = {
     '/api/sos/invite': 'invite',
     '/api/sos/trigger': 'trigger',
-    '/api/sos/push-key': 'push-key'
+    '/api/sos/push-key': 'push-key',
+    '/api/sos/video/start': 'video-start',
+    '/api/sos/video/offer': 'video-offer',
+    '/api/sos/video/answer': 'video-answer',
+    '/api/sos/video/ice-sender': 'video-ice-sender',
+    '/api/sos/video/ice-receiver': 'video-ice-receiver',
+    '/api/sos/video/sender-poll': 'video-sender-poll',
+    '/api/sos/video/poll': 'video-poll',
+    '/api/sos/video/stop-sender': 'video-stop-sender',
+    '/api/sos/video/stop': 'video-stop'
   };
   if (request.method === 'POST' && sosActions[url.pathname]) {
     return forwardSos(request, env, sosActions[url.pathname]);
@@ -1033,7 +1271,7 @@ export async function handleApi(request, env = {}) {
     if (mode !== 'gemini' && mode !== 'mock') return json({ error: 'Unsupported AI_MODE "' + mode + '".' }, 503);
     const selectedModel = String(body.model || model).replace(/^models\//, '');
     const waitSeconds = body.waitSeconds || 120;
-    const prompt = buildPrompt({
+    const basePrompt = buildPrompt({
       mode: action,
       question: body.question || '',
       systemPrompt: body.systemPrompt || '',
@@ -1041,6 +1279,15 @@ export async function handleApi(request, env = {}) {
       responseStyle: body.responseStyle || 'concise',
       responseLanguage: body.responseLanguage || 'en-US'
     });
+    const memoryEnabled = body.memoryEnabled === true;
+    const memoryOwner = memoryEnabled ? await resolveSceneMemoryOwner(request, env) : null;
+    if (memoryEnabled && !memoryOwner) return json({ error: 'Visual memory needs a private guest session or a signed-in account. Refresh and try again.' }, 401);
+    let previousObservations = [];
+    if (memoryEnabled) {
+      try { previousObservations = await listSceneMemory(env, memoryOwner); }
+      catch (error) { return json({ error: error.message || 'Could not load visual memory.' }, 502); }
+    }
+    const prompt = memoryEnabled ? buildSceneMemoryPrompt(basePrompt, previousObservations) : basePrompt;
     if (mode === 'gemini') {
       const saveRequested=body.saveToHistory!==false;
       const user=saveRequested?await getAuthenticatedUser(request,env):null;
@@ -1048,7 +1295,15 @@ export async function handleApi(request, env = {}) {
         ?await createPhotoHistoryDraft(env,user,request,body,prompt,selectedModel,action)
         :{saved:false,message:'Photo history is switched off.'};
       try {
-        const result = await askGemini({ image: body.image, prompt, model: selectedModel, waitSeconds }, apiKey);
+        const result = await askGemini({ image: body.image, prompt, model: selectedModel, waitSeconds, structuredOutput: memoryEnabled }, apiKey);
+        let memorySaved = false;
+        if (memoryEnabled) {
+          const observation = normalizeSceneMemoryOutput(result.answer);
+          if (observation) {
+            result.answer = observation.answer;
+            memorySaved = await saveSceneMemory(env, memoryOwner, { ...observation, question: body.question || '', sourceCamera: body.cameraSource || 'unknown' });
+          }
+        }
         if(user) await storeAccountUsage(env,user,request,{
           model:result.model,requestType:action,
           usage:result.usage,imageSizeBytes:dataUrlByteLength(body.image)
@@ -1059,7 +1314,7 @@ export async function handleApi(request, env = {}) {
           model:result.model,attemptedModels:result.attempted,
           finishReason:result.finishReason,usageMetadata:result.usage||null,
           historySaved:Boolean(history.saved),historyMessage:saveRequested?history.message:null,
-          historyId:history.id||null,answer:result.answer
+          historyId:history.id||null,answer:result.answer,memoryEnabled,memorySaved,memoryCount:memoryEnabled?Math.min(5,previousObservations.length+(memorySaved?1:0)):0
         });
       } catch(error) {
         const failedHistory=await completePhotoHistory(env,historyDraft,null,error);
@@ -1106,12 +1361,37 @@ export async function purgeExpiredGuestHistory(env,now=Date.now()) {
   }
   const deleted=await supabaseRest(env,'ai_history?guest_session_hash=not.is.null&created_at=lt.'+encodeURIComponent(cutoff),{method:'DELETE'});
   if(!deleted.ok)throw new Error('Could not delete expired guest-history metadata.');
-  return {skipped:false,deleted:'expired_guest_history'};
+  const memoryDeleted=await supabaseRest(env,'scene_memory_entries?guest_session_hash=not.is.null&created_at=lt.'+encodeURIComponent(cutoff),{method:'DELETE'});
+  if(!memoryDeleted.ok)throw new Error('Could not delete expired guest visual memory.');
+  return {skipped:false,deleted:'expired_guest_history_and_memory'};
+}
+
+export async function purgeExpiredRecordings(env, now = Date.now()) {
+  if (!supabaseConfigured(env) || !env.INCIDENT_RECORDINGS) return { skipped: true, deleted: 0 };
+  const cutoff = new Date(now).toISOString();
+  const staleCutoff = new Date(now - 24 * 60 * 60 * 1000).toISOString();
+  const [expiredResponse, incompleteResponse] = await Promise.all([
+    supabaseRest(env, 'emergency_recordings?select=id,object_prefix&expires_at=lt.' + encodeURIComponent(cutoff) + '&limit=100'),
+    supabaseRest(env, 'emergency_recordings?select=id,object_prefix&status=eq.recording&created_at=lt.' + encodeURIComponent(staleCutoff) + '&limit=100')
+  ]);
+  if (!expiredResponse.ok || !incompleteResponse.ok) throw new Error('Could not list expired emergency recordings.');
+  const rows = [...await expiredResponse.json().catch(() => []), ...await incompleteResponse.json().catch(() => [])];
+  const uniqueRows = [...new Map(rows.map(row => [row.id, row])).values()];
+  let deleted = 0;
+  for (const row of uniqueRows) {
+    await deleteRecordingObjects(env.INCIDENT_RECORDINGS, row.object_prefix);
+    const removed = await supabaseRest(env, 'emergency_recordings?id=eq.' + encodeURIComponent(row.id), { method: 'DELETE' });
+    if (!removed.ok) throw new Error('Could not delete expired emergency recording metadata.');
+    deleted += 1;
+  }
+  return { skipped: false, deleted };
 }
 
 export default {
   async scheduled(controller,env) {
-    await purgeExpiredGuestHistory(env,controller?.scheduledTime||Date.now());
+    const now=controller?.scheduledTime||Date.now();
+    await purgeExpiredGuestHistory(env,now);
+    await purgeExpiredRecordings(env,now);
   },
   async fetch(request, env) {
     const api = await handleApi(request, env);

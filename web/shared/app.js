@@ -1,8 +1,10 @@
 import { captureImage, blobToDataUrl, compressImageToJpeg, primeShutterAudio } from './camera.js?v=20261117-release5';
-import { startPhoneCamera, capturePhoneFrame, stopPhoneCamera, captureEsp32Photo, getPhoneTorchState, setPhoneTorch, getEsp32Endpoints, stopEsp32Stream } from './camera-manager.js?v=20261126-camera4';
-import { requestAI } from './api.js?v=20261117-release5';
+import { startPhoneCamera, capturePhoneFrame, stopPhoneCamera, captureEsp32Photo, getPhoneTorchState, setPhoneTorch, getEsp32Endpoints, stopEsp32Stream, getPhoneCameraStream } from './camera-manager.js?v=20261126-camera5';
+import { requestAI } from './api.js?v=20261126-recording1';
+import { startEmergencyVideo, createEsp32CanvasStream, stopEmergencyVideo } from './emergency-video.js?v=20261126-video1';
+import { startIncidentRecording } from './recording-manager.js?v=20261126-recording1';
 import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release5';
-import { getSettings, saveSettings } from './settings.js?v=20261117-release5';
+import { getSettings, saveSettings } from './settings.js?v=20261126-recording1';
 import { hasCurrentConsent, acceptConsent, rejectConsent } from './consent.js?v=20261117-release5';
 import { createShakeSequenceTracker, getShakeMagnitude, matchSosVoiceCommand } from './sos-triggers.js?v=20261117-release1';
 import { mountLanguageSwitch, toBangla } from './language.js?v=20261117-release5';
@@ -259,7 +261,7 @@ async function run(mode,question='',imageOverride=null){
   const image=await blobToDataUrl(imageBlob);
   const settings=getSettings();
   show('Sending the compressed photo for analysis.');
-  const result=await requestAI(mode==='ask'&&question.trim()?'/api/ask':'/api/describe',{image,question:question.trim(),systemPrompt:settings.systemPrompt||'',customPrompt:settings.customPrompt,model:settings.aiModel,waitSeconds:settings.waitSeconds,responseStyle:settings.responseStyle,responseLanguage:settings.speechLanguage,saveToHistory:settings.savePhotoHistory===true});
+  const result=await requestAI(mode==='ask'&&question.trim()?'/api/ask':'/api/describe',{image,question:question.trim(),systemPrompt:settings.systemPrompt||'',customPrompt:settings.customPrompt,model:settings.aiModel,waitSeconds:settings.waitSeconds,responseStyle:settings.responseStyle,responseLanguage:settings.speechLanguage,saveToHistory:settings.savePhotoHistory===true,memoryEnabled:settings.sceneMemoryEnabled===true,cameraSource:settings.cameraSetupComplete?settings.cameraSource:'unknown'});
   if(result.mock)throw new Error('AI is in MOCK mode. No image was analysed.');
   if(result.provider!=='Gemini'||!result.answer)throw new Error('The AI backend did not return a verified Gemini answer.');
   await announceAnswer(result.answer);
@@ -267,9 +269,10 @@ async function run(mode,question='',imageOverride=null){
    const completed=settings.speechLanguage==='bn-BD'
     ?'ছবির বিশ্লেষণ সম্পন্ন হয়েছে। ব্যবহৃত মডেল: '+(result.model||'Gemini')
     :'Completed with '+(result.model||'Gemini')+'.';
-   const message=settings.savePhotoHistory&&result.historyMessage
-    ?result.historyMessage
-    :completed;
+   const messageParts=[];
+   if(settings.savePhotoHistory&&result.historyMessage)messageParts.push(result.historyMessage);
+   if(settings.sceneMemoryEnabled)messageParts.push(result.memorySaved?'Visual memory updated with this photo.':'Visual memory could not be saved from this response.');
+   const message=messageParts.length?messageParts.join(' '):completed;
    status.textContent=settings.speechLanguage==='bn-BD'?localizeSpeech(message):message;
   }
  }catch(error){
@@ -302,6 +305,74 @@ function speakHelp(){
  const settings=getSettings();const message=settings.speechLanguage==='bn-BD'?'ডেয়ারডেভিলস আই-এর সহায়িকা। প্রধান চারটি বোতাম হলো বর্ণনা, এআই-কে জিজ্ঞাসা, এসওএস এবং আবার শোনান। বর্ণনা চাপলে ক্যামেরায় যা দেখা যায় তা বলা হবে। এআই-কে জিজ্ঞাসা চাপুন, বাংলায় প্রশ্ন করুন এবং কথা শেষ হলে একটু থামুন। এসওএস পাঠাতে এসওএস বোতাম দুইবার চাপুন। আবার শোনান চাপলে শেষ উত্তরটি শোনা যাবে। অ্যাডমিনে ঐচ্ছিক স্বয়ংক্রিয় এসওএস চালু করলে তিনবার ফোন নাড়ালে আট সেকেন্ডের সতর্কীকরণ সময় শুরু হবে। ভয়েস এসওএস চালু থাকলে “ডেয়ারডেভিল এসওএস” বলুন, তারপর “নিশ্চিত করুন” বলুন। বাতিল করতে “এসওএস বাতিল” বলুন। এটি পরীক্ষামূলক সহায়ক, সাদা ছড়ি বা গাইড কুকুরের বিকল্প নয়। স্বাভাবিক চলাচলের সহায়তা ব্যবহার করতে থাকুন।':'Spoken help for Daredevil’s Eye. The four main buttons are Describe, Ask AI, SOS and Repeat. Tap Describe to hear what the camera can see. Tap Ask AI, ask a question in Bangla, English or a mixture, then pause. Tap SOS once to arm it. Tap SOS again within five seconds to confirm and send an alert to your paired receiver. Tap Repeat to hear the last answer again. Spoken Help is the separate button below the four main actions. If you enable the optional SOS triggers in Admin, three deliberate shakes start an eight-second SOS countdown. The optional voice trigger listens only while Blind mode is visible: say Daredevil SOS, then say Confirm SOS; say Cancel SOS to stop a pending alert. This is an experimental tool, not a cane or guide dog. Continue using your normal mobility aid. To leave Blind mode, edit the browser address and remove the word blind between the slashes.';
  show('Playing spoken help.');speakSosStatus(message);
 }
+let emergencyVideoCleanup=null;
+let emergencyVideoActive=false;
+let activeEmergencyRecording=null;
+async function waitForEsp32VideoFrame(image){
+ if(image.naturalWidth&&image.naturalHeight)return;
+ await new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>reject(new Error('ESP32 live preview did not provide a frame in time.')),8000);
+  image.addEventListener('load',()=>{clearTimeout(timer);resolve();},{once:true});
+  image.addEventListener('error',()=>{clearTimeout(timer);reject(new Error('ESP32 live preview could not load. Check local-network permission and firmware CORS.'));},{once:true});
+ });
+}
+async function stopEmergencySharing(){
+ if(activeEmergencyRecording){try{await activeEmergencyRecording.stop();}catch{}activeEmergencyRecording=null;}
+ await stopEmergencyVideo();
+ if(emergencyVideoCleanup){try{emergencyVideoCleanup();}catch{}emergencyVideoCleanup=null;}
+ emergencyVideoActive=false;
+ const panel=$('#sos-video-sharing-panel');if(panel)panel.hidden=true;
+}
+async function startEmergencySharing(settings,eventId){
+ if(!settings.sosVideoEnabled)return;
+ const panel=$('#sos-video-sharing-panel'),videoStatus=$('#sos-video-status');
+ if(panel)panel.hidden=false;
+ if(videoStatus)videoStatus.textContent='Preparing the camera for your paired receiver…';
+ let stream=null,cleanup=null;
+ try{
+  if(settings.cameraSource==='phone'){
+   stream=getPhoneCameraStream();
+   if(!stream){
+    const video=document.createElement('video');video.autoplay=true;video.muted=true;video.playsInline=true;video.className='sr-only';video.setAttribute('aria-hidden','true');document.body.append(video);
+    stream=await startPhoneCamera(video);
+    cleanup=()=>{stopPhoneCamera();video.remove();};
+   }
+  }else if(settings.cameraSource==='esp32'){
+   let image=$('#action-esp32-stream-preview'),created=false;
+   if(!image){image=document.createElement('img');image.className='sr-only';image.alt='ESP32 emergency video bridge';document.body.append(image);created=true;}
+   if(!image.getAttribute('src')){image.crossOrigin='anonymous';image.src=getEsp32Endpoints().stream;}
+   await waitForEsp32VideoFrame(image);
+   const bridge=createEsp32CanvasStream(image,6);
+   stream=bridge.stream;
+   cleanup=()=>{bridge.stop();if(created){stopEsp32Stream(image);image.remove();}};
+  }else{
+   throw new Error('Select Phone camera or ESP32-CAM in Admin before enabling emergency video.');
+  }
+  if(!stream)throw new Error('No active camera stream is available.');
+  emergencyVideoCleanup=cleanup;
+  await startEmergencyVideo({deviceId:settings.deviceId,eventId,stream,onEnded:()=>{if(activeEmergencyRecording){void activeEmergencyRecording.stop();activeEmergencyRecording=null;}},onStatus:message=>{
+   if(videoStatus)videoStatus.textContent=message;
+   if(status)status.textContent=message;
+  }});
+  emergencyVideoActive=true;
+  if(settings.sosRecordingEnabled){
+   try{activeEmergencyRecording=await startIncidentRecording(stream,{deviceId:settings.deviceId,cameraSource:settings.cameraSource,onStatus:message=>{if(videoStatus)videoStatus.textContent=message;}});}
+   catch(error){if(videoStatus)videoStatus.textContent='Live video is available, but private recording could not start: '+error.message;}
+  }
+  if(videoStatus&&!settings.sosRecordingEnabled)videoStatus.textContent='SOS is sent. Live camera sharing is active or connecting to your paired receiver. Use Stop Sharing to end it.';
+  announce('SOS sent. Emergency video sharing is starting with your paired contact.');
+ }catch(error){
+  if(cleanup){try{cleanup();}catch{}}
+  emergencyVideoCleanup=null;
+  if(videoStatus)videoStatus.textContent='SOS was sent, but video sharing could not start: '+error.message;
+  setSosFeedback('SOS was sent. Video sharing could not start: '+error.message,'warning');
+ }
+}
+$('#sos-video-stop')?.addEventListener('click',async()=>{
+ const button=$('#sos-video-stop');button.disabled=true;
+ try{await stopEmergencySharing();setSosFeedback('Emergency video sharing stopped. Your SOS alert remains delivered.','success');}
+ finally{button.disabled=false;}
+});
 async function deliverSos(){
  if(sosDispatching)return;
  sosDispatching=true;stopSosVoiceListener();setSosFeedback('Sending SOS alert to the paired phone…','sending');
@@ -311,6 +382,7 @@ async function deliverSos(){
   const result=await requestAI('/api/sos/trigger',{deviceId:settings.deviceId});
   const message=result.message||(result.notificationAccepted?'SOS alert accepted by the push service. Delivery is not yet confirmed.':'SOS alert stored. The receiver must be online and notifications enabled.');
   setSosFeedback(message,result.notificationAccepted?'success':'warning');announce(message);
+  if(settings.sosVideoEnabled&&result.eventId)await startEmergencySharing(settings,result.eventId);
   const callLink=$('#sos-call-link');if(settings.emergencyPhone&&callLink){callLink.href='tel:'+settings.emergencyPhone.replace(/[^+0-9]/g,'');callLink.hidden=false;callLink.style.display='block';callLink.textContent='Call '+(settings.emergencyName||'trusted contact')+' now';}
  }catch(error){
   const message=error.message||'SOS alert could not be sent. Pair a receiver in Admin first.';
@@ -475,11 +547,29 @@ const resetCameraSource=()=>{
  saveSettings({cameraSetupComplete:false});showCameraSetup();
 };
 $('#change-camera-source')?.addEventListener('click',resetCameraSource);
+const sceneMemoryQuestionPanel=$('#scene-memory-question-panel');
+if(sceneMemoryQuestionPanel)sceneMemoryQuestionPanel.hidden=getSettings().sceneMemoryEnabled!==true;
+$('#scene-memory-question-form')?.addEventListener('submit',async event=>{
+ event.preventDefault();
+ const question=$('#scene-memory-question').value.trim();
+ const settings=getSettings();
+ if(!settings.sceneMemoryEnabled){$('#scene-memory-question-status').textContent='Enable five-photo visual memory in Admin first.';return;}
+ if(!question){$('#scene-memory-question-status').textContent='Enter a question about an earlier photo.';return;}
+ const button=$('#scene-memory-question-submit');button.disabled=true;$('#scene-memory-question-status').textContent='Checking your five saved observations…';
+ try{
+  const result=await requestAI('/api/memory/ask',{question,memoryEnabled:true,responseLanguage:settings.speechLanguage,model:settings.aiModel,waitSeconds:settings.waitSeconds});
+  if(!result.answer)throw new Error('The memory service returned no answer.');
+  $('#scene-memory-question-status').textContent='Answered using '+result.memoryCount+' saved observation(s).';
+  await announceAnswer(result.answer);
+ }catch(error){$('#scene-memory-question-status').textContent=error.message;}
+ finally{button.disabled=false;}
+});
+
 $('#esp32-change-camera-source')?.addEventListener('click',resetCameraSource);
 $('#esp32-action-stream-start')?.addEventListener('click',()=>{
  try{
   const url=getEsp32Endpoints().stream;
-  if(esp32StreamPreview){esp32StreamPreview.hidden=false;esp32StreamPreview.src=url;}
+  if(esp32StreamPreview){esp32StreamPreview.crossOrigin='anonymous';esp32StreamPreview.hidden=false;esp32StreamPreview.src=url;}
   if(esp32CameraStatus)esp32CameraStatus.textContent='Connecting to ESP32 live stream. If Chrome asks, allow local-network access.';
  }catch(error){if(esp32CameraStatus)esp32CameraStatus.textContent=error.message;}
 });
@@ -495,7 +585,7 @@ renderCameraPanels();
 document.addEventListener('visibilitychange',()=>{
  if(document.hidden){stopPhoneCamera();stopEsp32Stream(esp32StreamPreview);if(esp32StreamPreview)esp32StreamPreview.hidden=true;}
 });
-window.addEventListener('pagehide',()=>{stopPhoneCamera();stopEsp32Stream(esp32StreamPreview);syncPhoneTorchControl();});
+window.addEventListener('pagehide',()=>{void stopEmergencySharing();stopPhoneCamera();stopEsp32Stream(esp32StreamPreview);syncPhoneTorchControl();});
 
 
 const termsCheck=$('#consent-terms-check'),acceptButton=$('#consent-accept');

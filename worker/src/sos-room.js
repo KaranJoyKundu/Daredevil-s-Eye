@@ -121,8 +121,9 @@ function safeEqual(a, b) {
 }
 
 export class SOSRoom {
-  constructor(state) {
+  constructor(state, env = {}) {
     this.state = state;
+    this.env = env || {};
     this.serial = Promise.resolve();
   }
 
@@ -135,6 +136,8 @@ export class SOSRoom {
   async alarm() {
     const event = await this.state.storage.get('activeEvent');
     if (event?.active && event.expiresAt <= Date.now()) await this.state.storage.delete('activeEvent');
+    const video = await this.state.storage.get('videoSession');
+    if (video?.active && video.expiresAt <= Date.now()) await this.state.storage.put('videoSession', { ...video, active: false, stoppedAt: Date.now(), stopReason: 'expired' });
   }
 
   async getVapidKeys() {
@@ -197,6 +200,94 @@ export class SOSRoom {
     }
   }
 
+  iceServers() {
+    const servers = [{ urls: ['stun:stun.l.google.com:19302'] }];
+    const turnUrls = String(this.env.TURN_URL || '').split(',').map(value => value.trim()).filter(Boolean);
+    if (turnUrls.length && this.env.TURN_USERNAME && this.env.TURN_CREDENTIAL) {
+      servers.push({ urls: turnUrls, username: String(this.env.TURN_USERNAME), credential: String(this.env.TURN_CREDENTIAL) });
+    }
+    return servers;
+  }
+
+  async receiverAuthorized(token) {
+    const expectedHash = await this.state.storage.get('receiverTokenHash');
+    return Boolean(expectedHash && token && safeEqual(await hashSecret(String(token)), expectedHash));
+  }
+
+  async handleVideoAction(action, body) {
+    const now = Date.now();
+    const session = await this.state.storage.get('videoSession');
+    const sessionId = String(body.sessionId || '');
+    const sender = /^[a-f0-9]{32}$/.test(String(body.deviceId || '').toLowerCase());
+    const receiver = await this.receiverAuthorized(body.receiverToken);
+    const activeSession = session && session.active && session.expiresAt > now && (action === 'video-poll' ? (!sessionId || session.id === sessionId) : session.id === sessionId);
+    const stopSession = async reason => {
+      if (!activeSession) return json({ ok: false, error: 'The emergency video session is no longer active.' }, 404);
+      await this.state.storage.put('videoSession', { ...session, active: false, stoppedAt: now, stopReason: reason });
+      return json({ ok: true, stopped: true });
+    };
+    if (action === 'video-start') {
+      if (!sender) return json({ ok: false, error: 'Invalid sender device identity.' }, 400);
+      if (!(await this.state.storage.get('receiverTokenHash'))) return json({ ok: false, error: 'No trusted receiver is paired.' }, 409);
+      const event = await this.state.storage.get('activeEvent');
+      if (!event?.active || event.expiresAt <= now || event.id !== String(body.eventId || '')) return json({ ok: false, error: 'A current confirmed SOS event is required before sharing video.' }, 409);
+      if (session?.active && session.expiresAt > now) return json({ ok: false, error: 'An emergency video session is already active.' }, 409);
+      const created = { id: crypto.randomUUID(), eventId: event.id, active: true, createdAt: now, expiresAt: now + 5 * 60 * 1000, offer: null, answer: null, senderCandidates: [], receiverCandidates: [] };
+      await this.state.storage.put('videoSession', created);
+      await this.state.storage.setAlarm(created.expiresAt);
+      return json({ ok: true, sessionId: created.id, expiresAt: created.expiresAt, iceServers: this.iceServers(), turnConfigured: this.iceServers().length > 1 });
+    }
+    if (action === 'video-stop-sender') {
+      if (!sender) return json({ ok: false, error: 'Invalid sender device identity.' }, 400);
+      return stopSession('sender_stopped');
+    }
+    if (action === 'video-stop') {
+      if (!receiver) return json({ ok: false, error: 'Receiver authorization failed.' }, 403);
+      return stopSession('receiver_stopped');
+    }
+    if (action === 'video-offer') {
+      if (!sender) return json({ ok: false, error: 'Invalid sender device identity.' }, 400);
+      if (!activeSession) return json({ ok: false, error: 'The emergency video session is not active.' }, 404);
+      const sdp = body.sdp;
+      if (!sdp || sdp.type !== 'offer' || typeof sdp.sdp !== 'string' || sdp.sdp.length > 100000) return json({ ok: false, error: 'A valid WebRTC offer is required.' }, 400);
+      await this.state.storage.put('videoSession', { ...session, offer: { type: 'offer', sdp: sdp.sdp } });
+      return json({ ok: true, offerStored: true });
+    }
+    if (action === 'video-answer') {
+      if (!receiver) return json({ ok: false, error: 'Receiver authorization failed.' }, 403);
+      if (!activeSession) return json({ ok: false, error: 'The emergency video session is not active.' }, 404);
+      const sdp = body.sdp;
+      if (!sdp || sdp.type !== 'answer' || typeof sdp.sdp !== 'string' || sdp.sdp.length > 100000) return json({ ok: false, error: 'A valid WebRTC answer is required.' }, 400);
+      await this.state.storage.put('videoSession', { ...session, answer: { type: 'answer', sdp: sdp.sdp } });
+      return json({ ok: true, answerStored: true });
+    }
+    if (action === 'video-ice-sender' || action === 'video-ice-receiver') {
+      if (action === 'video-ice-sender' ? !sender : !receiver) return json({ ok: false, error: 'Video session authorization failed.' }, 403);
+      if (!activeSession) return json({ ok: false, error: 'The emergency video session is not active.' }, 404);
+      const candidate = body.candidate;
+      if (!candidate || typeof candidate.candidate !== 'string' || candidate.candidate.length > 4000) return json({ ok: false, error: 'Invalid ICE candidate.' }, 400);
+      const key = action === 'video-ice-sender' ? 'senderCandidates' : 'receiverCandidates';
+      const candidates = Array.isArray(session[key]) ? session[key] : [];
+      if (candidates.length >= 120) return json({ ok: false, error: 'The ICE candidate limit was reached.' }, 429);
+      candidates.push(candidate);
+      await this.state.storage.put('videoSession', { ...session, [key]: candidates });
+      return json({ ok: true, stored: true, count: candidates.length });
+    }
+    if (action === 'video-poll') {
+      if (!receiver) return json({ ok: false, error: 'Receiver authorization failed.' }, 403);
+      if (!activeSession) return json({ ok: true, active: false, session: null });
+      const after = Math.max(0, Math.min(120, Number(body.after) || 0));
+      return json({ ok: true, active: true, sessionId: session.id, offer: session.offer, senderCandidates: (session.senderCandidates || []).slice(after), senderCandidateCount: (session.senderCandidates || []).length, iceServers: this.iceServers() });
+    }
+    if (action === 'video-sender-poll') {
+      if (!sender) return json({ ok: false, error: 'Invalid sender device identity.' }, 400);
+      if (!activeSession) return json({ ok: true, active: false, answer: null });
+      const after = Math.max(0, Math.min(120, Number(body.after) || 0));
+      return json({ ok: true, active: true, answer: session.answer, receiverCandidates: (session.receiverCandidates || []).slice(after), receiverCandidateCount: (session.receiverCandidates || []).length });
+    }
+    return json({ ok: false, error: 'Unknown emergency video action.' }, 404);
+  }
+
   async handle(request) {
     if (request.method !== 'POST') return json({ ok: false, error: 'POST required.' }, 405);
     const action = new URL(request.url).pathname.replace(/^\/+/, '');
@@ -209,6 +300,8 @@ export class SOSRoom {
     }
 
     if (action === 'invalidate') {
+      const video = await this.state.storage.get('videoSession');
+      if (video?.active) await this.state.storage.put('videoSession', { ...video, active: false, stoppedAt: Date.now(), stopReason: 'receiver_invalidated' });
       await this.state.storage.delete('receiverTokenHash');
       await this.state.storage.delete('activeEvent');
       await this.state.storage.delete('pushSubscription');
@@ -217,6 +310,8 @@ export class SOSRoom {
     }
 
     if (action === 'pair') {
+      const video = await this.state.storage.get('videoSession');
+      if (video?.active) await this.state.storage.put('videoSession', { ...video, active: false, stoppedAt: Date.now(), stopReason: 'receiver_repaired' });
       const receiverToken = await randomToken();
       await this.state.storage.put('receiverTokenHash', await hashSecret(receiverToken));
       await this.state.storage.put('pairedAt', Date.now());
@@ -250,6 +345,8 @@ export class SOSRoom {
       });
     }
 
+    if (action.startsWith('video-')) return this.handleVideoAction(action, body);
+
     const token = String(body.receiverToken || '');
     const expectedHash = await this.state.storage.get('receiverTokenHash');
     if (!expectedHash || !safeEqual(await hashSecret(token), expectedHash)) {
@@ -257,6 +354,8 @@ export class SOSRoom {
     }
 
     if (action === 'revoke') {
+      const video = await this.state.storage.get('videoSession');
+      if (video?.active) await this.state.storage.put('videoSession', { ...video, active: false, stoppedAt: Date.now(), stopReason: 'receiver_revoked' });
       await this.state.storage.delete('receiverTokenHash');
       await this.state.storage.delete('activeEvent');
       await this.state.storage.delete('pushSubscription');

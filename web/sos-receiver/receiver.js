@@ -1,4 +1,4 @@
-import {requestPublic} from '/shared/api.js?v=20261117-release1';
+import {requestPublic} from '/shared/api.js?v=20261126-recording1';
 
 const $=selector=>document.querySelector(selector);
 const DEVICE_KEY='daredevils-eye.receiver.device.v2';
@@ -10,6 +10,7 @@ let receiverToken=localStorage.getItem(TOKEN_KEY)||sessionStorage.getItem(LEGACY
 if(deviceId)localStorage.setItem(DEVICE_KEY,deviceId);
 if(receiverToken)localStorage.setItem(TOKEN_KEY,receiverToken);
 let pollTimer=null,speechTimer=null,lastEventId='',alarmAudio=null,wakeLock=null,isConnected=false,polling=false;
+let videoPeer=null,videoSessionId='',videoCandidateCursor=0,videoPendingCandidates=[],videoAnswerCreated=false,videoPolling=false;
 
 function updateStatus(message){$('#receiver-status').textContent=message;}
 function base64UrlToBytes(value){
@@ -46,6 +47,69 @@ async function registerPushNotifications(permissionPromise){
  const saved=await requestPublic('/api/sos/subscribe',{deviceId,receiverToken,subscription:subscription.toJSON()});
  if(!saved.pushSubscribed)throw new Error('The server could not save this receiver subscription.');
  return true;
+}
+async function stopRemoteVideo(notify=false){
+ const sessionId=videoSessionId,peer=videoPeer;
+ videoPeer=null;videoSessionId='';videoCandidateCursor=0;videoPendingCandidates=[];videoAnswerCreated=false;
+ if(peer){peer.ontrack=null;peer.onicecandidate=null;peer.close();}
+ const video=$('#receiver-video');if(video){video.pause();video.srcObject=null;}
+ const panel=$('#receiver-video-panel');if(panel)panel.hidden=true;
+ if(notify&&sessionId&&deviceId&&receiverToken){
+  try{await requestPublic('/api/sos/video/stop',{deviceId,receiverToken,sessionId});}catch{}
+ }
+}
+async function pollEmergencyVideo(){
+ if(!isConnected||!receiverToken||videoPolling)return;
+ videoPolling=true;
+ try{
+  const data=await requestPublic('/api/sos/video/poll',{deviceId,receiverToken,sessionId:videoSessionId,after:videoCandidateCursor});
+  if(!data.active||!data.sessionId){
+   if(videoPeer)await stopRemoteVideo(false);
+   return;
+  }
+  if(data.sessionId!==videoSessionId){
+   await stopRemoteVideo(false);
+   videoSessionId=data.sessionId;
+   videoPeer=new RTCPeerConnection({iceServers:data.iceServers||[{urls:['stun:stun.l.google.com:19302']}]});
+   const peer=videoPeer;
+   peer.addEventListener('track',event=>{
+    const video=$('#receiver-video');
+    if(video){video.srcObject=event.streams?.[0]||new MediaStream([event.track]);video.play().catch(()=>{});}
+   });
+   peer.addEventListener('icecandidate',event=>{
+    if(event.candidate&&videoSessionId===data.sessionId){
+     requestPublic('/api/sos/video/ice-receiver',{deviceId,receiverToken,sessionId:data.sessionId,candidate:event.candidate.toJSON()})
+      .catch(error=>$('#receiver-video-status').textContent='Could not send video connection data: '+error.message);
+    }
+   });
+   peer.addEventListener('connectionstatechange',()=>{
+    if(peer.connectionState==='connected')$('#receiver-video-status').textContent='Live emergency video connected.';
+    else if(peer.connectionState==='connecting')$('#receiver-video-status').textContent='Connecting to the sender’s camera…';
+    else if(peer.connectionState==='failed')$('#receiver-video-status').textContent='Video could not connect. The SOS alert remains available; a TURN relay may be required.';
+    else if(peer.connectionState==='disconnected')$('#receiver-video-status').textContent='Video connection interrupted. Waiting for recovery…';
+   });
+   $('#receiver-video-panel').hidden=false;
+   $('#receiver-video-status').textContent='An authorized emergency video session is starting…';
+  }
+  if(data.offer&&!videoPeer.remoteDescription){
+   await videoPeer.setRemoteDescription(data.offer);
+   const answer=await videoPeer.createAnswer();
+   await videoPeer.setLocalDescription(answer);
+   await requestPublic('/api/sos/video/answer',{deviceId,receiverToken,sessionId:videoSessionId,sdp:videoPeer.localDescription});
+   videoAnswerCreated=true;
+   for(const candidate of videoPendingCandidates.splice(0)){
+    try{await videoPeer.addIceCandidate(candidate);}catch{}
+   }
+  }
+  for(const candidate of data.senderCandidates||[]){
+   if(videoPeer.remoteDescription){try{await videoPeer.addIceCandidate(candidate);}catch{}}
+   else videoPendingCandidates.push(candidate);
+  }
+  videoCandidateCursor=Number(data.senderCandidateCount)||videoCandidateCursor;
+ }catch(error){
+  const status=$('#receiver-video-status');
+  if(status)status.textContent='Emergency video connection is waiting: '+error.message;
+ }finally{videoPolling=false;}
 }
 function setConnected(connected){
  $('#pairing-panel').hidden=connected;
@@ -103,12 +167,19 @@ async function poll(){
   if(data.active&&data.event)showAlert(data.event);
   else if($('#emergency-alert').hidden)$('#receiver-detail').textContent='Connected. No active SOS alert.';
   updateStatus('Connected · listening for emergency alerts.');
+  await pollEmergencyVideo();
  }catch(error){
   if(/replaced|revoked|receiver session/i.test(error.message)){clearReceiverSession('This receiver has been replaced. Ask the sender for a new six-character code.');return;}
   updateStatus('Connection interrupted: '+error.message+'. Retrying…');
  }finally{polling=false;}
  if(isConnected)pollTimer=setTimeout(poll,2200);
 }
+$('#stop-receiver-video')?.addEventListener('click',async()=>{
+ const button=$('#stop-receiver-video');button.disabled=true;
+ try{await stopRemoteVideo(true);$('#receiver-video-status').textContent='Live video sharing ended.';updateStatus('Video sharing stopped. The SOS alert remains in the receiver history.');}
+ finally{button.disabled=false;}
+});
+window.addEventListener('pagehide',()=>{void stopRemoteVideo(false);});
 $('#pair-receiver').addEventListener('click',async()=>{
  const button=$('#pair-receiver');button.disabled=true;
  const code=$('#pairing-code').value.trim().toUpperCase();

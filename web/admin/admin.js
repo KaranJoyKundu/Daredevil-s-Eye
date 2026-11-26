@@ -1,7 +1,7 @@
-import {getSettings,saveSettings} from '/shared/settings.js?v=20261117-release5';
-import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261117-release5';
+import {getSettings,saveSettings} from '/shared/settings.js?v=20261126-recording1';
+import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261126-recording1';
 import {captureImage} from '/shared/camera.js?v=20261117-release1';
-import { getEsp32Endpoints, setEsp32LedBrightness, testEsp32Connection, stopEsp32Stream, captureEsp32Photo } from '/shared/camera-manager.js?v=20261126-camera1';
+import { getEsp32Endpoints, setEsp32LedBrightness, testEsp32Connection, stopEsp32Stream, captureEsp32Photo } from '/shared/camera-manager.js?v=20261126-camera5';
 import {speak,speakResponse,getAvailableVoices,isBengaliVoice,refreshAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261117-release5';
 
 const $=s=>document.querySelector(s);
@@ -23,6 +23,7 @@ function formSettings(){
   cameraBaseUrl:normalizeCameraAddress($('#camera').value),
   requirePhotoConfirmation:$('#require-photo-confirmation').checked,
   savePhotoHistory:$('#save-photo-history').checked,
+  sceneMemoryEnabled:$('#scene-memory-enabled').checked,
   emergencyName:$('#contact-name').value.trim(),
   emergencyPhone:$('#contact-phone').value.trim(),
   speechLanguage:$('#language').value,
@@ -30,6 +31,8 @@ function formSettings(){
   speechInputLanguage:$('#input-language').value,
   sosShakeEnabled:$('#sos-shake-enabled').checked,
   sosVoiceEnabled:$('#sos-voice-enabled').checked,
+  sosVideoEnabled:$('#sos-video-enabled').checked,
+  sosRecordingEnabled:$('#sos-video-enabled').checked&&$('#sos-recording-enabled').checked,
   sosVoiceLanguage:$('#sos-voice-language').value,
   speechPreset:$('#voice-preset').value,
   speechVoiceURI:$('#voice-select').value,
@@ -66,6 +69,13 @@ $('#esp32-stream-start')?.addEventListener('click',()=>{
 $('#esp32-stream-stop')?.addEventListener('click',()=>{stopEsp32Stream(esp32Preview);esp32Preview.hidden=true;esp32Preview.style.display='none';if(esp32Status)esp32Status.textContent='Stream connection closed. The ESP32 firmware has no separate stream-off endpoint.';});
 window.addEventListener('pagehide',()=>stopEsp32Stream(esp32Preview));
 
+$('#clear-scene-memory')?.addEventListener('click',async()=>{
+ if(!window.confirm('Permanently clear the five saved visual observations for this account or browser?'))return;
+ const button=$('#clear-scene-memory');button.disabled=true;$('#scene-memory-status').textContent='Clearing visual memory…';
+ try{const response=await apiFetch('/api/memory',{method:'DELETE',credentials:'same-origin'});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'Could not clear visual memory.');$('#scene-memory-status').textContent='Saved visual memory cleared.';}
+ catch(error){$('#scene-memory-status').textContent=error.message;}
+ finally{button.disabled=false;}
+});
 $('#personal-api-key').value=getSessionGeminiApiKey();
 $('#personal-key-status').textContent=getSessionGeminiApiKey()?'A personal key is active for this tab.':'No personal key is set in this tab.';
 $('#save-personal-key').addEventListener('click',()=>{
@@ -76,6 +86,8 @@ $('#remove-personal-key').addEventListener('click',()=>{clearSessionGeminiApiKey
 $('#camera').value=saved.cameraBaseUrl;
 $('#require-photo-confirmation').checked=saved.requirePhotoConfirmation!==false;
 $('#save-photo-history').checked=saved.savePhotoHistory!==false;
+$('#scene-memory-enabled').checked=saved.sceneMemoryEnabled===true;
+$('#scene-memory-status').textContent=saved.sceneMemoryEnabled?'Enabled. The latest five text observations are available to this account/browser.':'Disabled. No new observations will be stored.';
 $('#contact-name').value=saved.emergencyName;
 $('#contact-phone').value=saved.emergencyPhone;
 $('#sos-code').value=saved.sosPairingCode;
@@ -84,6 +96,19 @@ $('#speech-input-mode').value=saved.speechInputMode||'auto';
 $('#input-language').value=saved.speechInputLanguage||'bn-BD';
 $('#sos-shake-enabled').checked=!!saved.sosShakeEnabled;
 $('#sos-voice-enabled').checked=!!saved.sosVoiceEnabled;
+$('#sos-video-enabled').checked=!!saved.sosVideoEnabled;
+$('#sos-recording-enabled').checked=!!saved.sosRecordingEnabled;
+$('#sos-recording-enabled').disabled=!$('#sos-video-enabled').checked;
+const syncSosVideoOptions=()=>{
+ const live=$('#sos-video-enabled').checked;
+ $('#sos-recording-enabled').disabled=!live;
+ if(!live)$('#sos-recording-enabled').checked=false;
+ $('#sos-video-settings-status').textContent=live?'Live video opt-in is enabled. Recording '+($('#sos-recording-enabled').checked?'is also enabled.':'remains disabled.'):'Live video and recording are disabled.';
+};
+$('#sos-video-enabled').addEventListener('change',syncSosVideoOptions);
+$('#sos-recording-enabled').addEventListener('change',syncSosVideoOptions);
+syncSosVideoOptions();
+$('#sos-video-settings-status').textContent=saved.sosVideoEnabled?'Live video opt-in is enabled. Recording '+(saved.sosRecordingEnabled?'is also enabled.':'remains disabled.'):'Live video and recording are disabled.';
 $('#sos-voice-language').value=saved.sosVoiceLanguage||'bn-BD';
 $('#voice-preset').value=saved.speechPreset;
 $('#speech-engine').value=saved.speechEngine==='gemini'?'device':saved.speechEngine;

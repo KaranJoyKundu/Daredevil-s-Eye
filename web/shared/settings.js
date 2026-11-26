@@ -21,6 +21,8 @@ const DEFAULTS = Object.freeze({
   speechInputLanguage: 'bn-BD',
   sosShakeEnabled: false,
   sosVoiceEnabled: false,
+  sosVideoEnabled: false,
+  sosRecordingEnabled: false,
   sosVoiceLanguage: 'bn-BD',
   speechRate: 0.96,
   speechPitch: 1.08,

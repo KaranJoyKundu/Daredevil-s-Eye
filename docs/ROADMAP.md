@@ -99,6 +99,16 @@ Partly done. Email and password accounts, private photo history, guest history, 
 - [ ] Consider storing a keyed hash or shortened IP signal where sufficient; minimise raw IP retention and set an explicit deletion period.
 - [ ] Add tests for OTP expiry, reuse, brute-force resistance, quota concurrency, duplicate accounts, phone validation, admin authorisation and data deletion.
 
+## Current implementation handoff — 26 November 2026
+
+- The current camera manager, phone camera preview, ESP32 still capture and Action-page ESP32 live MJPEG preview are merged into main. Owner-reported physical verification covers /stream and /capture only; Android and flash/LED checks remain open.
+- PR #52 implements the next-generation camera/emergency software milestones: optional five-photo text-only memory; paired WebRTC SOS live video; optional five-minute/50 MB private recording; account playback/download/delete; 30-day cleanup; consent/privacy disclosures; and deployment documentation.
+- A fresh backup branch, backup/main-2026-11-26-before-camera-emergency-merge, was created from main commit 57ff340 before this feature merge. Supabase migrations for scene memory and emergency recording metadata have been applied to the linked project. RLS is enabled, browser roles have explicit deny policies, service_role access was verified, and the five-observation retention trigger is installed.
+- PR #52 exact-head GitHub Actions passed in run 45750076584: tests, syntax checks, Worker bundle and Durable Object migration validation. Production deployment is intentionally pending the private R2 bucket.
+- Cloudflare R2 bucket daredevils-eye-incident-recordings and TURN relay secrets are not yet provisioned. Do not merge/deploy the R2 binding until the bucket exists. The live video may work on direct paths without TURN, but cross-network success is not guaranteed.
+- The wider roadmap still has separate unfinished work: native Android volume-key wrapper, remote ESP32 gateway/relay, email OTP and signup profile fields, 10-detection guest quota and server-enforced account quotas, protected admin usage console/CSV export, and independent security/accessibility/real-user reviews. These are not included in PR #52 and must not be described as completed.
+- Hardware/browser acceptance still requires the Galaxy A55 on Android 16, a second receiver phone, screen-lock/background tests, TalkBack and blind/low-vision feedback sessions.
+
 ## Phase 5 — research and public release readiness
 
 - [ ] Threat model and independent security review.

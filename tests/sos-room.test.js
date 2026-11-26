@@ -109,3 +109,60 @@ test('SOS pairing directory rate limits guesses by IP',async()=>{
  const blocked=await directory.fetch(post('/pair',{code:'YYYYYY'},{'cf-connecting-ip':'203.0.113.5'}));
  assert.equal(blocked.status,429);
 });
+
+test('emergency video requires a confirmed SOS and paired receiver, then exchanges WebRTC signalling',async()=>{
+ const room=new SOSRoom(makeRoomState(),{TURN_URL:'turn:turn.example:3478',TURN_USERNAME:'temporary-user',TURN_CREDENTIAL:'temporary-secret'});
+ const paired=await (await room.fetch(post('/pair',{}))).json();
+ const before=await room.fetch(post('/video-start',{deviceId:deviceA,eventId:'not-an-event'}));
+ assert.equal(before.status,409);
+ const triggered=await (await room.fetch(post('/trigger',{}))).json();
+ const started=await room.fetch(post('/video-start',{deviceId:deviceA,eventId:triggered.eventId}));
+ const session=await started.json();
+ assert.equal(session.ok,true);
+ assert.equal(session.turnConfigured,true);
+ const offer={type:'offer',sdp:'v=0\\r\\no=- 1 1 IN IP4 127.0.0.1'};
+ const stored=await room.fetch(post('/video-offer',{deviceId:deviceA,sessionId:session.sessionId,sdp:offer}));
+ assert.equal((await stored.json()).offerStored,true);
+ const receiverPoll=await room.fetch(post('/video-poll',{receiverToken:paired.receiverToken,sessionId:session.sessionId,after:0}));
+ const receiverData=await receiverPoll.json();
+ assert.equal(receiverData.offer.sdp,offer.sdp);
+ assert.equal(receiverData.iceServers.length,2);
+ const answer={type:'answer',sdp:'v=0\\r\\no=- 2 2 IN IP4 127.0.0.1'};
+ await room.fetch(post('/video-answer',{receiverToken:paired.receiverToken,sessionId:session.sessionId,sdp:answer}));
+ await room.fetch(post('/video-ice-receiver',{receiverToken:paired.receiverToken,sessionId:session.sessionId,candidate:{candidate:'candidate:1'}}));
+ const senderPoll=await room.fetch(post('/video-sender-poll',{deviceId:deviceA,sessionId:session.sessionId,after:0}));
+ const senderData=await senderPoll.json();
+ assert.equal(senderData.answer.sdp,answer.sdp);
+ assert.equal(senderData.receiverCandidates.length,1);
+ const stopped=await room.fetch(post('/video-stop-sender',{deviceId:deviceA,sessionId:session.sessionId}));
+ assert.equal((await stopped.json()).stopped,true);
+ const inactive=await room.fetch(post('/video-poll',{receiverToken:paired.receiverToken,sessionId:session.sessionId}));
+ assert.equal((await inactive.json()).active,false);
+});
+
+test('emergency video signalling rejects an unpaired or revoked receiver',async()=>{
+ const room=new SOSRoom(makeRoomState());
+ const noPair=await room.fetch(post('/trigger',{}));
+ assert.equal(noPair.status,409);
+ const invite=await (await room.fetch(post('/pair',{}))).json();
+ const active=await (await room.fetch(post('/trigger',{}))).json();
+ const started=await (await room.fetch(post('/video-start',{deviceId:deviceA,eventId:active.eventId}))).json();
+ assert.equal(started.ok,true);
+ await room.fetch(post('/revoke',{receiverToken:invite.receiverToken}));
+ const poll=await room.fetch(post('/video-poll',{receiverToken:invite.receiverToken,sessionId:started.sessionId}));
+ assert.equal(poll.status,403);
+});
+
+test('re-pairing stops any previous emergency video session',async()=>{
+ const room=new SOSRoom(makeRoomState());
+ const first=await (await room.fetch(post('/pair',{}))).json();
+ const event=await (await room.fetch(post('/trigger',{}))).json();
+ const session=await (await room.fetch(post('/video-start',{deviceId:deviceA,eventId:event.eventId}))).json();
+ assert.equal(session.ok,true);
+ const second=await (await room.fetch(post('/pair',{}))).json();
+ assert.notEqual(second.receiverToken,first.receiverToken);
+ const oldPoll=await room.fetch(post('/video-poll',{receiverToken:first.receiverToken,sessionId:session.sessionId}));
+ assert.equal(oldPoll.status,403);
+ const newPoll=await room.fetch(post('/video-poll',{receiverToken:second.receiverToken,sessionId:session.sessionId}));
+ assert.equal((await newPoll.json()).active,false);
+});
