@@ -41,10 +41,10 @@ The first deliverable may use the live HTTPS app as its WebView origin so existi
 
 ### Input arbitration and safety
 
-- Single-press actions must wait for the double-press window before firing Volume Up; otherwise a double press would accidentally run Describe before Repeat.
-- A Volume Up double press must produce Repeat only, not two Describe actions.
+- Single-press actions wait for the default 360 ms double-press window before firing Volume Up; otherwise a double press would accidentally run Describe before Repeat. Tune this value after physical A55 testing.
+- A Volume Up double press must produce Repeat only, not two Describe actions. The current default window is 360 ms.
 - Volume Down remains a single press for Ask. A long Volume Down press may invoke spoken Help only if it can be distinguished without delaying or swallowing ordinary volume changes; otherwise Help remains an in-app/voice action.
-- The simultaneous hold has priority over individual key actions. Do not send SOS on key-down alone.
+- The simultaneous hold has priority over individual key actions. The current default SOS hold duration is 700 ms. Do not send SOS on key-down alone.
 - SOS requires a clear spoken confirmation and/or a deliberate on-screen/notification confirmation. Holding both keys only opens the confirmation flow.
 - Provide a setting to disable global interception and restore ordinary volume-key behaviour.
 - Explain that a global Accessibility Service needs explicit user enablement in Android Settings. Never enable it silently.
