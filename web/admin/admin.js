@@ -66,7 +66,8 @@ $('#esp32-stream-start')?.addEventListener('click',()=>{
 });
 $('#esp32-stream-stop')?.addEventListener('click',()=>{stopEsp32Stream(esp32Preview);esp32Preview.hidden=true;esp32Preview.style.display='none';if(esp32Status)esp32Status.textContent='Stream connection closed. The ESP32 firmware has no separate stream-off endpoint.';});
 window.addEventListener('pagehide',()=>stopEsp32Stream(esp32Preview));
-\n$('#personal-api-key').value=getSessionGeminiApiKey();
+
+$('#personal-api-key').value=getSessionGeminiApiKey();
 $('#personal-key-status').textContent=getSessionGeminiApiKey()?'A personal key is active for this tab.':'No personal key is set in this tab.';
 $('#save-personal-key').addEventListener('click',()=>{
  try{setSessionGeminiApiKey($('#personal-api-key').value);$('#personal-api-key').value='';$('#personal-key-status').textContent='Personal key active in this tab. Refreshing ranked models…';loadModels();}
