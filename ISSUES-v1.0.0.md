@@ -68,6 +68,10 @@ Status meanings: `DONE IN CODE` is not the same as device-tested or production-r
 ### [ ] Security and accessibility audit
 - Audit WebView origin/navigation allowlist, local-network camera access, CSP, permissions, data retention, photo metadata, pairing tokens, rate limits, TalkBack, focus order and touch targets.
 
+### [x] Android launcher shortcuts added
+- Describe, Ask AI, Repeat and SOS confirmation are available as Android launcher shortcuts.
+- **DEVICE TEST REQUIRED:** long-press app icon and verify each shortcut launches the correct action; SOS must still require the app's confirmation flow.
+
 ## Work committed in this engineering branch
 - Optional Accessibility onboarding and supported restricted-setting guidance.
 - Back fallback for secondary routes.
