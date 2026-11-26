@@ -545,6 +545,8 @@ $('#esp32-action-stream-start')?.addEventListener('click',async()=>{
  try{
   if(esp32StreamPreview)esp32StreamPreview.hidden=false;
   if(window.Capacitor?.isNativePlatform?.()){
+   const plugin=window.DaredevilVolumeControls;
+   if(!plugin?.fetchEsp32Snapshot)throw new Error('Native camera bridge is not ready. Close and reopen Daredevil’s Eye, then retry.');
    stopNativeEsp32Preview();
    if(esp32CameraStatus)esp32CameraStatus.textContent='Connecting to ESP32 using native local-network snapshots…';
    await refreshNativeEsp32Preview();
