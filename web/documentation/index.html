@@ -103,6 +103,49 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(-
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important}}
 
+
+/* Compact document flow: override the shared site's one-screen section defaults. */
+html,body{min-height:100%;background:var(--doc-bg)!important}
+body{max-width:1120px!important;padding:28px clamp(18px,4vw,42px) 64px!important}
+main{display:grid!important;gap:0!important}
+main>section.hero,main>section.panel{
+  height:auto!important;min-height:0!important;min-height:unset!important;
+  padding:26px 0!important;margin:0!important;overflow:visible!important;
+  background:transparent!important;border:0!important;border-radius:0!important;
+  box-shadow:none!important;
+}
+main>section.hero{padding-top:18px!important;padding-bottom:30px!important}
+main>section.panel{border-top:1px solid var(--doc-line)!important}
+main>section.panel.warning{
+  margin:12px 0!important;padding:14px 16px!important;
+  border:1px solid rgba(243,200,121,.24)!important;
+  border-left:3px solid var(--doc-warn)!important;border-radius:10px!important;
+  background:rgba(139,102,38,.10)!important;
+}
+.hero:after{display:none}
+.hero:before{content:"";position:absolute;left:0;top:0;width:90px;height:3px;background:linear-gradient(90deg,var(--doc-accent),var(--doc-accent-2));border-radius:4px}
+.hero h1{font-size:clamp(2.35rem,6vw,4.1rem)!important;margin:14px 0 10px!important}
+.hero>p:nth-of-type(3){max-width:780px}
+.progress{max-width:680px;margin-top:18px!important}
+#phases{gap:0!important}
+#phases>.phase{background:transparent!important;border:0!important;border-top:1px solid var(--doc-line)!important;border-radius:0!important;box-shadow:none!important;padding:24px 0!important;overflow:visible!important}
+.phase h2{margin-bottom:10px!important}
+.task{padding:10px 8px!important}
+.panel ul{margin:10px 0}
+.panel li{padding:4px 0}
+@media(min-width:701px){
+ .hero .actions{display:flex;gap:12px;flex-wrap:wrap}
+ .panel table{max-width:100%}
+}
+@media(max-width:700px){
+ body{padding:18px 18px 44px!important}
+ main>section.hero,main>section.panel{padding:20px 0!important}
+ main>section.hero{padding-top:12px!important}
+ .hero h1{font-size:clamp(2.25rem,12vw,3.4rem)!important}
+ .actions{display:flex!important;flex-direction:column;align-items:stretch}
+ .actions a,button{width:100%;box-sizing:border-box}
+}
+
 </style>
 </head>
 <body>
