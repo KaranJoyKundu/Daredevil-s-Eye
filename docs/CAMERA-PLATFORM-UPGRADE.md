@@ -2,7 +2,7 @@
 
 **Project:** Daredevil's Eye  
 **Repository:** KaranJoyKundu/Daredevil-s-Eye  
-**Status:** Camera foundation implemented on current `main`; phone torch added; firmware patch prepared separately; physical device validation remains open.  
+**Status:** Camera foundation and ESP32 controls are implemented on `main`. Owner reports that live MJPEG streaming and normal JPEG capture work on the physical ESP32-CAM (2026-11-26). Flash capture, LED brightness, Android Chrome Local Network Access, scene memory, SOS live video and incident recording remain unverified or unimplemented as detailed below.  
 **Plan date:** 2026-11-26  
 **Production baseline:** `47618f8445a10ffc28e65f37fbabe21149f5aa2f`
 
@@ -195,10 +195,10 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - [x] Stream start/stop by attaching/removing the MJPEG image URL.
 - [x] LED brightness and off controls (0..255).
 - [x] No-flash and flash capture paths; Admin Image Lab now exposes a flash-capture action.
-- [ ] Validate all ESP32 controls on physical hardware.
+- [x] Owner-confirmed physical hardware test: `:81/stream` live MJPEG stream and `/capture` still JPEG both work (2026-11-26; user report).\n- [ ] Validate LED brightness, flash-off and `/capture-flash` on physical hardware.
 - [x] Inspect the supplied firmware's existing GET CORS headers; no legacy PNA preflight code is needed for the current simple GET requests.
 - [x] Prepare a separate `app_httpd.cpp` patch registering `/capture-flash` and restoring the previous LED brightness after capture. This patch is not part of the web repository and has not been flashed.
-- [ ] Compile and flash the firmware patch; verify `/capture-flash`, `/capture`, LED brightness and `:81/stream` on the physical board.
+- [ ] Compile and flash the firmware patch; verify `/capture-flash` and LED brightness on the physical board. `/capture` and `:81/stream` are owner-reported working; record firmware SHA and exact test setup on the next hardware pass.
 - [ ] Validate Chrome Local Network Access permission and same-Wi-Fi access on the target Android Chrome.
 - [x] Phone torch capability detection and guarded UI control (shown only when the active phone-camera track advertises torch support).
 
@@ -299,7 +299,7 @@ n### Port onto current main on 2026-11-26
 - Physical torch behaviour still requires a real Android Chrome test; not every Galaxy A55/browser build exposes the torch constraint.
 
 
-### Current-main camera validation update — 2026-11-26
+### Physical camera report — 2026-11-26\n\n- Owner confirmed the ESP32-CAM live MJPEG stream and still-image capture are working. This validates the stream and normal capture path only.\n- Still pending: flash-assisted capture, LED brightness control, browser CORS/canvas access, Chrome Local Network Access permission on Android, and full Action-page Describe flow using the configured ESP32.\n- The actual board IP and firmware binary/source hash were not included in the report; keep the app's per-device address configurable and do not infer the IP from this test.\n\n### Current-main camera validation update — 2026-11-26
 
 - PR #31 includes guarded phone torch detection and UI control. The control is shown only when the active camera track exposes torch support.
 - Fixed malformed Admin camera markup and stale ESP32 address guidance.
