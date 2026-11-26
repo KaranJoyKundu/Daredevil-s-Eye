@@ -75,7 +75,11 @@ export function getPhoneCameraState() {
 }
 
 /** Report whether the active phone camera exposes a controllable torch. */
-export function getPhoneCameraStream() {\n  return phoneStream?.getVideoTracks().some(track => track.readyState === 'live') ? phoneStream : null;\n}\n\nexport function getPhoneTorchState() {
+export function getPhoneCameraStream() {
+  return phoneStream?.getVideoTracks().some(track => track.readyState === 'live') ? phoneStream : null;
+}
+
+export function getPhoneTorchState() {
   const track = phoneStream?.getVideoTracks().find(item => item.readyState === 'live');
   if (!track) return { available: false, enabled: false };
   let capabilities = {};
