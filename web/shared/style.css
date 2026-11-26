@@ -420,3 +420,7 @@ a{text-underline-offset:3px}
 .blind-page main.blind-grid{flex:1 1 auto;height:auto;min-height:0;max-height:none;padding:6px}
 .blind-page .blind-utility{flex:0 0 60px;height:60px;padding:4px 7px}
 
+
+/* Visible status for Blind mode when device speech is unavailable or quiet. */
+.blind-action-feedback{flex:0 0 auto;width:calc(100% - 20px);margin:0 10px 6px;padding:8px 11px;border:1px solid #55716b;border-radius:10px;background:#121816;color:#fff;font-size:.88rem;line-height:1.35;text-align:center;overflow-wrap:anywhere}
+.blind-action-feedback[hidden]{display:none!important}
