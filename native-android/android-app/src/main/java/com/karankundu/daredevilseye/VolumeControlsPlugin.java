@@ -120,11 +120,17 @@ public class VolumeControlsPlugin extends Plugin {
                 java.net.URL url = new java.net.URL(address);
                 String host = url.getHost();
                 String[] octets = host.split("\\.");
-                if (url.getProtocol().equals("https") == false && !url.getProtocol().equals("http")) {
+                if (!url.getProtocol().equals("https") && !url.getProtocol().equals("http")) {
                     throw new IllegalArgumentException("Only HTTP camera URLs are supported.");
                 }
                 if (octets.length != 4) throw new IllegalArgumentException("Camera must use a private IPv4 address.");
-                int a = Integer.parseInt(octets[0]), b = Integer.parseInt(octets[1]);
+                int[] ip = new int[4];
+                for (int i = 0; i < 4; i++) {
+                    if (!octets[i].matches("\\d{1,3}")) throw new IllegalArgumentException("Camera must use a private IPv4 address.");
+                    ip[i] = Integer.parseInt(octets[i]);
+                    if (ip[i] < 0 || ip[i] > 255) throw new IllegalArgumentException("Camera IPv4 address is invalid.");
+                }
+                int a = ip[0], b = ip[1];
                 boolean privateHost = a == 10 || (a == 172 && b >= 16 && b <= 31) ||
                     (a == 192 && b == 168) || (a == 169 && b == 254);
                 if (!privateHost) throw new IllegalArgumentException("Camera URL must point to a private local-network address.");
