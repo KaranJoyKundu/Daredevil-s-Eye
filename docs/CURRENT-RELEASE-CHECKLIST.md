@@ -1,80 +1,85 @@
-# Daredevil's Eye — current release checklist
+# Current release and validation checklist
 
-Updated: 20 November 2026  
-Target handset: Samsung Galaxy A55 5G, Android 16 / One UI 8  
-Production URL: https://daredevils-eye.karanjoykundu.workers.dev/
+**Last reviewed:** 26 November 2026  
+**Production URL:** https://daredevils-eye.karanjoykundu.workers.dev/  
+**Android validation target:** Samsung Galaxy A55 5G · Android 16 · One UI 8
 
-This document is the current checklist. It supersedes older status text where the earlier descriptions conflict. Implemented code is not the same as verified physical-device behavior.
+This checklist is evidence-based. “Implemented” means the repository contains the implementation. It does not imply that a real user, browser, phone, camera or receiver has passed an end-to-end test.
 
-## Completed in source
+## Production web app
 
-| Area | Current behavior | Verification still required |
+| Area | Current evidence | Remaining validation |
 |---|---|---|
-| Landing page | `/` is the project landing page. `/action/` is the main app and `/blind/` is Blind mode. | None. Checked in Chrome at desktop, tablet and mobile sizes. |
-| Language switch | The English / বাংলা switch changes the interface, spoken messages and AI answers. The Bangla switch message is a direct translation of the English one. | A native speaker's review of the Bangla text. |
-| Bangla speech on desktop | If the device has no Bengali voice (for example Windows), answers are spoken by Gemini text-to-speech through `/api/speech`. Android uses its own bn-BD voice. | Listen on a Windows PC. Check quota use. |
-| Assistant modes | Admin presets: All-in-one, Single object, Medicine, Read text, Taka, Colour and Custom. The system prompt can be edited (up to 4,000 characters), and the safety rules are always added. | Check answer quality for each preset with real photos. |
-| Installable app | Web manifest, service worker, icons and three home-screen shortcuts. | Install and launch on the Galaxy A55. |
-| Shutter sound | One recorded click (`web/shared/shutter.mp3`) for each capture. | Check that it is audible on a phone. Confirm the file's licence. |
-| Gemini model | Gemini 3.8 Flash is the default. Old saved Gemini 3.6 Flash selections migrate to 3.8 Flash. | Live-key quality/quota test. |
-| Bangla defaults | Bangla (Bangladesh) is the default for AI replies, device speech, input preference and SOS voice language. Current Terms acceptance writes these defaults to existing browser settings. | Bengali TTS and speech-input testing on the A55. |
-| Repeated safety warnings | Generic hazard warnings are removed from every AI response. Safety limits remain in Terms, Privacy and the consent screen. | Confirm fresh assets load after deployment. |
-| Bengali voice | Browser voice enumeration is asynchronous; code waits for it and requests Android's bn-BD locale even when Chrome does not list a Bengali voice. Admin has refresh and preview controls. | Actual Google TTS playback/pronunciation on A55. |
-| Account page | Redesigned responsive Account & History dashboard with sign-in, private account photos, guest photos, personal Gemini key, usage summary and deletion controls. | Mobile/TalkBack usability. |
-| Signed-in photo history | Submitted compressed JPEG is written to the private bucket before Gemini starts; record is updated to completed or failed afterward. | Production secrets are now uploaded; end-to-end live persistence still needs user-device verification. |
-| Guest photo history | Guest session uses a random 256-bit HttpOnly cookie. Only its SHA-256 digest is stored. Guest photos are private and accessible through this browser's cookie. | Production secrets are now uploaded; end-to-end live persistence still needs user-device verification. |
-| Guest retention | Guest photo rows and objects are scheduled for deletion after 30 days using a daily Worker Cron trigger. | Check scheduled execution in Cloudflare. |
-| Support page | bKash/Nagad support page exists. Buy Me a Coffee remains skipped because no creator URL exists. | Nothing pending unless a creator URL is supplied. |
+| Main site and routes | Cloudflare Worker production deployment is active; routes include Home, Action, Blind, Admin, Diagnostics and support pages | Smoke-test the critical flows after future shared-script or routing changes |
+| Action startup | PR #68 merged; startup-order failure was fixed; phone photo picker opened in browser verification; owner later confirmed app working | Re-test Describe, Ask, camera-source selection, upload, SOS arm/cancel, Repeat and Stop after relevant changes |
+| Speech feedback | PR #69 merged; speech-engine failure no longer replaces visible action status | Verify on physical Android devices and with Bengali/English voices |
+| Privacy notice | Requested informational notice; no blocking popup, Accept button, checkbox or history opt-in toggle | Ensure future changes do not reintroduce the removed consent UI |
+| Bangla / English | Bangla is the default and English is selectable | Native-speaker review of translations and A55 pronunciation |
+| Phone and ESP32 camera | Phone upload/capture and ESP32 stream/still-capture support exist | Test A55 WebView local-network access, JPEG quality/size, flash/LED and shutter audibility |
+| Gemini vision and voice | Worker routes support vision, transcription, speech and compatible-model fallback | Record real-device quality, latency, quota and failure behaviour |
+| SOS | Pairing, receiver tokens, confirmation and Web Push implementation exist | Test two physical phones, acknowledgement, cancellation, offline and locked receiver |
+| Account/guest history | Supabase schema, private bucket and Worker history paths exist | End-to-end guest and signed-in save/view/delete plus 30-day cleanup verification |
+| Accessibility | Blind mode, spoken help, status announcements and haptics exist in source | TalkBack/NVDA and supervised blind/low-vision evaluation |
 
-## Model decision
+## Native Android companion
 
-The default is Gemini 3.8 Flash, not 3.6 Flash. This is already configured in the Worker, Wrangler config and browser defaults. Keep 3.8 Flash rather than downgrading to an older model. Existing saved 3.6 selections are normalized to 3.8.
-
-## Production activation
-
-Supabase project: dyfpawbkttbgoorcgwbd, Mumbai ap-south-1. The base history schema and guest-history schema have been applied; the daredevil-history bucket is private.
-
-The required Worker secrets were successfully uploaded by production workflow run #448 (and re-uploaded by #450):
-- SUPABASE_URL
-- SUPABASE_PUBLISHABLE_KEY
-- SUPABASE_SECRET_KEY
-- API_KEY_ENCRYPTION_KEY
-- IP_HASH_SECRET
-
-The modern publishable/secret pair, project URL, encryption key and HMAC key are now present on the production Worker. Do not add them again unless rotating credentials. Keep the Supabase Secret key private. Supabase Auth must allow the production site URL.
-
-Do not assume history is live merely because the Worker deployment succeeds. Confirm the Account page service status, then submit one guest photo and one signed-in photo and verify they appear.
-
-## Remaining tasks, in priority order
-
-| Priority | Remaining item | Done condition |
+| Area | Current evidence | Remaining validation |
 |---|---|---|
-| P0 | Add the five Supabase secrets and deploy | Done: workflow runs #448 and #450 uploaded the modern Supabase keys and shared secrets successfully. |
-| P0 | Guest-history end-to-end test | Submit while signed out; confirm the photo appears after refresh, opens privately, and can be deleted. |
-| P0 | Signed-in history end-to-end test | Submit while signed in; confirm the photo appears on another browser/device and deletion works. |
-| P1 | Guest 30-day cleanup | Confirm Cloudflare Cron runs; test purge with a controlled old timestamp in a test database. |
-| P1 | Bengali output on A55 | Download Google Bengali speech data; use Admin refresh and preview; test prompts, errors and answers. |
-| P1 | Bangla speech input on A55 | Test Bangla-only and mixed Bangla-English transcription and record accuracy. |
-| P1 | Account UI/accessibility | Test small-screen layout, TalkBack focus, labels, live regions, large targets and delete confirmations. |
-| P1 | Camera-history semantics | Confirm submitted compressed image is saved; preview-only cancelled image is not saved; failed Gemini analysis still leaves the image record. |
-| P1 | Screen-off SOS | Pair a second phone, lock it, send SOS and verify actual notification visibility/sound/vibration. |
-| P2 | ESP32-CAM/shutter/compression | Owner confirms live MJPEG stream and normal JPEG capture work (2026-11-26). Still test Android Chrome Local Network Access, Action-page capture/analysis, flash capture, LED brightness, shutter audibility, selected-frame quality and JPEG size under 4 MB. |
-| P2 | Accessibility/security review | Test TalkBack, false-positive SOS behavior and re-run Supabase security/performance advisors after final schema changes. |
-| Optional | Buy Me a Coffee | Add a creator page only when one exists; no placeholder payment URL is published. |
+| Capacitor/native project | Merged PR #64; native source and bridge are in `main` | Install and launch on the target A55 |
+| Debug APK | CI workflow #45755955230 succeeded; artifact ID `15086769593`; recorded SHA-256 below | Install, launch, update/uninstall behaviour and permissions on A55 |
+| Production bridge | Deployment workflow #45756257754 succeeded | Verify all native-to-web actions on handset |
+| Volume mapping | Native Activity and optional Accessibility Service implementation are in repository | Test Up, Down, double Up, simultaneous hold, missed/duplicate events and ordinary volume restoration |
+| Global shortcuts | User-enabled Accessibility Service implementation exists | Verify on A55 with other apps foregrounded; test TalkBack conflict |
+| Screen-off/lock-screen | Best-effort design and Android limitations are documented | Test separately; never promise camera/microphone always work while locked |
+| Signed release | Signing workflow and owner setup guide exist | Owner creates and backs up keystore, adds protected secrets, publishes signed APK and tests upgrade |
 
-## Privacy boundaries
+Debug APK details recorded on 26 November:
+- Workflow: [Android debug build #45755955230](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/45755955230)
+- Artifact: `daredevils-eye-android-debug` (ID `15086769593`); recorded expiry 10 December 2026
+- SHA-256: `410ccff91587d07f8c7a819e6e2a4cc2b84c3bc69e6ea283720185bd6feb851a`
+- This is a **debug-signed test APK**, not the permanent release-signed build. A later release signed with the owner's keystore will have a different signing identity; follow the release guide before installing/updating.
 
-- Signed-in history belongs to the authenticated user and remains until deleted.
-- Guest history is tied to this browser's random HttpOnly cookie and is deleted automatically after 30 days.
-- The cookie bearer token is never stored in the database; only its SHA-256 digest is stored.
-- Signed-in and guest photo rows may include a keyed HMAC IP fingerprint for aggregate counts; raw IP addresses are never stored. Guest browser user-agent strings are not stored, and the fingerprint is removed with the 30-day guest record.
-- The saved image is the selected/compressed photo submitted to AI. Discarded internal camera frame candidates are not stored.
-- Preview-only photos cancelled before submission are not stored.
-- Audio recordings are not saved to the photo-history database.
+## Safety and privacy release gates
 
-## Completed merge and deployment record
+- [ ] No secrets, API keys, receiver tokens, session cookies or private user data are committed or embedded in APK assets.
+- [ ] Privacy notice accurately describes image/audio processing and optional history.
+- [ ] No blocking consent popup, Accept button, checkbox or photo-history toggle has been reintroduced.
+- [ ] Medicine, banknote and text-reading outputs are treated as fallible; high-stakes details are checked independently.
+- [ ] SOS requires deliberate confirmation and never claims delivery without evidence.
+- [ ] No navigation, road-crossing, medical, emergency-service or screen-off reliability claims exceed test evidence.
+- [ ] ESP32-CAM HTTP endpoint remains restricted to a trusted local network.
 
-- PR #7 merged to main as 7f5b3ad8c45fc5516559357c0f4268d3e0819015. CI run #447 passed 72/72 tests; main production deployment #448 succeeded and uploaded the Supabase URL, modern publishable/secret keys, encryption key and IP-hash secret.
-- PR #8 merged to main as b6a6ffc25b15dcee76518cdb46069df52170d00a. CI run #449 passed 72/72 tests; the follow-up main deployment #450 succeeded and re-uploaded the Supabase secrets.
-- Supabase security and health advisors reported no findings after the guest schema update. The performance advisor only reported unused indexes while the tables are still empty.
-- Remaining live checks are guest/account photo persistence, 30-day Cron execution, A55 Bengali speech and second-phone screen-off SOS.
+## Required physical test record
+
+For every device test, record: date, exact handset/model code, Android and One UI build, app build/commit, browser (if relevant), permissions, network conditions, steps, expected result, observed result and pass/fail.
+
+- [ ] Galaxy A55: install and first launch of debug APK.
+- [ ] Volume Up = one Describe; no duplicate action.
+- [ ] Volume Down = Ask AI; microphone permission and recording feedback.
+- [ ] Double Volume Up = Repeat only; no Describe leakage.
+- [ ] Hold both = SOS confirmation only; cancellation works; no accidental dispatch.
+- [ ] Global shortcuts with Accessibility Service enabled and disabled.
+- [ ] TalkBack on/off; normal volume controls restored when global shortcuts are off.
+- [ ] Foreground, other-app foreground, locked screen and display-off cases tested separately.
+- [ ] Bangla, English and mixed-language speech input/output.
+- [ ] Phone camera, gallery picker and ESP32 camera in the native WebView.
+- [ ] RFID medicine announcement and duplicate-event handling.
+- [ ] SOS from sender to a second physical receiver, including acknowledgement and failure cases.
+- [ ] Account/guest history save, refresh, view and delete.
+- [ ] Supervised accessibility feedback from blind/low-vision participants with informed consent.
+
+## Signed APK release gate
+
+- [ ] Create a persistent owner-controlled Android keystore.
+- [ ] Keep at least one encrypted offline backup and store passwords in a password manager.
+- [ ] Add the four protected GitHub Actions secrets described in [Android release signing](ANDROID-RELEASE-SETUP.md).
+- [ ] Run the signed release workflow using a new version tag.
+- [ ] Verify APK signature and SHA-256 checksum.
+- [ ] Install and upgrade-test the signed APK on the A55.
+- [ ] Publish release notes and a clear download link.
+
+## Production deployment record
+
+The documentation/layout fix PR #72 is merged. Main deployment workflow [#45843735382](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/45843735382) completed successfully. This proves the deployment workflow completed; it does not replace a manual smoke test of every page.
+
+See [Project status](STATUS.md), [Native Android plan](NATIVE-ANDROID-APP.md), [Testing](TESTING.md) and [Deployment](DEPLOYMENT.md).
