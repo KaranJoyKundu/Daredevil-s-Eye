@@ -3,7 +3,7 @@ import { startPhoneCamera, capturePhoneFrame, stopPhoneCamera, captureEsp32Photo
 import { requestAI } from './api.js?v=20261117-release5';
 import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release5';
 import { getSettings, saveSettings } from './settings.js?v=20261117-release5';
-import { hasCurrentConsent, acceptConsent, rejectConsent } from './consent.js?v=20261126-returning1';
+import { hasCurrentConsent, acceptConsent, rejectConsent, isGrandfatheredReturningUser } from './consent.js?v=20261126-returning2';
 import { createShakeSequenceTracker, getShakeMagnitude, matchSosVoiceCommand } from './sos-triggers.js?v=20261117-release1';
 import { mountLanguageSwitch, toBangla } from './language.js?v=20261117-release5';
 import { startRFIDListener } from './rfid-listener.js?v=20261126-dedup1';
@@ -501,6 +501,8 @@ window.addEventListener('pagehide',()=>{stopPhoneCamera();stopEsp32Stream(esp32S
 const termsCheck=$('#consent-terms-check'),acceptButton=$('#consent-accept');
 if(termsCheck&&acceptButton){
  const syncAccept=()=>{acceptButton.disabled=!termsCheck.checked;};
+ // Keep returning users' prior accepted status if this panel is shown after an update.
+ termsCheck.checked=isGrandfatheredReturningUser();
  termsCheck.addEventListener('change',syncAccept);syncAccept();
 }
 $('#consent-accept')?.addEventListener('click',()=>{

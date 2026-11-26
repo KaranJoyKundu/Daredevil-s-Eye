@@ -1,4 +1,4 @@
-import {hasCurrentConsent,acceptConsent,rejectConsent,isGrandfatheredReturningUser,grantLegacyAccountAccess} from './consent.js?v=20261126-returning1';
+import {hasCurrentConsent,acceptConsent,rejectConsent,isGrandfatheredReturningUser,grantLegacyAccountAccess} from './consent.js?v=20261126-returning2';
 import {saveSettings} from './settings.js?v=20261117-release5';
 import {mountLanguageSwitch} from './language.js?v=20261117-release5';
 import {startRFIDListener} from './rfid-listener.js?v=20261126-bg2';
@@ -26,6 +26,7 @@ startRFIDListener();
 // including direct visits to Admin, Diagnostics, Account and the SOS receiver.
 const protectedPaths=new Set(['/','/action/','/blind/','/admin/','/diagnostics/','/help/','/sos-receiver/','/medicine/']);
 const currentPath=location.pathname.replace(/\/?$/,'/');
+const returningUser=isGrandfatheredReturningUser();
 if(protectedPaths.has(currentPath)&&!hasCurrentConsent()&&!document.querySelector('#consent-panel')){
  const gate=document.createElement('section');
  gate.id='consent-panel';gate.className='consent-gate';gate.setAttribute('role','dialog');gate.setAttribute('aria-modal','true');
@@ -35,13 +36,14 @@ if(protectedPaths.has(currentPath)&&!hasCurrentConsent()&&!document.querySelecto
   <p>Photos and voice requests may be processed by this app, Cloudflare and Google Gemini. After you accept, each photo submitted for AI analysis is saved automatically: signed-in users get private account history, while guests get private history tied to this browser for 30 days. You can turn photo saving off in Admin.</p>
   <p>The Terms &amp; Conditions and Privacy pages contain the complete safety and data details.</p>
   <p>Read the <a href="/terms/">Terms &amp; Conditions</a> and <a href="/privacy/">Privacy details</a>. You can also <a href="/account/">sign in or create an account</a>.</p>
-  <label class="consent-check"><input id="shared-consent-check" type="checkbox"> I have read and agree to the Terms &amp; Conditions and Privacy notice.</label>
+  <label class="consent-check"><input id="shared-consent-check" type="checkbox"${returningUser ? " checked" : ""}> I have read and agree to the Terms &amp; Conditions and Privacy notice.</label>
   <p id="shared-consent-status" class="hint" role="status" aria-live="polite"></p>
   <div class="consent-actions"><button id="shared-consent-accept" type="button" disabled>Accept &amp; continue</button><button id="shared-consent-reject" type="button" class="secondary">Reject</button></div>
  </div>`;
  document.body.append(gate);
  const check=gate.querySelector('#shared-consent-check'),accept=gate.querySelector('#shared-consent-accept'),status=gate.querySelector('#shared-consent-status');
  check.addEventListener('change',()=>{accept.disabled=!check.checked;});
+ accept.disabled=!check.checked;
  accept.addEventListener('click',()=>{
   if(!check.checked){status.textContent='Please tick the box to accept the terms.';return;}
   if(!acceptConsent()){status.textContent='Could not save acceptance in this browser. Enable site storage and try again.';return;}
