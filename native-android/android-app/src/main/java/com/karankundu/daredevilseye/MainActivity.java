@@ -57,6 +57,7 @@ public class MainActivity extends BridgeActivity {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 8401);
         }
         dispatchPendingAction();
+        handleLauncherShortcut(getIntent());
         showAccessibilitySetupOnce();
     }
 
@@ -78,6 +79,7 @@ public class MainActivity extends BridgeActivity {
         super.onNewIntent(intent);
         setIntent(intent);
         dispatchPendingAction();
+        handleLauncherShortcut(intent);
     }
 
     private void showAccessibilitySetupOnce() {
@@ -160,6 +162,16 @@ public class MainActivity extends BridgeActivity {
     private void cancelDescribe() {
         if (describeRunnable != null) handler.removeCallbacks(describeRunnable);
         describeRunnable = null;
+    }
+
+    private void handleLauncherShortcut(Intent intent) {
+        if (intent == null || !intent.hasExtra("dee_shortcut_action")) return;
+        String action = intent.getStringExtra("dee_shortcut_action");
+        intent.removeExtra("dee_shortcut_action");
+        if ("describe".equals(action) || "ask".equals(action) ||
+            "repeat".equals(action) || "sos".equals(action)) {
+            dispatchAction(action);
+        }
     }
 
     private void dispatchAction(String action) {
