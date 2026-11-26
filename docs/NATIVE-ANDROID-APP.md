@@ -189,6 +189,8 @@ Do not mark optional roadmap work (scene memory, WebRTC SOS video, R2 incident r
 
 ## 8. Build and release policy
 
+See [ANDROID-RELEASE-SETUP.md](ANDROID-RELEASE-SETUP.md) for the exact Windows PowerShell commands to create the persistent signing keystore, add protected GitHub Actions secrets and publish the APK.
+
 - Main remains production; do all Android work on `feat/native-android-capacitor-a55`.
 - Keep `backup/main-before-native-android-2026-11-26` as the rollback point.
 - CI must run the existing Node tests and syntax checks plus Android Gradle build.
