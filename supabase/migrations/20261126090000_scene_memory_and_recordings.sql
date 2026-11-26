@@ -59,6 +59,7 @@ begin
 end;
 $$;
 revoke all on function public.trim_scene_memory_to_five() from public, anon, authenticated;
+grant execute on function public.trim_scene_memory_to_five() to service_role;
 drop trigger if exists scene_memory_keep_five on public.scene_memory_entries;
 create trigger scene_memory_keep_five
 after insert on public.scene_memory_entries
