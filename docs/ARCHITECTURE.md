@@ -93,3 +93,8 @@ SOS is started by the user. A push service accepting the notification does not p
 - Not built yet: email OTP, guest trial limits, per-user quotas and an admin usage dashboard (see [Roadmap](ROADMAP.md)). An IP address alone must not be treated as one person.
 
 See [Supabase setup](SUPABASE-ACCOUNT-HISTORY-SETUP.md).
+
+
+## Native Android application
+
+The native Android companion is documented in [NATIVE-ANDROID-APP.md](NATIVE-ANDROID-APP.md). It uses Capacitor for the Android WebView and a native volume-key plugin plus an optional, explicitly enabled Accessibility Service. The current first wrapper loads the existing HTTPS Worker app so same-origin API calls and HttpOnly session cookies remain intact; it is online-first. Global volume shortcuts, screen-off event delivery, TalkBack coexistence and camera/microphone behaviour require physical Galaxy A55 validation. Never assume a WebView can run camera or microphone actions after Android suspends it.
