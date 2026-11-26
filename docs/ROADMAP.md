@@ -12,7 +12,7 @@ This roadmap replaces the old token/rate-limit checklist, which no longer descri
 - [x] One recorded shutter click per capture.
 - [x] Account and guest photo history (Supabase) with 30-day guest cleanup (17 November).
 - [ ] Real-device checks: listed in the [release checklist](CURRENT-RELEASE-CHECKLIST.md).
-- [ ] Native Android app for hardware volume-button shortcuts (Up = Describe, Down = Ask AI, both = SOS).
+- [ ] Native Android app for Galaxy A55 (Capacitor + native Android): approved mapping is Up = Describe, Down = Ask AI, double Up = Repeat, both held = SOS confirmation. Implementation is in progress; APK build, global Accessibility Service, screen-off tests and signed release remain open. See [Native Android app master plan](NATIVE-ANDROID-APP.md).
 
 ## Phase 0 — working public prototype foundation
 
@@ -107,3 +107,21 @@ Partly done. Email and password accounts, private photo history, guest history, 
 - [ ] Reliability, latency and cost/quota measurements under realistic loads.
 - [ ] Clear incident/support process, limitation statements and versioned release notes.
 - [ ] No safety-readiness claims without supporting test evidence.
+
+
+## Phase 6 — Native Android companion (implementation in progress)
+
+The owner approved a native Capacitor application for Samsung Galaxy A55 5G on Android 16 / One UI 8. The complete implementation checklist and status are maintained in [NATIVE-ANDROID-APP.md](NATIVE-ANDROID-APP.md) and the in-app [Documentation page](/documentation/).
+
+- [x] Create rollback branch and isolated implementation branch.
+- [x] Add owner-approved interaction mapping and screen-off safety requirements.
+- [x] Add Capacitor configuration, Android native source overlay and debug APK CI workflow.
+- [x] Add native foreground volume-key handling and optional global Accessibility Service source.
+- [x] Add native-to-web event bridge and Android settings controls.
+- [ ] Verify Android build and installable debug APK.
+- [ ] Test foreground, background, lock screen and screen-off key delivery on the actual Galaxy A55.
+- [ ] Validate TalkBack coexistence, Bangla/English speech, ESP32 camera, RFID and SOS.
+- [ ] Configure protected release signing secrets and publish signed APK to GitHub Releases.
+- [ ] Later: evaluate Google Play distribution.
+
+Do not claim screen-off operation is guaranteed. The optional Accessibility Service is user-enabled and may conflict with TalkBack; background camera/microphone startup remains subject to Android restrictions.

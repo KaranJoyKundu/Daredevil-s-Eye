@@ -1,0 +1,17 @@
+{
+  "appId": "com.karankundu.daredevilseye",
+  "appName": "Daredevil's Eye",
+  "webDir": "web",
+  "server": {
+    "url": "https://daredevils-eye.karanjoykundu.workers.dev/blind/",
+    "cleartext": false,
+    "androidScheme": "https",
+    "allowNavigation": [
+      "daredevils-eye.karanjoykundu.workers.dev"
+    ]
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true
+  }
+}

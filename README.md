@@ -6,7 +6,7 @@
 ![Tests](https://img.shields.io/badge/tests-80%20passing-2f6f5e)
 ![Status](https://img.shields.io/badge/status-hackathon%20prototype-c2a14a)
 
-Daredevil's Eye takes a photo from a phone or an ESP32-CAM, sends it to Google Gemini, and reads the answer aloud in Bangla or English. Four large buttons cover the main tasks: describe the scene, ask a spoken question, repeat the last answer, and alert a trusted person (SOS). The app runs in the phone browser and can be installed to the home screen. Nothing needs to be downloaded from an app store.
+Daredevil's Eye takes a photo from a phone or an ESP32-CAM, sends it to Google Gemini, and reads the answer aloud in Bangla or English. Four large buttons cover the main tasks: describe the scene, ask a spoken question, repeat the last answer, and alert a trusted person (SOS). The web app runs in the phone browser and can be installed to the home screen. A native Capacitor Android companion for the Galaxy A55 is now under development, with hardware volume-button controls and a signed APK planned through GitHub Releases.
 
 **Live demo:** https://daredevils-eye.karanjoykundu.workers.dev/
 
@@ -34,7 +34,7 @@ Daredevil's Eye takes a photo from a phone or an ESP32-CAM, sends it to Google G
 | Blind mode | Four large tiles (Describe, Ask AI, SOS, Repeat), spoken help, vibration patterns and a screen that stays on while working. |
 | SOS | Alerts a trusted person on a paired second phone through a web push notification. SOS needs two taps to confirm. Shake SOS and voice-phrase SOS are optional and off by default. |
 | History | Optional private photo-and-answer history: kept for signed-in users until they delete it; guest history is deleted after 30 days. |
-| Installable app | Can be installed from Chrome as a home-screen app, with long-press shortcuts for Describe, Ask AI and SOS. |
+| Installable web app | Can be installed from Chrome as a home-screen app, with long-press shortcuts for Describe, Ask AI and SOS. |\n| Native Android app | In progress for Galaxy A55: Volume Up = Describe, Volume Down = Ask AI, double Up = Repeat, both held = SOS confirmation. Screen-off behaviour is best-effort and must be device-tested. |
 | Model fallback | Uses Gemini 3.8 Flash by default. If a model hits a quota or is unavailable, it tries other Gemini vision models. |
 
 ## Pages
@@ -94,7 +94,7 @@ A merge to `main` runs the tests and then deploys the Worker to Cloudflare with 
 - Photo history is stored only when history is turned on, in a private storage bucket. Raw IP addresses are never stored.
 - Answers can be wrong. The app never claims a path or road crossing is safe, and never makes up distances.
 - SOS is a best-effort alert to one paired phone. It does not call emergency services, and delivery is not guaranteed.
-- Android Chrome does not pass the hardware volume buttons to web pages. Volume-button control needs MacroDroid/Tasker or a future native app. See [Phone controls](docs/PHONE-CONTROLS.md).
+- Android Chrome does not pass hardware volume buttons to ordinary web pages. A native Capacitor app and optional Accessibility Service are under development; global controls and screen-off behaviour are not yet validated. See [Phone controls](docs/PHONE-CONTROLS.md) and [Native Android plan](docs/NATIVE-ANDROID-APP.md).
 
 Details: [Safety](docs/SAFETY.md), [Security policy](SECURITY.md), [Threat model](docs/THREAT-MODEL.md).
 
@@ -116,7 +116,7 @@ Details: [Safety](docs/SAFETY.md), [Security policy](SECURITY.md), [Threat model
 | [Accessibility](docs/ACCESSIBILITY.md) / [Phone controls](docs/PHONE-CONTROLS.md) | Blind mode, voice and Android integrations |
 | [Safety](docs/SAFETY.md) / [Threat model](docs/THREAT-MODEL.md) / [Security](SECURITY.md) | Safety boundaries, risks and how to report a vulnerability |
 | [Supabase setup](docs/SUPABASE-ACCOUNT-HISTORY-SETUP.md) | Account and photo-history backend |
-| [Roadmap](docs/ROADMAP.md) / [Changelog](CHANGELOG.md) | What is planned next and what has changed |
+| [Roadmap](docs/ROADMAP.md) / [Changelog](CHANGELOG.md) | What is planned next and what has changed |\n| [Native Android app](docs/NATIVE-ANDROID-APP.md) | Galaxy A55 app architecture, volume-button mapping, screen-off limitations, implementation phases and APK release checklist |\n| [Android release signing](docs/ANDROID-RELEASE-SETUP.md) | Windows keystore creation, protected GitHub secrets and signed APK publishing steps |
 | [Implementation plan](docs/IMPLEMENTATION-PLAN.md) | The 17 November work plan, kept as a record |
 | [Next-generation camera and emergency roadmap](docs/NEXT-GENERATION-CAMERA-AND-EMERGENCY-ROADMAP.md) | Full proposed plan for device setup, persistent phone/ESP32 cameras, five-photo visual memory, emergency live sharing, private video recording, architecture, milestones and acceptance tests |
 

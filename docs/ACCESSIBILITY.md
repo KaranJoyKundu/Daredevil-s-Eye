@@ -58,3 +58,14 @@ The first handset validation target is Galaxy A55 5G on Android 16 / One UI 8. T
 - Device motion must be explicitly tested on the handset. Do not infer sensor reliability from desktop simulation or unit tests.
 - Keep optional automatic SOS triggers foreground-only. Do not claim they work with the screen locked or while Android suspends the browser.
 - Use the Diagnostics phone report to record browser, OS (when exposed), recording formats, Bengali voices and API availability. It does not upload the report.
+
+
+## Native Android companion — Galaxy A55
+
+The native app is being implemented with Capacitor and native Android code. The approved physical controls are Volume Up = Describe, Volume Down = Ask AI, double Volume Up = Repeat, and holding both = open SOS confirmation. Single Volume Up is delayed briefly so it can be distinguished from a double press.
+
+Global controls require the user to explicitly enable Daredevil's Eye in Android Accessibility settings. The service is intended to observe only volume key events; it does not request window-content access. Android accessibility key filtering may conflict with TalkBack or another service that filters key events. This must be tested, not assumed.
+
+The strongest supported background behaviour is best-effort: store a pending action, surface a notification and resume the app when Android allows it. Android background-start restrictions and foreground-service rules can prevent immediate camera or microphone use while locked. Phone-camera capture and microphone recording are not promised with the display off. SOS always requires confirmation and backend acknowledgement before the UI may say it was sent.
+
+See [Native Android app master plan](NATIVE-ANDROID-APP.md) for the release checklist and device-test matrix.

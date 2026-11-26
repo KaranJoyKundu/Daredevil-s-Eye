@@ -4,7 +4,7 @@ import {startRFIDListener} from './rfid-listener.js?v=20261126-bg2';
 const links = [
   ['Home','/action/'],['Medicine RFID','/medicine/'],['Blind mode','/blind/'],['Admin / Settings','/admin/'],
   ['Diagnostics','/diagnostics/'],['Account & History','/account/'],['Help','/help/'],['SOS Receiver','/sos-receiver/'],
-  ['Contact','/contact/'],['Support','/support/'],['Terms & Conditions','/terms/'],['Privacy','/privacy/']
+  ['Documentation','/documentation/'],['Contact','/contact/'],['Support','/support/'],['Terms & Conditions','/terms/'],['Privacy','/privacy/']
 ];
 const bar=document.createElement('div');
 bar.className='site-nav';
