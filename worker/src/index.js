@@ -362,6 +362,26 @@ async function deleteRecordingObjects(bucket, prefix) {
     cursor = page.truncated ? page.cursor : undefined;
   } while (cursor);
 }
+async function readRequestBodyUpTo(request, maximumBytes) {
+  if (!request.body) return new ArrayBuffer(0);
+  const reader = request.body.getReader();
+  const chunks = [];
+  let size = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > maximumBytes) {
+      try { await reader.cancel(); } catch {}
+      throw new Error('The uploaded recording chunk exceeds the size limit.');
+    }
+    chunks.push(value);
+  }
+  const output = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) { output.set(chunk, offset); offset += chunk.byteLength; }
+  return output.buffer;
+}
 async function handleRecordingApi(request, env, url) {
   if (['POST','DELETE'].includes(request.method)) {
     const origin = request.headers.get('origin');
@@ -410,8 +430,9 @@ async function handleRecordingApi(request, env, url) {
   if (request.method === 'POST' && chunkIndex !== null) {
     if (row.status !== 'recording') return json({ error: 'This recording is no longer accepting video chunks.' }, 409);
     if (!Number.isInteger(chunkIndex) || chunkIndex < 0 || chunkIndex >= 120) return json({ error: 'Invalid recording chunk number.' }, 400);
-    const bytes = await request.arrayBuffer();
-    if (!bytes.byteLength || bytes.byteLength > 1_000_000) return json({ error: 'Each recording chunk must be between 1 byte and 1 MB.' }, 413);
+    let bytes; try { bytes = await readRequestBodyUpTo(request, 1_000_000); }
+    catch (error) { return json({ error: error.message }, 413); }
+    if (!bytes.byteLength) return json({ error: 'Each recording chunk must be at least 1 byte.' }, 400);
     const key = row.object_prefix + String(chunkIndex).padStart(4, '0') + '.part';
     if (chunkIndex < row.chunk_count) {
       const existing = await env.INCIDENT_RECORDINGS.head(key);
@@ -435,7 +456,7 @@ async function handleRecordingApi(request, env, url) {
     if (!updated.ok) return json({ error: 'Could not mark the emergency recording complete.' }, 502);
     return json({ ok: true, recordingId: id, durationSeconds: duration });
   }
-  if (request.method === 'GET' && chunkIndex === null) {
+  if (request.method === 'GET' && chunkIndex === null && !url.pathname.endsWith('/complete')) {
     if (row.status !== 'complete' || !row.chunk_count) return json({ error: 'This recording is not ready for playback yet.' }, 409);
     let index = 0;
     const stream = new ReadableStream({
@@ -458,7 +479,7 @@ async function handleRecordingApi(request, env, url) {
       'x-content-type-options': 'nosniff'
     }});
   }
-  if (request.method === 'DELETE' && chunkIndex === null) {
+  if (request.method === 'DELETE' && chunkIndex === null && !url.pathname.endsWith('/complete')) {
     try { await deleteRecordingObjects(env.INCIDENT_RECORDINGS, row.object_prefix); }
     catch { return json({ error: 'Could not delete all private video chunks. The recording record was kept so deletion can be retried.' }, 502); }
     const deleted = await supabaseRest(env, 'emergency_recordings?id=eq.' + encodeURIComponent(id) + '&' + recordingOwnerFilter(owner), { method: 'DELETE' });
@@ -1340,12 +1361,32 @@ export async function purgeExpiredGuestHistory(env,now=Date.now()) {
   }
   const deleted=await supabaseRest(env,'ai_history?guest_session_hash=not.is.null&created_at=lt.'+encodeURIComponent(cutoff),{method:'DELETE'});
   if(!deleted.ok)throw new Error('Could not delete expired guest-history metadata.');
-  return {skipped:false,deleted:'expired_guest_history'};
+  const memoryDeleted=await supabaseRest(env,'scene_memory_entries?guest_session_hash=not.is.null&created_at=lt.'+encodeURIComponent(cutoff),{method:'DELETE'});
+  if(!memoryDeleted.ok)throw new Error('Could not delete expired guest visual memory.');
+  return {skipped:false,deleted:'expired_guest_history_and_memory'};
+}
+
+export async function purgeExpiredRecordings(env, now = Date.now()) {
+  if (!supabaseConfigured(env) || !env.INCIDENT_RECORDINGS) return { skipped: true, deleted: 0 };
+  const cutoff = new Date(now).toISOString();
+  const response = await supabaseRest(env, 'emergency_recordings?select=id,object_prefix&expires_at=lt.' + encodeURIComponent(cutoff) + '&limit=100');
+  if (!response.ok) throw new Error('Could not list expired emergency recordings.');
+  const rows = await response.json().catch(() => []);
+  let deleted = 0;
+  for (const row of rows) {
+    await deleteRecordingObjects(env.INCIDENT_RECORDINGS, row.object_prefix);
+    const removed = await supabaseRest(env, 'emergency_recordings?id=eq.' + encodeURIComponent(row.id), { method: 'DELETE' });
+    if (!removed.ok) throw new Error('Could not delete expired emergency recording metadata.');
+    deleted += 1;
+  }
+  return { skipped: false, deleted };
 }
 
 export default {
   async scheduled(controller,env) {
-    await purgeExpiredGuestHistory(env,controller?.scheduledTime||Date.now());
+    const now=controller?.scheduledTime||Date.now();
+    await purgeExpiredGuestHistory(env,now);
+    await purgeExpiredRecordings(env,now);
   },
   async fetch(request, env) {
     const api = await handleApi(request, env);
