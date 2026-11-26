@@ -125,7 +125,9 @@ input[type=file]{min-height:48px;padding:8px;font-size:.9rem}
 #sos-trigger-cancel{width:100%;height:52px;min-height:52px;margin:0!important;border:2px solid #ffd0d0!important;border-radius:12px!important;background:#8f1616!important;color:#fff!important;font-weight:850!important}
 #sos-trigger-cancel[hidden],#spoken-help-button[hidden]{display:none!important}
 .blind-consent{display:flex;position:fixed;inset:0;z-index:100;align-items:center;justify-content:center;padding:18px;background:#0d1110ee}
-.blind-consent-card{width:min(620px,100%);padding:22px;border:2px solid #d9b56f;border-radius:18px;background:#1f2725}
+.blind-consent-card{width:min(620px,100%);max-height:calc(100dvh - 36px);overflow-y:auto;overscroll-behavior:contain;padding:22px;border:2px solid #d9b56f;border-radius:18px;background:#1f2725}
+.blind-consent-card .consent-actions{position:sticky;bottom:0;padding-top:10px;background:#1f2725}
+.blind-consent-card .consent-actions button{min-height:52px;white-space:normal}
 .blind-consent-card h2{margin-top:0}
 .blind-consent-card button{margin-top:16px}
 @media(orientation:landscape) and (max-height:520px){.blind-tile{gap:4px}.blind-tile span{font-size:2rem}.blind-tile strong{font-size:1.25rem}.blind-tile small{font-size:.75rem}.blind-help-button{height:48px}}
