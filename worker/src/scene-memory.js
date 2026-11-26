@@ -2,14 +2,14 @@ const MAX_OBSERVATIONS = 5;
 const MAX_FACTS = 32;
 
 function cleanText(value, limit = 240) {
-  return String(value ?? '').replace(/[\\u0000-\\u001f\\u007f]/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, limit);
+  return String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, limit);
 }
 
 export function normalizeSceneMemoryOutput(raw) {
   const text = String(raw || '').trim();
   let parsed;
   try {
-    parsed = JSON.parse(text.replace(/^\x60{3}(?:json)?\\s*/i, '').replace(/\\s*\x60{3}$/i, ''));
+    parsed = JSON.parse(text.replace(/^\x60{3}(?:json)?\s*/i, '').replace(/\s*\x60{3}$/i, ''));
   } catch {
     return null;
   }
@@ -48,7 +48,7 @@ export function buildSceneMemoryPrompt(basePrompt, observations = []) {
     '{"spoken_answer":"A natural concise answer for the user.","scene_summary":"A concise summary of the current photo.","facts":[{"object":"object name","color":"visible colour or empty string","location":"relative position or empty string","observation":"what is visibly supported","confidence":"high|medium|low"}]}',
     'Previous observations (oldest to newest):',
     JSON.stringify(safe)
-  ].join('\\n');
+  ].join('\n');
 }
 
 export function buildMemoryQuestionPrompt(question, responseLanguage, observations = []) {
@@ -68,7 +68,7 @@ export function buildMemoryQuestionPrompt(question, responseLanguage, observatio
     'User question: ' + cleanText(question, 1000),
     'Saved observations:',
     JSON.stringify(safe)
-  ].join('\\n');
+  ].join('\n');
 }
 
 export const SCENE_MEMORY_LIMIT = MAX_OBSERVATIONS;
