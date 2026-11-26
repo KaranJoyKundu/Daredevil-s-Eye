@@ -71,16 +71,44 @@ public class VolumeControlsPlugin extends Plugin {
         if(textToSpeech.speak(text,TextToSpeech.QUEUE_ADD,null,"dee-"+System.currentTimeMillis())==TextToSpeech.ERROR)call.reject("Android could not start speech.");else call.resolve();
     }
     @PluginMethod public void stopSpeech(PluginCall call){if(textToSpeech!=null)textToSpeech.stop();call.resolve();}
-    @PluginMethod public void saveImage(PluginCall call){
-      String dataUrl=call.getString("dataUrl",""),filename=call.getString("filename","daredevils-eye-photo.jpg");
-      try{int comma=dataUrl.indexOf(',');if(comma<0)throw new IllegalArgumentException("Invalid image data.");
-        byte[] bytes=Base64.decode(dataUrl.substring(comma+1),Base64.DEFAULT);if(bytes.length==0)throw new IllegalArgumentException("Photo is empty.");
-        ContentValues values=new ContentValues();values.put(MediaStore.Images.Media.DISPLAY_NAME,filename);values.put(MediaStore.Images.Media.MIME_TYPE,"image/jpeg");
-        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.Q)values.put(MediaStore.Images.Media.RELATIVE_PATH,Environment.DIRECTORY_PICTURES+"/Daredevils Eye");
-        Uri uri=getContext().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values);if(uri==null)throw new IllegalStateException("Could not create Pictures entry.");
-        try(java.io.OutputStream out=getContext().getContentResolver().openOutputStream(uri)){if(out==null)throw new IllegalStateException("Could not open photo destination.");out.write(bytes);}
-        JSObject result=new JSObject();result.put("message","Photo saved in Pictures/Daredevils Eye.");result.put("uri",uri.toString());call.resolve(result);
-      }catch(Exception error){call.reject("Could not save photo: "+error.getMessage(),error);}
+    @PluginMethod public void saveImage(PluginCall call) {
+      String dataUrl = call.getString("dataUrl", "");
+      String filename = call.getString("filename", "daredevils-eye-photo.jpg");
+      Uri uri = null;
+      try {
+        int comma = dataUrl.indexOf(',');
+        if (comma < 0) throw new IllegalArgumentException("Invalid image data.");
+        byte[] bytes = Base64.decode(dataUrl.substring(comma + 1), Base64.DEFAULT);
+        if (bytes.length == 0) throw new IllegalArgumentException("Photo is empty.");
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, filename);
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+          values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Daredevils Eye");
+          values.put(MediaStore.Images.Media.IS_PENDING, 1);
+        }
+        uri = getContext().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        if (uri == null) throw new IllegalStateException("Could not create Pictures entry.");
+        try (java.io.OutputStream out = getContext().getContentResolver().openOutputStream(uri, "w")) {
+          if (out == null) throw new IllegalStateException("Could not open photo destination.");
+          out.write(bytes);
+          out.flush();
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+          ContentValues ready = new ContentValues();
+          ready.put(MediaStore.Images.Media.IS_PENDING, 0);
+          getContext().getContentResolver().update(uri, ready, null, null);
+        }
+        JSObject result = new JSObject();
+        result.put("message", "Photo saved in Pictures/Daredevils Eye.");
+        result.put("uri", uri.toString());
+        call.resolve(result);
+      } catch (Exception error) {
+        if (uri != null) {
+          try { getContext().getContentResolver().delete(uri, null, null); } catch (Exception ignored) {}
+        }
+        call.reject("Could not save photo: " + error.getMessage(), error);
+      }
     }
 
     @PluginMethod
