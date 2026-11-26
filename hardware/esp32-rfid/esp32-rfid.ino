@@ -279,15 +279,9 @@ void loop() {
     char part[3]; sprintf(part, "%02X", rfid.uid.uidByte[i]); uid += part;
   }
   Serial.println("[2/7] CARD UID READ · " + uid);
-  String medicine;
-  for (const auto &card : MEDICINES) if (uid.equalsIgnoreCase(card.uid)) medicine = card.name;
-  if (!medicine.length()) {
-    stageError("UNKNOWN_CARD", "UID " + uid + " is not registered in the firmware.");
-  } else {
-    Serial.println("[3/7] MEDICINE MAPPING · " + medicine);
-    Serial.println("[6/7] AUTHENTICATED EVENT TRANSMISSION");
-    sendMedicine(uid, medicine);
-  }
+  Serial.println("[3/7] UID LOOKUP · resolving this card in your account");
+  Serial.println("[6/7] AUTHENTICATED EVENT TRANSMISSION");
+  if (!sendMedicine(uid)) Serial.println("[INFO] Check the Medicine RFID page if this UID is not registered.");
   rfid.PICC_HaltA();
   rfid.PCD_StopCrypto1();
 }
