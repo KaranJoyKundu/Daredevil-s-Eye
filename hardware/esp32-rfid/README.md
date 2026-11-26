@@ -8,7 +8,8 @@ This feature adds an account-paired ESP32 + RC522 medicine reader to Daredevil's
 - A signed-in account generates a six-digit, ten-minute pairing code.
 - The ESP32 exchanges the code for a 256-bit device token. Only its SHA-256 digest is stored in the RFID Durable Object.
 - The Worker associates each event with the account paired to the device; the ESP32 cannot choose an account ID.
-- Medicine events are retained for up to 24 hours, with a bounded queue. The phone acknowledges an event after speech completes.
+- Medicine events are retained for up to 24 hours, with a bounded server queue. The phone acknowledges an event after speech completes.
+- The ESP32 keeps up to five unsent events in Preferences/NVS and retries them in order after connectivity returns; the event ID remains stable during retries.
 - The app-wide listener polls while a Daredevil's Eye page using shared navigation is open and the listener is enabled.
 - Device revocation invalidates the stored token immediately.
 - Pairing attempts are capped at ten per active code.
