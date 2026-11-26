@@ -4,6 +4,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.provider.Settings;
+import android.text.TextUtils;
+import com.getcapacitor.JSObject;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
 
 import androidx.core.content.ContextCompat;
 
@@ -33,6 +38,42 @@ public class VolumeControlsPlugin extends Plugin {
         };
         IntentFilter filter = new IntentFilter(VolumeKeyAccessibilityService.ACTION_VOLUME_ACTION);
         ContextCompat.registerReceiver(getContext(), receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
+    }
+
+
+    @PluginMethod
+    public void openAccessibilitySettings(PluginCall call) {
+        Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(intent);
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void isAccessibilityEnabled(PluginCall call) {
+        String expected = getContext().getPackageName() + "/" + VolumeKeyAccessibilityService.class.getName();
+        String enabled = Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        JSObject result = new JSObject();
+        result.put("enabled", !TextUtils.isEmpty(enabled) && enabled.toLowerCase().contains(expected.toLowerCase()));
+        call.resolve(result);
+    }
+
+    @PluginMethod
+    public void setForegroundShortcutsEnabled(PluginCall call) {
+        boolean enabled = call.getBoolean("enabled", true);
+        getContext().getSharedPreferences("dee_native_setup", Context.MODE_PRIVATE).edit().putBoolean("foreground_shortcuts_enabled", enabled).apply();
+        JSObject result = new JSObject();
+        result.put("enabled", enabled);
+        call.resolve(result);
+    }
+
+    @PluginMethod
+    public void setGlobalShortcutsEnabled(PluginCall call) {
+        boolean enabled = call.getBoolean("enabled", true);
+        getContext().getSharedPreferences(VolumeKeyAccessibilityService.PREFS, Context.MODE_PRIVATE).edit().putBoolean("global_shortcuts_enabled", enabled).apply();
+        JSObject result = new JSObject();
+        result.put("enabled", enabled);
+        call.resolve(result);
     }
 
     @Override
