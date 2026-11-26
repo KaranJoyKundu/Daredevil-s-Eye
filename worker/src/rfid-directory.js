@@ -6,7 +6,7 @@ const same=(a,b)=>{if(a.length!==b.length)return false;let diff=0;for(let i=0;i<
 const validUser=id=>typeof id==='string'&&/^[0-9a-f-]{36}$/i.test(id);
 const normalizeUid=value=>String(value||'').replace(/[\s:-]/g,'').toUpperCase();
 const validUid=value=>/^(?:[A-F0-9]{8}|[A-F0-9]{14}|[A-F0-9]{20})$/.test(value);
-const validDate=value=>!value||/^\d{4}-\d{2}-\d{2}$/.test(value);
+const validDate=value=>!value||/^\d{4}-(?:0[1-9]|1[0-2])$/.test(value);
 const clean=(value,max)=>String(value||'').trim().slice(0,max);
 const dateLabel=value=>{if(!value)return '';const [year,month,day]=value.split('-').map(Number);const date=new Date(Date.UTC(year,month-1,day||1));return date.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});};
 
@@ -68,7 +68,7 @@ export class RFIDDirectory {
     const announcementText=clean(medicine.announcementText,1000),expiredText=clean(medicine.expiredText,300);
     if(!validUid(uid))return json({ok:false,error:'Enter a valid RFID UID (4, 7, or 10 bytes in hexadecimal).'},400);
     if(!name)return json({ok:false,error:'Medicine name is required.'},400);
-    if(!validDate(expiryDate))return json({ok:false,error:'Expiry date must use YYYY-MM-DD.'},400);
+    if(!validDate(expiryDate))return json({ok:false,error:'Expiry month must use YYYY-MM.'},400);
     const medicines=await this.storage.get('medicines')||[];
     const record={uid,name,strength,expiryDate,instructions,announcementText,expiredText,updatedAt:new Date().toISOString(),userId};
     const index=medicines.findIndex(item=>item.userId===userId&&item.uid===uid);
