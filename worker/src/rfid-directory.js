@@ -60,13 +60,18 @@ export class RFIDDirectory {
   async listMedicines({userId}){
     if(!validUser(userId))return json({ok:false,error:'A signed-in account is required.'},401);
     const seededKey='medicine-defaults-seeded:'+userId;
+    const defaultsAlreadySeeded=Boolean(await this.storage.get(seededKey));
     const medicines=await this.storage.get('medicines')||[];
     let changed=false;
     for(const item of DEFAULT_MEDICINES){
       const existing=medicines.find(card=>card.userId===userId&&card.uid===item.uid);
       if(!existing){
-        medicines.push({...item,announcementText:'',expiredText:'Warning! This medicine has expired.',userId,defaultCard:true,updatedAt:new Date().toISOString()});
-        changed=true;
+        // Seed starter cards once per account. If a user later changes or deletes
+        // a starter UID, do not silently recreate the old card on the next list.
+        if(!defaultsAlreadySeeded){
+          medicines.push({...item,announcementText:'',expiredText:'Warning! This medicine has expired.',userId,defaultCard:true,updatedAt:new Date().toISOString()});
+          changed=true;
+        }
         continue;
       }
       // Upgrade untouched legacy starter cards, including accounts seeded by an older release.
