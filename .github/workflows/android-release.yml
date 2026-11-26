@@ -57,6 +57,8 @@ jobs:
         run: |
           cp -R native-android/android-app/. android/app/
           cp -R native-android/android-root/. android/ 2>/dev/null || true
+      - name: Sync Android version from package.json
+        run: node native-android/sync-version.mjs
       - name: Decode signing keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
