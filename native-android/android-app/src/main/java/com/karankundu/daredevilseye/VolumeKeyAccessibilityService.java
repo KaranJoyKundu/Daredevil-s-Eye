@@ -10,6 +10,8 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.media.AudioAttributes;
+import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
 
@@ -17,7 +19,7 @@ public class VolumeKeyAccessibilityService extends AccessibilityService {
     public static final String ACTION_VOLUME_ACTION = "com.karankundu.daredevilseye.VOLUME_ACTION";
     public static final String PREFS = "dee_volume_controls";
     public static final String KEY_PENDING_ACTION = "pending_action";
-    private static final String CHANNEL_ID = "dee_volume_shortcuts";
+    private static final String CHANNEL_ID = "dee_volume_shortcuts_v2";
     private static final long DOUBLE_PRESS_MS = 360L;
     private static final long SOS_HOLD_MS = 700L;
 
@@ -118,7 +120,8 @@ public class VolumeKeyAccessibilityService extends AccessibilityService {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Blind mode button shortcuts", NotificationManager.IMPORTANCE_HIGH);
             channel.setDescription("Shows when a hardware volume-button shortcut needs the app.");
-            manager.createNotificationChannel(channel);
+            channel.setSound(Settings.System.DEFAULT_NOTIFICATION_URI,new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
+            channel.enableVibration(true);channel.setVibrationPattern(new long[]{0,180,100,180});manager.createNotificationChannel(channel);
         }
         Intent launch = getPackageManager().getLaunchIntentForPackage(getPackageName());
         if (launch == null) return;
@@ -139,6 +142,7 @@ public class VolumeKeyAccessibilityService extends AccessibilityService {
             .setContentText(label + ". Tap to continue.")
             .setContentIntent(pending)
             .setAutoCancel(true)
+            .setDefaults(Notification.DEFAULT_SOUND|Notification.DEFAULT_VIBRATE)
             .setCategory(Notification.CATEGORY_RECOMMENDATION)
             .build();
         manager.notify(41, notification);

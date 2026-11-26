@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.view.KeyEvent;
+import android.webkit.WebSettings;
 
 import androidx.core.app.ActivityCompat;
 
@@ -29,6 +30,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(VolumeControlsPlugin.class);
         super.onCreate(savedInstanceState);
+        if(getBridge()!=null&&getBridge().getWebView()!=null)getBridge().getWebView().getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 8401);
         }

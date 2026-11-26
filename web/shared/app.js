@@ -404,6 +404,7 @@ async function preparePhonePhoto(file,source){
   if($('#photo-details'))$('#photo-details').textContent=details+' · '+(settings.requirePhotoConfirmation===false?'Auto-send is enabled.':'Review this exact compressed photo before sending.');
   if(askButton)askButton.disabled=false;
   if(cancelButton)cancelButton.hidden=false;
+  if($('#photo-save'))$('#photo-save').hidden=false;
   if(settings.requirePhotoConfirmation===false){
    const question=$('#question')?.value.trim()||'';
    await run(question?'ask':'describe',question,compressed);
@@ -420,6 +421,16 @@ async function preparePhonePhoto(file,source){
 }
 $('#phone-photo-camera')?.addEventListener('change',event=>{const file=event.target.files?.[0];event.target.value='';preparePhonePhoto(file,'Phone camera');});
 $('#phone-photo-upload')?.addEventListener('change',event=>{const file=event.target.files?.[0];event.target.value='';preparePhonePhoto(file,'Uploaded photo');});
+async function savePreparedPhoto(){
+ if(!phonePhoto)return;const button=$('#photo-save');if(button)button.disabled=true;
+ try{const native=window.DaredevilVolumeControls;
+  if(window.Capacitor?.isNativePlatform?.()&&native?.saveImage){
+   const dataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('Could not read photo.'));reader.readAsDataURL(phonePhoto);});
+   const result=await native.saveImage({dataUrl,filename:'daredevils-eye-'+Date.now()+'.jpg'});const message=result?.message||'Photo saved in Pictures/Daredevils Eye.';if(status)status.textContent=message;announce(message);
+  }else{const url=URL.createObjectURL(phonePhoto),a=document.createElement('a');a.href=url;a.download='daredevils-eye-photo.jpg';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);if(status)status.textContent='Photo download started.';}
+ }catch(error){if(status)status.textContent='Could not save photo: '+error.message;announce('Could not save photo. '+error.message);}finally{if(button)button.disabled=false;}
+}
+$('#photo-save')?.addEventListener('click',savePreparedPhoto);
 $('#photo-ask-ai')?.addEventListener('click',()=>{
  if(!phonePhoto)return;
  const question=$('#question')?.value.trim()||'';
@@ -432,6 +443,7 @@ $('#photo-cancel')?.addEventListener('click',()=>{
  if($('#photo-preview-panel'))$('#photo-preview-panel').hidden=true;
  if($('#photo-ask-ai'))$('#photo-ask-ai').disabled=true;
  if($('#photo-cancel'))$('#photo-cancel').hidden=true;
+ if($('#photo-save'))$('#photo-save').hidden=true;
  if(status)status.textContent='Photo removed. Nothing was sent.';
 });
 $('#question-form')?.addEventListener('submit',event=>{
