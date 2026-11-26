@@ -41,6 +41,17 @@ public class VolumeControlsPlugin extends Plugin {
     }
 
 
+
+    @PluginMethod
+    public void ackPendingAction(PluginCall call) {
+        String eventId = call.getString("eventId", "");
+        android.content.SharedPreferences prefs = getContext().getSharedPreferences(VolumeKeyAccessibilityService.PREFS, Context.MODE_PRIVATE);
+        if (!eventId.isEmpty() && eventId.equals(prefs.getString("pending_event_id", ""))) {
+            prefs.edit().remove(VolumeKeyAccessibilityService.KEY_PENDING_ACTION).remove("pending_event_id").remove("pending_at").apply();
+        }
+        call.resolve();
+    }
+
     @PluginMethod
     public void openAccessibilitySettings(PluginCall call) {
         Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
