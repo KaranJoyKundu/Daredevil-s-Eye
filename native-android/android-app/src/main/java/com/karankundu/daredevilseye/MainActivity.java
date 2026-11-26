@@ -20,7 +20,7 @@ import org.json.JSONObject;
 
 public class MainActivity extends BridgeActivity {
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private boolean upDown, downDown, chordConsumed, upPending;
+    private boolean upDown, downDown, chordConsumed, upPending, sosTriggered;
     private long lastUpRelease;
     private Runnable describeRunnable, sosRunnable;
 
@@ -77,12 +77,16 @@ public class MainActivity extends BridgeActivity {
                 cancelDescribe();
                 upPending = false;
                 chordConsumed = true;
-                sosRunnable = () -> dispatchAction("sos");
+                sosRunnable = () -> { sosTriggered = true; dispatchAction("sos"); };
                 handler.postDelayed(sosRunnable, 700L);
             }
             return true;
         }
         if (event.getAction() == KeyEvent.ACTION_UP) {
+            if (chordConsumed && !sosTriggered && sosRunnable != null) {
+                handler.removeCallbacks(sosRunnable);
+                sosRunnable = null;
+            }
             if (key == KeyEvent.KEYCODE_VOLUME_UP) {
                 upDown = false;
                 if (!chordConsumed) {
@@ -109,7 +113,7 @@ public class MainActivity extends BridgeActivity {
             if (!upDown && !downDown) {
                 if (sosRunnable != null) handler.removeCallbacks(sosRunnable);
                 sosRunnable = null;
-                chordConsumed = false;
+                chordConsumed = false;\n                sosTriggered = false;
             }
             return true;
         }
