@@ -49,3 +49,14 @@ The release is deployed, but these checks need a real user/browser/device:
 8. Review Account UI with TalkBack and at mobile widths.
 
 See CURRENT-RELEASE-CHECKLIST.md for detailed acceptance criteria and device-test steps.
+
+
+## Native Android companion — in progress (26 November 2026)
+
+- Backup branch: `backup/main-before-native-android-2026-11-26`.
+- Feature branch: `feat/native-android-capacitor-a55`.
+- Draft PR: [#64](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/64).
+- Master plan: [NATIVE-ANDROID-APP.md](NATIVE-ANDROID-APP.md); revisit tracker is served at `/documentation/`.
+- Capacitor configuration, Android native source overlay, volume-key Activity/Accessibility Service, JavaScript event bridge and debug APK workflow have been added to the feature branch.
+- Android CI is being debugged. No APK artifact is verified yet. Global key interception, TalkBack coexistence and screen-off behaviour have not been physically tested on the A55.
+- Release signing still needs protected Android keystore secrets. Do not upload a debug-signed build as a production release or claim that it can be updated with a future release key.
