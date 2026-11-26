@@ -126,6 +126,13 @@ function update(){const boxes=[...root.querySelectorAll('input')];const done=box
 update();
 const native=window.Capacitor?.Plugins?.VolumeControls;
 const nativeStatus=document.getElementById('accessibility-status');
+if(native?.getShortcutSettings){
+ native.getShortcutSettings().then(settings=>{
+  document.getElementById('foreground-shortcuts').checked=!!settings.foregroundEnabled;
+  document.getElementById('global-shortcuts').checked=!!settings.globalEnabled;
+  nativeStatus.textContent=settings.accessibilityEnabled?'Global Accessibility Service is enabled.':'Global Accessibility Service is not enabled yet.';
+ }).catch(()=>{});
+}
 document.getElementById('open-accessibility').addEventListener('click',async()=>{
  if(!native?.openAccessibilitySettings){nativeStatus.textContent='Open this page inside the Android APK to access native settings.';return;}
  try{await native.openAccessibilitySettings();nativeStatus.textContent='Find Daredevil’s Eye under Installed apps / Downloaded apps and enable the service.';}catch(e){nativeStatus.textContent='Could not open Android settings: '+e.message;}
