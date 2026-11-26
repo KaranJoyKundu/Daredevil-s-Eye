@@ -122,7 +122,7 @@ export class RFIDDirectory {
     const today=new Date().toISOString().slice(0,10),expired=Boolean(medicine.expiryDate&&medicine.expiryDate<today.slice(0,7));
     const medicineName=[medicine.name,medicine.strength].filter(Boolean).join(' ');
     const instruction=String(medicine.instructions||'').trim();
-    const prescription=instruction?( /^your registered prescription says\\b/i.test(instruction)?instruction:'Your registered prescription says '+instruction):'';
+    const prescription=instruction?( /^your registered prescription says\b/i.test(instruction)?instruction:'Your registered prescription says '+instruction):'';
     const generated=[medicineName,medicine.expiryDate?'Expiry date: '+dateLabel(medicine.expiryDate):'',prescription].filter(Boolean).join('. ');
     const speechText=expired?(medicine.expiredText||'Warning! This medicine has expired.'):(medicine.announcementText||generated||medicine.name);
     const event={id,deviceId:device.deviceId,userId:device.userId,uid:normalized,medicine:medicine.name,speechText,expired,createdAt:new Date().toISOString()};
