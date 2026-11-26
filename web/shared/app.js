@@ -517,16 +517,48 @@ const resetCameraSource=()=>{
 };
 $('#change-camera-source')?.addEventListener('click',resetCameraSource);
 $('#esp32-change-camera-source')?.addEventListener('click',resetCameraSource);
-$('#esp32-action-stream-start')?.addEventListener('click',()=>{
+let nativeEsp32PreviewTimer=null;
+let nativeEsp32PreviewBusy=false;
+function stopNativeEsp32Preview(){
+ if(nativeEsp32PreviewTimer!==null)clearInterval(nativeEsp32PreviewTimer);
+ nativeEsp32PreviewTimer=null;
+ nativeEsp32PreviewBusy=false;
+}
+window.__deeStopNativeEsp32Preview=stopNativeEsp32Preview;
+async function refreshNativeEsp32Preview(){
+ if(nativeEsp32PreviewBusy||document.hidden||!esp32StreamPreview)return;
+ const plugin=window.DaredevilVolumeControls;
+ if(!plugin?.fetchEsp32Snapshot)return;
+ nativeEsp32PreviewBusy=true;
  try{
-  const url=getEsp32Endpoints().stream;
-  if(esp32StreamPreview){esp32StreamPreview.hidden=false;esp32StreamPreview.src=url;}
-  if(esp32CameraStatus)esp32CameraStatus.textContent='Connecting to ESP32 live stream. If Chrome asks, allow local-network access.';
+  const result=await plugin.fetchEsp32Snapshot({url:getEsp32Endpoints().capture()});
+  if(result?.base64){
+   esp32StreamPreview.src='data:'+(result.contentType||'image/jpeg')+';base64,'+result.base64;
+   if(esp32CameraStatus)esp32CameraStatus.textContent='ESP32 helper preview is active (native local-network snapshots).';
+  }
+ }catch(error){
+  stopNativeEsp32Preview();
+  if(esp32CameraStatus)esp32CameraStatus.textContent=error?.message||'ESP32 preview could not connect. Check the camera IP and Wi-Fi.';
+ }finally{nativeEsp32PreviewBusy=false;}
+}
+$('#esp32-action-stream-start')?.addEventListener('click',async()=>{
+ try{
+  if(esp32StreamPreview)esp32StreamPreview.hidden=false;
+  if(window.Capacitor?.isNativePlatform?.()){
+   stopNativeEsp32Preview();
+   if(esp32CameraStatus)esp32CameraStatus.textContent='Connecting to ESP32 using native local-network snapshots…';
+   await refreshNativeEsp32Preview();
+   if(nativeEsp32PreviewTimer===null)nativeEsp32PreviewTimer=setInterval(refreshNativeEsp32Preview,400);
+  }else{
+   const url=getEsp32Endpoints().stream;
+   if(esp32StreamPreview)esp32StreamPreview.src=url;
+   if(esp32CameraStatus)esp32CameraStatus.textContent='Connecting to ESP32 live stream. Keep both devices on the same Wi-Fi.';
+  }
  }catch(error){if(esp32CameraStatus)esp32CameraStatus.textContent=error.message;}
 });
 $('#esp32-action-stream-stop')?.addEventListener('click',()=>{
- stopEsp32Stream(esp32StreamPreview);if(esp32StreamPreview)esp32StreamPreview.hidden=true;
- if(esp32CameraStatus)esp32CameraStatus.textContent='Live stream stopped. Describe still captures remain available.';
+ stopNativeEsp32Preview();stopEsp32Stream(esp32StreamPreview);if(esp32StreamPreview)esp32StreamPreview.hidden=true;
+ if(esp32CameraStatus)esp32CameraStatus.textContent='Preview stopped. Describe still captures remain available.';
 });
 if(esp32StreamPreview){
  esp32StreamPreview.addEventListener('load',()=>{if(esp32CameraStatus)esp32CameraStatus.textContent='ESP32 live preview is active. Press Describe to capture a still image for AI analysis.';});
