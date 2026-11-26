@@ -60,6 +60,37 @@ function make(tag,className,text){
  if(text!==undefined)node.textContent=String(text);
  return node;
 }
+function createRecordingCard(item){
+ const card=make('article','account-history-card');
+ const title=make('h3','account-history-title','Emergency video · '+(item.camera_source==='esp32'?'ESP32-CAM':'Phone camera'));
+ const meta=make('p','account-history-meta',formatDate(item.created_at)+' · '+Math.max(0,Number(item.duration_seconds)||0)+' seconds · '+(Number(item.total_bytes||0)/1024/1024).toFixed(2)+' MB');
+ const video=document.createElement('video');video.controls=true;video.playsInline=true;video.preload='none';video.src='/api/recordings/'+encodeURIComponent(item.id);video.style.width='100%';video.style.maxHeight='360px';video.style.background='#000';video.style.borderRadius='12px';
+ const footer=make('div','account-history-footer');
+ const download=document.createElement('a');download.href='/api/recordings/'+encodeURIComponent(item.id)+'?download=1';download.textContent='Download video';download.className='account-button account-button-light';download.setAttribute('download','');
+ const remove=make('button','account-button account-button-danger','Delete recording');remove.type='button';
+ remove.addEventListener('click',async()=>{
+  if(!window.confirm('Permanently delete this emergency video recording?'))return;
+  remove.disabled=true;
+  try{await api('/api/recordings/'+encodeURIComponent(item.id),{method:'DELETE'});card.remove();$('#recordings-status').textContent='Recording deleted.';}
+  catch(error){$('#recordings-status').textContent=error.message;remove.disabled=false;}
+ });
+ footer.append(download,remove);card.append(title,meta,video,footer);
+ const expires=make('p','account-footnote','Automatically expires '+formatDate(item.expires_at)+'.');
+ card.append(expires);
+ return card;
+}
+async function loadRecordings(){
+ $('#recordings-status').textContent='Loading private emergency recordings…';
+ $('#recordings-list').replaceChildren();
+ try{
+  const data=await api('/api/recordings'),items=(data.recordings||[]).filter(item=>item.status==='complete');
+  if(!items.length){$('#recordings-status').textContent='No completed emergency recordings are saved for this account/browser.';return;}
+  $('#recordings-status').textContent=items.length+' private recording'+(items.length===1?'':'s')+'.';
+  for(const item of items)$('#recordings-list').append(createRecordingCard(item));
+ }catch(error){$('#recordings-status').textContent=error.message;}
+}
+$('#refresh-recordings')?.addEventListener('click',loadRecordings);
+
 function createHistoryCard(item,scope){
  const card=make('article','account-history-card');
  const top=make('div','account-history-top');
@@ -167,11 +198,12 @@ async function refreshSession(){
   if(!state.authenticated){
    showSignedOut();
    $('#account-status').textContent='Account service is ready. Sign in or create an account to keep history across devices.';
+   await loadRecordings();
    return;
   }
   showSignedIn(state.user);
   $('#account-status').textContent='Signed in. Your account photos and settings are private to this account.';
-  await Promise.all([loadKeyState(),loadHistory(),loadUsage()]);
+  await Promise.all([loadKeyState(),loadHistory(),loadUsage(),loadRecordings()]);
  }catch(error){
   showSignedOut();
   $('#account-status').textContent=error.message;
@@ -188,7 +220,7 @@ $('#login-form').addEventListener('submit',async event=>{
   $('#login-password').value='';sessionCheckedAt=Date.now();
   showSignedIn(result.user);$('#account-status').textContent='Signed in successfully.';
   $('#login-status').textContent='';
-  await Promise.all([loadKeyState(),loadHistory(),loadUsage()]);
+  await Promise.all([loadKeyState(),loadHistory(),loadUsage(),loadRecordings()]);
  }catch(error){$('#login-status').textContent=error.message;}
  finally{button.disabled=false;}
 });
@@ -211,6 +243,7 @@ $('#logout-button').addEventListener('click',async()=>{
  try{await api('/api/account/logout',{method:'POST'});}catch{}
  clearSessionGeminiApiKey();showSignedOut();
  $('#account-status').textContent='You have signed out. This browser’s guest history remains separate.';
+ await loadRecordings();
 });
 async function loadKeyState(){
  try{
