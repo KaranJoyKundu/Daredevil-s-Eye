@@ -381,9 +381,7 @@ $('#test-image-button').addEventListener('click',async()=>{
    waitSeconds:selected.waitSeconds,responseStyle:selected.responseStyle,responseLanguage:getSettings().speechLanguage
   });
   if(result.mock)throw new Error('Mock mode is enabled. No image analysis was performed.');
-  $('#test-result').textContent=(result.disclaimer||'')+'
-
-'+result.answer;
+  $('#test-result').textContent=(result.disclaimer||'')+'\n\n'+result.answer;
   $('#test-status').textContent='Completed using '+(result.model||selected.aiModel)+'.';
  }catch(error){$('#test-status').textContent='AI test failed: '+(error.message||'Unknown error');}
  finally{button.disabled=!selectedFile;}
