@@ -97,6 +97,7 @@ The engineering branch now includes these code changes:
 - Android Back: WebView history first; secondary routes fall back to `/action/`; root backgrounds the task.
 - Accessibility onboarding explicitly marks the service optional and describes Android's supported `Allow restricted settings` path. No attempt is made to bypass Android's security controls.
 - Native MediaStore photo writes now use `IS_PENDING` and remove partial entries on failure.
+- Android Action preview now has a native JPEG snapshot bridge limited to private IPv4 hosts and the ESP32 `/capture` endpoint; the UI polls at a controlled interval and stops polling when the preview is stopped or the page is hidden.
 - CI verification workflow runs on this release branch.
 - Selected navy/gold/white eye-and-signal brand is wired into Android vector launcher resources and the web/PWA SVG.
 
