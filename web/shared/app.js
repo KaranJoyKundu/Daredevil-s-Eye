@@ -2,6 +2,7 @@ import { captureImage, blobToDataUrl, compressImageToJpeg, primeShutterAudio } f
 import { startPhoneCamera, capturePhoneFrame, stopPhoneCamera, captureEsp32Photo, getPhoneTorchState, setPhoneTorch, getEsp32Endpoints, stopEsp32Stream, getPhoneCameraStream } from './camera-manager.js?v=20261126-camera5';
 import { requestAI } from './api.js?v=20261117-release5';
 import { startEmergencyVideo, createEsp32CanvasStream, stopEmergencyVideo } from './emergency-video.js?v=20261126-video1';
+import { startIncidentRecording } from './recording-manager.js?v=20261126-recording1';
 import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release5';
 import { getSettings, saveSettings } from './settings.js?v=20261117-release5';
 import { hasCurrentConsent, acceptConsent, rejectConsent } from './consent.js?v=20261117-release5';
@@ -305,6 +306,7 @@ function speakHelp(){
 }
 let emergencyVideoCleanup=null;
 let emergencyVideoActive=false;
+let activeEmergencyRecording=null;
 async function waitForEsp32VideoFrame(image){
  if(image.naturalWidth&&image.naturalHeight)return;
  await new Promise((resolve,reject)=>{
@@ -314,6 +316,7 @@ async function waitForEsp32VideoFrame(image){
  });
 }
 async function stopEmergencySharing(){
+ if(activeEmergencyRecording){try{await activeEmergencyRecording.stop();}catch{}activeEmergencyRecording=null;}
  await stopEmergencyVideo();
  if(emergencyVideoCleanup){try{emergencyVideoCleanup();}catch{}emergencyVideoCleanup=null;}
  emergencyVideoActive=false;
@@ -346,12 +349,16 @@ async function startEmergencySharing(settings,eventId){
   }
   if(!stream)throw new Error('No active camera stream is available.');
   emergencyVideoCleanup=cleanup;
-  await startEmergencyVideo({deviceId:settings.deviceId,eventId,stream,onStatus:message=>{
+  await startEmergencyVideo({deviceId:settings.deviceId,eventId,stream,onEnded:()=>{if(activeEmergencyRecording){void activeEmergencyRecording.stop();activeEmergencyRecording=null;}},onStatus:message=>{
    if(videoStatus)videoStatus.textContent=message;
    if(status)status.textContent=message;
   }});
   emergencyVideoActive=true;
-  if(videoStatus)videoStatus.textContent='SOS is sent. Live camera sharing is active or connecting to your paired receiver. Use Stop Sharing to end it.';
+  if(settings.sosRecordingEnabled){
+   try{activeEmergencyRecording=await startIncidentRecording(stream,{deviceId:settings.deviceId,cameraSource:settings.cameraSource,onStatus:message=>{if(videoStatus)videoStatus.textContent=message;}});}
+   catch(error){if(videoStatus)videoStatus.textContent='Live video is available, but private recording could not start: '+error.message;}
+  }
+  if(videoStatus&&!settings.sosRecordingEnabled)videoStatus.textContent='SOS is sent. Live camera sharing is active or connecting to your paired receiver. Use Stop Sharing to end it.';
   announce('SOS sent. Emergency video sharing is starting with your paired contact.');
  }catch(error){
   if(cleanup){try{cleanup();}catch{}}
