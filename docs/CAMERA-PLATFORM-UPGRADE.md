@@ -251,8 +251,8 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - Phone camera tracks are stopped when switching sources, hiding the page or leaving it; the user must explicitly re-enable after returning to the foreground.
 - Added an Admin Image Lab action to capture an ESP32 still with flash and preview the returned image.
 - Added regression coverage for camera setup wiring, lifecycle cleanup and flash capture.
-- Latest branch commit: `c9ef170559842b1af9ae98973df533373742e2d3`.
-- The earlier CI run passed on commit `c9fbc796385012c00a3ab86b05bb2987714c6255`; the follow-up changes have not yet been verified by a new CI run.
+- Original camera branch latest commit: `c9ef170559842b1af9ae98973df533373742e2d3`. Current-main port is tracked in PR #31.
+- The earlier CI run passed on the original branch at commit `c9fbc796385012c00a3ab86b05bb2987714c6255`; the current-main port in PR #31 still requires its own CI run.
 - No firmware changes, scene-memory backend, SOS WebRTC, R2 recording, TURN configuration or production deployment are complete.
 
 ## 12. Continue-work instructions for a future session
