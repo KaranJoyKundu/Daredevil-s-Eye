@@ -1,5 +1,12 @@
 # Changelog
 
+## 26 November 2026 — Preserve visible action feedback when speech fails
+
+- A device text-to-speech failure no longer overwrites the visible status produced by SOS, Repeat and other actions.
+- The existing SOS confirmation feedback remains visible for its full five-second confirmation window; speech is optional feedback, not the only indication that the tap registered.
+- Live verification showed the first SOS tap did arm the confirmation flow; the browser automation only observed the later expiry because it read the page after the five-second window. No alert was sent.
+
+
 ## 26 November 2026 — Action/Blind startup recovery (hotfix in progress)
 
 - Fixed a fatal startup-order bug in the shared browser app: the removed consent-panel initializer called `showCameraSetup()` before camera-panel `const` bindings were initialized, aborting the module before any user-action handlers were registered.
