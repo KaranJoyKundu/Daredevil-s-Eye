@@ -393,6 +393,7 @@ const cameraSetupPanel=$('#camera-setup-panel');
 const phoneCameraPanel=$('#phone-camera-panel');
 const phoneCameraPreview=$('#phone-camera-preview');
 const cameraSetupStatus=$('#camera-setup-status');
+const phoneCameraStatus=$('#phone-camera-status');
 function renderCameraPanels(){
  const settings=getSettings();
  if(cameraSetupPanel)cameraSetupPanel.hidden=!hasCurrentConsent()||settings.cameraSetupComplete;
@@ -412,7 +413,8 @@ async function chooseCameraSource(source){
  saveSettings({cameraSource:source,cameraSetupComplete:true});
  renderCameraPanels();
  if(source==='phone'){
-  if(cameraSetupStatus)cameraSetupStatus.textContent='Phone camera selected. Press Enable phone camera to grant permission and start the preview.';
+  if(cameraSetupStatus)cameraSetupStatus.textContent='Phone camera selected.';
+  if(phoneCameraStatus)phoneCameraStatus.textContent='Phone camera selected. Press Enable phone camera to grant permission and start the preview.';
   if(phoneCameraPanel)phoneCameraPanel.hidden=false;
   if(phoneCameraPreview)phoneCameraPreview.srcObject=null;
  }else if(cameraSetupStatus){
@@ -424,9 +426,10 @@ $('#enable-phone-camera')?.addEventListener('click',async()=>{
  const button=$('#enable-phone-camera');button.disabled=true;
  try{
   await startPhoneCamera(phoneCameraPreview,{facingMode:getSettings().phoneCameraFacingMode||'environment'});
-  if(cameraSetupStatus)cameraSetupStatus.textContent='Phone camera is active. Keep this page visible; press Describe to capture a frame.';
+  if(cameraSetupStatus)cameraSetupStatus.textContent='Phone camera is active.';
+  if(phoneCameraStatus)phoneCameraStatus.textContent='Phone camera is active. Keep this page visible; press Describe to capture a frame.';
   show('Phone camera is active.');
- }catch(error){if(cameraSetupStatus)cameraSetupStatus.textContent=error.message;show(error.message);}
+ }catch(error){if(cameraSetupStatus)cameraSetupStatus.textContent=error.message;if(phoneCameraStatus)phoneCameraStatus.textContent=error.message;show(error.message);}
  finally{button.disabled=false;}
 });
 $('#change-camera-source')?.addEventListener('click',()=>{
