@@ -195,7 +195,8 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - [x] Stream start/stop by attaching/removing the MJPEG image URL, with cleanup on page hide/navigation.
 - [x] LED brightness and off controls (0..255).
 - [x] Normal still capture from the selected ESP32 camera is wired to Describe; Admin Image Lab also exposes flash-capture action.
-- [x] Owner-confirmed physical hardware test: `:81/stream` live MJPEG stream and `/capture` still JPEG both work (2026-11-26; user report).\n- [ ] Validate LED brightness, flash-off and `/capture-flash` on physical hardware.
+- [x] Owner-confirmed physical hardware test: `:81/stream` live MJPEG stream and `/capture` still JPEG both work (2026-11-26; user report).
+- [ ] Validate LED brightness, flash-off and `/capture-flash` on physical hardware.
 - [x] Inspect the supplied firmware's existing GET CORS headers; no legacy PNA preflight code is needed for the current simple GET requests.
 - [x] Prepare a separate `app_httpd.cpp` patch registering `/capture-flash` and restoring the previous LED brightness after capture. This patch is not part of the web repository and has not been flashed.
 - [ ] Compile and flash the firmware patch; verify `/capture-flash` and LED brightness on the physical board. `/capture` and `:81/stream` are owner-reported working; record firmware SHA and exact test setup on the next hardware pass.
@@ -299,7 +300,19 @@ n### Port onto current main on 2026-11-26
 - Physical torch behaviour still requires a real Android Chrome test; not every Galaxy A55/browser build exposes the torch constraint.
 
 
-### Action-page ESP32 preview — 2026-11-26\n\n- Added an ESP32 live-preview panel to `/action/` when ESP32-CAM is selected. Users can explicitly start/stop the MJPEG stream, see connection feedback, and invoke Describe to capture a separate JPEG still.\n- Stopping the preview closes the image stream connection and does not disable `/capture`; the preview is also stopped when the page is hidden or unloaded.\n- The stream preview uses the browser's image element and does not claim canvas access or video recording support.\n\n### Physical camera report — 2026-11-26\n\n- Owner confirmed the ESP32-CAM live MJPEG stream and still-image capture are working. This validates the stream and normal capture path only.\n- Still pending: flash-assisted capture, LED brightness control, browser CORS/canvas access, Chrome Local Network Access permission on Android, and full Action-page Describe flow using the configured ESP32.\n- The actual board IP and firmware binary/source hash were not included in the report; keep the app's per-device address configurable and do not infer the IP from this test.\n\n### Current-main camera validation update — 2026-11-26
+### Action-page ESP32 preview — 2026-11-26
+
+- Added an ESP32 live-preview panel to `/action/` when ESP32-CAM is selected. Users can explicitly start/stop the MJPEG stream, see connection feedback, and invoke Describe to capture a separate JPEG still.
+- Stopping the preview closes the image stream connection and does not disable `/capture`; the preview is also stopped when the page is hidden or unloaded.
+- The stream preview uses the browser's image element and does not claim canvas access or video recording support.
+
+### Physical camera report — 2026-11-26
+
+- Owner confirmed the ESP32-CAM live MJPEG stream and still-image capture are working. This validates the stream and normal capture path only.
+- Still pending: flash-assisted capture, LED brightness control, browser CORS/canvas access, Chrome Local Network Access permission on Android, and full Action-page Describe flow using the configured ESP32.
+- The actual board IP and firmware binary/source hash were not included in the report; keep the app's per-device address configurable and do not infer the IP from this test.
+
+### Current-main camera validation update — 2026-11-26
 
 - PR #31 includes guarded phone torch detection and UI control. The control is shown only when the active camera track exposes torch support.
 - Fixed malformed Admin camera markup and stale ESP32 address guidance.
