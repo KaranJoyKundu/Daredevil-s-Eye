@@ -1,4 +1,5 @@
 import { captureImage, blobToDataUrl, compressImageToJpeg, primeShutterAudio } from './camera.js?v=20261117-release5';
+import { startPhoneCamera, capturePhoneFrame, stopPhoneCamera, captureEsp32Photo } from './camera-manager.js?v=20261126-camera1';
 import { requestAI } from './api.js?v=20261117-release5';
 import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release5';
 import { getSettings, saveSettings } from './settings.js?v=20261117-release5';
@@ -243,7 +244,8 @@ async function run(mode,question='',imageOverride=null){
  try{
   wakeLock=await acquireWakeLock();
   if(!imageOverride&&!phonePhoto)announce('Taking several photos. Hold still.');
-  const sourceBlob=imageOverride||phonePhoto||await captureImage();
+  const cameraSettings=getSettings();
+  const sourceBlob=imageOverride||phonePhoto||(cameraSettings.cameraSetupComplete&&cameraSettings.cameraSource==='phone'?await capturePhoneFrame():cameraSettings.cameraSetupComplete&&cameraSettings.cameraSource==='esp32'?await captureEsp32Photo():await captureImage());
   const imageBlob=sourceBlob.type==='image/jpeg'&&sourceBlob.size<3_800_000?sourceBlob:await compressImageToJpeg(sourceBlob);
   const image=await blobToDataUrl(imageBlob);
   const settings=getSettings();
