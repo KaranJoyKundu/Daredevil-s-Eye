@@ -44,13 +44,42 @@ test('every account receives editable Napa One and Monus 10 defaults exactly onc
  const {post}=fixture();
  const first=(await (await post('medicines/list',{userId:USER})).json()).medicines;
  assert.deepEqual(first.map(item=>item.uid).sort(),['1474D505','A1618C04']);
- assert.equal(first.find(item=>item.uid==='A1618C04').name,'Napa One');
- assert.equal(first.find(item=>item.uid==='A1618C04').expiredText,'Warning! This medicine has expired.');
- assert.equal(first.find(item=>item.uid==='1474D505').expiredText,'Warning! This medicine has expired.');
+ const napa=first.find(item=>item.uid==='A1618C04');
+ const monus=first.find(item=>item.uid==='1474D505');
+ assert.equal(napa.name,'Napa One');
+ assert.equal(napa.strength,'1000 mg');
+ assert.equal(napa.expiryDate,'2025-07');
+ assert.equal(napa.instructions,'once per night before meal');
+ assert.equal(napa.expiredText,'Warning! This medicine has expired.');
+ assert.equal(monus.name,'Monus 10');
+ assert.equal(monus.strength,'10 mg');
+ assert.equal(monus.expiryDate,'2029-07');
+ assert.equal(monus.instructions,'once per night before meal');
+ assert.equal(monus.expiredText,'Warning! This medicine has expired.');
  await post('medicines/save',{userId:USER,medicine:{uid:'A1618C04',originalUid:'A1618C04',name:'My Paracetamol',strength:'500 mg'}});
  const changed=(await (await post('medicines/list',{userId:USER})).json()).medicines;
  assert.equal(changed.find(item=>item.uid==='A1618C04').name,'My Paracetamol');
  assert.equal(changed.length,2);
+});
+
+test('existing accounts are upgraded with blank starter-card defaults without overwriting edits',async()=>{
+ const {post,values}=fixture();
+ values.set('medicine-defaults-seeded:'+USER,true);
+ values.set('medicines',[
+  {uid:'A1618C04',userId:USER,name:'Napa One',strength:'500 mg',expiryDate:'',instructions:'',announcementText:'My custom announcement',expiredText:'My custom expiry warning'},
+  {uid:'1474D505',userId:USER,name:'Monus 10',strength:'',expiryDate:'',instructions:'',announcementText:'',expiredText:'Warning! This medicine has expired.'}
+ ]);
+ const cards=(await (await post('medicines/list',{userId:USER})).json()).medicines;
+ const napa=cards.find(item=>item.uid==='A1618C04');
+ const monus=cards.find(item=>item.uid==='1474D505');
+ assert.equal(napa.strength,'500 mg');
+ assert.equal(napa.expiryDate,'2025-07');
+ assert.equal(napa.instructions,'once per night before meal');
+ assert.equal(napa.announcementText,'My custom announcement');
+ assert.equal(napa.expiredText,'My custom expiry warning');
+ assert.equal(monus.strength,'10 mg');
+ assert.equal(monus.expiryDate,'2029-07');
+ assert.equal(monus.instructions,'once per night before meal');
 });
 
 test('medicine UID can be changed while editing without leaving the old UID behind',async()=>{
