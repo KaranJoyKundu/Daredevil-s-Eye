@@ -27,7 +27,7 @@ test('RFID pairing is single-use, account-bound, and returns a device token only
  assert.equal((await post('pair/claim',{code:started.code})).status,401);
 });
 
-test('RFID events are authenticated, account-scoped, deduplicated and acknowledged',async()=>{
+test('direct device provisioning creates an account-bound credential without a six-digit code',async()=>{\n const {post}=fixture(),userId='d9b3f6e0-1d2a-4f2c-9a8a-7c5b6d4e3f21';\n const provisioned=await (await post('devices/provision',{userId})).json();\n assert.equal(provisioned.ok,true);assert.match(provisioned.deviceToken,/^[a-f0-9]{64}$/);\n assert.equal((await post('event/submit',{uid:'A1618C04',medicine:'Napa One'},provisioned.deviceToken)).status,200);\n assert.equal((await post('event/poll',{userId})).json instanceof Function,true);\n});\n\ntest('RFID events are authenticated, account-scoped, deduplicated and acknowledged',async()=>{
  const {post}=fixture(),userId='d9b3f6e0-1d2a-4f2c-9a8a-7c5b6d4e3f21';
  const pair=await (await post('pair/start',{userId})).json();
  const device=await (await post('pair/claim',{code:pair.code})).json();
@@ -65,7 +65,7 @@ test('medicine page is a separate nav destination and global listener is loaded 
  assert.match(page,/listener-enabled/);
  assert.match(pageScript,/scan-napa/);
  assert.doesNotMatch(page,/generate-code|pair-code/);
- assert.match(page,/temporarily bypassed for this page test/);
+ assert.match(page,/Authorize ESP32/);\n assert.match(pageScript,/api\\/rfid\\/devices\\/provision/);
 });
 
 test('ESP32 firmware refuses unverified TLS and contains both registered UID mappings',()=>{
@@ -75,7 +75,7 @@ test('ESP32 firmware refuses unverified TLS and contains both registered UID map
  assert.match(firmware,/useBuiltinCACertBundle/);
  assert.match(firmware,/MAX_PENDING_EVENTS = 5/);
  assert.match(firmware,/savePendingQueue/);
- assert.match(firmware,/DEVICE_AUTH_FAILED/);
+ assert.match(firmware,/DEVICE_AUTH_FAILED/);\n assert.match(firmware,/64-character device token/);\n assert.doesNotMatch(firmware,/six digits here/);
  assert.match(firmware,/preferences.remove\("token"\)/);
  assert.doesNotMatch(firmware,/setInsecure\s*\(/);
 });
