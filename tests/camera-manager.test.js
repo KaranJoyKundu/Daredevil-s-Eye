@@ -66,5 +66,13 @@ test('phone torch is exposed only when the active camera track advertises suppor
   assert.match(manager, /getCapabilities\?\.\(\)/);
   assert.match(manager, /applyConstraints\(\{ advanced: \[\{ torch: Boolean\(enabled\) \}\] \}\)/);
   assert.match(action, /id="phone-camera-torch"/);
+  assert.match(app, /camera-manager\.js\?v=20261126-camera3/);
   assert.match(app, /syncPhoneTorchControl\(\)/);
+});
+
+test('Admin camera settings markup closes labels and shows the current ESP32 default', () => {
+  const adminHtml = readFileSync(new URL('../web/admin/index.html', import.meta.url), 'utf8');
+  assert.match(adminHtml, /Current camera address: http:\/\/192\.168\.0\.100/);
+  assert.doesNotMatch(adminHtml, /<\/small<div/);
+  assert.doesNotMatch(adminHtml, /border-radius:12px">>/);
 });
