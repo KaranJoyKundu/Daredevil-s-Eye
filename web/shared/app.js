@@ -466,7 +466,7 @@ $('#esp32-action-stream-stop')?.addEventListener('click',()=>{
 });
 if(esp32StreamPreview){
  esp32StreamPreview.addEventListener('load',()=>{if(esp32CameraStatus)esp32CameraStatus.textContent='ESP32 live preview is active. Press Describe to capture a still image for AI analysis.';});
- esp32StreamPreview.addEventListener('error',()=>{if(esp32CameraStatus)esp32CameraStatus.textContent='Live preview could not connect. Check the ESP32 IP, Wi-Fi and Chrome Local Network Access. Still-photo capture can be tested separately.';});
+ esp32StreamPreview.addEventListener('error',()=>{if(!esp32StreamPreview.getAttribute('src'))return;if(esp32CameraStatus)esp32CameraStatus.textContent='Live preview could not connect. Check the ESP32 IP, Wi-Fi and Chrome Local Network Access. Still-photo capture can be tested separately.';});
 }
 renderCameraPanels();
 document.addEventListener('visibilitychange',()=>{
