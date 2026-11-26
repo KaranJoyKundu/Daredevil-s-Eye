@@ -12,7 +12,7 @@ This feature adds an account-paired ESP32 + RC522 medicine reader to Daredevil's
 - The ESP32 keeps up to five unsent events in Preferences/NVS and retries them in order after connectivity returns; the event ID remains stable during retries.
 - The app-wide listener polls while a Daredevil's Eye page using shared navigation is open and the listener is enabled.
 - Device revocation invalidates the stored token immediately.
-- Pairing attempts are capped at ten per active code.
+- Device tokens are generated only for the signed-in account and stored as SHA-256 hashes.
 
 ## Hardware wiring
 
@@ -46,10 +46,10 @@ The firmware uses the ESP32 Arduino core's built-in trusted CA certificate bundl
 
 1. Deploy the Worker changes, including the RFIDDirectory Durable Object migration.
 2. Sign into Daredevil's Eye and open /medicine/.
-3. Generate a pairing code.
+3. Click **Authorize ESP32 & generate token** and copy the token. It is shown only once.
 4. Open the ESP32 Serial Monitor at 115200 baud.
-5. The firmware connects to Wi-Fi, validates /api/health, then prompts for the six-digit code.
-6. Enter the code. The device token is stored in ESP32 NVS (Preferences); it is not printed.
+5. The firmware connects to Wi-Fi, validates /api/health, then prompts for the 64-character token.
+6. Paste the token and press Enter. It is stored in ESP32 NVS (Preferences) and is not printed.
 7. Scan a registered card. The current firmware maps:
    - A1618C04 → Napa One
    - 1474D505 → Monus 10
