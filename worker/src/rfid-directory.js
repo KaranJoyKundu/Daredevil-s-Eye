@@ -1,6 +1,7 @@
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const encoder=new TextEncoder();
-const LEGACY_MEDICINES=Object.freeze({'A1618C04':'Napa One','1474D505':'Monus 10'});
+const DEFAULT_MEDICINES=Object.freeze([{uid:'A1618C04',name:'Napa One'},{uid:'1474D505',name:'Monus 10'}]);
+const LEGACY_MEDICINES=Object.freeze(Object.fromEntries(DEFAULT_MEDICINES.map(item=>[item.uid,item.name])));
 const randomHex=(bytes=32)=>Array.from(crypto.getRandomValues(new Uint8Array(bytes)),b=>b.toString(16).padStart(2,'0')).join('');
 const digest=async value=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',encoder.encode(value))),b=>b.toString(16).padStart(2,'0')).join('');
 const same=(a,b)=>{if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a.charCodeAt(i)^b.charCodeAt(i);return diff===0;};
@@ -58,6 +59,16 @@ export class RFIDDirectory {
   }
   async listMedicines({userId}){
     if(!validUser(userId))return json({ok:false,error:'A signed-in account is required.'},401);
+    const seededKey='medicine-defaults-seeded:'+userId;
+    if(!await this.storage.get(seededKey)){
+      const medicines=await this.storage.get('medicines')||[];
+      for(const item of DEFAULT_MEDICINES){
+        if(!medicines.some(existing=>existing.userId===userId&&existing.uid===item.uid))
+          medicines.push({...item,strength:'',expiryDate:'',instructions:'',announcementText:'',expiredText:'',userId,defaultCard:true,updatedAt:new Date().toISOString()});
+      }
+      await this.storage.put('medicines',medicines);
+      await this.storage.put(seededKey,true);
+    }
     const medicines=await this.storage.get('medicines')||[];
     return json({ok:true,medicines:medicines.filter(item=>item.userId===userId).map(({userId,...item})=>item).sort((a,b)=>a.name.localeCompare(b.name))});
   }
@@ -67,12 +78,14 @@ export class RFIDDirectory {
     const uid=normalizeUid(medicine.uid),name=clean(medicine.name,100),strength=clean(medicine.strength,60);
     const expiryDate=clean(medicine.expiryDate,10),instructions=clean(medicine.instructions,500);
     const announcementText=clean(medicine.announcementText,1000),expiredText=clean(medicine.expiredText,300);
+    const originalUid=normalizeUid(medicine.originalUid||'');
     if(!validUid(uid))return json({ok:false,error:'Enter a valid RFID UID (4, 7, or 10 bytes in hexadecimal).'},400);
     if(!name)return json({ok:false,error:'Medicine name is required.'},400);
     if(!validDate(expiryDate))return json({ok:false,error:'Expiry month must use YYYY-MM.'},400);
     const medicines=await this.storage.get('medicines')||[];
+    if(originalUid&&originalUid!==uid&&medicines.some(item=>item.userId===userId&&item.uid===uid))return json({ok:false,error:'That RFID UID is already assigned to another medicine card.'},409);
     const record={uid,name,strength,expiryDate,instructions,announcementText,expiredText,updatedAt:new Date().toISOString(),userId};
-    const index=medicines.findIndex(item=>item.userId===userId&&item.uid===uid);
+    const index=medicines.findIndex(item=>item.userId===userId&&item.uid===(originalUid||uid));
     if(index>=0)medicines[index]=record;else medicines.push(record);
     await this.storage.put('medicines',medicines);
     const {userId:ignored,...safe}=record;
