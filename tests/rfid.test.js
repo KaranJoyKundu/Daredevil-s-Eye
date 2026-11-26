@@ -17,7 +17,7 @@ function fixture(){
  return {directory,values,post};
 }
 const USER='d9b3f6e0-1d2a-4f2c-9a8a-7c5b6d4e3f21';
-const medicine=(overrides={})=>({uid:'A1618C04',name:'Paracetamol',strength:'500 mg',expiryDate:'2027-12-31',instructions:'Your registered prescription says one tablet after food.',...overrides});
+const medicine=(overrides={})=>({uid:'A1618C04',name:'Paracetamol',strength:'500 mg',expiryDate:'2027-12',instructions:'Your registered prescription says one tablet after food.',...overrides});
 
 test('RFID pairing is single-use, account-bound, and returns a device token only once',async()=>{
  const {post}=fixture();
@@ -56,7 +56,7 @@ test('direct device provisioning sends UID-only scans into personalized account 
 test('expired medicine speaks the warning instead of normal prescription instructions',async()=>{
  const {post}=fixture();
  const device=await (await post('devices/provision',{userId:USER})).json();
- await post('medicines/save',{userId:USER,medicine:medicine({expiryDate:'2000-01-01',expiredText:'Warning! This medicine has expired.'})});
+ await post('medicines/save',{userId:USER,medicine:medicine({expiryDate:'2000-01',expiredText:'Warning! This medicine has expired.'})});
  await post('event/submit',{uid:'A1618C04'},device.deviceToken);
  const events=(await (await post('event/poll',{userId:USER})).json()).events;
  assert.equal(events[0].expired,true);
