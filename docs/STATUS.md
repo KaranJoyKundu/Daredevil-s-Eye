@@ -73,3 +73,13 @@ See CURRENT-RELEASE-CHECKLIST.md for detailed acceptance criteria and device-tes
 - Documentation page is live at `/documentation/`; permanent plan is `docs/NATIVE-ANDROID-APP.md`.
 - Current APK is debug-signed for initial A55 testing. Permanent signed GitHub Release requires the owner-controlled keystore and four protected GitHub Actions secrets in `docs/ANDROID-RELEASE-SETUP.md`.
 - Physical Galaxy A55 tests remain open: volume gesture accuracy, global Accessibility Service, screen-off/lock-screen handling, TalkBack coexistence, camera/microphone, RFID and SOS.
+
+
+## Action/Blind startup recovery — 26 November 2026
+
+- Incident: all delegated Action controls and phone-photo input handlers were missing because `web/shared/app.js` threw during module initialization.
+- Root cause: the obsolete `updateConsentPanel()` call invoked `showCameraSetup()` before the `const` bindings for the camera panels were initialized. This accessed `cameraSetupPanel` in its temporal dead zone and stopped the module before it registered click, file-input, form, and camera event handlers.
+- Fix prepared on `hotfix/action-startup-temporal-dead-zone`: remove the obsolete consent-panel startup call; retain the normal `renderCameraPanels()` call after panel bindings are initialized; bump the Action and Blind app-module URL so browsers fetch the corrected module.
+- Privacy requirement retained: no popup, no Accept button, no checkbox, and no photo-history toggle. The always-visible informational privacy notice remains.
+- Routing review: PR #66's explicit `/action/index.html` and `/blind/index.html` Worker rewrite caused `ERR_TOO_MANY_REDIRECTS`; PR #67 correctly reverted that rewrite. Do not reintroduce the PR #66 rewrite.
+- Verification status: source-level root cause and patch identified. Do not mark production fixed until CI passes, deployment succeeds, and live browser checks confirm Describe, Ask AI, SOS arm/cancel, Repeat/Stop, camera-source controls, phone gallery picker, phone camera and ESP32 controls.
