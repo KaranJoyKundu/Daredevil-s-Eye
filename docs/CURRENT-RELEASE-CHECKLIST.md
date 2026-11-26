@@ -58,7 +58,7 @@ Do not assume history is live merely because the Worker deployment succeeds. Con
 | P1 | Account UI/accessibility | Test small-screen layout, TalkBack focus, labels, live regions, large targets and delete confirmations. |
 | P1 | Camera-history semantics | Confirm submitted compressed image is saved; preview-only cancelled image is not saved; failed Gemini analysis still leaves the image record. |
 | P1 | Screen-off SOS | Pair a second phone, lock it, send SOS and verify actual notification visibility/sound/vibration. |
-| P2 | ESP32-CAM/shutter/compression | Test LAN access, the selected frame, the single shutter click and JPEG size under 4 MB on real hardware. |
+| P2 | ESP32-CAM/shutter/compression | Owner confirms live MJPEG stream and normal JPEG capture work (2026-11-26). Still test Android Chrome Local Network Access, Action-page capture/analysis, flash capture, LED brightness, shutter audibility, selected-frame quality and JPEG size under 4 MB. |
 | P2 | Accessibility/security review | Test TalkBack, false-positive SOS behavior and re-run Supabase security/performance advisors after final schema changes. |
 | Optional | Buy Me a Coffee | Add a creator page only when one exists; no placeholder payment URL is published. |
 
