@@ -40,7 +40,7 @@ Set WIFI_SSID and WIFI_PASSWORD for a 2.4 GHz network.
 
 ### TLS certificate is a deliberate setup gate
 
-The firmware uses certificate-verified HTTPS and does not call setInsecure(). ROOT_CA_CERT is intentionally empty in the committed template. Before sending a pairing code or device token, paste the trusted root CA PEM that validates the current daredevils-eye.karanjoykundu.workers.dev certificate chain into that constant. The firmware stops with TLS_CA_NOT_CONFIGURED until this is done. Do not bypass this check: the device token must not travel over unverified TLS.
+The firmware uses the ESP32 Arduino core's built-in trusted CA certificate bundle through useBuiltinCACertBundle(), and does not disable certificate verification. Use Arduino-ESP32 core 3.x so this API is available. This avoids maintaining a manually pasted root certificate. Do not replace it with insecure TLS: the device token must only travel over verified HTTPS.
 
 ## Pairing and first run
 
