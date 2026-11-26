@@ -33,10 +33,31 @@ test('medicine cards are validated and isolated to the owning account',async()=>
  const {post}=fixture();
  assert.equal((await post('medicines/save',{userId:USER,medicine:medicine()})).status,200);
  const other='d9b3f6e0-1d2a-4f2c-9a8a-7c5b6d4e3f22';
- assert.equal((await (await post('medicines/list',{userId:other})).json()).medicines.length,0);
+ const otherCards=(await (await post('medicines/list',{userId:other})).json()).medicines;
+ assert.deepEqual(otherCards.map(item=>item.uid).sort(),['1474D505','A1618C04']);
  const listed=await (await post('medicines/list',{userId:USER})).json();
- assert.equal(listed.medicines.length,1);assert.equal(listed.medicines[0].uid,'A1618C04');
+ assert.equal(listed.medicines.length,2);assert.equal(listed.medicines.find(item=>item.uid==='A1618C04').name,'Paracetamol');
  assert.equal((await post('medicines/save',{userId:USER,medicine:medicine({uid:'not-a-uid'})})).status,400);
+});
+
+test('every account receives editable Napa One and Monus 10 defaults exactly once',async()=>{
+ const {post}=fixture();
+ const first=(await (await post('medicines/list',{userId:USER})).json()).medicines;
+ assert.deepEqual(first.map(item=>item.uid).sort(),['1474D505','A1618C04']);
+ assert.equal(first.find(item=>item.uid==='A1618C04').name,'Napa One');
+ await post('medicines/save',{userId:USER,medicine:{uid:'A1618C04',originalUid:'A1618C04',name:'My Paracetamol',strength:'500 mg'}});
+ const changed=(await (await post('medicines/list',{userId:USER})).json()).medicines;
+ assert.equal(changed.find(item=>item.uid==='A1618C04').name,'My Paracetamol');
+ assert.equal(changed.length,2);
+});
+
+test('medicine UID can be changed while editing without leaving the old UID behind',async()=>{
+ const {post}=fixture();
+ await post('medicines/list',{userId:USER});
+ await post('medicines/save',{userId:USER,medicine:{uid:'0A0B0C0D',originalUid:'A1618C04',name:'Renamed medicine'}});
+ const cards=(await (await post('medicines/list',{userId:USER})).json()).medicines;
+ assert.equal(cards.some(item=>item.uid==='A1618C04'),false);
+ assert.equal(cards.find(item=>item.uid==='0A0B0C0D').name,'Renamed medicine');
 });
 
 test('existing Napa One and Monus 10 cards continue to work until customized',async()=>{
