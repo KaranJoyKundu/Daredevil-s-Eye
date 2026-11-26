@@ -24,7 +24,7 @@ This roadmap replaces the old token/rate-limit checklist, which no longer descri
 - [x] Standard four-action home screen.
 - [x] Admin settings for camera, AI response options, speech and SOS configuration.
 - [x] Diagnostics page with six cards, including Check all at once.
-- [x] Versioned local privacy consent.
+- [x] Informational privacy notice and privacy-first photo-history controls; no blocking consent popup, Accept button, checkbox or history opt-in toggle.
 - [x] One-time SOS invitations, receiver tokens, replacement and acknowledgement.
 - [x] GitHub Actions test/syntax workflow and conditional Cloudflare deployment.
 - [x] Public Cloudflare URL deployed: https://daredevils-eye.karanjoykundu.workers.dev/
@@ -60,7 +60,7 @@ This roadmap replaces the old token/rate-limit checklist, which no longer descri
 
 ## Device-control notes
 
-The web app cannot reliably intercept Android hardware volume keys. MacroDroid/Tasker URL triggers and manifest shortcuts are integration paths; event delivery, lock-screen behavior and permissions must be checked on the actual phone. A native Android wrapper with a volume-key handler remains deferred.
+The ordinary web/PWA cannot reliably intercept Android hardware volume keys. MacroDroid/Tasker URL triggers and manifest shortcuts are web fallbacks. A native Capacitor Android companion and native volume-key/Accessibility Service implementation are now merged; the debug APK builds in CI. Physical A55 validation, TalkBack compatibility, background/lock-screen behaviour and signed release remain open. See [Native Android master plan](NATIVE-ANDROID-APP.md) and [Phone controls](PHONE-CONTROLS.md).
 
 ## Phase 2 — physical prototype verification
 
@@ -109,7 +109,7 @@ Partly done. Email and password accounts, private photo history, guest history, 
 - [ ] No safety-readiness claims without supporting test evidence.
 
 
-## Phase 6 — Native Android companion (implementation in progress)
+## Phase 6 — Native Android companion (implementation merged; device validation in progress)
 
 The owner approved a native Capacitor application for Samsung Galaxy A55 5G on Android 16 / One UI 8. The complete implementation checklist and status are maintained in [NATIVE-ANDROID-APP.md](NATIVE-ANDROID-APP.md) and the in-app [Documentation page](/documentation/).
 
