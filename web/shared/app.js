@@ -128,7 +128,17 @@ function localizeSpeech(message){
  return 'দুঃখিত, কাজটি সম্পন্ন করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
 }
 // Status line in the chosen answer language (only for messages localizeSpeech knows; others fall back to its generic error).
-function show(message){if(status)status.textContent=getSettings().speechLanguage==='bn-BD'?localizeSpeech(message):message;}
+function updateBlindFeedback(message){
+ if(!isBlindMode||!blindFeedback)return;
+ const text=getSettings().speechLanguage==='bn-BD'?localizeSpeech(String(message||'')):String(message||'');
+ blindFeedback.textContent=text;
+ blindFeedback.hidden=!text;
+}
+function show(message){
+ const text=getSettings().speechLanguage==='bn-BD'?localizeSpeech(message):message;
+ if(status)status.textContent=text;
+ updateBlindFeedback(text);
+}
 function speakSosStatus(message){
  const settings=getSettings();
  const resume=()=>{if(isBlindMode&&settings.sosVoiceEnabled&&!document.hidden&&!sosVoiceBlocked&&!sosDispatching)startSosVoiceListener();};
@@ -221,7 +231,7 @@ function setSosFeedback(message,state='info'){
  feedback.dataset.state=state;feedback.hidden=!message;
 }
 function resetSosButton(){const button=document.querySelector('[data-action="sos"]');if(button)button.setAttribute('aria-pressed','false');}
-function announce(message){const settings=getSettings(),spoken=localizeSpeech(message);if(status)status.textContent=settings.speechLanguage==='bn-BD'?spoken:message;speakSosStatus(message);}
+function announce(message){const settings=getSettings(),spoken=localizeSpeech(message),visible=settings.speechLanguage==='bn-BD'?spoken:message;if(status)status.textContent=visible;updateBlindFeedback(visible);speakSosStatus(message);}
 function actionVibration(action){const patterns={describe:[65],ask:[55,90,55],sos:[260],repeat:[45,65,45,65,45],help:[35,65,35]};vibrate(patterns[action]||60);}
 async function acquireWakeLock(){if(!navigator.wakeLock?.request)return null;try{return await navigator.wakeLock.request('screen');}catch{return null;}}
 async function releaseWakeLock(lock){try{if(lock&&!lock.released)await lock.release();}catch{}}
@@ -279,9 +289,11 @@ async function run(mode,question='',imageOverride=null){
     ?result.historyMessage
     :completed;
    status.textContent=settings.speechLanguage==='bn-BD'?localizeSpeech(message):message;
+   updateBlindFeedback(status.textContent);
   }
  }catch(error){
   const message=error.message||'Something went wrong.';revealRun++;if($('#result'))$('#result').textContent=message;if(status)status.textContent=message;
+  updateBlindFeedback(message);
   speak(spokenError(error),{lang:getSettings().speechLanguage||'en-US'});
  }finally{await releaseWakeLock(wakeLock);startSosVoiceListener();}
 }
