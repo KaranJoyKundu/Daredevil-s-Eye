@@ -59,5 +59,5 @@ Wrangler prompts for the key. Do not put secret values directly into command his
 - Use Admin BYOK only with a key under your control.
 - Test microphone transcription on HTTPS; record the exact browser/device and language.
 - Pair two physical phones for SOS and test replacement and acknowledgement.
-- Review privacy notice and consent text.
+- Review the visible informational privacy notice and confirm there is no blocking consent popup, Accept button, checkbox or photo-history opt-in toggle.
 - Verify that no API key, audio recording or private image appears in logs or commits.
