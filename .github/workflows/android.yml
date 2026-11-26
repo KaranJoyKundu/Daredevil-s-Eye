@@ -1,0 +1,61 @@
+name: Build Daredevil's Eye Android APK
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'native-android/**'
+      - 'capacitor.config.*'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/android.yml'
+  push:
+    branches: [feat/native-android-capacitor-a55]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug:
+    name: Build Android debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install Node dependencies
+        run: npm install
+      - name: Generate Android project if absent
+        run: |
+          if [ ! -d android ]; then
+            npx cap add android
+          fi
+      - name: Sync Capacitor
+        run: npx cap sync android
+      - name: Apply tracked native Android integration
+        run: |
+          if [ -d native-android/android-app ]; then
+            cp -R native-android/android-app/. android/app/
+          fi
+          if [ -d native-android/android-root ]; then
+            cp -R native-android/android-root/. android/
+          fi
+      - name: Build debug APK
+        working-directory: android
+        run: gradle --no-daemon assembleDebug
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: daredevils-eye-android-debug
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
