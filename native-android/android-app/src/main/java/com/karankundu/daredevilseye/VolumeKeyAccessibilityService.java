@@ -22,7 +22,7 @@ public class VolumeKeyAccessibilityService extends AccessibilityService {
     private static final long SOS_HOLD_MS = 700L;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private boolean upDown, downDown, chordConsumed, upPending;
+    private boolean upDown, downDown, chordConsumed, upPending, sosTriggered;
     private long lastUpRelease;
     private Runnable describeRunnable, sosRunnable;
 
@@ -44,13 +44,17 @@ public class VolumeKeyAccessibilityService extends AccessibilityService {
                 cancelDescribe();
                 upPending = false;
                 chordConsumed = true;
-                sosRunnable = () -> dispatch("sos");
+                sosRunnable = () -> { sosTriggered = true; dispatch("sos"); };
                 handler.postDelayed(sosRunnable, SOS_HOLD_MS);
             }
             return true;
         }
 
         if (event.getAction() == KeyEvent.ACTION_UP) {
+            if (chordConsumed && !sosTriggered && sosRunnable != null) {
+                handler.removeCallbacks(sosRunnable);
+                sosRunnable = null;
+            }
             if (key == KeyEvent.KEYCODE_VOLUME_UP) {
                 upDown = false;
                 if (!chordConsumed) {
@@ -77,7 +81,7 @@ public class VolumeKeyAccessibilityService extends AccessibilityService {
             if (!upDown && !downDown) {
                 if (sosRunnable != null) handler.removeCallbacks(sosRunnable);
                 sosRunnable = null;
-                chordConsumed = false;
+                chordConsumed = false;\n                sosTriggered = false;
             }
             return true;
         }
