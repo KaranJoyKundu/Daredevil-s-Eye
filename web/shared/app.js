@@ -525,6 +525,7 @@ function handleNativeVolumeAction(event){
  else if(action==='repeat')repeatAnswer();
  else if(action==='sos')armSos({shortcut:true});
  else if(action==='help')speakHelp();
+ if(eventId){const plugin=window.Capacitor?.Plugins?.VolumeControls;plugin?.ackPendingAction?.({eventId}).catch(()=>{});}
 }
 window.addEventListener('deeVolumeAction',handleNativeVolumeAction);
 window.__deeVolumeBridgeReady=true;
