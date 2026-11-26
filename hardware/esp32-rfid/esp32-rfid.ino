@@ -30,6 +30,8 @@ MFRC522 rfid(RFID_SS_PIN, RFID_RST_PIN);
 Preferences preferences;
 String deviceToken;
 String deviceId;
+bool rfidReady = false;
+bool deviceReady = false;
 unsigned long lastScanAt = 0;
 unsigned long lastQueueRetryAt = 0;
 const unsigned long SCAN_COOLDOWN_MS = 1800;
@@ -243,6 +245,7 @@ void setup() {
     return;
   }
   Serial.printf("[PASS] RC522 VERSION 0x%02X\n", version);
+  rfidReady = true;
   preferences.begin("de-rfid", true);
   deviceToken = preferences.getString("token", "");
   deviceId = preferences.getString("deviceId", "");
@@ -250,12 +253,20 @@ void setup() {
   if (!connectWiFi()) return;
   if (!checkServer()) return;
   if (!pairDevice()) return;
+  deviceReady = true;
   Serial.println("[5/7] RFID SCAN READY");
   Serial.println("[PASS] SCAN A REGISTERED MEDICINE CARD");
   Serial.println("==========================================");
 }
 
 void loop() {
+  if (!rfidReady) { delay(1000); return; }
+  if (!deviceReady) {
+    if (WiFi.status() != WL_CONNECTED && !connectWiFi()) { delay(3000); return; }
+    if (!checkServer()) { delay(5000); return; }
+    if (!pairDevice()) { delay(3000); return; }
+    deviceReady = true;
+  }
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("[WARN] WIFI DISCONNECTED · reconnecting");
     if (!connectWiFi()) { delay(3000); return; }
