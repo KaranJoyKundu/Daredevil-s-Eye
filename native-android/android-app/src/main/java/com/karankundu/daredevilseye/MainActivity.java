@@ -113,7 +113,8 @@ public class MainActivity extends BridgeActivity {
             if (!upDown && !downDown) {
                 if (sosRunnable != null) handler.removeCallbacks(sosRunnable);
                 sosRunnable = null;
-                chordConsumed = false;\n                sosTriggered = false;
+                chordConsumed = false;
+                sosTriggered = false;
             }
             return true;
         }
