@@ -187,15 +187,16 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - [x] Preserve upload-only fallback.
 - [x] Centralize ESP32 endpoint construction and set default IP to 192.168.0.100.
 - [x] Add ESP32 /capture connection test in Admin.
-- [ ] Ensure cleanup on source change/page lifecycle.
+- [x] Ensure cleanup on source change/page lifecycle (phone tracks stop on source change, pagehide and hidden-page transitions; user must re-enable after returning).
 - [x] Add static regression tests for camera setup, phone capture, ESP32 endpoint generation and Admin controls.
 
 ### Phase 2 — ESP32 controls
-- [ ] Live stream preview.
-- [ ] Stream start/stop.
-- [ ] LED brightness and off.
-- [ ] No-flash and flash capture.
-- [ ] Firmware CORS/preflight changes and actual hardware validation.
+- [x] Live stream preview UI in Admin.
+- [x] Stream start/stop by attaching/removing the MJPEG image URL.
+- [x] LED brightness and off controls (0..255).
+- [x] No-flash and flash capture paths; Admin Image Lab now exposes a flash-capture action.
+- [ ] Validate all ESP32 controls on physical hardware.
+- [ ] Firmware CORS/preflight changes and actual hardware validation (firmware source is not in this repository branch).
 - [ ] Phone torch capability detection.
 
 ### Phase 3 — scene memory
@@ -236,7 +237,20 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - `npm test` and `npm run check` pass on the exact PR SHA.
 - Manual test results on a physical Android phone and ESP32 are recorded separately.
 
-### Work completed on 2026-11-26\n\n- Added this plan and repository handoff document.\n- Created fresh backup and feature branch.\n- Added per-device camera source/setup settings and migrated the legacy ESP32 default IP to 192.168.0.100.\n- Added shared phone/ESP32 camera manager: persistent phone MediaStream, canvas still capture, stream cleanup, configurable ESP32 endpoints, LED brightness, flash/no-flash capture and connection test.\n- Added first-time camera selector after consent and phone camera preview/enable flow to Action page.\n- Routed Describe to the selected phone stream or ESP32 still capture; upload-only selection triggers the existing upload flow.\n- Added Admin ESP32 connection test, LED brightness and stream start/stop controls.\n- Added camera-manager regression tests and syntax-check coverage.\n- Not yet verified on a physical phone or ESP32; browser local-network permission/CORS behaviour remains a manual test.\n\n## 12. Continue-work instructions for a future session
+### Work completed on 2026-11-26\n\n- Added this plan and repository handoff document.\n- Created fresh backup and feature branch.\n- Added per-device camera source/setup settings and migrated the legacy ESP32 default IP to 192.168.0.100.\n- Added shared phone/ESP32 camera manager: persistent phone MediaStream, canvas still capture, stream cleanup, configurable ESP32 endpoints, LED brightness, flash/no-flash capture and connection test.\n- Added first-time camera selector after consent and phone camera preview/enable flow to Action page.\n- Routed Describe to the selected phone stream or ESP32 still capture; upload-only selection triggers the existing upload flow.\n- Added Admin ESP32 connection test, LED brightness and stream start/stop controls.\n- Added camera-manager regression tests and syntax-check coverage.\n- Not yet verified on a physical phone or ESP32; browser local-network permission/CORS behaviour remains a manual test.\n\n### Additional implementation on 2026-11-26
+
+- Wired the Action page's first-time camera selector to device settings; the earlier UI-only markup was not connected to handlers.
+- Existing consent now triggers the setup check on page load, not only immediately after clicking Accept.
+- Phone-camera selection persists per device and exposes an explicit Enable action; permission is not requested automatically.
+- Added visible phone-camera status feedback.
+- Phone camera tracks are stopped when switching sources, hiding the page or leaving it; the user must explicitly re-enable after returning to the foreground.
+- Added an Admin Image Lab action to capture an ESP32 still with flash and preview the returned image.
+- Added regression coverage for camera setup wiring, lifecycle cleanup and flash capture.
+- Latest branch commit: `c9ef170559842b1af9ae98973df533373742e2d3`.
+- The earlier CI run passed on commit `c9fbc796385012c00a3ab86b05bb2987714c6255`; the follow-up changes have not yet been verified by a new CI run.
+- No firmware changes, scene-memory backend, SOS WebRTC, R2 recording, TURN configuration or production deployment are complete.
+
+## 12. Continue-work instructions for a future session
 
 1. Read this document first.
 2. Check GitHub current main SHA, feature branch SHA, PR status and latest CI.
