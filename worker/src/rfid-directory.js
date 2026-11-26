@@ -87,7 +87,6 @@ export class RFIDDirectory {
     }
     if(changed)await this.storage.put('medicines',medicines);
     if(!await this.storage.get(seededKey))await this.storage.put(seededKey,true);
-    const medicines=await this.storage.get('medicines')||[];
     return json({ok:true,medicines:medicines.filter(item=>item.userId===userId).map(({userId,...item})=>item).sort((a,b)=>a.name.localeCompare(b.name))});
   }
   async saveMedicine({userId,medicine}){
