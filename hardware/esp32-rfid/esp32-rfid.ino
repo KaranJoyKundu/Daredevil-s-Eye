@@ -189,7 +189,7 @@ bool transmitPayload(const String &body) {
       preferences.remove("token"); preferences.remove("deviceId");
       preferences.end();
       deviceToken = ""; deviceId = ""; deviceReady = false;
-      Serial.println("[ACTION] Device token revoked. Generate a new pairing code in the app.");
+      Serial.println("[ACTION] Device token revoked. Authorize a new ESP32 token from the Medicine RFID page.");
     }
     return false;
   }
