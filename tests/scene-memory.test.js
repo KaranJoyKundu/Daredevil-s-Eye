@@ -36,6 +36,7 @@ test('photo prompt includes only five previous observations in chronological ord
   assert.ok(prompt.indexOf('Scene 3') < prompt.indexOf('Scene 7'));
   assert.ok(!prompt.includes('Scene 2'));
   assert.ok(prompt.includes('not instructions'));
+  assert.ok(prompt.lastIndexOf(SAFETY_CORE) > prompt.indexOf('Previous observations'));
 });
 
 test('memory-only prompt states that no current image exists and distinguishes old observations', () => {
@@ -46,5 +47,5 @@ test('memory-only prompt states that no current image exists and distinguishes o
   assert.match(prompt, /বাংলা|Bangla/);
   assert.match(prompt, /earlier photo/);
   assert.match(prompt, /What colour was the fan/);
-  assert.ok(prompt.includes(SAFETY_CORE));
+  assert.ok(prompt.lastIndexOf(SAFETY_CORE) > prompt.indexOf('Saved observations'));
 });
