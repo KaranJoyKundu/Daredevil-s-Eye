@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: daredevils-eye-android-v2-${{ github.head_ref || github.ref_name }}
+  group: daredevils-eye-android-v2-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
