@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildSceneMemoryPrompt, buildMemoryQuestionPrompt, normalizeSceneMemoryOutput, SCENE_MEMORY_LIMIT } from '../worker/src/scene-memory.js';
+import { SAFETY_CORE } from '../worker/src/prompts.js';
 
 test('scene memory accepts a valid structured answer and limits/sanitizes facts', () => {
   const result = normalizeSceneMemoryOutput(JSON.stringify({
@@ -45,4 +46,5 @@ test('memory-only prompt states that no current image exists and distinguishes o
   assert.match(prompt, /বাংলা|Bangla/);
   assert.match(prompt, /earlier photo/);
   assert.match(prompt, /What colour was the fan/);
+  assert.ok(prompt.includes(SAFETY_CORE));
 });
