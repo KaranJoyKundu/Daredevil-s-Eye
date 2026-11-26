@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { acceptConsent, rejectConsent, hasCurrentConsent, getConsentRecord, resetConsent, CURRENT_CONSENT_VERSION } from '../web/shared/consent.js';
+import { acceptConsent, rejectConsent, hasCurrentConsent, getConsentRecord, resetConsent, CURRENT_CONSENT_VERSION, isTestingMode } from '../web/shared/consent.js';
 
 class MemoryStorage {
   values = new Map();
@@ -82,5 +82,25 @@ test('rejecting the current terms does not grant access, but later acceptance ca
   } finally {
     if (previous === undefined) delete globalThis.localStorage;
     else Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: previous });
+  }
+});
+
+
+test('explicit testMode URL bypasses the gate without recording consent', () => {
+  const previousStorage = globalThis.localStorage;
+  const previousLocation = globalThis.location;
+  const storage = new MemoryStorage();
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: storage });
+  Object.defineProperty(globalThis, 'location', { configurable: true, value: { search: '?testMode=1' } });
+  try {
+    assert.equal(isTestingMode(), true);
+    assert.equal(hasCurrentConsent(), true);
+    assert.equal(getConsentRecord(), null);
+    assert.equal(storage.getItem('daredevils-eye.privacy-consent.v2'), null);
+  } finally {
+    if (previousStorage === undefined) delete globalThis.localStorage;
+    else Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: previousStorage });
+    if (previousLocation === undefined) delete globalThis.location;
+    else Object.defineProperty(globalThis, 'location', { configurable: true, value: previousLocation });
   }
 });

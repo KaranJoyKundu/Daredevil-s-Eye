@@ -29,7 +29,14 @@ export function grantLegacyAccountAccess() {
   catch { return false; }
 }
 
+export function isTestingMode() {
+  try { return new URLSearchParams(globalThis.location?.search || '').get('testMode') === '1'; }
+  catch { return false; }
+}
+
 export function hasCurrentConsent() {
+  // Explicit URL opt-in for developer testing only; never writes a consent record.
+  if (isTestingMode()) return true;
   // Returning devices and authenticated pre-existing accounts are grandfathered
   // past the blocking first-run gate. This does not create or falsify a consent record.
   if (isGrandfatheredReturningUser()) return true;
