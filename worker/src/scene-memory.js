@@ -29,7 +29,7 @@ export function normalizeSceneMemoryOutput(raw) {
 }
 
 export function buildSceneMemoryPrompt(basePrompt, observations = []) {
-  const safe = Array.isArray(observations) ? observations.slice(0, MAX_OBSERVATIONS).map((item, index) => ({
+  const safe = Array.isArray(observations) ? observations.slice(0, MAX_OBSERVATIONS).reverse().map((item, index) => ({
     observation: index + 1,
     observed_at: cleanText(item?.created_at, 40),
     scene_summary: cleanText(item?.scene_summary, 1200),
