@@ -22,10 +22,6 @@ static const char *WIFI_SSID = "YOUR_WIFI_NAME";
 static const char *WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
 static const char *SERVER_BASE = "https://daredevils-eye.karanjoykundu.workers.dev";
 
-// Paste the current trusted root CA PEM for the workers.dev TLS certificate here.
-// Leave empty until configured: firmware deliberately refuses to send credentials without TLS verification.
-static const char *ROOT_CA_CERT = "";
-
 MFRC522 rfid(RFID_SS_PIN, RFID_RST_PIN);
 Preferences preferences;
 String deviceToken;
@@ -66,14 +62,6 @@ String randomEventId() {
   return String(id);
 }
 
-bool tlsReady() {
-  if (!ROOT_CA_CERT || strlen(ROOT_CA_CERT) < 100) {
-    stageError("TLS_CA_NOT_CONFIGURED", "Add the verified root CA certificate in ROOT_CA_CERT before connecting.");
-    return false;
-  }
-  return true;
-}
-
 bool connectWiFi() {
   Serial.println("[2/7] WIFI CONNECTION");
   WiFi.mode(WIFI_STA);
@@ -96,9 +84,8 @@ int request(const String &path, const String &body, String &response, const Stri
     stageError("WIFI_DISCONNECTED", "Reconnect before sending the request.");
     return -1;
   }
-  if (!tlsReady()) return -2;
   WiFiClientSecure client;
-  client.setCACert(ROOT_CA_CERT);
+  client.useBuiltinCACertBundle();
   HTTPClient http;
   const String url = String(SERVER_BASE) + path;
   if (!http.begin(client, url)) {
