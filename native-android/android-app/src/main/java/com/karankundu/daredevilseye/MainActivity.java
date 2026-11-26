@@ -144,6 +144,8 @@ public class MainActivity extends BridgeActivity {
     private void dispatchToWeb(String action, String eventId, int attempt) {
         if (attempt >= 12 || isFinishing()) return;
         handler.postDelayed(() -> {
+            SharedPreferences pendingPrefs = getSharedPreferences(VolumeKeyAccessibilityService.PREFS, MODE_PRIVATE);
+            if (!eventId.equals(pendingPrefs.getString("pending_event_id", ""))) return;
             try {
                 if (getBridge() != null) {
                     JSONObject data = new JSONObject();
