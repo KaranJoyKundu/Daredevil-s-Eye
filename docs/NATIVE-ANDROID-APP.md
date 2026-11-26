@@ -7,9 +7,15 @@
 **Distribution:** Signed APK through GitHub Releases first; Google Play later  
 **Feature branch:** `feat/native-android-capacitor-a55`  
 **Rollback point:** `backup/main-before-native-android-2026-11-26`  
-**Status:** Implementation in progress. This document is the durable source of truth; update every checkbox only after evidence exists.
+**Status:** Native implementation merged into `main`; CI-built debug APK exists. Physical Galaxy A55 validation and persistent signed release remain outstanding. This document is the durable source of truth; update every checkbox only after evidence exists.
 
 > Safety boundary: Daredevil's Eye is an experimental assistive tool, not a certified mobility aid, medical device, or emergency service. It must not claim guaranteed camera/microphone access with the display off. Keep ordinary emergency options and mobility aids available.
+
+## Current tester download
+
+**[Download the Android test app through Firebase App Distribution](https://appdistribution.firebase.google.com/testerapps/1:196832423983:android:5398d21c07fd260c21d6da/releases/5u4gh86a181lo?utm_source=firebase-console)**
+
+This link points to the current Firebase App Distribution release supplied by the project owner. Testers may need to sign in with the Google account that was invited to the Firebase tester group. If access is denied, confirm that the account has been invited. This is a tester build distribution path, not a public Play Store listing and not a guarantee that the build is a permanent, updateable, release-signed APK. Check the release details in Firebase before installing or updating.
 
 ## 1. Owner-approved product decisions
 
@@ -104,26 +110,23 @@ Do not mark optional roadmap work (scene memory, WebRTC SOS video, R2 incident r
 - [x] Create isolated Android feature branch from current main.
 - [x] Write this master plan and add a revisit-able Documentation page.
 - [ ] Add Android implementation and security decisions to the architecture docs.
-- [ ] Record baseline main SHA and verify no production files are modified directly.
+- [x] Record baseline main SHA and verify the implementation was developed on a feature branch.
 
 ### Phase 1 — Capacitor Android foundation
-- [ ] Add Capacitor dependencies and configuration.
-- [ ] Generate and commit a reproducible Android project/scaffold.
-- [ ] Configure app ID, app name, icon, splash screen, portrait layout and target SDK.
-- [ ] Configure the HTTPS app origin and verify API, cookies, service worker and login behaviour.
-- [ ] Add Android build workflow (debug artifact on feature branch; signed release only from protected secrets/tag).
-- [ ] Build a debug APK and install it on the Galaxy A55.
-- [ ] Verify the existing Blind Mode loads and all ordinary touch controls still work.
+- [x] Add Capacitor dependencies and configuration.
+- [x] Commit the Android project/native source overlay.
+- [x] Configure app identity and Android project metadata in the merged implementation.
+- [x] Configure the production HTTPS app origin in the wrapper.
+- [x] Add the Android debug-build workflow and separate signed-release workflow.
+- [x] Build a debug APK in CI (workflow #45755955230; artifact ID 15086769593).
+- [ ] Install the debug APK on the Galaxy A55 and verify first launch, permissions, WebView routes, cookies and Blind Mode controls.
 
 ### Phase 2 — Native volume controls
-- [ ] Implement foreground Activity key handling.
-- [ ] Implement single/double press arbitration with configurable timing.
-- [ ] Implement simultaneous Up+Down hold detection with debounce and cancellation.
-- [ ] Implement optional Accessibility Service and settings deep-link.
-- [ ] Implement a native-to-web event bridge with queued events and duplicate protection.
-- [ ] Add a blind-accessible control configuration and spoken setup instructions.
-- [ ] Add haptic feedback and clear action feedback.
-- [ ] Preserve normal volume behaviour when global control is disabled.
+- [x] Add foreground Activity key handling in the merged native source.
+- [x] Add single/double press arbitration and simultaneous Up+Down hold handling in source.
+- [x] Add optional Accessibility Service source and Android settings entry point.
+- [x] Add the native-to-web event bridge and settings controls.
+- [ ] Physically verify timing, duplicate protection, haptics, visible/spoken feedback and restoration of normal volume behaviour on the A55.
 - [ ] Test with TalkBack enabled and disabled; document any conflict.
 
 ### Phase 3 — Background and locked-screen behaviour
