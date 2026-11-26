@@ -7,11 +7,12 @@ Daredevil's Eye can associate each RFID card UID with an account-owned medicine 
 - Open `/medicine/` while signed in to manage your own medicine cards.
 - Register a card by entering its hexadecimal UID, medicine name, strength, expiry month, and prescription instructions.
 - Optionally provide a complete custom spoken message and a separate expired-medicine warning.
-- The phone's shared RFID listener speaks the server-resolved announcement on app pages while enabled.
+- The phone's shared RFID listener speaks the server-resolved announcement on app pages while enabled. Scrolling, wheel movement, touch, and pointer activity also trigger an immediate event check and speech retry if the browser had blocked the first attempt.
 - Expiry is checked by the Worker at scan time. Once the expiry date has passed, the expired warning replaces the normal announcement and dosage instructions.
 - Medicine records are account-scoped. A reader can resolve only the cards belonging to the account that authorized its device token.
 - The ESP32 sends only the card UID and event ID. It contains no hard-coded medicine catalogue; adding or editing medicine records does not require reflashing it.
 - Device tokens are generated for the signed-in account and stored as SHA-256 hashes in the Durable Object.
+- Repeated reads of the same UID from the same reader are suppressed for six seconds in both firmware and Worker, even if the ESP32 generated a new event ID.
 - Events are retained for up to 24 hours; the ESP32 keeps up to five unsent events in Preferences/NVS and retries in order.
 
 ## Example announcement
@@ -23,7 +24,7 @@ With the fields configured as:
 - Expiry month: December 2027
 - Instructions: Your registered prescription says one tablet after food.
 
-The generated announcement is similar to:
+The generated announcement uses the following structure (fill in the actual medicine fields for each card):
 
 > Paracetamol. 500 mg. Expiry month: December 2027. Your registered prescription says one tablet after food.
 

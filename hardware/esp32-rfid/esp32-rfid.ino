@@ -30,7 +30,8 @@ bool rfidReady = false;
 bool deviceReady = false;
 unsigned long lastScanAt = 0;
 unsigned long lastQueueRetryAt = 0;
-const unsigned long SCAN_COOLDOWN_MS = 1800;
+String lastScanUid = "";
+const unsigned long SAME_UID_COOLDOWN_MS = 6000;
 const unsigned long QUEUE_RETRY_MS = 5000;
 const uint8_t MAX_PENDING_EVENTS = 5;
 
@@ -264,14 +265,17 @@ void loop() {
     if (!deviceReady) return;
   }
   if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) { delay(20); return; }
-  if (millis() - lastScanAt < SCAN_COOLDOWN_MS) {
-    rfid.PICC_HaltA(); rfid.PCD_StopCrypto1(); return;
-  }
-  lastScanAt = millis();
   String uid;
   for (byte i = 0; i < rfid.uid.size; i++) {
     char part[3]; sprintf(part, "%02X", rfid.uid.uidByte[i]); uid += part;
   }
+  const unsigned long now = millis();
+  if (uid == lastScanUid && now - lastScanAt < SAME_UID_COOLDOWN_MS) {
+    Serial.println("[INFO] DUPLICATE CARD READ SUPPRESSED · " + uid);
+    rfid.PICC_HaltA(); rfid.PCD_StopCrypto1(); delay(40); return;
+  }
+  lastScanUid = uid;
+  lastScanAt = now;
   Serial.println("[2/7] CARD UID READ · " + uid);
   Serial.println("[3/7] UID LOOKUP · resolving this card in your account");
   Serial.println("[6/7] AUTHENTICATED EVENT TRANSMISSION");

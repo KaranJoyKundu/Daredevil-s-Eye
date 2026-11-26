@@ -5,7 +5,7 @@ import { getSettings, saveSettings } from './settings.js?v=20261117-release5';
 import { hasCurrentConsent, acceptConsent, rejectConsent } from './consent.js?v=20261117-release5';
 import { createShakeSequenceTracker, getShakeMagnitude, matchSosVoiceCommand } from './sos-triggers.js?v=20261117-release1';
 import { mountLanguageSwitch, toBangla } from './language.js?v=20261117-release5';
-import { startRFIDListener } from './rfid-listener.js?v=20261126-rfid3';
+import { startRFIDListener } from './rfid-listener.js?v=20261126-dedup1';
 const $=selector=>document.querySelector(selector),status=$('#status');
 mountLanguageSwitch($('.blind-utility'));
 startRFIDListener();

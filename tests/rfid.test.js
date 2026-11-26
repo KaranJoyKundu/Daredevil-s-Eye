@@ -45,6 +45,8 @@ test('every account receives editable Napa One and Monus 10 defaults exactly onc
  const first=(await (await post('medicines/list',{userId:USER})).json()).medicines;
  assert.deepEqual(first.map(item=>item.uid).sort(),['1474D505','A1618C04']);
  assert.equal(first.find(item=>item.uid==='A1618C04').name,'Napa One');
+ assert.equal(first.find(item=>item.uid==='A1618C04').expiredText,'Warning! This medicine has expired.');
+ assert.equal(first.find(item=>item.uid==='1474D505').expiredText,'Warning! This medicine has expired.');
  await post('medicines/save',{userId:USER,medicine:{uid:'A1618C04',originalUid:'A1618C04',name:'My Paracetamol',strength:'500 mg'}});
  const changed=(await (await post('medicines/list',{userId:USER})).json()).medicines;
  assert.equal(changed.find(item=>item.uid==='A1618C04').name,'My Paracetamol');
@@ -122,6 +124,18 @@ test('RFID events are authenticated, account-scoped, deduplicated and acknowledg
  assert.equal((await (await post('event/poll',{userId:USER})).json()).events.length,0);
 });
 
+
+test('rapid duplicate reads with different event IDs are suppressed by device and UID',async()=>{
+ const {post}=fixture();
+ const device=await (await post('devices/provision',{userId:USER})).json();
+ await post('medicines/save',{userId:USER,medicine:medicine()});
+ const first=await (await post('event/submit',{uid:'A1618C04',eventId:'11111111111111111111111111111111'},device.deviceToken)).json();
+ const second=await (await post('event/submit',{uid:'A1 61 8C 04',eventId:'22222222222222222222222222222222'},device.deviceToken)).json();
+ assert.equal(first.accepted,true);assert.equal(second.accepted,true);assert.equal(second.duplicate,true);
+ const events=(await (await post('event/poll',{userId:USER})).json()).events;
+ assert.equal(events.length,1);
+});
+
 test('revoking an RFID reader invalidates its device token',async()=>{
  const {post}=fixture();
  const device=await (await post('devices/provision',{userId:USER})).json();
@@ -140,6 +154,8 @@ test('medicine page exposes personal card management and shared listener speaks 
  assert.match(listener,/event\.speechText\|\|event\.medicine/);
  assert.ok(listener.includes("localStorage.getItem(ENABLED_KEY)!=='0'"));
  assert.ok(listener.includes("addEventListener('scroll',onUserActivity"));
+ assert.ok(listener.includes("addEventListener('wheel',onUserActivity"));
+ assert.ok(listener.includes('completedEventId'));
  assert.ok(page.includes('id="listener-enabled" type="checkbox" checked'));
  assert.ok(pageScript.includes("field('uid').readOnly=false"));
  assert.ok(pageScript.includes('/api/rfid/devices/provision'));
@@ -151,6 +167,8 @@ test('ESP32 firmware sends arbitrary card UIDs and never contains a fixed medici
  assert.match(firmware,/\\"uid\\":\\"/);
  assert.match(firmware,/useBuiltinCACertBundle/);
  assert.match(firmware,/MAX_PENDING_EVENTS = 5/);
+ assert.match(firmware,/SAME_UID_COOLDOWN_MS = 6000/);
+ assert.match(firmware,/DUPLICATE CARD READ SUPPRESSED/);
  assert.match(firmware,/savePendingQueue/);
  assert.match(firmware,/64-character device token/);
  assert.doesNotMatch(firmware,/MEDICINES\[\]/);

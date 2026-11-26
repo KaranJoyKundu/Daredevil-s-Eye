@@ -64,8 +64,8 @@
 <div class="medicine-field"><label for="medicine-strength">Strength / dosage form</label><input id="medicine-strength" name="strength" maxlength="60" placeholder="500 mg tablet"></div>
 <div class="medicine-field"><label for="medicine-expiry">Expiry month</label><input id="medicine-expiry" name="expiryDate" type="month"></div>
 <div class="medicine-field full"><label for="medicine-instructions">Prescription / usage instructions</label><textarea id="medicine-instructions" name="instructions" maxlength="500" placeholder="Your registered prescription says one tablet after food."></textarea></div>
-<div class="medicine-field full"><label for="medicine-announcement">Custom spoken message (optional)</label><textarea id="medicine-announcement" name="announcementText" maxlength="1000" placeholder="Leave blank to build a message from the fields above."></textarea><small class="medicine-muted">When filled, this is spoken instead of the generated name, strength, expiry and instruction message.</small></div>
-<div class="medicine-field full"><label for="medicine-expired">Message when expired (optional)</label><input id="medicine-expired" name="expiredText" maxlength="300" placeholder="Warning! This medicine has expired."></div>
+<div class="medicine-field full"><label for="medicine-announcement">Custom spoken message (optional)</label><textarea id="medicine-announcement" name="announcementText" maxlength="1000" placeholder="Paracetamol 500 mg. Expiry date: December 2027. Your registered prescription says one tablet after food."></textarea><small class="medicine-muted">Leave blank to generate this format automatically: medicine name, strength, expiry date, then your registered prescription instructions. The two starter cards are included for every account and can be edited.</small></div>
+<div class="medicine-field full"><label for="medicine-expired">Message when expired (optional)</label><input id="medicine-expired" name="expiredText" maxlength="300" value="Warning! This medicine has expired."></div>
 <div class="medicine-field full"><strong>Speech preview</strong><div id="medicine-preview" class="medicine-preview" aria-live="polite">Your medicine announcement will appear here.</div><div class="medicine-actions"><button id="medicine-preview-speak" type="button" class="secondary">Hear this preview</button></div></div>
 <div class="medicine-actions medicine-field full"><button id="medicine-save" type="submit">Save medicine card</button><button id="medicine-cancel" type="button" class="secondary" hidden>Cancel edit</button></div>
 </form>
@@ -95,6 +95,6 @@ GND    →  GND</pre>
 <p class="medicine-muted">Use 3.3V only. The reader's SDA pin is SPI chip-select, not I²C SDA.</p>
 </section>
 </main>
-<script type="module" src="/medicine/rfid.js?v=20261126-medicine3"></script>
+<script type="module" src="/medicine/rfid.js?v=20261126-dedup1"></script>
 <script type="module" src="/shared/site-nav.js?v=20261126-rfid2"></script>
 </body></html>
