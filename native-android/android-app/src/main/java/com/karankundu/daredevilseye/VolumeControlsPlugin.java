@@ -42,6 +42,16 @@ public class VolumeControlsPlugin extends Plugin {
 
 
 
+
+    @PluginMethod
+    public void getPendingAction(PluginCall call) {
+        android.content.SharedPreferences prefs = getContext().getSharedPreferences(VolumeKeyAccessibilityService.PREFS, Context.MODE_PRIVATE);
+        JSObject result = new JSObject();
+        result.put("action", prefs.getString(VolumeKeyAccessibilityService.KEY_PENDING_ACTION, ""));
+        result.put("eventId", prefs.getString("pending_event_id", ""));
+        call.resolve(result);
+    }
+
     @PluginMethod
     public void ackPendingAction(PluginCall call) {
         String eventId = call.getString("eventId", "");
