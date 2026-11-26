@@ -1,5 +1,5 @@
 import { captureImage, blobToDataUrl, compressImageToJpeg, primeShutterAudio } from './camera.js?v=20261117-release5';
-import { startPhoneCamera, capturePhoneFrame, stopPhoneCamera, captureEsp32Photo, getPhoneTorchState, setPhoneTorch } from './camera-manager.js?v=20261126-camera1';
+import { startPhoneCamera, capturePhoneFrame, stopPhoneCamera, captureEsp32Photo, getPhoneTorchState, setPhoneTorch } from './camera-manager.js?v=20261126-camera3';
 import { requestAI } from './api.js?v=20261117-release5';
 import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release5';
 import { getSettings, saveSettings } from './settings.js?v=20261117-release5';
