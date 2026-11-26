@@ -1116,6 +1116,20 @@ export default {
   async fetch(request, env) {
     const api = await handleApi(request, env);
     if (api) return api;
+
+    // Resolve the app entry pages explicitly before the SPA fallback. This keeps
+    // /blind/ and /action/ bound to their own HTML and script references.
+    if (request.method === 'GET' || request.method === 'HEAD') {
+      const url = new URL(request.url);
+      const page = url.pathname.replace(/\\/+$/, '');
+      if (page === '/blind' || page === '/action') {
+        url.pathname = page + '/index.html';
+        const asset = await env.ASSETS.fetch(new Request(url, request));
+        const headers = new Headers(asset.headers);
+        headers.set('cache-control', 'no-store');
+        return new Response(asset.body, { status: asset.status, statusText: asset.statusText, headers });
+      }
+    }
     return env.ASSETS.fetch(request);
   }
 };
