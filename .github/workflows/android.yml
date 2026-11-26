@@ -12,6 +12,13 @@ on:
       - '.github/workflows/android.yml'
   push:
     branches: [feat/native-android-capacitor-a55, release/v1.0.0-engineering-overhaul]
+    paths:
+      - 'android/**'
+      - 'native-android/**'
+      - 'capacitor.config.*'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/android.yml'
   workflow_dispatch:
 
 permissions:
