@@ -4,13 +4,13 @@ This guide covers the optional WebRTC live-share and private incident-recording 
 
 ## Required account setup
 
-1. Apply the repository migration from the project root:
+1. The new Supabase migration is already applied to the linked project (both private tables, indexes, five-entry trigger and deny policies were verified). After pulling this branch, run the commands below only to confirm the local migration history is in sync; `db push` should report no pending migrations:
    ```powershell
    npx supabase login
    npx supabase link --project-ref dyfpawbkttbgoorcgwbd
    npx supabase db push
    ```
-   The migration is additive. It creates private `scene_memory_entries` and `emergency_recordings` tables, enables RLS, revokes browser-role table access, and keeps at most five scene-memory observations per account/guest session. Do not paste the database password or access token into chat or commit them.
+   The migration is additive. It creates private `scene_memory_entries` and `emergency_recordings` tables, enables RLS, explicitly denies browser roles, grants the Worker service role, and keeps at most five scene-memory observations per account/guest session. Do not paste the database password or access token into chat or commit them.
 
 2. Create the private Cloudflare R2 bucket (one time):
    ```powershell
