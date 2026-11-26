@@ -508,3 +508,26 @@ window.addEventListener('pagehide',()=>{stopPhoneCamera();stopEsp32Stream(esp32S
 
 
 handleDeepLinkAction();
+
+
+// Native Android volume-key bridge. Browser/PWA users continue to use touch controls.
+function connectNativeVolumeControls(){
+ const plugin=window.Capacitor?.Plugins?.VolumeControls;
+ if(!plugin?.addListener)return;
+ const runAction=action=>{
+  if(action==='describe')run('describe');
+  else if(action==='ask'){
+   const button=document.querySelector('[data-action="ask"]');button?.click();
+  }else if(action==='repeat')repeatAnswer();
+  else if(action==='sos'){
+   // A hardware hold only arms the existing explicit SOS confirmation flow.
+   armSos({shortcut:true});
+  }else if(action==='help')speakHelp();
+ };
+ plugin.addListener('volumeAction',event=>runAction(String(event?.action||''))).catch(()=>{});
+ plugin.getPendingAction?.().then(result=>{
+  const action=String(result?.action||'');
+  if(action)runAction(action);
+ }).catch(()=>{});
+}
+connectNativeVolumeControls();
