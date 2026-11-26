@@ -407,10 +407,16 @@ a{text-underline-offset:3px}
 .consent-inline .consent-card p{line-height:1.5}
 
 
-/* Persistent, non-blocking privacy notice and photo-history preference. */
-.privacy-notice{max-width:760px;margin:0 auto 14px;padding:12px 16px;display:grid;gap:8px;border:1px solid #55716b;border-radius:12px;background:#152521;color:inherit;font-size:.92rem;line-height:1.45}
-.privacy-notice strong{font-size:1rem}
-.privacy-notice label{display:flex;align-items:center;gap:9px;font-weight:600;cursor:pointer}
-.privacy-notice input{width:20px;height:20px;accent-color:#8bd5b5;flex:0 0 auto}
-.privacy-notice a{color:#9edfc4;text-decoration:underline}
-@media(max-width:480px){.privacy-notice{margin:0 12px 12px;padding:11px 12px}}
+/* Compact, informational privacy notice; no controls. */
+.privacy-notice{max-width:760px;margin:0 auto 12px;padding:8px 14px;border:1px solid #3a4542;border-radius:10px;background:#121816;color:#d0d3cb;font-size:.84rem;line-height:1.35}
+.privacy-notice a{color:#9fc7b8;text-decoration:underline}
+@media(max-width:480px){.privacy-notice{margin:0 10px 10px;padding:8px 10px}}
+
+/* Blind mode is a full-height column: navigation and the compact privacy note are
+   accounted for before distributing the remaining height among the four controls. */
+.blind-page{display:flex;flex-direction:column;height:100dvh;min-height:100dvh;overflow:hidden}
+.blind-page .site-nav{width:100%;flex:0 0 auto;padding:6px 12px}
+.blind-page .privacy-notice{width:calc(100% - 20px);flex:0 0 auto;margin:0 10px 6px}
+.blind-page main.blind-grid{flex:1 1 auto;height:auto;min-height:0;max-height:none;padding:6px}
+.blind-page .blind-utility{flex:0 0 60px;height:60px;padding:4px 7px}
+
