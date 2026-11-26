@@ -39,6 +39,16 @@ test('medicine cards are validated and isolated to the owning account',async()=>
  assert.equal((await post('medicines/save',{userId:USER,medicine:medicine({uid:'not-a-uid'})})).status,400);
 });
 
+test('existing Napa One and Monus 10 cards continue to work until customized',async()=>{
+ const {post}=fixture();
+ const device=await (await post('devices/provision',{userId:USER})).json();
+ const sent=await (await post('event/submit',{uid:'A1618C04'},device.deviceToken)).json();
+ assert.equal(sent.accepted,true);
+ const events=(await (await post('event/poll',{userId:USER})).json()).events;
+ assert.equal(events[0].medicine,'Napa One');
+ assert.equal(events[0].speechText,'Napa One');
+});
+
 test('direct device provisioning sends UID-only scans into personalized account announcements',async()=>{
  const {post}=fixture();
  const provisioned=await (await post('devices/provision',{userId:USER})).json();
