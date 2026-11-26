@@ -72,6 +72,15 @@ Do not assume history is live merely because the Worker deployment succeeds. Con
 - Preview-only photos cancelled before submission are not stored.
 - Audio recordings are not saved to the photo-history database.
 
+## Camera, scene memory and emergency video update — 26 November 2026
+
+- PR #43 camera platform integration and PR #49 Action-page ESP32 MJPEG preview are merged into main. The owner confirms the physical ESP32 /stream and /capture endpoints work.
+- PR #52 contains opt-in five-photo text memory, paired WebRTC SOS live video, optional private chunked recordings, Account playback/download/delete and automatic retention cleanup. Exact-head CI is being verified before merge.
+- Supabase project dyfpawbkttbgoorcgwbd now has scene_memory_entries and emergency_recordings. Both tables have RLS enabled, explicit deny policies for anon/authenticated, service_role grants, and a five-observation trigger for scene memory. The migration versions are recorded in Supabase.
+- Pending before production deployment: create the private R2 bucket daredevils-eye-incident-recordings; configure TURN_URL, TURN_USERNAME and TURN_CREDENTIAL if cross-network WebRTC relay is required; then merge PR #52 and confirm the main deployment succeeds.
+- Pending physical verification: Android 16 Chrome Local Network Access, phone-camera WebRTC, ESP32 canvas-to-WebRTC CORS, receiver video, Stop Sharing, MediaRecorder chunk upload, playback/download/delete, flash capture and LED brightness.
+- Recording is separately opt-in, limited to five minutes / 50 MB, private to the account or guest browser, and expires after 30 days. Live video is separately opt-in and does not block the SOS alert if video fails.
+
 ## Completed merge and deployment record
 
 - PR #7 merged to main as 7f5b3ad8c45fc5516559357c0f4268d3e0819015. CI run #447 passed 72/72 tests; main production deployment #448 succeeded and uploaded the Supabase URL, modern publishable/secret keys, encryption key and IP-hash secret.
