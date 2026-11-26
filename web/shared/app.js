@@ -1,5 +1,5 @@
 import { captureImage, blobToDataUrl, compressImageToJpeg, primeShutterAudio } from './camera.js?v=20261117-release5';
-import { startPhoneCamera, capturePhoneFrame, stopPhoneCamera, captureEsp32Photo } from './camera-manager.js?v=20261126-camera1';
+import { startPhoneCamera, capturePhoneFrame, stopPhoneCamera, captureEsp32Photo, getPhoneTorchState, setPhoneTorch } from './camera-manager.js?v=20261126-camera1';
 import { requestAI } from './api.js?v=20261117-release5';
 import { speak, speakResponse, stopSpeaking, listenOnce, detectSpokenLanguage, vibrate } from './speech.js?v=20261117-release5';
 import { getSettings, saveSettings } from './settings.js?v=20261117-release5';
@@ -394,6 +394,14 @@ const phoneCameraPanel=$('#phone-camera-panel');
 const phoneCameraPreview=$('#phone-camera-preview');
 const cameraSetupStatus=$('#camera-setup-status');
 const phoneCameraStatus=$('#phone-camera-status');
+const phoneCameraTorch=$('#phone-camera-torch');
+function syncPhoneTorchControl(){
+ const state=getPhoneTorchState();
+ if(!phoneCameraTorch)return;
+ phoneCameraTorch.hidden=!state.available;
+ phoneCameraTorch.textContent=state.enabled?'Turn phone light off':'Turn phone light on';
+ phoneCameraTorch.setAttribute('aria-pressed',String(state.enabled));
+}
 function renderCameraPanels(){
  const settings=getSettings();
  if(cameraSetupPanel)cameraSetupPanel.hidden=!hasCurrentConsent()||settings.cameraSetupComplete;
@@ -439,7 +447,7 @@ renderCameraPanels();
 document.addEventListener('visibilitychange',()=>{
  if(document.hidden){stopPhoneCamera();}
 });
-window.addEventListener('pagehide',()=>stopPhoneCamera());
+window.addEventListener('pagehide',()=>{stopPhoneCamera();syncPhoneTorchControl();});
 
 
 const termsCheck=$('#consent-terms-check'),acceptButton=$('#consent-accept');
