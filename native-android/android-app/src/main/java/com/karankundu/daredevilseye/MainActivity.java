@@ -66,6 +66,9 @@ public class MainActivity extends BridgeActivity {
         if (key != KeyEvent.KEYCODE_VOLUME_UP && key != KeyEvent.KEYCODE_VOLUME_DOWN) {
             return super.dispatchKeyEvent(event);
         }
+        if (!getSharedPreferences("dee_native_setup", MODE_PRIVATE).getBoolean("foreground_shortcuts_enabled", true)) {
+            return super.dispatchKeyEvent(event);
+        }
         if (event.getRepeatCount() > 0) return true;
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
             if (key == KeyEvent.KEYCODE_VOLUME_UP) upDown = true;
