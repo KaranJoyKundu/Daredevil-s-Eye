@@ -41,6 +41,7 @@ Status meanings: `DONE IN CODE` is not the same as device-tested or production-r
 - Existing UI uses MJPEG `/stream` on port 81 in an image element; still capture uses `/capture`.
 - **DONE IN CODE:** Android now requests JPEG snapshots through a native bridge restricted to private IPv4 addresses and the exact `/capture` endpoint; the Action preview polls at a controlled interval and tears down on page/stream teardown. This avoids HTTPS-to-HTTP mixed-content and browser CORS for the preview path.
 - **DEVICE TEST REQUIRED:** inspect A55 local-network permission behavior, image freshness, frame rate, network errors and camera contention. A snapshot preview is not full-motion MJPEG video.
+- **CI:** Android debug build passed on commit `ebb7aba00144d7a36c4140083a281430a71b1948` (run `45867985691`); artifact `15141243178` verified.
 - Acceptance: ESP32 on same Wi-Fi and phone hotspot; test stream contention, reconnect and screen rotation.
 
 ### [x] MediaStore photo save hardened
@@ -59,8 +60,9 @@ Status meanings: `DONE IN CODE` is not the same as device-tested or production-r
 - **DEVICE TEST REQUIRED:** adaptive icon mask, Android monochrome themed icon, splash and 24/48/96 dp rendering.
 
 ### [ ] SemVer and signed release pipeline
-- package version currently `1.0.0-beta.1`.
-- Path: one source of truth for Android `versionName`/`versionCode`, changelog, tags and release APK naming. Use user-owned persistent keystore secrets only.
+- Package version currently `1.0.0-beta.1`.
+- **DONE IN CODE:** `native-android/sync-version.mjs` syncs Gradle `versionName` and `versionCode` from `package.json`; both debug and signed-release workflows call it.
+- **REMAINING:** changelog/tag/release APK naming and user-owned persistent keystore secrets. Use protected secrets only.
 - Acceptance: signed RC-to-final update test. Debug signing is not a production update identity.
 
 ### [ ] Security and accessibility audit
