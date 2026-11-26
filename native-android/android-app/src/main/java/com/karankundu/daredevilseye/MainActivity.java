@@ -11,6 +11,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.view.KeyEvent;
+import android.view.View;
+
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import android.webkit.WebSettings;
 
 import androidx.core.app.ActivityCompat;
@@ -30,7 +35,24 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(VolumeControlsPlugin.class);
         super.onCreate(savedInstanceState);
-        if(getBridge()!=null&&getBridge().getWebView()!=null)getBridge().getWebView().getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            View webView = getBridge().getWebView();
+            webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+            final int initialLeft = webView.getPaddingLeft();
+            final int initialTop = webView.getPaddingTop();
+            final int initialRight = webView.getPaddingRight();
+            final int initialBottom = webView.getPaddingBottom();
+            ViewCompat.setOnApplyWindowInsetsListener(webView, (view, windowInsets) -> {
+                Insets bars = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()
+                );
+                Insets ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
+                view.setPadding(initialLeft + bars.left, initialTop + bars.top,
+                    initialRight + bars.right, initialBottom + Math.max(bars.bottom, ime.bottom));
+                return windowInsets;
+            });
+            ViewCompat.requestApplyInsets(webView);
+        }
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 8401);
         }
