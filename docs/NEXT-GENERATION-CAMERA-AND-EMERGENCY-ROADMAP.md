@@ -541,4 +541,11 @@ Update this section as implementation proceeds. Keep planned work unchecked unti
 - [ ] Milestone 4 — Emergency live sharing
 - [ ] Milestone 5 — Emergency video recording
 
-**Next recommended task:** Milestone 0 review, then Milestone 1 device-selection wizard and unified camera manager.
+**Next recommended task:** Complete PR #49 validation and the remaining ESP32 hardware checks, then implement Milestone 3 scene memory on an isolated development schema before moving to emergency live sharing and recording.
+### Current implementation status — 2026-11-26
+
+- The camera platform foundation (phone/ESP32 source selection, shared camera manager, still capture and Admin ESP32 controls) is present on `main`.
+- PR #49 adds the missing ESP32 live preview to the Action page, with independent `/capture` still-photo analysis and stream lifecycle cleanup. It is open and must pass exact-head CI and browser validation before merge.
+- Owner-reported physical test: ESP32 `:81/stream` and `/capture` work. Flash-assisted capture, LED brightness, Android Chrome Local Network Access and end-to-end Action-page AI analysis are not yet verified.
+- Five-photo scene memory (Milestone 3), emergency WebRTC live sharing (Milestone 4), and private R2 incident recording (Milestone 5) remain unimplemented. They require separate code, tests and infrastructure validation; do not mark them complete based on this camera PR.
+- No production deployment or Supabase schema change is included in this continuation.
