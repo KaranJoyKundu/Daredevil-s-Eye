@@ -75,7 +75,7 @@ Do not assume history is live merely because the Worker deployment succeeds. Con
 ## Camera, scene memory and emergency video update — 26 November 2026
 
 - PR #43 camera platform integration and PR #49 Action-page ESP32 MJPEG preview are merged into main. The owner confirms the physical ESP32 /stream and /capture endpoints work.
-- PR #52 contains opt-in five-photo text memory, paired WebRTC SOS live video, optional private chunked recordings, Account playback/download/delete and automatic retention cleanup. Exact-head CI is being verified before merge.
+- PR #52 contains opt-in five-photo text memory, paired WebRTC SOS live video, optional private chunked recordings, Account playback/download/delete and automatic retention cleanup. Exact-head GitHub Actions run 45749717683 passed tests, syntax checks, Worker bundle and Durable Object migration validation.
 - Supabase project dyfpawbkttbgoorcgwbd now has scene_memory_entries and emergency_recordings. Both tables have RLS enabled, explicit deny policies for anon/authenticated, service_role grants, and a five-observation trigger for scene memory. The migration versions are recorded in Supabase.
 - Pending before production deployment: create the private R2 bucket daredevils-eye-incident-recordings; configure TURN_URL, TURN_USERNAME and TURN_CREDENTIAL if cross-network WebRTC relay is required; then merge PR #52 and confirm the main deployment succeeds.
 - Pending physical verification: Android 16 Chrome Local Network Access, phone-camera WebRTC, ESP32 canvas-to-WebRTC CORS, receiver video, Stop Sharing, MediaRecorder chunk upload, playback/download/delete, flash capture and LED brightness.
