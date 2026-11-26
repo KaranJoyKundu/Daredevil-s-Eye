@@ -102,9 +102,13 @@ export class RFIDDirectory {
     const medicines=await this.storage.get('medicines')||[];
     if(originalUid&&originalUid!==uid&&medicines.some(item=>item.userId===userId&&item.uid===uid))return json({ok:false,error:'That RFID UID is already assigned to another medicine card.'},409);
     const record={uid,name,strength,expiryDate,instructions,announcementText,expiredText,updatedAt:new Date().toISOString(),userId};
-    const index=medicines.findIndex(item=>item.userId===userId&&item.uid===(originalUid||uid));
-    if(index>=0)medicines[index]=record;else medicines.push(record);
-    await this.storage.put('medicines',medicines);
+    // Replace the edited card by its original UID, and also prevent a duplicate
+    // if the destination UID already exists for this account.
+    const nextMedicines=medicines.filter(item=>!(
+      item.userId===userId&&(item.uid===uid||(originalUid&&item.uid===originalUid))
+    ));
+    nextMedicines.push(record);
+    await this.storage.put('medicines',nextMedicines);
     const {userId:ignored,...safe}=record;
     return json({ok:true,medicine:safe});
   }
