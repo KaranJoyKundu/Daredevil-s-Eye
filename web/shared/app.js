@@ -143,7 +143,7 @@ function speakSosStatus(message){
  const settings=getSettings();
  const resume=()=>{if(isBlindMode&&settings.sosVoiceEnabled&&!document.hidden&&!sosVoiceBlocked&&!sosDispatching)startSosVoiceListener();};
  stopSosVoiceListener();
- const utterance=speak(localizeSpeech(message),{lang:settings.speechLanguage||'en-US',onEnd:resume,onError:error=>{if(status)status.textContent=settings.speechLanguage==='bn-BD'?localizeSpeech(error):String(error);resume();}});
+ const utterance=speak(localizeSpeech(message),{lang:settings.speechLanguage||'en-US',onEnd:resume,onError:()=>{\n  // Keep the action's visible confirmation/error text in place if device TTS fails.\n  // Speech-engine errors must not erase SOS, Repeat or other action feedback.\n  resume();\n }});
  if(!utterance)resume();
 }
 function setSosCancelVisibility(visible){
