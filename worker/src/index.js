@@ -1369,11 +1369,16 @@ export async function purgeExpiredGuestHistory(env,now=Date.now()) {
 export async function purgeExpiredRecordings(env, now = Date.now()) {
   if (!supabaseConfigured(env) || !env.INCIDENT_RECORDINGS) return { skipped: true, deleted: 0 };
   const cutoff = new Date(now).toISOString();
-  const response = await supabaseRest(env, 'emergency_recordings?select=id,object_prefix&expires_at=lt.' + encodeURIComponent(cutoff) + '&limit=100');
-  if (!response.ok) throw new Error('Could not list expired emergency recordings.');
-  const rows = await response.json().catch(() => []);
+  const staleCutoff = new Date(now - 24 * 60 * 60 * 1000).toISOString();
+  const [expiredResponse, incompleteResponse] = await Promise.all([
+    supabaseRest(env, 'emergency_recordings?select=id,object_prefix&expires_at=lt.' + encodeURIComponent(cutoff) + '&limit=100'),
+    supabaseRest(env, 'emergency_recordings?select=id,object_prefix&status=eq.recording&created_at=lt.' + encodeURIComponent(staleCutoff) + '&limit=100')
+  ]);
+  if (!expiredResponse.ok || !incompleteResponse.ok) throw new Error('Could not list expired emergency recordings.');
+  const rows = [...await expiredResponse.json().catch(() => []), ...await incompleteResponse.json().catch(() => [])];
+  const uniqueRows = [...new Map(rows.map(row => [row.id, row])).values()];
   let deleted = 0;
-  for (const row of rows) {
+  for (const row of uniqueRows) {
     await deleteRecordingObjects(env.INCIDENT_RECORDINGS, row.object_prefix);
     const removed = await supabaseRest(env, 'emergency_recordings?id=eq.' + encodeURIComponent(row.id), { method: 'DELETE' });
     if (!removed.ok) throw new Error('Could not delete expired emergency recording metadata.');
