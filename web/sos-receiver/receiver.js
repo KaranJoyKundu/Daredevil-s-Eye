@@ -52,7 +52,7 @@ function setConnected(connected){
  $('#connected-panel').hidden=!connected;
 }
 function getAlarmAudio(){
- if(!alarmAudio){alarmAudio=new Audio('/shared/emergency-siren.mp3?v=20261126-siren1');alarmAudio.preload='auto';alarmAudio.loop=true;alarmAudio.volume=1;}
+ if(!alarmAudio){alarmAudio=new Audio('/shared/emergency-siren.mp3?v=20261126-siren2');alarmAudio.preload='auto';alarmAudio.loop=true;alarmAudio.volume=1;alarmAudio.addEventListener('error',()=>updateStatus('Siren audio file failed to load. Check the deployed /shared/emergency-siren.mp3 asset.'));}
  return alarmAudio;
 }
 async function unlockAudio(){
@@ -122,6 +122,19 @@ $('#pair-receiver').addEventListener('click',async()=>{
   location.replace('/sos-receiver/?paired=1');
  }catch(error){updateStatus('Pairing failed: '+error.message);}
  finally{button.disabled=false;}
+});
+$('#test-alarm').addEventListener('click',async()=>{
+ const button=$('#test-alarm');button.disabled=true;
+ const audio=getAlarmAudio();
+ try{
+  audio.pause();audio.currentTime=0;audio.loop=false;
+  await audio.play();
+  updateStatus('Siren test is playing. You should hear the emergency siren now.');
+  audio.onended=()=>{audio.loop=true;audio.onended=null;button.disabled=false;updateStatus('Siren test finished. Receiver remains connected.');};
+ }catch(error){
+  audio.loop=true;button.disabled=false;
+  updateStatus('Siren test failed: '+(error?.message||'audio playback was blocked')+'. Check media volume and tap Test Emergency Siren again.');
+ }
 });
 $('#enable-alarm').addEventListener('click',async()=>{
  const button=$('#enable-alarm');button.disabled=true;
