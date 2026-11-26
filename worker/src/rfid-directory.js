@@ -1,5 +1,6 @@
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const encoder=new TextEncoder();
+const LEGACY_MEDICINES=Object.freeze({'A1618C04':'Napa One','1474D505':'Monus 10'});
 const randomHex=(bytes=32)=>Array.from(crypto.getRandomValues(new Uint8Array(bytes)),b=>b.toString(16).padStart(2,'0')).join('');
 const digest=async value=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',encoder.encode(value))),b=>b.toString(16).padStart(2,'0')).join('');
 const same=(a,b)=>{if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a.charCodeAt(i)^b.charCodeAt(i);return diff===0;};
@@ -94,7 +95,7 @@ export class RFIDDirectory {
     const normalized=normalizeUid(uid);
     if(!validUid(normalized))return json({ok:false,error:'Invalid RFID UID.'},400);
     const medicines=await this.storage.get('medicines')||[];
-    const medicine=medicines.find(item=>item.userId===device.userId&&item.uid===normalized);
+    const medicine=medicines.find(item=>item.userId===device.userId&&item.uid===normalized)|| (LEGACY_MEDICINES[normalized]?{uid:normalized,name:LEGACY_MEDICINES[normalized],strength:'',expiryDate:'',instructions:'',announcementText:'',expiredText:''}:null);
     if(!medicine)return json({ok:false,error:'This RFID UID is not registered to your account. Add it on the Medicine RFID page.'},404);
     const id=/^[a-f0-9-]{16,64}$/i.test(String(eventId||''))?String(eventId):randomHex(16);
     const events=(await this.storage.get('events')||[]).filter(item=>Date.now()-Date.parse(item.createdAt)<86400000);
