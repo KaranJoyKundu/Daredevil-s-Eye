@@ -160,15 +160,36 @@ export class RFIDDirectory {
   }
   async pollEvents({userId}){
     if(!validUser(userId))return json({ok:false,error:'A signed-in account is required.'},401);
-    const events=(await this.storage.get('events')||[]).filter(item=>Date.now()-Date.parse(item.createdAt)<86400000);
+    const now=Date.now(),activeKey='active-speech:'+userId;
+    let events=(await this.storage.get('events')||[]).filter(item=>now-Date.parse(item.createdAt)<30000);
+    const active=await this.storage.get(activeKey);
+    if(active&&active.leaseUntil>now){
+      await this.storage.put('events',events);
+      return json({ok:true,events:[]});
+    }
+    if(active)await this.storage.delete(activeKey);
+    // The storage array is append-ordered. Timestamps can share the same
+    // millisecond, so use insertion order rather than sorting by createdAt.
+    const pending=events.filter(item=>item.userId===userId);
+    const selected=pending[pending.length-1]||null;
+    if(selected){
+      // Keep only the newest pending scan for this account. Older scans are
+      // stale context, not a playback queue to read aloud after recovery.
+      const discarded=new Set(pending.slice(0,-1).map(item=>item.id));
+      events=events.filter(item=>!discarded.has(item.id));
+      await this.storage.put(activeKey,{eventId:selected.id,leaseUntil:now+45000});
+    }
     await this.storage.put('events',events);
-    return json({ok:true,events:events.filter(item=>item.userId===userId).slice(0,20).map(({userId,...item})=>item)});
+    return json({ok:true,events:selected?[(({userId:ignored,...item})=>item)(selected)]:[]});
   }
   async ackEvent({userId,eventId}){
     if(!validUser(userId)||typeof eventId!=='string')return json({ok:false,error:'Invalid event acknowledgement.'},400);
     const events=await this.storage.get('events')||[],event=events.find(item=>item.id===eventId&&item.userId===userId);
     if(!event)return json({ok:false,error:'Event not found.'},404);
-    await this.storage.put('events',events.filter(item=>item.id!==eventId));return json({ok:true,acknowledged:true});
+    await this.storage.put('events',events.filter(item=>item.id!==eventId));
+    const activeKey='active-speech:'+userId,active=await this.storage.get(activeKey);
+    if(active?.eventId===eventId)await this.storage.delete(activeKey);
+    return json({ok:true,acknowledged:true});
   }
   async listDevices({userId}){
     if(!validUser(userId))return json({ok:false,error:'A signed-in account is required.'},401);

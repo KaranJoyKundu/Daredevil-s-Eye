@@ -13,7 +13,7 @@ async function acknowledge(eventId){
 function unlockSpeech(){
  try{window.speechSynthesis?.resume();}catch{}
 }
-async function poll(forceRetry=false){
+async function poll(){
  if(busy||speaking||!enabled()||!hasCurrentConsent())return;
  busy=true;
  try{
@@ -37,14 +37,14 @@ async function poll(forceRetry=false){
    onEnd:()=>{finish();completedEventId=event.id;failedEventId='';acknowledge(event.id).then(ok=>{if(ok&&completedEventId===event.id)completedEventId='';}).catch(()=>{});},
    onError:error=>{finish();failedEventId=event.id;if(Date.now()-lastErrorAt>30000){lastErrorAt=Date.now();console.warn('[RFID listener]',error);}}
   });
-  if(result===false){finish();failedEventId=event.id;}
+  if(result===false&&finish())acknowledge(event.id).catch(()=>{});
  }catch(error){
   if(Date.now()-lastErrorAt>30000){lastErrorAt=Date.now();console.warn('[RFID listener]',error.message);}
  }finally{busy=false;}
 }
 function onUserActivity(){
  unlockSpeech();
- if(enabled())poll(true);
+ if(enabled())poll();
 }
 export function startRFIDListener(){
  if(timer)return;
