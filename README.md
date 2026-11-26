@@ -17,7 +17,7 @@
 | I want to… | Go to |
 |---|---|
 | Try the live app | [Open Daredevil's Eye](https://daredevils-eye.karanjoykundu.workers.dev/) |
-| Use the simplified blind-first interface | [Blind mode](/blind/) |
+| Use the simplified blind-first interface | [Blind mode](https://daredevils-eye.karanjoykundu.workers.dev/blind/) |
 | Read the current project status | [Implementation status](docs/STATUS.md) |
 | Install and run the project locally | [Setup guide](docs/SETUP.md) |
 | Understand the system | [Architecture](docs/ARCHITECTURE.md) |
