@@ -252,7 +252,7 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - Added Admin ESP32 connection test, LED brightness and stream start/stop controls.
 - Added camera-manager regression tests and syntax-check coverage.
 - Not yet verified on a physical phone or ESP32; browser local-network permission/CORS behaviour remains a manual test.
-n### Port onto current main on 2026-11-26
+### Port onto current main on 2026-11-26
 
 - Main advanced by 60 commits after the original camera branch was created. The original PR #30 is now 60 commits behind and is not mergeable; it remains a draft reference and must not be merged.
 - Created `feat/camera-platform-current-main` from current main commit `47618f8445a10ffc28e65f37fbabe21149f5aa2f` and selectively ported camera changes without replacing current RFID/medicine integration.
