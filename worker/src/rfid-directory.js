@@ -1,6 +1,6 @@
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const encoder=new TextEncoder();
-const DEFAULT_MEDICINES=Object.freeze([{uid:'A1618C04',name:'Napa One'},{uid:'1474D505',name:'Monus 10'}]);
+const DEFAULT_MEDICINES=Object.freeze([{uid:'A1618C04',name:'Napa One',strength:'1000 mg',expiryDate:'2025-07',instructions:'once per night before meal'},{uid:'1474D505',name:'Monus 10',strength:'10 mg',expiryDate:'2029-07',instructions:'once per night before meal'}]);
 const LEGACY_MEDICINES=Object.freeze(Object.fromEntries(DEFAULT_MEDICINES.map(item=>[item.uid,item.name])));
 const randomHex=(bytes=32)=>Array.from(crypto.getRandomValues(new Uint8Array(bytes)),b=>b.toString(16).padStart(2,'0')).join('');
 const digest=async value=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',encoder.encode(value))),b=>b.toString(16).padStart(2,'0')).join('');
@@ -60,15 +60,33 @@ export class RFIDDirectory {
   async listMedicines({userId}){
     if(!validUser(userId))return json({ok:false,error:'A signed-in account is required.'},401);
     const seededKey='medicine-defaults-seeded:'+userId;
-    if(!await this.storage.get(seededKey)){
-      const medicines=await this.storage.get('medicines')||[];
-      for(const item of DEFAULT_MEDICINES){
-        if(!medicines.some(existing=>existing.userId===userId&&existing.uid===item.uid))
-          medicines.push({...item,strength:'',expiryDate:'',instructions:'',announcementText:'',expiredText:'Warning! This medicine has expired.',userId,defaultCard:true,updatedAt:new Date().toISOString()});
+    const medicines=await this.storage.get('medicines')||[];
+    let changed=false;
+    for(const item of DEFAULT_MEDICINES){
+      const existing=medicines.find(card=>card.userId===userId&&card.uid===item.uid);
+      if(!existing){
+        medicines.push({...item,announcementText:'',expiredText:'Warning! This medicine has expired.',userId,defaultCard:true,updatedAt:new Date().toISOString()});
+        changed=true;
+        continue;
       }
-      await this.storage.put('medicines',medicines);
-      await this.storage.put(seededKey,true);
+      // Upgrade untouched legacy starter cards, including accounts seeded by an older release.
+      // Only fill blank fields and never replace a user's existing card details or custom message.
+      if(existing.name===item.name){
+        for(const field of ['strength','expiryDate','instructions']){
+          if(!String(existing[field]||'').trim()&&item[field]){
+            existing[field]=item[field];
+            changed=true;
+          }
+        }
+        if(!String(existing.expiredText||'').trim()){
+          existing.expiredText='Warning! This medicine has expired.';
+          changed=true;
+        }
+        if(existing.defaultCard!==true){existing.defaultCard=true;changed=true;}
+      }
     }
+    if(changed)await this.storage.put('medicines',medicines);
+    if(!await this.storage.get(seededKey))await this.storage.put(seededKey,true);
     const medicines=await this.storage.get('medicines')||[];
     return json({ok:true,medicines:medicines.filter(item=>item.userId===userId).map(({userId,...item})=>item).sort((a,b)=>a.name.localeCompare(b.name))});
   }
