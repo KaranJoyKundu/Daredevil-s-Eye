@@ -34,12 +34,6 @@ const unsigned long SCAN_COOLDOWN_MS = 1800;
 const unsigned long QUEUE_RETRY_MS = 5000;
 const uint8_t MAX_PENDING_EVENTS = 5;
 
-struct MedicineCard { const char *uid; const char *name; };
-const MedicineCard MEDICINES[] = {
-  {"A1618C04", "Napa One"},
-  {"1474D505", "Monus 10"}
-};
-
 String stageError(const char *code, const String &detail) {
   Serial.printf("[FAIL] %s: %s\n", code, detail.c_str());
   return String(code);
@@ -207,8 +201,8 @@ bool flushPendingEvent() {
   return true;
 }
 
-bool sendMedicine(const String &uid, const String &medicine) {
-  const String body = "{\"uid\":\"" + uid + "\",\"medicine\":\"" + medicine + "\",\"eventId\":\"" + randomEventId() + "\"}";
+bool sendMedicine(const String &uid) {
+  const String body = "{\"uid\":\"" + uid + "\",\"eventId\":\"" + randomEventId() + "\"}";
   if (!flushPendingEvent() || loadPendingQueue().length()) {
     enqueuePendingEvent(body);
     lastQueueRetryAt = millis();
@@ -219,7 +213,7 @@ bool sendMedicine(const String &uid, const String &medicine) {
     lastQueueRetryAt = millis();
     return false;
   }
-  Serial.printf("[PASS] EVENT ACCEPTED · %s · UID %s\n", medicine.c_str(), uid.c_str());
+  Serial.printf("[PASS] EVENT ACCEPTED · UID %s\n", uid.c_str());
   return true;
 }
 
@@ -279,15 +273,9 @@ void loop() {
     char part[3]; sprintf(part, "%02X", rfid.uid.uidByte[i]); uid += part;
   }
   Serial.println("[2/7] CARD UID READ · " + uid);
-  String medicine;
-  for (const auto &card : MEDICINES) if (uid.equalsIgnoreCase(card.uid)) medicine = card.name;
-  if (!medicine.length()) {
-    stageError("UNKNOWN_CARD", "UID " + uid + " is not registered in the firmware.");
-  } else {
-    Serial.println("[3/7] MEDICINE MAPPING · " + medicine);
-    Serial.println("[6/7] AUTHENTICATED EVENT TRANSMISSION");
-    sendMedicine(uid, medicine);
-  }
+  Serial.println("[3/7] UID LOOKUP · resolving this card in your account");
+  Serial.println("[6/7] AUTHENTICATED EVENT TRANSMISSION");
+  if (!sendMedicine(uid)) Serial.println("[INFO] Check the Medicine RFID page if this UID is not registered.");
   rfid.PICC_HaltA();
   rfid.PCD_StopCrypto1();
 }

@@ -2,7 +2,7 @@ name: Verify and deploy Daredevil's Eye
 
 on:
   push:
-    branches: [main, feat/first-prototype, feat/reliability-photo-history-push, feat/rfid-medicine-integration]
+    branches: [main, feat/first-prototype, feat/reliability-photo-history-push, feat/rfid-medicine-integration, feat/rfid-personalized-medicine-messages]
   pull_request:
     branches: [main]
   workflow_dispatch:

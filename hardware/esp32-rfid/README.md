@@ -1,18 +1,48 @@
 # Medicine RFID reader setup
 
-This feature adds an account-paired ESP32 + RC522 medicine reader to Daredevil's Eye.
+Daredevil's Eye can associate each RFID card UID with an account-owned medicine record and speak a configurable announcement when that card is scanned.
 
-## Current implementation
+## Current behavior
 
-- /medicine/ is the dedicated setup page and appears directly after Home / Action in the shared app menu.
-- A signed-in account authorizes a reader from /medicine/ and receives a one-time 256-bit device token.
-- Paste the token into the ESP32 Serial Monitor when prompted. Only its SHA-256 digest is stored in the RFID Durable Object.
-- The Worker associates each event with the account paired to the device; the ESP32 cannot choose an account ID.
-- Medicine events are retained for up to 24 hours, with a bounded server queue. The phone acknowledges an event after speech completes.
-- The ESP32 keeps up to five unsent events in Preferences/NVS and retries them in order after connectivity returns; the event ID remains stable during retries.
-- The app-wide listener polls while a Daredevil's Eye page using shared navigation is open and the listener is enabled.
-- Device revocation invalidates the stored token immediately.
-- Device tokens are generated only for the signed-in account and stored as SHA-256 hashes.
+- Open `/medicine/` while signed in to manage your own medicine cards.
+- Register a card by entering its hexadecimal UID, medicine name, strength, expiry month, and prescription instructions.
+- Optionally provide a complete custom spoken message and a separate expired-medicine warning.
+- The phone's shared RFID listener speaks the server-resolved announcement on app pages while enabled.
+- Expiry is checked by the Worker at scan time. Once the expiry date has passed, the expired warning replaces the normal announcement and dosage instructions.
+- Medicine records are account-scoped. A reader can resolve only the cards belonging to the account that authorized its device token.
+- The ESP32 sends only the card UID and event ID. It contains no hard-coded medicine catalogue; adding or editing medicine records does not require reflashing it.
+- Device tokens are generated for the signed-in account and stored as SHA-256 hashes in the Durable Object.
+- Events are retained for up to 24 hours; the ESP32 keeps up to five unsent events in Preferences/NVS and retries in order.
+
+## Example announcement
+
+With the fields configured as:
+
+- Medicine: Paracetamol
+- Strength: 500 mg
+- Expiry month: December 2027
+- Instructions: Your registered prescription says one tablet after food.
+
+The generated announcement is similar to:
+
+> Paracetamol. 500 mg. Expiry month: December 2027. Your registered prescription says one tablet after food.
+
+When the expiry date has passed, the default announcement is:
+
+> Warning! This medicine has expired.
+
+A custom spoken message overrides the generated normal announcement. A custom expired message can override the default expired warning.
+
+## Add a medicine card
+
+1. Sign into Daredevil's Eye and open `/medicine/`.
+2. Scan the RFID card and copy the UID shown in the ESP32 Serial Monitor.
+3. Enter the UID in hexadecimal. Spaces, colons, and hyphens are accepted and normalized.
+4. Enter the medicine name; optionally add strength, expiry month, and prescription instructions.
+5. Leave the custom announcement blank to use the generated message, or enter the exact text to be spoken.
+6. Save. The next scan uses the updated message immediately.
+
+Only add dosage instructions from a verified prescription or healthcare professional. The app reads back the information entered; it does not prescribe or validate a dose.
 
 ## Hardware wiring
 
@@ -30,47 +60,35 @@ Use 3.3V only. RC522 SDA is SPI chip select, not I²C SDA.
 
 ## Firmware prerequisites
 
-Open hardware/esp32-rfid/esp32-rfid.ino in Arduino IDE.
+Open `hardware/esp32-rfid/esp32-rfid.ino` in Arduino IDE.
 
 Install:
 - ESP32 board support (Arduino-ESP32 core 3.x)
 - MFRC522 by Miguel Balboa
 
-Set WIFI_SSID and WIFI_PASSWORD for a 2.4 GHz network.
+Set `WIFI_SSID` and `WIFI_PASSWORD` for a 2.4 GHz network.
 
-### TLS certificate is a deliberate setup gate
+The firmware uses the ESP32 Arduino core's built-in trusted CA certificate bundle through `useBuiltinCACertBundle()`. Do not disable TLS certificate verification.
 
-The firmware uses the ESP32 Arduino core's built-in trusted CA certificate bundle through useBuiltinCACertBundle(), and does not disable certificate verification. Use Arduino-ESP32 core 3.x so this API is available. This avoids maintaining a manually pasted root certificate. Do not replace it with insecure TLS: the device token must only travel over verified HTTPS.
+## Authorize the ESP32
 
-## Pairing and first run
+1. Sign into Daredevil's Eye and open `/medicine/`.
+2. Click **Authorize ESP32 & generate token** and copy the token. It is shown only once.
+3. Open the ESP32 Serial Monitor at 115200 baud.
+4. Paste the 64-character token when prompted. It is stored in ESP32 NVS and is not printed.
+5. Register each physical card UID in the Medicine RFID page. The same ESP32 can read any supported UID length (4, 7, or 10 bytes); the account must have a matching medicine record.
+6. Scan a registered card. Changes to its announcement take effect on the next scan without a firmware update.
 
-1. Deploy the Worker changes, including the RFIDDirectory Durable Object migration.
-2. Sign into Daredevil's Eye and open /medicine/.
-3. Click **Authorize ESP32 & generate token** and copy the token. It is shown only once.
-4. Open the ESP32 Serial Monitor at 115200 baud.
-5. The firmware connects to Wi-Fi, validates /api/health, then prompts for the 64-character token.
-6. Paste the token and press Enter. It is stored in ESP32 NVS (Preferences) and is not printed.
-7. Scan a registered card. The current firmware maps:
-   - A1618C04 → Napa One
-   - 1474D505 → Monus 10
-
-To authorize again after revocation or token loss, erase the ESP32 Preferences namespace de-rfid, then authorize a new device token from /medicine/.
+To authorize again after revocation or token loss, erase the ESP32 Preferences namespace `de-rfid`, then authorize a new device token from `/medicine/`.
 
 ## App-wide announcements
 
-On /medicine/, enable Medicine announcements. The setting is stored in this browser and the shared listener is started by site-nav.js on app pages. It polls every three seconds while the page is visible, then speaks the exact registered medicine name using the current speech language. It acknowledges the event after speech completes.
+Enable **Medicine announcements** on `/medicine/`. The shared listener polls every three seconds while a Daredevil's Eye page is visible and the listener is enabled. It speaks the exact server-generated or user-authored announcement using the current speech language, then acknowledges the event after speech completes.
 
-The first version requires the app to remain open in a foreground page. Browser background timers, Android battery management, closed tabs, and screen-locked behavior are not guaranteed. Push notification / background delivery is a later stage.
+The first version requires the app to remain open in a foreground page. Background timers, closed tabs, and screen-locked behavior are not guaranteed.
 
 ## Verification boundary
 
-Automated tests cover pairing, token authentication, account-scoped event polling, duplicate event IDs, acknowledgements, revocation, the setup page, and the firmware's TLS safety gate.
+Automated tests cover account-scoped medicine records, UID validation, custom announcements, expiry warnings, device authentication, event polling and acknowledgement, and the firmware's TLS safety gate.
 
-A successful Worker deployment does not prove:
-- RC522 wiring and physical card reads
-- Wi-Fi credentials and reconnect behavior
-- The correct root CA PEM on the ESP32
-- Android speech output / Bangla voice availability
-- Background or screen-locked announcements
-
-Record each hardware stage's serial output before moving to the next one.
+A successful Worker deployment does not prove physical RC522 reads, Wi-Fi credentials, Android speech output, or background/screen-locked announcements.

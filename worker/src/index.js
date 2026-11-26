@@ -879,14 +879,26 @@ export async function handleApi(request, env = {}) {
   if(url.pathname.startsWith('/api/rfid/')){
     if(!env.RFID_DIRECTORY)return json({ok:false,error:'RFID relay is not configured.'},503);
     const directory=env.RFID_DIRECTORY.get(env.RFID_DIRECTORY.idFromName('rfid-directory'));
-    const userRequired=url.pathname==='/api/rfid/pair/start'||url.pathname==='/api/rfid/devices/provision'||(url.pathname==='/api/rfid/events'&&request.method==='GET')||url.pathname==='/api/rfid/events/ack'||(url.pathname==='/api/rfid/devices'&&request.method==='GET')||(request.method==='DELETE'&&url.pathname.startsWith('/api/rfid/devices/'));
+    const medicineDelete=request.method==='DELETE'&&url.pathname.startsWith('/api/rfid/medicines/');
+    const userRequired=url.pathname==='/api/rfid/pair/start'||url.pathname==='/api/rfid/devices/provision'||(url.pathname==='/api/rfid/events'&&request.method==='GET')||url.pathname==='/api/rfid/events/ack'||(url.pathname==='/api/rfid/devices'&&request.method==='GET')||(url.pathname==='/api/rfid/medicines'&&(request.method==='GET'||request.method==='POST'))||medicineDelete||(request.method==='DELETE'&&url.pathname.startsWith('/api/rfid/devices/'));
     const user=userRequired?await getAuthenticatedUser(request,env):null;
-    if(userRequired&&!user)return json({ok:false,error:'Sign in to manage RFID devices.'},401);
+    if(userRequired&&!user)return json({ok:false,error:'Sign in to manage RFID devices and medicine cards.'},401);
     if(request.method==='GET'&&url.pathname==='/api/rfid/events'){
       return directory.fetch(new Request('https://rfid.internal/event/poll',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:user.id})}));
     }
     if(request.method==='GET'&&url.pathname==='/api/rfid/devices'){
       return directory.fetch(new Request('https://rfid.internal/devices/list',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:user.id})}));
+    }
+    if(request.method==='GET'&&url.pathname==='/api/rfid/medicines'){
+      return directory.fetch(new Request('https://rfid.internal/medicines/list',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:user.id})}));
+    }
+    if(request.method==='POST'&&url.pathname==='/api/rfid/medicines'){
+      const body=await request.json().catch(()=>({}));
+      return directory.fetch(new Request('https://rfid.internal/medicines/save',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:user.id,medicine:body})}));
+    }
+    if(medicineDelete){
+      const uid=decodeURIComponent(url.pathname.split('/').pop()||'');
+      return directory.fetch(new Request('https://rfid.internal/medicines/delete',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:user.id,uid})}));
     }
     if(request.method==='POST'&&url.pathname==='/api/rfid/devices/provision'){
       return directory.fetch(new Request('https://rfid.internal/devices/provision',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:user.id})}));
@@ -909,7 +921,6 @@ export async function handleApi(request, env = {}) {
     }
     return json({ok:false,error:'RFID route not found.'},404);
   }
-
   if(url.pathname.startsWith('/api/account/')||url.pathname.startsWith('/api/guest/')) return handleAccountApi(request,env,url);
 
   if (request.method === 'GET' && url.pathname === '/api/health') {

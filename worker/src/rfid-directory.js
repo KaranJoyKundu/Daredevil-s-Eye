@@ -1,14 +1,17 @@
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const encoder=new TextEncoder();
-const MEDICINE_CARDS=Object.freeze({'A1618C04':'Napa One','1474D505':'Monus 10'});
+const LEGACY_MEDICINES=Object.freeze({'A1618C04':'Napa One','1474D505':'Monus 10'});
 const randomHex=(bytes=32)=>Array.from(crypto.getRandomValues(new Uint8Array(bytes)),b=>b.toString(16).padStart(2,'0')).join('');
 const digest=async value=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',encoder.encode(value))),b=>b.toString(16).padStart(2,'0')).join('');
 const same=(a,b)=>{if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a.charCodeAt(i)^b.charCodeAt(i);return diff===0;};
+const validUser=id=>typeof id==='string'&&/^[0-9a-f-]{36}$/i.test(id);
+const normalizeUid=value=>String(value||'').replace(/[\s:-]/g,'').toUpperCase();
+const validUid=value=>/^(?:[A-F0-9]{8}|[A-F0-9]{14}|[A-F0-9]{20})$/.test(value);
+const validDate=value=>!value||/^\d{4}-(?:0[1-9]|1[0-2])$/.test(value);
+const clean=(value,max)=>String(value||'').trim().slice(0,max);
+const dateLabel=value=>{if(!value)return '';const [year,month,day]=value.split('-').map(Number);const date=new Date(Date.UTC(year,month-1,day||1));return date.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});};
 
-/**
- * One account-scoped directory for paired RFID readers and their pending medicine events.
- * Device credentials are stored as SHA-256 digests; raw tokens are returned only once.
- */
+/** Account-scoped medicine cards, reader credentials and pending speech events. */
 export class RFIDDirectory {
   constructor(state){this.state=state;this.storage=state.storage;}
   async fetch(request){
@@ -18,6 +21,9 @@ export class RFIDDirectory {
     if(action==='pair/start')return this.startPairing(body);
     if(action==='devices/provision')return this.provisionDevice(body);
     if(action==='pair/claim')return this.claimPairing(body);
+    if(action==='medicines/list')return this.listMedicines(body);
+    if(action==='medicines/save')return this.saveMedicine(body);
+    if(action==='medicines/delete')return this.deleteMedicine(body);
     if(action==='event/submit')return this.submitEvent(request,body);
     if(action==='event/poll')return this.pollEvents(body);
     if(action==='event/ack')return this.ackEvent(body);
@@ -26,14 +32,13 @@ export class RFIDDirectory {
     return json({ok:false,error:'RFID action not found.'},404);
   }
   async startPairing({userId}){
-    if(typeof userId!=='string'||!/^[0-9a-f-]{36}$/i.test(userId))return json({ok:false,error:'A signed-in account is required.'},401);
+    if(!validUser(userId))return json({ok:false,error:'A signed-in account is required.'},401);
     const code=String(crypto.getRandomValues(new Uint32Array(1))[0]%1000000).padStart(6,'0');
-    const record={codeHash:await digest(code),userId,expiresAt:Date.now()+10*60*1000,attempts:0};
-    await this.storage.put('pairing',record);
+    await this.storage.put('pairing',{codeHash:await digest(code),userId,expiresAt:Date.now()+600000,attempts:0});
     return json({ok:true,code,expiresInSeconds:600});
   }
   async provisionDevice({userId}){
-    if(typeof userId!=='string'||!/^[0-9a-f-]{36}$/i.test(userId))return json({ok:false,error:'A signed-in account is required.'},401);
+    if(!validUser(userId))return json({ok:false,error:'A signed-in account is required.'},401);
     const token=randomHex(32),deviceId=randomHex(16),devices=await this.storage.get('devices')||[];
     devices.push({deviceId,userId,tokenHash:await digest(token),createdAt:new Date().toISOString(),lastSeenAt:null});
     await this.storage.put('devices',devices);
@@ -43,71 +48,87 @@ export class RFIDDirectory {
     const value=String(code||'').trim();
     if(!/^\d{6}$/.test(value))return json({ok:false,error:'Enter the six-digit pairing code.'},400);
     const pairing=await this.storage.get('pairing');
-    if(!pairing||pairing.expiresAt<Date.now()){
-      await this.storage.delete('pairing');
-      return json({ok:false,error:'Pairing code is invalid or expired.'},401);
-    }
-    if(pairing.attempts>=10){
-      await this.storage.delete('pairing');
-      return json({ok:false,error:'Pairing attempt limit reached. Generate a new code.'},429);
-    }
-    if(!same(await digest(value),pairing.codeHash)){
-      pairing.attempts+=1;
-      await this.storage.put('pairing',pairing);
-      return json({ok:false,error:'Pairing code is invalid or expired.'},401);
-    }
+    if(!pairing||pairing.expiresAt<Date.now()){await this.storage.delete('pairing');return json({ok:false,error:'Pairing code is invalid or expired.'},401);}
+    if(pairing.attempts>=10){await this.storage.delete('pairing');return json({ok:false,error:'Pairing attempt limit reached. Generate a new code.'},429);}
+    if(!same(await digest(value),pairing.codeHash)){pairing.attempts++;await this.storage.put('pairing',pairing);return json({ok:false,error:'Pairing code is invalid or expired.'},401);}
     const token=randomHex(32),deviceId=randomHex(16),devices=await this.storage.get('devices')||[];
     devices.push({deviceId,userId:pairing.userId,tokenHash:await digest(token),createdAt:new Date().toISOString(),lastSeenAt:null});
-    await this.storage.put('devices',devices);
-    await this.storage.delete('pairing');
+    await this.storage.put('devices',devices);await this.storage.delete('pairing');
     return json({ok:true,deviceId,deviceToken:token});
   }
-  async submitEvent(request,{uid,medicine,eventId}){
-    const auth=String(request.headers.get('authorization')||'');
-    const token=auth.startsWith('Bearer ')?auth.slice(7):'';
+  async listMedicines({userId}){
+    if(!validUser(userId))return json({ok:false,error:'A signed-in account is required.'},401);
+    const medicines=await this.storage.get('medicines')||[];
+    return json({ok:true,medicines:medicines.filter(item=>item.userId===userId).map(({userId,...item})=>item).sort((a,b)=>a.name.localeCompare(b.name))});
+  }
+  async saveMedicine({userId,medicine}){
+    if(!validUser(userId))return json({ok:false,error:'A signed-in account is required.'},401);
+    if(!medicine||typeof medicine!=='object')return json({ok:false,error:'Medicine details are required.'},400);
+    const uid=normalizeUid(medicine.uid),name=clean(medicine.name,100),strength=clean(medicine.strength,60);
+    const expiryDate=clean(medicine.expiryDate,10),instructions=clean(medicine.instructions,500);
+    const announcementText=clean(medicine.announcementText,1000),expiredText=clean(medicine.expiredText,300);
+    if(!validUid(uid))return json({ok:false,error:'Enter a valid RFID UID (4, 7, or 10 bytes in hexadecimal).'},400);
+    if(!name)return json({ok:false,error:'Medicine name is required.'},400);
+    if(!validDate(expiryDate))return json({ok:false,error:'Expiry month must use YYYY-MM.'},400);
+    const medicines=await this.storage.get('medicines')||[];
+    const record={uid,name,strength,expiryDate,instructions,announcementText,expiredText,updatedAt:new Date().toISOString(),userId};
+    const index=medicines.findIndex(item=>item.userId===userId&&item.uid===uid);
+    if(index>=0)medicines[index]=record;else medicines.push(record);
+    await this.storage.put('medicines',medicines);
+    const {userId:ignored,...safe}=record;
+    return json({ok:true,medicine:safe});
+  }
+  async deleteMedicine({userId,uid}){
+    if(!validUser(userId))return json({ok:false,error:'A signed-in account is required.'},401);
+    const normalized=normalizeUid(uid),medicines=await this.storage.get('medicines')||[];
+    const next=medicines.filter(item=>!(item.userId===userId&&item.uid===normalized));
+    if(next.length===medicines.length)return json({ok:false,error:'Medicine UID not found.'},404);
+    await this.storage.put('medicines',next);
+    return json({ok:true,deleted:true});
+  }
+  async submitEvent(request,{uid,eventId}){
+    const auth=String(request.headers.get('authorization')||''),token=auth.startsWith('Bearer ')?auth.slice(7):'';
     if(!/^[a-f0-9]{64}$/i.test(token))return json({ok:false,error:'Device authentication required.'},401);
     const tokenHash=await digest(token),devices=await this.storage.get('devices')||[];
     const device=devices.find(item=>same(item.tokenHash,tokenHash));
     if(!device)return json({ok:false,error:'Device token is invalid or revoked.'},401);
-    if(typeof uid!=='string'||!/^([a-f0-9]{8}|[a-f0-9]{14}|[a-f0-9]{20})$/i.test(uid))return json({ok:false,error:'Invalid RFID UID.'},400);
-    if(typeof medicine!=='string'||!medicine.trim()||medicine.length>100)return json({ok:false,error:'Invalid medicine name.'},400);
-    const expectedMedicine=MEDICINE_CARDS[uid.toUpperCase()];
-    if(!expectedMedicine||medicine.trim()!==expectedMedicine)return json({ok:false,error:'RFID UID and medicine mapping are not registered.'},400);
+    const normalized=normalizeUid(uid);
+    if(!validUid(normalized))return json({ok:false,error:'Invalid RFID UID.'},400);
+    const medicines=await this.storage.get('medicines')||[];
+    const medicine=medicines.find(item=>item.userId===device.userId&&item.uid===normalized)|| (LEGACY_MEDICINES[normalized]?{uid:normalized,name:LEGACY_MEDICINES[normalized],strength:'',expiryDate:'',instructions:'',announcementText:'',expiredText:''}:null);
+    if(!medicine)return json({ok:false,error:'This RFID UID is not registered to your account. Add it on the Medicine RFID page.'},404);
     const id=/^[a-f0-9-]{16,64}$/i.test(String(eventId||''))?String(eventId):randomHex(16);
-    const events=(await this.storage.get('events')||[]).filter(item=>Date.now()-Date.parse(item.createdAt)<24*60*60*1000);
+    const events=(await this.storage.get('events')||[]).filter(item=>Date.now()-Date.parse(item.createdAt)<86400000);
     if(events.some(item=>item.id===id))return json({ok:true,accepted:true,duplicate:true,eventId:id});
-    const event={id,deviceId:device.deviceId,userId:device.userId,uid:uid.toUpperCase(),medicine:medicine.trim(),createdAt:new Date().toISOString()};
-    events.push(event);
-    await this.storage.put('events',events.slice(-100));
-    device.lastSeenAt=event.createdAt;
-    await this.storage.put('devices',devices);
+    const today=new Date().toISOString().slice(0,10),expired=Boolean(medicine.expiryDate&&medicine.expiryDate<today.slice(0,7));
+    const generated=[medicine.name,medicine.strength,medicine.expiryDate?'Expiry date: '+dateLabel(medicine.expiryDate):'',medicine.instructions].filter(Boolean).join('. ');
+    const speechText=expired?(medicine.expiredText||'Warning! This medicine has expired.'):(medicine.announcementText||generated||medicine.name);
+    const event={id,deviceId:device.deviceId,userId:device.userId,uid:normalized,medicine:medicine.name,speechText,expired,createdAt:new Date().toISOString()};
+    events.push(event);await this.storage.put('events',events.slice(-100));
+    device.lastSeenAt=event.createdAt;await this.storage.put('devices',devices);
     return json({ok:true,accepted:true,eventId:id});
   }
   async pollEvents({userId}){
-    if(typeof userId!=='string'||!/^[0-9a-f-]{36}$/i.test(userId))return json({ok:false,error:'A signed-in account is required.'},401);
-    const events=(await this.storage.get('events')||[]).filter(item=>Date.now()-Date.parse(item.createdAt)<24*60*60*1000);
+    if(!validUser(userId))return json({ok:false,error:'A signed-in account is required.'},401);
+    const events=(await this.storage.get('events')||[]).filter(item=>Date.now()-Date.parse(item.createdAt)<86400000);
     await this.storage.put('events',events);
     return json({ok:true,events:events.filter(item=>item.userId===userId).slice(0,20).map(({userId,...item})=>item)});
   }
   async ackEvent({userId,eventId}){
-    if(typeof userId!=='string'||!/^[0-9a-f-]{36}$/i.test(userId)||typeof eventId!=='string')return json({ok:false,error:'Invalid event acknowledgement.'},400);
-    const events=await this.storage.get('events')||[];
-    const event=events.find(item=>item.id===eventId&&item.userId===userId);
+    if(!validUser(userId)||typeof eventId!=='string')return json({ok:false,error:'Invalid event acknowledgement.'},400);
+    const events=await this.storage.get('events')||[],event=events.find(item=>item.id===eventId&&item.userId===userId);
     if(!event)return json({ok:false,error:'Event not found.'},404);
-    await this.storage.put('events',events.filter(item=>item.id!==eventId));
-    return json({ok:true,acknowledged:true});
+    await this.storage.put('events',events.filter(item=>item.id!==eventId));return json({ok:true,acknowledged:true});
   }
   async listDevices({userId}){
-    if(typeof userId!=='string'||!/^[0-9a-f-]{36}$/i.test(userId))return json({ok:false,error:'A signed-in account is required.'},401);
+    if(!validUser(userId))return json({ok:false,error:'A signed-in account is required.'},401);
     const devices=await this.storage.get('devices')||[];
     return json({ok:true,devices:devices.filter(item=>item.userId===userId).map(({tokenHash,userId,...item})=>item)});
   }
   async revokeDevice({userId,deviceId}){
-    if(typeof userId!=='string'||!/^[0-9a-f-]{36}$/i.test(userId)||!/^[a-f0-9]{32}$/i.test(String(deviceId||'')))return json({ok:false,error:'Invalid device request.'},400);
+    if(!validUser(userId)||!/^[a-f0-9]{32}$/i.test(String(deviceId||'')))return json({ok:false,error:'Invalid device request.'},400);
     const devices=await this.storage.get('devices')||[];
-    const exists=devices.some(item=>item.userId===userId&&item.deviceId===deviceId);
-    if(!exists)return json({ok:false,error:'Device not found.'},404);
-    await this.storage.put('devices',devices.filter(item=>item.deviceId!==deviceId));
-    return json({ok:true,revoked:true});
+    if(!devices.some(item=>item.userId===userId&&item.deviceId===deviceId))return json({ok:false,error:'Device not found.'},404);
+    await this.storage.put('devices',devices.filter(item=>item.deviceId!==deviceId));return json({ok:true,revoked:true});
   }
 }
