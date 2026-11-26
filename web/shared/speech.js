@@ -196,6 +196,11 @@ function runSpeechQueue(chunks, options, settings, runId, voices) {
 
 export function speak(text, options = {}) {
   const nativeTts=window.DaredevilVolumeControls;
+  if(window.Capacitor?.isNativePlatform?.()&&!nativeTts?.speakText&&window.__deeNativePluginPromise){
+    let cancelled=false;
+    window.__deeNativePluginPromise.then(()=>{if(!cancelled)speak(text,options);}).catch(error=>{if(!cancelled)options.onError?.('Android speech bridge unavailable: '+(error?.message||'reopen the app and retry'));});
+    return {queued:true,cancel:()=>{cancelled=true;}};
+  }
   if(window.Capacitor?.isNativePlatform?.()&&nativeTts?.speakText){
     const settings=getSettings(),language=options.lang||settings.speechLanguage||'en-US',chunks=splitSpeechText(text);
     if(!chunks.length){options.onEnd?.();return {queued:false};}
