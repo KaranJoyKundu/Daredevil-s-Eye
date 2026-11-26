@@ -22,7 +22,8 @@ create index if not exists scene_memory_user_created_idx
 create index if not exists scene_memory_guest_created_idx
   on public.scene_memory_entries(guest_session_hash, created_at desc) where guest_session_hash is not null;
 alter table public.scene_memory_entries enable row level security;
-revoke all on table public.scene_memory_entries from anon, authenticated;
+revoke all on table public.scene_memory_entries from public, anon, authenticated;
+grant all on table public.scene_memory_entries to service_role;
 comment on table public.scene_memory_entries is
   'Opt-in text-only visual memory. Stores at most five recent observations per account or private guest session; never stores image bytes.';
 
@@ -91,7 +92,8 @@ create index if not exists emergency_recordings_guest_created_idx
   on public.emergency_recordings(guest_session_hash, created_at desc) where guest_session_hash is not null;
 create index if not exists emergency_recordings_expiry_idx on public.emergency_recordings(expires_at);
 alter table public.emergency_recordings enable row level security;
-revoke all on table public.emergency_recordings from anon, authenticated;
+revoke all on table public.emergency_recordings from public, anon, authenticated;
+grant all on table public.emergency_recordings to service_role;
 comment on table public.emergency_recordings is
   'Private SOS incident recording metadata. Video chunks are stored only in a private Cloudflare R2 bucket and are accessed through authenticated Worker routes.';
 ),
