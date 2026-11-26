@@ -94,7 +94,7 @@ test('RFID events are authenticated, account-scoped, deduplicated and acknowledg
  assert.equal(sent.accepted,true);
  const duplicate=await (await post('event/submit',{uid:'A1618C04',eventId:id},device.deviceToken)).json();
  assert.equal(duplicate.duplicate,true);
- assert.equal((await post('event/submit',{uid:'1474D505'},device.deviceToken)).status,404);
+ assert.equal((await post('event/submit',{uid:'0A0B0C0D'},device.deviceToken)).status,404);
  const pending=await (await post('event/poll',{userId:USER})).json();
  assert.equal(pending.events.length,1);assert.equal(pending.events[0].medicine,'Paracetamol');
  assert.equal((await post('event/ack',{userId:USER,eventId:sent.eventId})).status,200);
