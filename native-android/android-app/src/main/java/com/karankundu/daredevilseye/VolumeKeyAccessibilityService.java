@@ -1,7 +1,6 @@
 package com.karankundu.daredevilseye;
 
 import android.accessibilityservice.AccessibilityService;
-import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -34,7 +33,7 @@ public class VolumeKeyAccessibilityService extends AccessibilityService {
     protected boolean onKeyEvent(KeyEvent event) {
         if (event == null) return false;
         if (!getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean("global_shortcuts_enabled", true)) return false;
-        if (isAppForeground() && !getSharedPreferences("dee_native_setup", MODE_PRIVATE).getBoolean("foreground_shortcuts_enabled", true)) return false;
+        if (MainActivity.isActivityResumed && !getSharedPreferences("dee_native_setup", MODE_PRIVATE).getBoolean("foreground_shortcuts_enabled", true)) return false;
         final int key = event.getKeyCode();
         if (key != KeyEvent.KEYCODE_VOLUME_UP && key != KeyEvent.KEYCODE_VOLUME_DOWN) return false;
         if (event.getRepeatCount() > 0) return true;
@@ -110,14 +109,8 @@ public class VolumeKeyAccessibilityService extends AccessibilityService {
         showActionNotification(action, eventId);
     }
 
-    private boolean isAppForeground() {
-        ActivityManager.RunningAppProcessInfo processInfo = new ActivityManager.RunningAppProcessInfo();
-        ActivityManager.getMyMemoryState(processInfo);
-        return processInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
-    }
-
     private void showActionNotification(String action, String eventId) {
-        if (isAppForeground()) return;
+        if (MainActivity.isActivityResumed) return;
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager == null) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
