@@ -40,3 +40,7 @@ class_name = "RFIDDirectory"
 [[migrations]]
 tag = "v3"
 new_sqlite_classes = ["RFIDDirectory"]
+
+[[r2_buckets]]
+binding = "INCIDENT_RECORDINGS"
+bucket_name = "daredevils-eye-incident-recordings"
