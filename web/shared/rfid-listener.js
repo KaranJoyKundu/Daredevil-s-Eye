@@ -14,7 +14,7 @@ function unlockSpeech(){
  try{window.speechSynthesis?.resume();}catch{}
 }
 async function poll(forceRetry=false){
- if(busy||speaking||!enabled()||!hasCurrentConsent()||document.hidden)return;
+ if(busy||speaking||!enabled()||!hasCurrentConsent())return;
  busy=true;
  try{
   const response=await fetch('/api/rfid/events',{credentials:'same-origin',cache:'no-store'});
@@ -48,9 +48,9 @@ function onUserActivity(){
 }
 export function startRFIDListener(){
  if(timer)return;
- timer=setInterval(()=>poll(false),2500);
+ // Keep checking while this tab is backgrounded too. Browsers may throttle or freeze hidden tabs; the app cannot override that policy.\n timer=setInterval(()=>poll(false),1000);
  window.addEventListener('storage',event=>{if(event.key===ENABLED_KEY&&enabled())poll();});
- document.addEventListener('visibilitychange',()=>{if(!document.hidden){unlockSpeech();poll();}});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden){unlockSpeech();poll();}});\n window.addEventListener('pageshow',()=>{unlockSpeech();poll();});\n window.addEventListener('focus',()=>{unlockSpeech();poll();});
  // Scrolling, touching or keyboard navigation can unlock speech on browsers
  // that suspend speech output until the user interacts with the page.
  window.addEventListener('scroll',onUserActivity,{passive:true,capture:true});
