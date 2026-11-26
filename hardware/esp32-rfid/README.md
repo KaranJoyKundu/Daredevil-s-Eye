@@ -54,7 +54,7 @@ The firmware uses the ESP32 Arduino core's built-in trusted CA certificate bundl
    - A1618C04 → Napa One
    - 1474D505 → Monus 10
 
-To pair again after revocation or a token loss, erase the ESP32 Preferences namespace de-rfid or clear the token and deviceId values with a small Preferences sketch, then generate a new pairing code.
+To authorize again after revocation or token loss, erase the ESP32 Preferences namespace de-rfid, then authorize a new device token from /medicine/.
 
 ## App-wide announcements
 
