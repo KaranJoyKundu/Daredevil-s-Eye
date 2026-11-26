@@ -1,20 +1,26 @@
+## 26 November 2026 — Documentation layout and project documentation
+
+- PR #71 refreshed the Android documentation page styling; PR #72 corrected oversized sections inherited from the shared site stylesheet.
+- PR #72 merged to main; production deployment workflow #45843735382 succeeded.
+- Project documentation overhaul is tracked separately from application code.
+
 # Changelog
 
-## 26 November 2026 — Preserve visible action feedback when speech fails
+## 26 November 2026 — Preserve visible action feedback when speech fails (PR #69 merged)
 
 - A device text-to-speech failure no longer overwrites the visible status produced by SOS, Repeat and other actions.
 - The existing SOS confirmation feedback remains visible for its full five-second confirmation window; speech is optional feedback, not the only indication that the tap registered.
 - Live verification showed the first SOS tap did arm the confirmation flow; the browser automation only observed the later expiry because it read the page after the five-second window. No alert was sent.
 
 
-## 26 November 2026 — Action/Blind startup recovery (hotfix in progress)
+## 26 November 2026 — Action/Blind startup recovery (PR #68 merged)
 
 - Fixed a fatal startup-order bug in the shared browser app: the removed consent-panel initializer called `showCameraSetup()` before camera-panel `const` bindings were initialized, aborting the module before any user-action handlers were registered.
 - Removed that obsolete initializer; camera panels continue to render after their bindings are initialized.
 - Bumped the Action and Blind app script URL to force browsers to fetch the corrected module.
 - Kept the requested privacy design: informational notice only, with no consent popup, buttons, checkbox or photo-history toggle.
 - Documented the failed explicit static-page routing attempt: PR #66 introduced a redirect loop and PR #67 reverted it. Do not restore that rewrite.
-- Production verification is pending CI, deployment and live interaction tests.
+- PR #68 CI passed and the fix was merged. Browser verification confirmed the Action page loaded and the phone photo picker opened; the owner later confirmed the app was working.
 
 ## 20 November 2026 — hackathon release (PRs #14–#24)
 
