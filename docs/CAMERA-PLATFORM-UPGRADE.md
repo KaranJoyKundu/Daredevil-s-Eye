@@ -2,7 +2,7 @@
 
 **Project:** Daredevil's Eye  
 **Repository:** KaranJoyKundu/Daredevil-s-Eye  
-**Status:** Approved plan; camera work ported onto current `main` in `feat/camera-platform-current-main`  
+**Status:** Camera foundation implemented on current `main`; phone torch added; firmware patch prepared separately; physical device validation remains open.  
 **Plan date:** 2026-11-26  
 **Production baseline:** `47618f8445a10ffc28e65f37fbabe21149f5aa2f`
 
@@ -39,7 +39,7 @@ Existing modules inspected before this work:
 - `worker/src/sos-room.js`, `worker/src/sos-directory.js`: existing SOS receiver coordination.
 - `wrangler.toml`: Worker assets and existing SOS Durable Objects.
 
-Current production baseline SHA: `b81df7c25717d01e88760a525298dcfb97662175`.
+Current production baseline SHA: `47618f8445a10ffc28e65f37fbabe21149f5aa2f`.
 
 The previous backup branch `backup/main-before-pr-12` is older than current production and is NOT the rollback point for this project. A fresh backup has been created: `backup/main-before-camera-upgrade-2026-11-26`.
 
@@ -60,7 +60,7 @@ PR #10 link: https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/10
 
 - Production branch: `main`; do not push feature work directly to it.
 - Fresh rollback point: `backup/main-before-camera-upgrade-2026-11-26`.
-- Current implementation branch: `feat/camera-platform-foundation`.
+- Current implementation branch: `feat/camera-platform-current-main` (PR #31).
 - Keep feature work in focused commits and a PR. Never merge/deploy without explicit approval.
 - Before editing a file, fetch/read its current full content from the target branch.
 - After each meaningful phase: run `npm test`, `npm run check`; inspect exact GitHub Actions run for the pushed SHA.
@@ -106,7 +106,7 @@ Requirements:
 - Stop stream by releasing/closing its connection; don't pretend a missing URL exists.
 - A stream failure must not break still capture.
 - Provide connect/test feedback and clear CORS/network errors.
-- HTTPS app to HTTP LAN camera can trigger browser Local Network Access / mixed-content / CORS restrictions. Request permission only after a user action. Firmware must return suitable CORS headers for the exact app origin and OPTIONS preflight where needed. Validate Chrome's current Local Network Access behaviour on the target Android version. Never proxy a private LAN address through the public Worker; the user's browser is the LAN bridge.
+- HTTPS app to HTTP LAN camera access is gated by Chrome's Local Network Access permission. The top-level app must be a secure HTTPS context and the first LAN request must follow a user action. The supplied firmware source already returns `Access-Control-Allow-Origin: *` on its GET handlers; the app does not send credentials or custom headers. Current Chrome Local Network Access replaces the old Private Network Access preflight model, so do not add deprecated PNA headers just for this flow. Validate the actual flashed firmware and Chrome permission prompt on the target Android version. Never proxy a private LAN address through the public Worker; the user's browser is the LAN bridge.
 - ESP32 frame-to-canvas operations require readable CORS-enabled frames. If the browser can display but cannot read pixels, report this and do not claim recording support.
 
 ### Phone torch
@@ -196,7 +196,10 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - [x] LED brightness and off controls (0..255).
 - [x] No-flash and flash capture paths; Admin Image Lab now exposes a flash-capture action.
 - [ ] Validate all ESP32 controls on physical hardware.
-- [ ] Firmware CORS/preflight changes and actual hardware validation (firmware source is not in this repository branch).
+- [x] Inspect the supplied firmware's existing GET CORS headers; no legacy PNA preflight code is needed for the current simple GET requests.
+- [x] Prepare a separate `app_httpd.cpp` patch registering `/capture-flash` and restoring the previous LED brightness after capture. This patch is not part of the web repository and has not been flashed.
+- [ ] Compile and flash the firmware patch; verify `/capture-flash`, `/capture`, LED brightness and `:81/stream` on the physical board.
+- [ ] Validate Chrome Local Network Access permission and same-Wi-Fi access on the target Android Chrome.
 - [x] Phone torch capability detection and guarded UI control (shown only when the active phone-camera track advertises torch support).
 
 ### Phase 3 — scene memory
@@ -237,7 +240,18 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - `npm test` and `npm run check` pass on the exact PR SHA.
 - Manual test results on a physical Android phone and ESP32 are recorded separately.
 
-### Work completed on 2026-11-26\n\n- Added this plan and repository handoff document.\n- Created fresh backup and feature branch.\n- Added per-device camera source/setup settings and migrated the legacy ESP32 default IP to 192.168.0.100.\n- Added shared phone/ESP32 camera manager: persistent phone MediaStream, canvas still capture, stream cleanup, configurable ESP32 endpoints, LED brightness, flash/no-flash capture and connection test.\n- Added first-time camera selector after consent and phone camera preview/enable flow to Action page.\n- Routed Describe to the selected phone stream or ESP32 still capture; upload-only selection triggers the existing upload flow.\n- Added Admin ESP32 connection test, LED brightness and stream start/stop controls.\n- Added camera-manager regression tests and syntax-check coverage.\n- Not yet verified on a physical phone or ESP32; browser local-network permission/CORS behaviour remains a manual test.\n\n### Port onto current main on 2026-11-26
+### Work completed on 2026-11-26
+
+- Added this plan and repository handoff document.
+- Created fresh backup and feature branch.
+- Added per-device camera source/setup settings and migrated the legacy ESP32 default IP to 192.168.0.100.
+- Added shared phone/ESP32 camera manager: persistent phone MediaStream, canvas still capture, stream cleanup, configurable ESP32 endpoints, LED brightness, flash/no-flash capture and connection test.
+- Added first-time camera selector after consent and phone camera preview/enable flow to Action page.
+- Routed Describe to the selected phone stream or ESP32 still capture; upload-only selection triggers the existing upload flow.
+- Added Admin ESP32 connection test, LED brightness and stream start/stop controls.
+- Added camera-manager regression tests and syntax-check coverage.
+- Not yet verified on a physical phone or ESP32; browser local-network permission/CORS behaviour remains a manual test.
+n### Port onto current main on 2026-11-26
 
 - Main advanced by 60 commits after the original camera branch was created. The original PR #30 is now 60 commits behind and is not mergeable; it remains a draft reference and must not be merged.
 - Created `feat/camera-platform-current-main` from current main commit `47618f8445a10ffc28e65f37fbabe21149f5aa2f` and selectively ported camera changes without replacing current RFID/medicine integration.
@@ -252,8 +266,8 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - Added an Admin Image Lab action to capture an ESP32 still with flash and preview the returned image.
 - Added regression coverage for camera setup wiring, lifecycle cleanup and flash capture.
 - Original camera branch latest commit: `c9ef170559842b1af9ae98973df533373742e2d3`. Current-main port is tracked in PR #31.
-- The earlier CI run passed on the original branch at commit `c9fbc796385012c00a3ab86b05bb2987714c6255`; the current-main port in PR #31 still requires its own CI run.
-- No firmware changes, scene-memory backend, SOS WebRTC, R2 recording, TURN configuration or production deployment are complete.
+- The original branch CI passed at commit `c9fbc796385012c00a3ab86b05bb2987714c6255`. Current-main PR #31 CI also passed on exact head `965b60305bcf15e91df69af625744c364d424b32` (run 45733994019): 95 tests passed, syntax checks passed, Worker bundle and Durable Object migration validation passed; production deployment was skipped.
+- A separate firmware patch file was prepared but not compiled or flashed. Scene-memory backend, SOS WebRTC, R2 recording, TURN configuration and production deployment are not complete.
 
 ## 12. Continue-work instructions for a future session
 
@@ -261,8 +275,8 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 2. Check GitHub current main SHA, feature branch SHA, PR status and latest CI.
 3. Read the current versions of every file to be changed; do not rely on this document's code descriptions as source.
 4. Check PR #10 patches for any useful independent work before touching overlapping modules. Port selectively; never merge its stale base.
-5. Continue the first unchecked Phase 1 item.
-6. Keep changes on `feat/camera-platform-foundation` until a PR is ready.
+5. Continue Phase 2 hardware validation, then design Phase 3 scene memory on an isolated Supabase development environment.
+6. Keep web changes on `feat/camera-platform-current-main` / PR #31 until the camera phase is accepted.
 7. Run tests/checks and inspect GitHub Actions on the exact pushed SHA.
 8. Update this document's checklist, status and decisions before ending the session.
 
@@ -283,3 +297,12 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - Added regression coverage for capability detection, control wiring and Admin camera markup.
 - Updated the Action page cache-busting versions for the camera manager and app.
 - Physical torch behaviour still requires a real Android Chrome test; not every Galaxy A55/browser build exposes the torch constraint.
+
+
+### Current-main camera validation update — 2026-11-26
+
+- PR #31 includes guarded phone torch detection and UI control. The control is shown only when the active camera track exposes torch support.
+- Fixed malformed Admin camera markup and stale ESP32 address guidance.
+- Added two regression tests; exact PR head passed 95/95 tests, JavaScript syntax checks and Worker/Durable Object validation in GitHub Actions run 45733994019.
+- No production deployment occurred; the deployment job was skipped.
+- The separate ESP32 firmware patch is available as a handoff ZIP, but remains uncompiled and unflashed.
