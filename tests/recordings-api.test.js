@@ -100,4 +100,9 @@ test('private recording API rejects cross-origin writes and missing R2 storage',
     body: JSON.stringify({ deviceId: 'a'.repeat(32), cameraSource: 'phone', mimeType: 'video/webm' })
   }), noBucketEnv);
   assert.equal(crossOrigin.status, 403);
+  const unavailable = await handleApi(new Request('https://local.test/api/recordings', {
+    method: 'POST', headers: { Origin: 'https://local.test', 'content-type': 'application/json' },
+    body: JSON.stringify({ deviceId: 'a'.repeat(32), cameraSource: 'phone', mimeType: 'video/webm' })
+  }), noBucketEnv);
+  assert.equal(unavailable.status, 503);
 });
