@@ -1,6 +1,6 @@
 import {speak} from '../shared/speech.js?v=20261126-rfid2';
 import {getSettings} from '../shared/settings.js?v=20261117-release5';
-import {setRFIDListenerEnabled,isRFIDListenerEnabled} from '../shared/rfid-listener.js?v=20261126-medicine1';
+import {setRFIDListenerEnabled,isRFIDListenerEnabled} from '../shared/rfid-listener.js?v=20261126-dedup1';
 
 const $=id=>document.getElementById(id);
 const status=(id,message)=>{const el=$(id);if(el)el.textContent=message;};
@@ -69,6 +69,7 @@ function updateMedicinePreview(){
  $('medicine-preview').textContent=medicineMessage(item);
 }
 medicineFields.forEach(name=>field(name)?.addEventListener('input',updateMedicinePreview));
+const DEFAULT_EXPIRED_TEXT='Warning! This medicine has expired.';
 async function medicineApi(url,options={}){
  const response=await fetch(url,{credentials:'same-origin',cache:'no-store',...options,headers:{'content-type':'application/json',...(options.headers||{})}});
  const data=await response.json().catch(()=>({}));
@@ -87,7 +88,7 @@ function renderMedicines(){
   info.append(heading,document.createElement('br'),uid,preview);
   const actions=document.createElement('div');actions.className='medicine-record-actions';
   const edit=document.createElement('button');edit.type='button';edit.textContent='Edit';
-  edit.addEventListener('click',()=>{editingUid=item.uid;medicineFields.forEach(name=>field(name).value=item[name]||'');field('uid').readOnly=false;medicineCancel.hidden=false;$('medicine-save').textContent='Update medicine card';updateMedicinePreview();medicineForm.scrollIntoView({behavior:'smooth',block:'center'});});
+  edit.addEventListener('click',()=>{editingUid=item.uid;medicineFields.forEach(name=>field(name).value=item[name]||(name==='expiredText'?DEFAULT_EXPIRED_TEXT:''));field('uid').readOnly=false;medicineCancel.hidden=false;$('medicine-save').textContent='Update medicine card';updateMedicinePreview();medicineForm.scrollIntoView({behavior:'smooth',block:'center'});});
   const remove=document.createElement('button');remove.type='button';remove.className='danger';remove.textContent='Delete';
   remove.addEventListener('click',async()=>{if(!confirm('Delete '+item.name+' (UID '+item.uid+') from your account?'))return;try{await medicineApi('/api/rfid/medicines/'+encodeURIComponent(item.uid),{method:'DELETE'});status('medicine-status','Medicine card deleted.');await loadMedicines();}catch(error){status('medicine-status',error.message);}});
   actions.append(edit,remove);row.append(info,actions);medicineRecords.append(row);
@@ -98,7 +99,7 @@ async function loadMedicines(){
  catch(error){medicineRecords.textContent='Sign in to load your medicine cards.';status('medicine-status',error.message);}
 }
 function resetMedicineForm(){
- medicineForm.reset();editingUid='';field('uid').readOnly=false;medicineCancel.hidden=true;$('medicine-save').textContent='Save medicine card';updateMedicinePreview();
+ medicineForm.reset();field('expiredText').value=DEFAULT_EXPIRED_TEXT;editingUid='';field('uid').readOnly=false;medicineCancel.hidden=true;$('medicine-save').textContent='Save medicine card';updateMedicinePreview();
 }
 medicineCancel.addEventListener('click',resetMedicineForm);
 medicineForm.addEventListener('submit',async event=>{
