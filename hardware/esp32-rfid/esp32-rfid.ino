@@ -215,7 +215,7 @@ bool flushPendingEvent() {
 
 bool sendMedicine(const String &uid, const String &medicine) {
   const String body = "{\"uid\":\"" + uid + "\",\"medicine\":\"" + medicine + "\",\"eventId\":\"" + randomEventId() + "\"}";
-  if (!flushPendingEvent()) {
+  if (!flushPendingEvent() || loadPendingQueue().length()) {
     enqueuePendingEvent(body);
     lastQueueRetryAt = millis();
     return false;
