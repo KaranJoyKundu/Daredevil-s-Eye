@@ -118,4 +118,5 @@ Details: [Safety](docs/SAFETY.md), [Security policy](SECURITY.md), [Threat model
 | [Supabase setup](docs/SUPABASE-ACCOUNT-HISTORY-SETUP.md) | Account and photo-history backend |
 | [Roadmap](docs/ROADMAP.md) / [Changelog](CHANGELOG.md) | What is planned next and what has changed |
 | [Implementation plan](docs/IMPLEMENTATION-PLAN.md) | The 17 November work plan, kept as a record |
+| [Next-generation camera and emergency roadmap](docs/NEXT-GENERATION-CAMERA-AND-EMERGENCY-ROADMAP.md) | Full proposed plan for device setup, persistent phone/ESP32 cameras, five-photo visual memory, emergency live sharing, private video recording, architecture, milestones and acceptance tests |
 
