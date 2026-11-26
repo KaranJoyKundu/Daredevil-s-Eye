@@ -10,7 +10,8 @@ const config: CapacitorConfig = {
     // This is an online-first shell, not an offline AI client.
     url: 'https://daredevils-eye.karanjoykundu.workers.dev/blind/',
     cleartext: false,
-    androidScheme: 'https'
+    androidScheme: 'https',
+    allowNavigation: ['daredevils-eye.karanjoykundu.workers.dev']
   },
   android: {
     allowMixedContent: false,
