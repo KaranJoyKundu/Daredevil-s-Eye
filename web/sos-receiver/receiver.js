@@ -9,7 +9,7 @@ let deviceId=localStorage.getItem(DEVICE_KEY)||localStorage.getItem(LEGACY_DEVIC
 let receiverToken=localStorage.getItem(TOKEN_KEY)||sessionStorage.getItem(LEGACY_TOKEN_KEY)||'';
 if(deviceId)localStorage.setItem(DEVICE_KEY,deviceId);
 if(receiverToken)localStorage.setItem(TOKEN_KEY,receiverToken);
-let pollTimer=null,speechTimer=null,lastEventId='',audioContext=null,oscillator=null,gainNode=null,alarmLoop=null,wakeLock=null,isConnected=false,polling=false;
+let pollTimer=null,speechTimer=null,lastEventId='',alarmAudio=null,wakeLock=null,isConnected=false,polling=false;
 
 function updateStatus(message){$('#receiver-status').textContent=message;}
 function base64UrlToBytes(value){
@@ -51,13 +51,14 @@ function setConnected(connected){
  $('#pairing-panel').hidden=connected;
  $('#connected-panel').hidden=!connected;
 }
+function getAlarmAudio(){
+ if(!alarmAudio){alarmAudio=new Audio('/shared/emergency-siren.mp3?v=20261126-siren1');alarmAudio.preload='auto';alarmAudio.loop=true;alarmAudio.volume=1;}
+ return alarmAudio;
+}
 async function unlockAudio(){
- const AudioContextClass=window.AudioContext||window.webkitAudioContext;
- if(!AudioContextClass)throw new Error('This browser does not support the alarm audio engine.');
- if(!audioContext)audioContext=new AudioContextClass();
- await audioContext.resume();
- const buffer=audioContext.createBuffer(1,1,audioContext.sampleRate);
- const source=audioContext.createBufferSource();source.buffer=buffer;source.connect(audioContext.destination);source.start();
+ const audio=getAlarmAudio();
+ try{await audio.play();audio.pause();audio.currentTime=0;return true;}
+ catch{return false;}
 }
 async function keepScreenAwake(){try{if('wakeLock'in navigator)wakeLock=await navigator.wakeLock.request('screen');}catch{}}
 function speakAlarm(){
@@ -67,19 +68,13 @@ function speakAlarm(){
  utterance.rate=0.9;utterance.volume=1;window.speechSynthesis.speak(utterance);
 }
 function startAlarm(){
- if(!audioContext||oscillator)return;
- oscillator=audioContext.createOscillator();gainNode=audioContext.createGain();
- oscillator.type='sawtooth';gainNode.gain.value=0.14;
- oscillator.connect(gainNode);gainNode.connect(audioContext.destination);oscillator.start();
- const sweep=()=>{if(!oscillator)return;const now=audioContext.currentTime;oscillator.frequency.cancelScheduledValues(now);oscillator.frequency.setValueAtTime(620,now);oscillator.frequency.linearRampToValueAtTime(1250,now+0.55);oscillator.frequency.linearRampToValueAtTime(620,now+1.1);};
- sweep();alarmLoop=setInterval(sweep,1150);
- speakAlarm();speechTimer=setInterval(speakAlarm,18000);
+ const audio=getAlarmAudio();
+ if(audio.paused){audio.currentTime=0;audio.play().catch(()=>updateStatus('Emergency Siren could not start. Keep this page open and tap Enable Emergency Siren again.'));}
+ if(!speechTimer){speakAlarm();speechTimer=setInterval(speakAlarm,18000);}
 }
 function stopAlarm(){
- if(alarmLoop){clearInterval(alarmLoop);alarmLoop=null;}
  if(speechTimer){clearInterval(speechTimer);speechTimer=null;}
- if(oscillator){try{oscillator.stop();}catch{}oscillator.disconnect();oscillator=null;}
- if(gainNode){gainNode.disconnect();gainNode=null;}
+ if(alarmAudio){alarmAudio.pause();alarmAudio.currentTime=0;}
  window.speechSynthesis?.cancel();
 }
 function showAlert(event){
@@ -142,17 +137,17 @@ $('#enable-alarm').addEventListener('click',async()=>{
   }
   const audioUnlock=unlockAudio();
   const screenWake=keepScreenAwake();
-  await audioUnlock;
+  const sirenReady=await audioUnlock;
   await screenWake;
   let pushReady=false,pushError='';
   try{pushReady=await registerPushNotifications(permissionPromise);}catch(error){pushError=error.message||'Push registration failed.';}
   isConnected=true;
   updateStatus(pushReady
-   ? 'Receiver connected. Screen-off notifications are enabled; keep notifications allowed.'
+   ? (sirenReady?'Receiver connected. Emergency Siren is ready; screen-off notifications are enabled.':'Receiver connected. Notifications are enabled, but siren audio could not be unlocked. Tap Enable Emergency Siren again.')
    : 'Receiver connected with foreground polling only. '+pushError);
-  $('#receiver-detail').textContent=pushReady
-   ? 'Push notifications are registered. Android may show an alert while the screen is off; notification permission, connectivity and battery settings still apply.'
-   : 'Foreground polling is active, but this receiver may miss alerts while the screen is off or the browser is suspended.';
+  $('#receiver-detail').textContent=(sirenReady?'Emergency Siren is ready to play while this receiver page is active. ':'Siren audio is not unlocked yet. Tap Enable Emergency Siren again. ')+(pushReady
+   ? 'Push notifications are registered. Android may show a system notification while the screen is off; its sound is controlled by Android notification settings.'
+   : 'Foreground polling is active, but this receiver may miss alerts while the screen is off or the browser is suspended.');
   if(pollTimer)clearTimeout(pollTimer);pollTimer=null;
   poll();
  }catch(error){updateStatus('Could not enable the receiver: '+error.message);}

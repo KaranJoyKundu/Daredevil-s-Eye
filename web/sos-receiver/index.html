@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#641313"><title>SOS Receiver · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css?v=20261117-release1"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#641313"><title>SOS Receiver · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css?v=20261126-siren1"></head>
 <body><main>
-<header><p class="eyebrow">EMERGENCY RECEIVER</p><h1>SOS Receiver</h1><p class="subtitle">Pair once and allow browser notifications. Push alerts can reach this phone when the screen is off if Android and the browser permit them.</p></header>
+<header><p class="eyebrow">EMERGENCY RECEIVER</p><h1>SOS Receiver</h1><p class="subtitle">Pair once, then enable the Emergency Siren and browser notifications. The siren plays while this receiver page is active; screen-off alerts use Android notification sound settings.</p></header>
 <section id="pairing-panel" class="panel settings-section">
 <h2>Pair this phone</h2>
 <p>Enter the one-time six-character invitation from Admin / Settings on the sender phone. Pairing a new receiver invalidates the previous receiver.</p>
@@ -12,8 +12,8 @@
 </section>
 <section id="connected-panel" class="panel settings-section" hidden>
 <h2>Receiver paired</h2>
-<p>This receiver is saved on this device. Tap below to unlock alarm audio and register background notifications. The operating system may still delay or suppress notifications.</p>
-<button id="enable-alarm" type="button">Enable alarm & notifications</button>
+<p>This receiver is saved on this device. Tap below to unlock the Emergency Siren and register background notifications. The operating system may still delay or suppress notifications.</p>
+<button id="enable-alarm" type="button">Enable Emergency Siren & Notifications</button>
 </section>
 <p id="receiver-status" class="hint" role="status" aria-live="polite">Not connected.</p>
 <section id="emergency-alert" class="sos-alert" hidden>
@@ -21,7 +21,7 @@
 <h2>EMERGENCY ALERT</h2>
 <p id="alert-message">Someone may be in danger. Please check immediately.</p>
 <p id="alert-time"></p>
-<button id="acknowledge-alert" type="button" class="acknowledge-button">I have seen this alert — stop alarm</button>
+<button id="acknowledge-alert" type="button" class="acknowledge-button">I have seen this alert — stop siren</button>
 </section>
 <section class="panel settings-section">
 <h2>Receiver status</h2>
