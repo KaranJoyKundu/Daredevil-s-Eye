@@ -14,8 +14,8 @@ function announceMedicine(name){
  });
  if(result===false)status('scan-status','Speech could not start. Check browser audio permissions and try again.');
 }
-$('scan-napa').addEventListener('click',()=>announceMedicine('Napa One'));
-$('scan-monus').addEventListener('click',()=>announceMedicine('Monus 10'));
+$('scan-napa').addEventListener('click',()=>announceSavedMedicine('A1618C04','Napa One'));
+$('scan-monus').addEventListener('click',()=>announceSavedMedicine('1474D505','Monus 10'));
 const toggle=$('listener-enabled');
 toggle.checked=isRFIDListenerEnabled();
 status('listener-status',toggle.checked?'Automatic announcements are on by default. Keep the app open and signed in.':'Medicine announcements are paused.');
@@ -23,7 +23,7 @@ toggle.addEventListener('change',()=>{
  setRFIDListenerEnabled(toggle.checked);
  status('listener-status',toggle.checked?'Medicine announcements enabled across app pages.':'Medicine announcements paused.');
 });
-$('test-speech').addEventListener('click',()=>announceMedicine('Napa One'));
+$('test-speech').addEventListener('click',()=>announceSavedMedicine('A1618C04','Napa One'));
 
 const provisionButton=$('provision-device');
 const tokenOutput=$('device-token');
@@ -54,6 +54,12 @@ const medicineRecords=$('medicine-records');
 const medicineCancel=$('medicine-cancel');
 let savedMedicines=[];
 let editingUid='';
+// Simulated scans and the general speech test must use the same generated/custom
+// announcement as a real RFID event, not just speak the medicine's short name.
+function announceSavedMedicine(uid,fallback){
+ const item=savedMedicines.find(medicine=>medicine.uid===uid);
+ announceMedicine(item?medicineMessage(item):fallback);
+}
 const medicineFields=['uid','name','strength','expiryDate','instructions','announcementText','expiredText'];
 const fieldId=name=>({uid:'medicine-uid',name:'medicine-name',strength:'medicine-strength',expiryDate:'medicine-expiry',instructions:'medicine-instructions',announcementText:'medicine-announcement',expiredText:'medicine-expired'}[name]);
 const field=name=>$(fieldId(name));

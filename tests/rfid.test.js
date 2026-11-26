@@ -167,6 +167,9 @@ test('medicine page exposes personal card management and shared listener speaks 
  assert.match(nav,/startRFIDListener/);
  assert.match(page,/medicine-form/);assert.match(page,/medicine-uid/);assert.match(page,/medicine-expiry/);
  assert.match(pageScript,/api\/rfid\/medicines/);assert.match(page,/Custom spoken message/);
+ assert.match(pageScript,/function announceSavedMedicine\(uid,fallback\)/);
+ assert.match(pageScript,/scan-napa'\)\.addEventListener\('click',\(\)=>announceSavedMedicine\('A1618C04'/);
+ assert.match(pageScript,/scan-monus'\)\.addEventListener\('click',\(\)=>announceSavedMedicine\('1474D505'/);
  assert.match(listener,/event\.speechText\|\|event\.medicine/);
  assert.ok(listener.includes("localStorage.getItem(ENABLED_KEY)!=='0'"));
  assert.ok(listener.includes("addEventListener('scroll',onUserActivity"));
