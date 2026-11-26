@@ -1,4 +1,3 @@
-import {saveSettings,getSettings} from './settings.js?v=20261117-release5';
 import {mountLanguageSwitch} from './language.js?v=20261117-release5';
 import {startRFIDListener} from './rfid-listener.js?v=20261126-bg2';
 
@@ -21,15 +20,12 @@ document.body.prepend(bar);
 mountLanguageSwitch(bar);
 startRFIDListener();
 
-// Always-visible privacy notice. AI processing is required for Describe/Ask; history storage is optional.
+// Small, informational notice only. No checkbox or interaction is required.
 const privacyNotice=document.createElement('aside');
 privacyNotice.className='privacy-notice';
 privacyNotice.setAttribute('role','note');
-privacyNotice.innerHTML='<strong>Privacy notice</strong><span>Photos and voice requests are sent to this app’s service and Google Gemini when you use AI features. Photo history is optional and can be turned off at any time. <a href="/privacy/">Read the full privacy notice</a>.</span><label><input id="privacy-history-toggle" type="checkbox"> Save my submitted photos to history</label>';
+privacyNotice.innerHTML='<span><strong>Privacy:</strong> Photos and voice are processed by this app and Google Gemini when you use AI features. <a href="/privacy/">Details</a>.</span>';
 document.body.insertBefore(privacyNotice,bar.nextSibling);
-const historyToggle=privacyNotice.querySelector('#privacy-history-toggle');
-historyToggle.checked=getSettings().savePhotoHistory===true;
-historyToggle.addEventListener('change',()=>saveSettings({savePhotoHistory:historyToggle.checked}));
 const details=bar.querySelector('details');
 document.addEventListener('pointerdown',event=>{
   if(details?.open&&!bar.querySelector('.site-menu')?.contains(event.target))details.removeAttribute('open');
