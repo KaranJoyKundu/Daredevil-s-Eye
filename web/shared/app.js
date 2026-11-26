@@ -248,6 +248,7 @@ async function run(mode,question='',imageOverride=null){
  if(!hasCurrentConsent()){announce('Please review and accept the privacy notice before using the camera.');return;}
  actionVibration(mode==='ask'?'ask':'describe');
  if(!imageOverride&&!phonePhoto)primeShutterAudio();
+ const cameraSettings=getSettings();
  let wakeLock=null;
  try{
   wakeLock=await acquireWakeLock();
