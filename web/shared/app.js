@@ -258,7 +258,7 @@ async function run(mode,question='',imageOverride=null){
   const image=await blobToDataUrl(imageBlob);
   const settings=getSettings();
   show('Sending the compressed photo for analysis.');
-  const result=await requestAI(mode==='ask'&&question.trim()?'/api/ask':'/api/describe',{image,question:question.trim(),systemPrompt:settings.systemPrompt||'',customPrompt:settings.customPrompt,model:settings.aiModel,waitSeconds:settings.waitSeconds,responseStyle:settings.responseStyle,responseLanguage:settings.speechLanguage,saveToHistory:settings.savePhotoHistory===true});
+  const result=await requestAI(mode==='ask'&&question.trim()?'/api/ask':'/api/describe',{image,question:question.trim(),systemPrompt:settings.systemPrompt||'',customPrompt:settings.customPrompt,model:settings.aiModel,waitSeconds:settings.waitSeconds,responseStyle:settings.responseStyle,responseLanguage:settings.speechLanguage,saveToHistory:settings.savePhotoHistory===true,memoryEnabled:settings.sceneMemoryEnabled===true,cameraSource:settings.cameraSetupComplete?settings.cameraSource:'unknown'});
   if(result.mock)throw new Error('AI is in MOCK mode. No image was analysed.');
   if(result.provider!=='Gemini'||!result.answer)throw new Error('The AI backend did not return a verified Gemini answer.');
   await announceAnswer(result.answer);
@@ -266,9 +266,10 @@ async function run(mode,question='',imageOverride=null){
    const completed=settings.speechLanguage==='bn-BD'
     ?'ছবির বিশ্লেষণ সম্পন্ন হয়েছে। ব্যবহৃত মডেল: '+(result.model||'Gemini')
     :'Completed with '+(result.model||'Gemini')+'.';
-   const message=settings.savePhotoHistory&&result.historyMessage
-    ?result.historyMessage
-    :completed;
+   const messageParts=[];
+   if(settings.savePhotoHistory&&result.historyMessage)messageParts.push(result.historyMessage);
+   if(settings.sceneMemoryEnabled)messageParts.push(result.memorySaved?'Visual memory updated with this photo.':'Visual memory could not be saved from this response.');
+   const message=messageParts.length?messageParts.join(' '):completed;
    status.textContent=settings.speechLanguage==='bn-BD'?localizeSpeech(message):message;
   }
  }catch(error){
@@ -474,6 +475,24 @@ const resetCameraSource=()=>{
  saveSettings({cameraSetupComplete:false});showCameraSetup();
 };
 $('#change-camera-source')?.addEventListener('click',resetCameraSource);
+const sceneMemoryQuestionPanel=$('#scene-memory-question-panel');
+if(sceneMemoryQuestionPanel)sceneMemoryQuestionPanel.hidden=getSettings().sceneMemoryEnabled!==true;
+$('#scene-memory-question-form')?.addEventListener('submit',async event=>{
+ event.preventDefault();
+ const question=$('#scene-memory-question').value.trim();
+ const settings=getSettings();
+ if(!settings.sceneMemoryEnabled){$('#scene-memory-question-status').textContent='Enable five-photo visual memory in Admin first.';return;}
+ if(!question){$('#scene-memory-question-status').textContent='Enter a question about an earlier photo.';return;}
+ const button=$('#scene-memory-question-submit');button.disabled=true;$('#scene-memory-question-status').textContent='Checking your five saved observations…';
+ try{
+  const result=await requestAI('/api/memory/ask',{question,memoryEnabled:true,responseLanguage:settings.speechLanguage,model:settings.aiModel,waitSeconds:settings.waitSeconds});
+  if(!result.answer)throw new Error('The memory service returned no answer.');
+  $('#scene-memory-question-status').textContent='Answered using '+result.memoryCount+' saved observation(s).';
+  await announceAnswer(result.answer);
+ }catch(error){$('#scene-memory-question-status').textContent=error.message;}
+ finally{button.disabled=false;}
+});
+
 $('#esp32-change-camera-source')?.addEventListener('click',resetCameraSource);
 $('#esp32-action-stream-start')?.addEventListener('click',()=>{
  try{
