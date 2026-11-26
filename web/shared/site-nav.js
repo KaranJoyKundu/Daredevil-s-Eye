@@ -1,4 +1,4 @@
-import {hasCurrentConsent,acceptConsent,rejectConsent} from './consent.js?v=20261117-release5';
+import {hasCurrentConsent,acceptConsent,rejectConsent,isGrandfatheredReturningUser,grantLegacyAccountAccess} from './consent.js?v=20261126-returning1';
 import {saveSettings} from './settings.js?v=20261117-release5';
 import {mountLanguageSwitch} from './language.js?v=20261117-release5';
 import {startRFIDListener} from './rfid-listener.js?v=20261126-bg2';
@@ -24,7 +24,7 @@ startRFIDListener();
 
 // Require the same explicit consent before any app surface can be used,
 // including direct visits to Admin, Diagnostics, Account and the SOS receiver.
-const protectedPaths=new Set(['/','/action/','/blind/','/admin/','/diagnostics/','/account/','/help/','/sos-receiver/','/medicine/']);
+const protectedPaths=new Set(['/','/action/','/blind/','/admin/','/diagnostics/','/help/','/sos-receiver/','/medicine/']);
 const currentPath=location.pathname.replace(/\/?$/,'/');
 if(protectedPaths.has(currentPath)&&!hasCurrentConsent()&&!document.querySelector('#consent-panel')){
  const gate=document.createElement('section');
@@ -52,6 +52,30 @@ if(protectedPaths.has(currentPath)&&!hasCurrentConsent()&&!document.querySelecto
   rejectConsent();check.checked=false;accept.disabled=true;
   status.textContent='You declined the Terms & Conditions. This app page remains locked. Close this page, or return and accept if you change your mind.';
  });
+}
+// Returning users keep access without being asked to re-accept a notice they already used
+// the app under. This is a legacy access exemption, not a newly recorded consent.
+if(protectedPaths.has(currentPath)&&isGrandfatheredReturningUser()){
+  const notice=document.createElement('p');
+  notice.className='hint legacy-access-notice';
+  notice.setAttribute('role','note');
+  notice.append('Welcome back. You can continue using Daredevil’s Eye. Please review the ',);
+  const terms=document.createElement('a');terms.href='/terms/';terms.textContent='Terms & Conditions';
+  const privacy=document.createElement('a');privacy.href='/privacy/';privacy.textContent='Privacy notice';
+  notice.append(terms,' and ',privacy,' whenever you need.');
+  notice.style.cssText='margin:8px 16px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.06);';
+  document.body.insertBefore(notice,document.body.firstChild===bar?bar.nextSibling:document.body.firstChild);
+}
+
+// Existing accounts on a new browser are recognised after their authenticated session
+// is verified. The account page itself remains accessible so users can sign in first.
+if(protectedPaths.has(currentPath)&&!hasCurrentConsent()){
+  fetch('/api/account/session',{credentials:'same-origin',cache:'no-store'})
+    .then(response=>response.ok?response.json():null)
+    .then(state=>{
+      if(state?.authenticated&&grantLegacyAccountAccess())location.reload();
+    })
+    .catch(()=>{});
 }
 const details=bar.querySelector('details');
 document.addEventListener('pointerdown',event=>{
