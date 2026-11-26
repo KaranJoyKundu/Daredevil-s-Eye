@@ -47,7 +47,7 @@ public class MainActivity extends BridgeActivity {
                     WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()
                 );
                 Insets ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
-                view.setPadding(initialLeft + bars.left, initialTop + bars.top,
+                view.setPadding(initialLeft + bars.left, initialTop + bars.top + dp(18),
                     initialRight + bars.right, initialBottom + Math.max(bars.bottom, ime.bottom));
                 return windowInsets;
             });
@@ -212,6 +212,8 @@ public class MainActivity extends BridgeActivity {
             }
         }, attempt == 0 ? 450L : 500L);
     }
+    private int dp(int value) { return (int) (value * getResources().getDisplayMetrics().density + 0.5f); }
+
     /** Back follows web history, then returns secondary app routes to the Action page. */
     @Override
     public void onBackPressed() {
