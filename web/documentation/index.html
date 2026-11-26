@@ -37,6 +37,14 @@ a{color:#b8ddce}button{padding:10px 14px;border-radius:10px;border:1px solid #ff
 </section>
 <section class="panel warning"><strong>Screen-off limitation:</strong> The app will implement the strongest Android-permitted shortcuts. Android may block background camera/microphone startup, and global volume-key filtering requires explicit Accessibility Service enablement and may conflict with TalkBack. No “always works with screen off” claim will be made without A55 evidence.</section>
 <div id="phases"></div>
+<section class="panel">
+<h2>Configure this Android phone</h2>
+<p class="muted">These controls appear inside the native APK. The Accessibility Service must be enabled manually by you in Android Settings.</p>
+<div class="actions"><button id="open-accessibility">Open Accessibility settings</button><button id="check-accessibility">Check service status</button></div>
+<p id="accessibility-status" aria-live="polite" class="muted">Accessibility status has not been checked.</p>
+<label class="task"><input type="checkbox" id="foreground-shortcuts" checked><span><strong>Use volume shortcuts while Daredevil's Eye is open</strong><small>Turn this off to restore normal volume adjustment while the app is in front.</small></span></label>
+<label class="task"><input type="checkbox" id="global-shortcuts" checked><span><strong>Allow global volume shortcuts</strong><small>When the Accessibility Service is enabled, allow the same shortcuts while other apps are open. Android and TalkBack restrictions still apply.</small></span></label>
+</section>
 <section class="panel"><h2>Release requirements</h2><ul>
 <li>Signed APK through GitHub Releases first.</li><li>SHA-256 checksum and release notes.</li><li>Install/upgrade test on the Galaxy A55.</li><li>Play Store is a later phase.</li></ul>
 <p class="muted">No APK is downloadable until a successful Android build and release upload have been verified.</p></section>
@@ -116,5 +124,23 @@ for(const [title,desc] of tasks){const id='t'+index++;const label=document.creat
 root.append(section)}
 function update(){const boxes=[...root.querySelectorAll('input')];const done=boxes.filter(x=>x.checked).length;document.getElementById('count').textContent=done+' of '+boxes.length+' tasks checked';document.getElementById('bar').style.width=(boxes.length?done/boxes.length*100:0)+'%'}
 update();
+const native=window.Capacitor?.Plugins?.VolumeControls;
+const nativeStatus=document.getElementById('accessibility-status');
+document.getElementById('open-accessibility').addEventListener('click',async()=>{
+ if(!native?.openAccessibilitySettings){nativeStatus.textContent='Open this page inside the Android APK to access native settings.';return;}
+ try{await native.openAccessibilitySettings();nativeStatus.textContent='Find Daredevil’s Eye under Installed apps / Downloaded apps and enable the service.';}catch(e){nativeStatus.textContent='Could not open Android settings: '+e.message;}
+});
+document.getElementById('check-accessibility').addEventListener('click',async()=>{
+ if(!native?.isAccessibilityEnabled){nativeStatus.textContent='Native status check is available inside the Android APK.';return;}
+ try{const result=await native.isAccessibilityEnabled();nativeStatus.textContent=result.enabled?'Global volume shortcut service is enabled.':'Global service is not enabled. Open Accessibility settings to enable it.';}catch(e){nativeStatus.textContent='Status check failed: '+e.message;}
+});
+document.getElementById('foreground-shortcuts').addEventListener('change',async e=>{
+ if(!native?.setForegroundShortcutsEnabled){e.target.checked=!e.target.checked;nativeStatus.textContent='This setting is available inside the Android APK.';return;}
+ try{await native.setForegroundShortcutsEnabled({enabled:e.target.checked});}catch{e.target.checked=!e.target.checked;nativeStatus.textContent='Could not update foreground button settings.';}
+});
+document.getElementById('global-shortcuts').addEventListener('change',async e=>{
+ if(!native?.setGlobalShortcutsEnabled){e.target.checked=!e.target.checked;nativeStatus.textContent='This setting is available inside the Android APK.';return;}
+ try{await native.setGlobalShortcutsEnabled({enabled:e.target.checked});}catch{e.target.checked=!e.target.checked;nativeStatus.textContent='Could not update global shortcut setting.';}
+});
 </script>
 </body></html>
