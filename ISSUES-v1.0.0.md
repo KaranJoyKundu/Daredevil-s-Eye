@@ -37,9 +37,10 @@ Status meanings: `DONE IN CODE` is not the same as device-tested or production-r
 - WebView history is used first; when empty, secondary routes return to `/action/`; Action/root backgrounds the task.
 - **DEVICE TEST REQUIRED:** predictive Back gesture, Documentation → Back, Blind Mode exit and TalkBack.
 
-### [ ] ESP32 live preview in Android Action tab
+### [x] Native ESP32 snapshot preview path added for Android Action tab
 - Existing UI uses MJPEG `/stream` on port 81 in an image element; still capture uses `/capture`.
-- Path: reproduce in Android WebView and inspect WebView console/logcat, mixed content and local-network behavior. Preferred robust fallback: native private-IP snapshot polling with controlled frame rate and clear retry/disconnected states. Native MJPEG proxy can follow if true video is essential.
+- **DONE IN CODE:** Android now requests JPEG snapshots through a native bridge restricted to private IPv4 addresses and the exact `/capture` endpoint; the Action preview polls at a controlled interval and tears down on page/stream teardown. This avoids HTTPS-to-HTTP mixed-content and browser CORS for the preview path.
+- **DEVICE TEST REQUIRED:** inspect A55 local-network permission behavior, image freshness, frame rate, network errors and camera contention. A snapshot preview is not full-motion MJPEG video.
 - Acceptance: ESP32 on same Wi-Fi and phone hotspot; test stream contention, reconnect and screen rotation.
 
 ### [x] MediaStore photo save hardened
