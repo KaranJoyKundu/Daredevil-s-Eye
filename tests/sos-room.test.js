@@ -142,8 +142,8 @@ test('emergency video requires a confirmed SOS and paired receiver, then exchang
 
 test('emergency video signalling rejects an unpaired or revoked receiver',async()=>{
  const room=new SOSRoom(makeRoomState());
- const triggered=await (await room.fetch(post('/trigger',{}))).json();
- assert.equal(triggered.queued,false);
+ const noPair=await room.fetch(post('/trigger',{}));
+ assert.equal(noPair.status,409);
  const invite=await (await room.fetch(post('/pair',{}))).json();
  const active=await (await room.fetch(post('/trigger',{}))).json();
  const started=await (await room.fetch(post('/video-start',{deviceId:deviceA,eventId:active.eventId}))).json();
