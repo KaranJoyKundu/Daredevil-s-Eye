@@ -15,7 +15,7 @@ const DEFAULTS = Object.freeze({
   sceneMemoryEnabled: false,
   captureCount: 3,
   requirePhotoConfirmation: true,
-  savePhotoHistory: true,
+  savePhotoHistory: false,
   speechLanguage: 'bn-BD',
   speechInputMode: 'auto',
   speechInputLanguage: 'bn-BD',
