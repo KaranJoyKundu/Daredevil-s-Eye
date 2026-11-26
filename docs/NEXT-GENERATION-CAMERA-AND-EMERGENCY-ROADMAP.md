@@ -530,6 +530,16 @@ Before the first implementation PR:
 
 ---
 
+### Scene memory implementation update — 2026-11-26
+
+- Added opt-in five-photo memory helpers with strict JSON validation and text/fact sanitization.
+- Added same-origin Worker routes to list, clear and ask questions about saved observations. Account and guest data are isolated using the existing authenticated user ID or HttpOnly guest-session hash.
+- Photo Describe/Ask can request structured Gemini JSON when memory is enabled; the spoken answer is separated from the structured scene facts.
+- Added Admin enable/clear controls and an Action-page memory-only question form. Memory is disabled by default and does not store image bytes.
+- Added an additive Supabase migration for scene_memory_entries and emergency_recordings; it is committed on the feature branch but has not yet been applied to the live database.
+- Automated helper tests are added. Exact branch CI and a live Supabase migration test remain required before merging.
+- Emergency WebRTC signalling and R2 recording APIs/UI are still pending; do not mark Milestones 4 or 5 complete.
+
 ## Progress tracker
 
 Update this section as implementation proceeds. Keep planned work unchecked until code, automated checks and the required device tests have actually passed.
@@ -537,7 +547,7 @@ Update this section as implementation proceeds. Keep planned work unchecked unti
 - [ ] Milestone 0 — Foundation and safety review
 - [ ] Milestone 1 — Device setup and unified camera manager
 - [ ] Milestone 2 — ESP32 camera controls
-- [ ] Milestone 3 — Five-photo scene memory
+- [ ] Milestone 3 — Five-photo scene memory (implementation on feature branch; migration and CI validation pending)
 - [ ] Milestone 4 — Emergency live sharing
 - [ ] Milestone 5 — Emergency video recording
 
