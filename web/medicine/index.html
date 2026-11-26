@@ -38,7 +38,7 @@
 <p class="eyebrow">Assistive hardware · New</p>
 <h1>Medicine, spoken aloud.</h1>
 <p>Test medicine speech, then authorize a real ESP32 reader to send scans to your signed-in account.</p>
-<div class="medicine-callout">The phone must be signed in, online, and have the RFID listener enabled. Keep Daredevil’s Eye open for the first version; background and screen-locked delivery needs separate Android testing.</div>
+<div class="medicine-callout">The phone must be signed in and online. Announcements are enabled automatically and checked while the app is open. Scrolling or touching the page also wakes speech output if the browser has paused it; background and screen-locked delivery still needs separate Android testing.</div>
 </section>
 <div class="medicine-grid">
 <section class="medicine-card">
@@ -49,15 +49,15 @@
 </section>
 <section class="medicine-card">
 <h2>2 · Speak across the app</h2>
-<p class="medicine-muted">Turn this on once. The shared listener runs on Action, Blind mode, Account, Admin, and other app pages that load the common navigation.</p>
-<label class="medicine-toggle"><input id="listener-enabled" type="checkbox"><span><strong>Enable medicine announcements</strong><br><span class="medicine-muted">Speak incoming RFID medicine names automatically.</span></span></label>
+<p class="medicine-muted">Automatic announcements are on by default. The shared listener checks for new scans on Action, Blind mode, Account, Admin, and other app pages that load the common navigation.</p>
+<label class="medicine-toggle"><input id="listener-enabled" type="checkbox" checked><span><strong>Enable medicine announcements</strong><br><span class="medicine-muted">Speak incoming RFID medicine announcements automatically. Scroll or touch the page to wake speech if needed.</span></span></label>
 <p id="listener-status" class="medicine-status" role="status" aria-live="polite"></p>
 <div class="medicine-actions"><button id="test-speech" type="button" class="secondary">Test announcement</button></div>
 </section>
 </div>
 <section class="medicine-card" style="margin-top:16px" aria-labelledby="medicine-manager-title">
 <h2 id="medicine-manager-title">3 · Your medicine cards &amp; spoken instructions</h2>
-<p class="medicine-muted">Register each RFID UID to your account. The ESP32 sends only the UID; this app looks up the medicine and speaks the message you configure here. You do not need to reflash the ESP32 when you edit a medicine.</p>
+<p class="medicine-muted">Every account starts with Napa One (A1618C04) and Monus 10 (1474D505). Edit their details or UIDs, or add more cards. The ESP32 sends only the UID; this app looks up the medicine and speaks the message you configure here. You do not need to reflash the ESP32 when you edit a medicine.</p>
 <form id="medicine-form" class="medicine-form">
 <div class="medicine-field"><label for="medicine-uid">RFID UID (hex)</label><input id="medicine-uid" name="uid" required maxlength="30" placeholder="A1 61 8C 04" autocomplete="off"><small class="medicine-muted">Scan the card and copy its UID from Serial Monitor. Spaces are okay.</small></div>
 <div class="medicine-field"><label for="medicine-name">Medicine name *</label><input id="medicine-name" name="name" required maxlength="100" placeholder="Paracetamol"></div>
@@ -95,6 +95,6 @@ GND    →  GND</pre>
 <p class="medicine-muted">Use 3.3V only. The reader's SDA pin is SPI chip-select, not I²C SDA.</p>
 </section>
 </main>
-<script type="module" src="/medicine/rfid.js?v=20261126-medicine2"></script>
-<script type="module" src="/shared/site-nav.js?v=20261126-rfid1"></script>
+<script type="module" src="/medicine/rfid.js?v=20261126-medicine3"></script>
+<script type="module" src="/shared/site-nav.js?v=20261126-rfid2"></script>
 </body></html>

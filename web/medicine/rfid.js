@@ -18,6 +18,7 @@ $('scan-napa').addEventListener('click',()=>announceMedicine('Napa One'));
 $('scan-monus').addEventListener('click',()=>announceMedicine('Monus 10'));
 const toggle=$('listener-enabled');
 toggle.checked=isRFIDListenerEnabled();
+status('listener-status',toggle.checked?'Automatic announcements are on by default. Keep the app open and signed in.':'Medicine announcements are paused.');
 toggle.addEventListener('change',()=>{
  setRFIDListenerEnabled(toggle.checked);
  status('listener-status',toggle.checked?'Medicine announcements enabled across app pages.':'Medicine announcements paused.');
@@ -86,7 +87,7 @@ function renderMedicines(){
   info.append(heading,document.createElement('br'),uid,preview);
   const actions=document.createElement('div');actions.className='medicine-record-actions';
   const edit=document.createElement('button');edit.type='button';edit.textContent='Edit';
-  edit.addEventListener('click',()=>{editingUid=item.uid;medicineFields.forEach(name=>field(name).value=item[name]||'');field('uid').readOnly=true;medicineCancel.hidden=false;$('medicine-save').textContent='Update medicine card';updateMedicinePreview();medicineForm.scrollIntoView({behavior:'smooth',block:'center'});});
+  edit.addEventListener('click',()=>{editingUid=item.uid;medicineFields.forEach(name=>field(name).value=item[name]||'');field('uid').readOnly=false;medicineCancel.hidden=false;$('medicine-save').textContent='Update medicine card';updateMedicinePreview();medicineForm.scrollIntoView({behavior:'smooth',block:'center'});});
   const remove=document.createElement('button');remove.type='button';remove.className='danger';remove.textContent='Delete';
   remove.addEventListener('click',async()=>{if(!confirm('Delete '+item.name+' (UID '+item.uid+') from your account?'))return;try{await medicineApi('/api/rfid/medicines/'+encodeURIComponent(item.uid),{method:'DELETE'});status('medicine-status','Medicine card deleted.');await loadMedicines();}catch(error){status('medicine-status',error.message);}});
   actions.append(edit,remove);row.append(info,actions);medicineRecords.append(row);
@@ -104,6 +105,7 @@ medicineForm.addEventListener('submit',async event=>{
  event.preventDefault();
  const item=Object.fromEntries(medicineFields.map(name=>[name,String(field(name).value||'').trim()]));
  item.uid=normalizedUid(item.uid);
+ if(editingUid)item.originalUid=editingUid;
  if(!item.uid||!item.name){status('medicine-status','RFID UID and medicine name are required.');return;}
  const save=$('medicine-save');save.disabled=true;
  try{
