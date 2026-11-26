@@ -33,6 +33,12 @@
 <div><label>&nbsp;</label><button id="generate-sos-code" type="button" class="secondary">Generate pairing code</button></div>
 </div>
 <small>Share this one-time code privately. It is not stored permanently. Generating another code disconnects the previous receiver.</small>
+<h3>Optional emergency video and recording</h3>
+<label class="inline-checkbox" for="sos-video-enabled"><input id="sos-video-enabled" type="checkbox"> Offer live camera video to my paired receiver after a confirmed SOS</label>
+<small>Off by default. When enabled, after you confirm SOS the app will request/use the camera on this device and share only with your paired receiver for up to five minutes. A visible sharing status and Stop Sharing control are provided. Browser background/lock-screen camera operation is not guaranteed. ESP32 sharing depends on CORS and browser local-network access.</small>
+<label class="inline-checkbox" for="sos-recording-enabled"><input id="sos-recording-enabled" type="checkbox"> Also save an emergency video recording privately</label>
+<small>Separate opt-in, off by default. Recordings are limited to five minutes and retained for 30 days. They are available only to this account or private guest session and can be downloaded or deleted from Account &amp; History. Recording requires the private R2 storage service to be configured.</small>
+<p id="sos-video-settings-status" class="hint" role="status" aria-live="polite">Live video and recording are disabled.</p>
 <h3>Optional hands-free SOS triggers</h3>
 <p>These are disabled by default. They work only while Blind mode is open and visible on a supported phone. Shake sensing stays on the device; voice wake-word recognition may send audio to the browser's speech provider. Each automatic trigger has a cancellation window.</p>
 <div class="field-grid">
