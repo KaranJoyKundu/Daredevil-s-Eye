@@ -1,5 +1,4 @@
-import {hasCurrentConsent,acceptConsent,rejectConsent,isGrandfatheredReturningUser,grantLegacyAccountAccess} from './consent.js?v=20261126-consentfix1';
-import {saveSettings} from './settings.js?v=20261117-release5';
+import {saveSettings,getSettings} from './settings.js?v=20261117-release5';
 import {mountLanguageSwitch} from './language.js?v=20261117-release5';
 import {startRFIDListener} from './rfid-listener.js?v=20261126-bg2';
 
@@ -22,61 +21,15 @@ document.body.prepend(bar);
 mountLanguageSwitch(bar);
 startRFIDListener();
 
-// Require the same explicit consent before any app surface can be used,
-// including direct visits to Admin, Diagnostics, Account and the SOS receiver.
-const protectedPaths=new Set(['/','/action/','/blind/','/admin/','/diagnostics/','/help/','/sos-receiver/','/medicine/']);
-const currentPath=location.pathname.replace(/\/?$/,'/');
-const returningUser=isGrandfatheredReturningUser();
-if(protectedPaths.has(currentPath)&&!hasCurrentConsent()&&!document.querySelector('#consent-panel')){
- const gate=document.createElement('section');
- gate.id='consent-panel';gate.className='consent-gate';gate.setAttribute('role','dialog');gate.setAttribute('aria-modal','true');
- gate.setAttribute('aria-labelledby','shared-consent-title');
- gate.innerHTML=`<div class="consent-card">
-  <p class="eyebrow">WELCOME</p><h2 id="shared-consent-title">Before you begin</h2>
-  <p>Photos and voice requests may be processed by this app, Cloudflare and Google Gemini. After you accept, each photo submitted for AI analysis is saved automatically: signed-in users get private account history, while guests get private history tied to this browser for 30 days. You can turn photo saving off in Admin.</p>
-  <p>The Terms &amp; Conditions and Privacy pages contain the complete safety and data details.</p>
-  <p>Read the <a href="/terms/">Terms &amp; Conditions</a> and <a href="/privacy/">Privacy details</a>. You can also <a href="/account/">sign in or create an account</a>.</p>
-  <label class="consent-check"><input id="shared-consent-check" type="checkbox"${returningUser ? " checked" : ""}> I have read and agree to the Terms &amp; Conditions and Privacy notice.</label>
-  <p id="shared-consent-status" class="hint" role="status" aria-live="polite"></p>
-  <div class="consent-actions"><button id="shared-consent-accept" type="button">Accept &amp; continue</button><button id="shared-consent-reject" type="button" class="secondary">Reject</button></div>
- </div>`;
- document.body.append(gate);
- const check=gate.querySelector('#shared-consent-check'),accept=gate.querySelector('#shared-consent-accept'),status=gate.querySelector('#shared-consent-status');
- accept.addEventListener('click',()=>{
-  if(!check.checked){status.textContent='Please tick the box to accept the terms.';return;}
-  if(!acceptConsent()){status.textContent='Could not save acceptance in this browser. Enable site storage and try again.';return;}
-  saveSettings({savePhotoHistory:true,consentAccepted:true});
-  gate.remove();
- });
- gate.querySelector('#shared-consent-reject').addEventListener('click',()=>{
-  rejectConsent();check.checked=false;accept.disabled=true;
-  status.textContent='You declined the Terms & Conditions. This app page remains locked. Close this page, or return and accept if you change your mind.';
- });
-}
-// Returning users keep access without being asked to re-accept a notice they already used
-// the app under. This is a legacy access exemption, not a newly recorded consent.
-if(protectedPaths.has(currentPath)&&isGrandfatheredReturningUser()){
-  const notice=document.createElement('p');
-  notice.className='hint legacy-access-notice';
-  notice.setAttribute('role','note');
-  notice.append('Welcome back. You can continue using Daredevil’s Eye. Please review the ',);
-  const terms=document.createElement('a');terms.href='/terms/';terms.textContent='Terms & Conditions';
-  const privacy=document.createElement('a');privacy.href='/privacy/';privacy.textContent='Privacy notice';
-  notice.append(terms,' and ',privacy,' whenever you need.');
-  notice.style.cssText='margin:8px 16px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.06);';
-  document.body.insertBefore(notice,document.body.firstChild===bar?bar.nextSibling:document.body.firstChild);
-}
-
-// Existing accounts on a new browser are recognised after their authenticated session
-// is verified. The account page itself remains accessible so users can sign in first.
-if(protectedPaths.has(currentPath)&&!hasCurrentConsent()){
-  fetch('/api/account/session',{credentials:'same-origin',cache:'no-store'})
-    .then(response=>response.ok?response.json():null)
-    .then(state=>{
-      if(state?.authenticated&&grantLegacyAccountAccess())location.reload();
-    })
-    .catch(()=>{});
-}
+// Always-visible privacy notice. AI processing is required for Describe/Ask; history storage is optional.
+const privacyNotice=document.createElement('aside');
+privacyNotice.className='privacy-notice';
+privacyNotice.setAttribute('role','note');
+privacyNotice.innerHTML='<strong>Privacy notice</strong><span>Photos and voice requests are sent to this app’s service and Google Gemini when you use AI features. Photo history is optional and can be turned off at any time. <a href="/privacy/">Read the full privacy notice</a>.</span><label><input id="privacy-history-toggle" type="checkbox"> Save my submitted photos to history</label>';
+document.body.insertBefore(privacyNotice,bar.nextSibling);
+const historyToggle=privacyNotice.querySelector('#privacy-history-toggle');
+historyToggle.checked=getSettings().savePhotoHistory===true;
+historyToggle.addEventListener('change',()=>saveSettings({savePhotoHistory:historyToggle.checked}));
 const details=bar.querySelector('details');
 document.addEventListener('pointerdown',event=>{
   if(details?.open&&!bar.querySelector('.site-menu')?.contains(event.target))details.removeAttribute('open');
