@@ -30,7 +30,9 @@ function formSettings(){
   speechInputMode:$('#speech-input-mode').value,
   speechInputLanguage:$('#input-language').value,
   sosShakeEnabled:$('#sos-shake-enabled').checked,
-  sosVoiceEnabled:$('#sos-voice-enabled').checked,\n  sosVideoEnabled:$('#sos-video-enabled').checked,\n  sosRecordingEnabled:$('#sos-recording-enabled').checked,
+  sosVoiceEnabled:$('#sos-voice-enabled').checked,
+  sosVideoEnabled:$('#sos-video-enabled').checked,
+  sosRecordingEnabled:$('#sos-recording-enabled').checked,
   sosVoiceLanguage:$('#sos-voice-language').value,
   speechPreset:$('#voice-preset').value,
   speechVoiceURI:$('#voice-select').value,
@@ -93,7 +95,10 @@ $('#language').value=saved.speechLanguage;
 $('#speech-input-mode').value=saved.speechInputMode||'auto';
 $('#input-language').value=saved.speechInputLanguage||'bn-BD';
 $('#sos-shake-enabled').checked=!!saved.sosShakeEnabled;
-$('#sos-voice-enabled').checked=!!saved.sosVoiceEnabled;\n$('#sos-video-enabled').checked=!!saved.sosVideoEnabled;\n$('#sos-recording-enabled').checked=!!saved.sosRecordingEnabled;\n$('#sos-video-settings-status').textContent=saved.sosVideoEnabled?'Live video opt-in is enabled. Recording '+(saved.sosRecordingEnabled?'is also enabled.':'remains disabled.'):'Live video and recording are disabled.';
+$('#sos-voice-enabled').checked=!!saved.sosVoiceEnabled;
+$('#sos-video-enabled').checked=!!saved.sosVideoEnabled;
+$('#sos-recording-enabled').checked=!!saved.sosRecordingEnabled;
+$('#sos-video-settings-status').textContent=saved.sosVideoEnabled?'Live video opt-in is enabled. Recording '+(saved.sosRecordingEnabled?'is also enabled.':'remains disabled.'):'Live video and recording are disabled.';
 $('#sos-voice-language').value=saved.sosVoiceLanguage||'bn-BD';
 $('#voice-preset').value=saved.speechPreset;
 $('#speech-engine').value=saved.speechEngine==='gemini'?'device':saved.speechEngine;
@@ -366,7 +371,9 @@ $('#test-image-button').addEventListener('click',async()=>{
    waitSeconds:selected.waitSeconds,responseStyle:selected.responseStyle,responseLanguage:getSettings().speechLanguage
   });
   if(result.mock)throw new Error('Mock mode is enabled. No image analysis was performed.');
-  $('#test-result').textContent=(result.disclaimer||'')+'\n\n'+result.answer;
+  $('#test-result').textContent=(result.disclaimer||'')+'
+
+'+result.answer;
   $('#test-status').textContent='Completed using '+(result.model||selected.aiModel)+'.';
  }catch(error){$('#test-status').textContent='AI test failed: '+(error.message||'Unknown error');}
  finally{button.disabled=!selectedFile;}
