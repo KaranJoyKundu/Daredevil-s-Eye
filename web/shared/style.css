@@ -386,3 +386,14 @@ a{text-underline-offset:3px}
 .blind-utility{gap:7px}
 .blind-utility .lang-switch{height:52px;align-items:stretch}
 .blind-utility .lang-switch button:not(.action-card){min-height:0}
+
+
+/* SOS confirmation and delivery feedback: visible to sighted users and announced to assistive technology. */
+.sos-feedback{margin:14px auto;padding:14px 16px;width:min(900px,calc(100% - 28px));border:2px solid #d8c27a;border-radius:12px;background:#252e2b;color:#fff;font-size:1rem;font-weight:750;line-height:1.45;overflow-wrap:anywhere}
+.sos-feedback[hidden]{display:none!important}
+.sos-feedback[data-state="armed"]{border-color:#ffdc64;background:#493b13}
+.sos-feedback[data-state="sending"]{border-color:#8fc7ff;background:#173b59}
+.sos-feedback[data-state="success"]{border-color:#8ce0a5;background:#164329}
+.sos-feedback[data-state="warning"]{border-color:#ffdc64;background:#493b13}
+.sos-feedback[data-state="error"]{border-color:#ff9b9b;background:#541d1d}
+.blind-page .sos-feedback{position:fixed;z-index:90;top:12px;left:12px;right:12px;width:auto;margin:0;box-shadow:0 5px 24px #000b}
