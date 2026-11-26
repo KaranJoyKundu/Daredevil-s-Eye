@@ -34,6 +34,15 @@ This is the current snapshot. Historical notes are retained below only when they
 - This is a debug-signed test APK, not a permanent updateable release. A persistent owner-controlled keystore and four protected GitHub Actions secrets are still required. See [Android release signing](ANDROID-RELEASE-SETUP.md).
 - Physical Galaxy A55 validation remains open: install/launch, volume-key accuracy, global Accessibility Service, TalkBack coexistence, lock/screen-off behaviour, camera/microphone, RFID and two-phone SOS.
 
+### v1.0.0 engineering candidate (not merged to production)
+
+- Draft PR [#74](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/74) contains the current Android UX, camera-preview, media, icon and documentation work on `release/v1.0.0-engineering-overhaul`.
+- The first candidate commit `ebb7aba00144d7a36c4140083a281430a71b1948` passed Android build run [#45867985691](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/45867985691) and web verification run [#45867985596](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/45867985596). Artifact `15141243178` was downloaded, inspected as an APK, and has SHA-256 `18e125b565117b34d66f580305df6fe607d21c662ee42b28a7fc785053cf17fc`.
+- Subsequent branch commits add SemVer-to-Gradle synchronization and make speech, photo-save and camera actions wait for the native plugin bridge to finish loading. Their CI rebuild is pending; use the latest successful artifact only after the matching run completes.
+- Android Action camera preview uses native JPEG snapshots from the ESP32 `/capture` endpoint (not full-motion MJPEG). Device network/frame-rate testing remains open.
+- The candidate still does **not** implement native FCM background SOS or native SpeechRecognizer. FCM requires the Firebase Android app/configuration and protected sender credentials; SpeechRecognizer remains a code task.
+- This candidate has not been merged to `main`; the APK loads the live production Worker URL configured in Capacitor, so branch-only web changes are not live in installed APKs until the corresponding web release is deployed.
+
 ### Existing web capabilities
 
 The current product includes a Bangla-first interface, Describe and Ask AI flows, device speech, phone photo capture/upload, ESP32-CAM integration, Blind mode, Admin presets, Diagnostics, SOS pairing, optional account/guest photo history and an installable web app. See the [README](../README.md) and [architecture](ARCHITECTURE.md) for component-level detail.
