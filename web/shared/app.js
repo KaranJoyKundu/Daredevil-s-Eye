@@ -451,7 +451,6 @@ const resetCameraSource=()=>{
  stopPhoneCamera();stopEsp32Stream(esp32StreamPreview);if(esp32StreamPreview)esp32StreamPreview.hidden=true;
  saveSettings({cameraSetupComplete:false});showCameraSetup();
 };
-$('#change-camera-source, #esp32-change-camera-source').forEach?.(()=>{});
 $('#change-camera-source')?.addEventListener('click',resetCameraSource);
 $('#esp32-change-camera-source')?.addEventListener('click',resetCameraSource);
 $('#esp32-action-stream-start')?.addEventListener('click',()=>{
