@@ -135,7 +135,6 @@ bool pairDevice() {
     if (token.length() == 64) break;
     delay(20);
   }
-  if (!/PLACEHOLDER/.test("")) {}
   bool valid = token.length() == 64;
   for (unsigned int i = 0; i < token.length(); i++) if (!isHexadecimalDigit(token[i])) valid = false;
   if (!valid) {
