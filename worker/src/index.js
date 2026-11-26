@@ -879,7 +879,7 @@ export async function handleApi(request, env = {}) {
   if(url.pathname.startsWith('/api/rfid/')){
     if(!env.RFID_DIRECTORY)return json({ok:false,error:'RFID relay is not configured.'},503);
     const directory=env.RFID_DIRECTORY.get(env.RFID_DIRECTORY.idFromName('rfid-directory'));
-    const userRequired=url.pathname==='/api/rfid/pair/start'||(url.pathname==='/api/rfid/events'&&request.method==='GET')||url.pathname==='/api/rfid/events/ack'||(url.pathname==='/api/rfid/devices'&&request.method==='GET')||(request.method==='DELETE'&&url.pathname.startsWith('/api/rfid/devices/'));
+    const userRequired=url.pathname==='/api/rfid/pair/start'||url.pathname==='/api/rfid/devices/provision'||(url.pathname==='/api/rfid/events'&&request.method==='GET')||url.pathname==='/api/rfid/events/ack'||(url.pathname==='/api/rfid/devices'&&request.method==='GET')||(request.method==='DELETE'&&url.pathname.startsWith('/api/rfid/devices/'));
     const user=userRequired?await getAuthenticatedUser(request,env):null;
     if(userRequired&&!user)return json({ok:false,error:'Sign in to manage RFID devices.'},401);
     if(request.method==='GET'&&url.pathname==='/api/rfid/events'){
@@ -887,6 +887,9 @@ export async function handleApi(request, env = {}) {
     }
     if(request.method==='GET'&&url.pathname==='/api/rfid/devices'){
       return directory.fetch(new Request('https://rfid.internal/devices/list',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:user.id})}));
+    }
+    if(request.method==='POST'&&url.pathname==='/api/rfid/devices/provision'){
+      return directory.fetch(new Request('https://rfid.internal/devices/provision',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:user.id})}));
     }
     if(request.method==='POST'&&url.pathname==='/api/rfid/pair/start'){
       return directory.fetch(new Request('https://rfid.internal/pair/start',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:user.id})}));
