@@ -59,7 +59,7 @@
 <h2 id="medicine-manager-title">3 · Your medicine cards &amp; spoken instructions</h2>
 <p class="medicine-muted">Register each RFID UID to your account. The ESP32 sends only the UID; this app looks up the medicine and speaks the message you configure here. You do not need to reflash the ESP32 when you edit a medicine.</p>
 <form id="medicine-form" class="medicine-form">
-<div class="medicine-field"><label for="medicine-uid">RFID UID (hex)</label><input id="medicine-uid" name="uid" required maxlength="20" placeholder="A1 61 8C 04" autocomplete="off"><small class="medicine-muted">Scan the card and copy its UID from Serial Monitor. Spaces are okay.</small></div>
+<div class="medicine-field"><label for="medicine-uid">RFID UID (hex)</label><input id="medicine-uid" name="uid" required maxlength="30" placeholder="A1 61 8C 04" autocomplete="off"><small class="medicine-muted">Scan the card and copy its UID from Serial Monitor. Spaces are okay.</small></div>
 <div class="medicine-field"><label for="medicine-name">Medicine name *</label><input id="medicine-name" name="name" required maxlength="100" placeholder="Paracetamol"></div>
 <div class="medicine-field"><label for="medicine-strength">Strength / dosage form</label><input id="medicine-strength" name="strength" maxlength="60" placeholder="500 mg tablet"></div>
 <div class="medicine-field"><label for="medicine-expiry">Expiry date</label><input id="medicine-expiry" name="expiryDate" type="date"></div>
