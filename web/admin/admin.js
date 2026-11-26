@@ -1,7 +1,7 @@
-import {getSettings,saveSettings} from '/shared/settings.js?v=20261117-release5';
-import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261117-release5';
+import {getSettings,saveSettings} from '/shared/settings.js?v=20261126-recording1';
+import {requestAI,apiFetch,getSessionGeminiApiKey,setSessionGeminiApiKey,clearSessionGeminiApiKey} from '/shared/api.js?v=20261126-recording1';
 import {captureImage} from '/shared/camera.js?v=20261117-release1';
-import { getEsp32Endpoints, setEsp32LedBrightness, testEsp32Connection, stopEsp32Stream, captureEsp32Photo } from '/shared/camera-manager.js?v=20261126-camera1';
+import { getEsp32Endpoints, setEsp32LedBrightness, testEsp32Connection, stopEsp32Stream, captureEsp32Photo } from '/shared/camera-manager.js?v=20261126-camera5';
 import {speak,speakResponse,getAvailableVoices,isBengaliVoice,refreshAvailableVoices,VOICE_PRESETS,GEMINI_TTS_VOICES,stopSpeaking} from '/shared/speech.js?v=20261117-release5';
 
 const $=s=>document.querySelector(s);
