@@ -170,7 +170,9 @@ test('medicine page exposes personal card management and shared listener speaks 
  assert.match(listener,/event\.speechText\|\|event\.medicine/);
  assert.ok(listener.includes("localStorage.getItem(ENABLED_KEY)!=='0'"));
  assert.ok(listener.includes("addEventListener('scroll',onUserActivity"));
- assert.ok(listener.includes("addEventListener('wheel',onUserActivity"));\n assert.ok(!listener.includes('||document.hidden'));\n assert.ok(listener.includes('setInterval(()=>poll(false),1000)'));
+ assert.ok(listener.includes("addEventListener('wheel',onUserActivity"));
+ assert.ok(!listener.includes('||document.hidden'));
+ assert.ok(listener.includes('setInterval(()=>poll(false),1000)'));
  assert.ok(listener.includes('completedEventId'));
  assert.ok(page.includes('id="listener-enabled" type="checkbox" checked'));
  assert.ok(pageScript.includes("field('uid').readOnly=false"));
