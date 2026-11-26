@@ -5,7 +5,7 @@ Daredevil's Eye can associate each RFID card UID with an account-owned medicine 
 ## Current behavior
 
 - Open `/medicine/` while signed in to manage your own medicine cards.
-- Register a card by entering its hexadecimal UID, medicine name, strength, expiry date, and prescription instructions.
+- Register a card by entering its hexadecimal UID, medicine name, strength, expiry month, and prescription instructions.
 - Optionally provide a complete custom spoken message and a separate expired-medicine warning.
 - The phone's shared RFID listener speaks the server-resolved announcement on app pages while enabled.
 - Expiry is checked by the Worker at scan time. Once the expiry date has passed, the expired warning replaces the normal announcement and dosage instructions.
@@ -20,12 +20,12 @@ With the fields configured as:
 
 - Medicine: Paracetamol
 - Strength: 500 mg
-- Expiry: December 2027
+- Expiry month: December 2027
 - Instructions: Your registered prescription says one tablet after food.
 
 The generated announcement is similar to:
 
-> Paracetamol. 500 mg. Expiry date: December 2027. Your registered prescription says one tablet after food.
+> Paracetamol. 500 mg. Expiry month: December 2027. Your registered prescription says one tablet after food.
 
 When the expiry date has passed, the default announcement is:
 
@@ -38,7 +38,7 @@ A custom spoken message overrides the generated normal announcement. A custom ex
 1. Sign into Daredevil's Eye and open `/medicine/`.
 2. Scan the RFID card and copy the UID shown in the ESP32 Serial Monitor.
 3. Enter the UID in hexadecimal. Spaces, colons, and hyphens are accepted and normalized.
-4. Enter the medicine name; optionally add strength, expiry date, and prescription instructions.
+4. Enter the medicine name; optionally add strength, expiry month, and prescription instructions.
 5. Leave the custom announcement blank to use the generated message, or enter the exact text to be spoken.
 6. Save. The next scan uses the updated message immediately.
 
