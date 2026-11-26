@@ -172,5 +172,6 @@ export async function testEsp32Connection() {
 
 /** An MJPEG stream is stopped by releasing its browser connection; firmware has no stream-off URL. */
 export function stopEsp32Stream(imageElement) {
+  try { window.__deeStopNativeEsp32Preview?.(); } catch {}
   if (imageElement) imageElement.removeAttribute('src');
 }
