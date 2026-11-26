@@ -832,6 +832,7 @@ test('guest photo history saves submitted photos privately, shows them in this b
  t.after(()=>{globalThis.fetch=originalFetch;});
  globalThis.fetch=async(input,init={})=>{
   const url=new URL(String(input));
+  if(url.origin==='https://supabase.example.test'&&url.pathname==='/rest/v1/scene_memory_entries'&&init.method==='DELETE')return new Response(null,{status:204});
   if(url.origin==='https://supabase.example.test'&&url.pathname==='/rest/v1/ai_history'){
    if(init.method==='POST')historyRows.push(JSON.parse(init.body));
    if(init.method==='PATCH'&&historyRows.length)Object.assign(historyRows[historyRows.length-1],JSON.parse(init.body));
@@ -942,6 +943,7 @@ test('guest-history retention removes expired private photo objects before delet
  assert.ok(objectDelete>=0,'the expired private image is deleted');
  assert.ok(metadataDelete>objectDelete,'metadata is deleted only after the photo object is removed');
  assert.ok(calls.some(call=>call.url.includes('guest_session_hash=not.is.null')&&call.url.includes('created_at=lt.')));
+ assert.ok(calls.some(call=>call.url.includes('/rest/v1/scene_memory_entries')&&call.method==='DELETE'),'expired guest visual memory is also deleted');
 });
 
 
