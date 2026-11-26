@@ -11,6 +11,12 @@
 
 > Safety boundary: Daredevil's Eye is an experimental assistive tool, not a certified mobility aid, medical device, or emergency service. It must not claim guaranteed camera/microphone access with the display off. Keep ordinary emergency options and mobility aids available.
 
+## Current tester download
+
+**[Download the Android test app through Firebase App Distribution](https://appdistribution.firebase.google.com/testerapps/1:196832423983:android:5398d21c07fd260c21d6da/releases/5u4gh86a181lo?utm_source=firebase-console)**
+
+This link points to the current Firebase App Distribution release supplied by the project owner. Testers may need to sign in with the Google account that was invited to the Firebase tester group. If access is denied, confirm that the account has been invited. This is a tester build distribution path, not a public Play Store listing and not a guarantee that the build is a permanent, updateable, release-signed APK. Check the release details in Firebase before installing or updating.
+
 ## 1. Owner-approved product decisions
 
 - [x] Build a real Android APK using Capacitor and native Android code, not just a PWA shortcut.
