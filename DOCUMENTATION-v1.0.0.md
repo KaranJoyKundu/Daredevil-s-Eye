@@ -97,10 +97,12 @@ The engineering branch now includes these code changes:
 - Android Back: WebView history first; secondary routes fall back to `/action/`; root backgrounds the task.
 - Accessibility onboarding explicitly marks the service optional and describes Android's supported `Allow restricted settings` path. No attempt is made to bypass Android's security controls.
 - Native MediaStore photo writes now use `IS_PENDING` and remove partial entries on failure.
-- Android Action preview now has a native JPEG snapshot bridge limited to private IPv4 hosts and the ESP32 `/capture` endpoint; the UI polls at a controlled interval and stops polling when the preview is stopped or the page is hidden.
+- Android Action preview has a native JPEG snapshot bridge limited to private IPv4 hosts and the ESP32 `/capture` endpoint; the UI polls at a controlled interval and stops polling when the preview is stopped or the page is hidden.
+- Android build and Worker deployment workflows passed for commit `ebb7aba00144d7a36c4140083a281430a71b1948` (runs `45867985691` and `45867985596`). Debug APK artifact `15141243178` was downloaded and inspected as an APK; SHA-256: `18e125b565117b34d66f580305df6fe607d21c662ee42b28a7fc785053cf17fc`.
+- Added `native-android/sync-version.mjs` and wired it into debug and signed-release workflows so Android `versionName` and `versionCode` follow `package.json` SemVer (`1.0.0-beta.1` → `1000001`; final `1.0.0` → `1000099`).
 - CI verification workflow runs on this release branch.
 - Selected navy/gold/white eye-and-signal brand is wired into Android vector launcher resources and the web/PWA SVG.
 
-**Not yet completed:** native FCM background SOS, native SpeechRecognizer, native ESP32 stream/snapshot bridge, Quick Settings/headset shortcuts, full SemVer-to-Gradle synchronization, staging Worker isolation, and release signing. These require further implementation and/or Firebase/keystore configuration.
+**Not yet completed:** native FCM background SOS, native SpeechRecognizer, Quick Settings/headset shortcuts, staging Worker isolation, and release signing. The ESP32 snapshot bridge is implemented in this branch; full-motion MJPEG proxy remains future work. SemVer-to-Gradle synchronization is now wired into both Android build workflows. These require further implementation and/or Firebase/keystore configuration.
 
 **Not yet verified:** Android CI for the latest commit, deployment, and all physical Galaxy A55 tests. The Android Back and Insets changes are code-level implementations only until exercised on device. See `ISSUES-v1.0.0.md` for acceptance gates.
