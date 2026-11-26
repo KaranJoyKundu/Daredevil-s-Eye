@@ -36,7 +36,7 @@ export function createEsp32CanvasStream(imageElement, fps = 6) {
   return { stream, stop };
 }
 
-export async function startEmergencyVideo({ deviceId, eventId, stream, onStatus = () => {} }) {
+export async function startEmergencyVideo({ deviceId, eventId, stream, onStatus = () => {}, onEnded = () => {} }) {
   if (!('RTCPeerConnection' in window)) throw new Error('This browser does not support WebRTC live sharing.');
   if (!stream?.getVideoTracks?.().some(track => track.readyState === 'live')) {
     throw new Error('No active camera stream is available. Start the camera preview first.');
