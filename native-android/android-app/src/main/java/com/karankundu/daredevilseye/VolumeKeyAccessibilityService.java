@@ -32,6 +32,7 @@ public class VolumeKeyAccessibilityService extends AccessibilityService {
     @Override
     protected boolean onKeyEvent(KeyEvent event) {
         if (event == null) return false;
+        if (!getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean("global_shortcuts_enabled", true)) return false;
         final int key = event.getKeyCode();
         if (key != KeyEvent.KEYCODE_VOLUME_UP && key != KeyEvent.KEYCODE_VOLUME_DOWN) return false;
         if (event.getRepeatCount() > 0) return true;
