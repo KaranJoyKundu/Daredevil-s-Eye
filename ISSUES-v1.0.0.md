@@ -27,7 +27,7 @@ This tracker records observed issues and hypotheses. Items remain open until cod
 
 ## P2 — Identity and release readiness
 
-- [ ] **Minimal professional logo and icon family** — master vector, Android adaptive foreground/background/monochrome, splash, favicon and web assets.
+- [ ] **Minimal professional logo and icon family** (four editable SVG concepts committed; final selection and Android/web integration still open) — master vector, Android adaptive foreground/background/monochrome, splash, favicon and web assets.
 - [ ] **SemVer and release metadata** — centralize version name/code; begin at 1.0.0 with monotonic versionCode and consistent APK naming.
 - [ ] **Documentation and changelog refresh** — reconcile README, STATUS, ROADMAP, Android, SOS, accessibility, setup and release instructions.
 - [ ] **Security/privacy review** — audit credentials, permission scope, photo/audio handling, pairing tokens, remote WebView origin/navigation and public API abuse controls.
