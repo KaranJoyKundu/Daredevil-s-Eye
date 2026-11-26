@@ -5,8 +5,8 @@ This feature adds an account-paired ESP32 + RC522 medicine reader to Daredevil's
 ## Current implementation
 
 - /medicine/ is the dedicated setup page and appears directly after Home / Action in the shared app menu.
-- A signed-in account generates a six-digit, ten-minute pairing code.
-- The ESP32 exchanges the code for a 256-bit device token. Only its SHA-256 digest is stored in the RFID Durable Object.
+- A signed-in account authorizes a reader from /medicine/ and receives a one-time 256-bit device token.
+- Paste the token into the ESP32 Serial Monitor when prompted. Only its SHA-256 digest is stored in the RFID Durable Object.
 - The Worker associates each event with the account paired to the device; the ESP32 cannot choose an account ID.
 - Medicine events are retained for up to 24 hours, with a bounded server queue. The phone acknowledges an event after speech completes.
 - The ESP32 keeps up to five unsent events in Preferences/NVS and retries them in order after connectivity returns; the event ID remains stable during retries.
