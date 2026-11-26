@@ -49,13 +49,13 @@ export async function apiFetch(path, options = {}) {
   if (options.body && !headers.has('content-type')) headers.set('content-type', 'application/json');
   const target = String(path);
     // Refresh a returning user's HttpOnly session before the Worker resolves
-  if(/^\/api\/(health|models|config|describe|ask|transcribe|speech)$/.test(target)){
+  if(/^\/api\/(health|models|config|describe|ask|transcribe|speech|memory\/ask)$/.test(target)){
     await refreshSavedAccountSession();
   }
   // Ensure guests have an HttpOnly history cookie before a photo is submitted.
-  if(/^\/api\/(describe|ask)$/.test(target))await ensureGuestHistorySession();
+  if(/^\/api\/(describe|ask|memory(?:\/ask)?)$/.test(target))await ensureGuestHistorySession();
   // Never send a personal Gemini key to unrelated paths or SOS endpoints.
-  if (/^\/api\/(health|models|config|describe|ask|transcribe|speech)$/.test(target)) {
+  if (/^\/api\/(health|models|config|describe|ask|transcribe|speech|memory\/ask)$/.test(target)) {
     const key = getSessionGeminiApiKey();
     if (key) headers.set('x-user-gemini-api-key', key);
   }
