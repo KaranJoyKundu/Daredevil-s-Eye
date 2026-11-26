@@ -101,11 +101,13 @@ public class VolumeKeyAccessibilityService extends AccessibilityService {
             .putString(KEY_PENDING_ACTION, action).putString("pending_event_id", eventId)
             .putLong("pending_at", System.currentTimeMillis()).apply();
 
-        Intent broadcast = new Intent(ACTION_VOLUME_ACTION);
-        broadcast.setPackage(getPackageName());
-        broadcast.putExtra("action", action);
-        broadcast.putExtra("eventId", eventId);
-        sendBroadcast(broadcast);
+        if (MainActivity.isActivityResumed) {
+            Intent broadcast = new Intent(ACTION_VOLUME_ACTION);
+            broadcast.setPackage(getPackageName());
+            broadcast.putExtra("action", action);
+            broadcast.putExtra("eventId", eventId);
+            sendBroadcast(broadcast);
+        }
         showActionNotification(action, eventId);
     }
 
