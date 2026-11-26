@@ -19,6 +19,9 @@
 <small>When enabled, the selected camera/upload photo stays on this device until the user reviews it and presses Ask AI. Turn this off to automatically describe a selected photo.</small>
 <label class="inline-checkbox" for="save-photo-history"><input id="save-photo-history" type="checkbox"> Automatically save every submitted photo and AI answer</label>
 <small>On by default after Terms acceptance. Signed-in photos are saved to your private account history; signed-out photos are saved to this browser's private guest history for 30 days. A photo is saved when you submit it for AI analysis, even if Gemini fails. Turn this off here to stop saving new photos. Raw IP addresses are not stored.</small>
+<label class="inline-checkbox" for="scene-memory-enabled"><input id="scene-memory-enabled" type="checkbox"> Enable five-photo visual memory (text observations only)</label>
+<small>When enabled, Daredevil’s Eye remembers facts from your five latest photo observations so you can ask about earlier photos. It stores text summaries and facts, not extra images. Memory is private to this account or this browser and can be cleared below. Off by default.</small>
+<div class="inline-actions"><button id="clear-scene-memory" type="button" class="secondary">Clear saved visual memory</button></div><p id="scene-memory-status" class="hint" role="status" aria-live="polite">Visual memory is disabled by default.</p>
 <div class="field-grid">
 <div><label for="contact-name">Trusted contact name</label><input id="contact-name" maxlength="80" placeholder="Name"></div>
 <div><label for="contact-phone">Trusted contact phone</label><input id="contact-phone" type="tel" maxlength="30" placeholder="+880..."></div>
