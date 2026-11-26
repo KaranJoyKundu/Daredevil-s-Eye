@@ -256,6 +256,14 @@ export class SOSRoom {
       return json({ ok: false, error: 'This receiver session has been replaced or revoked. Pair again using a new invitation.' }, 403);
     }
 
+    if (action === 'revoke') {
+      await this.state.storage.delete('receiverTokenHash');
+      await this.state.storage.delete('activeEvent');
+      await this.state.storage.delete('pushSubscription');
+      await this.state.storage.delete('pairedAt');
+      return json({ ok: true, revoked: true });
+    }
+
     if (action === 'subscribe') {
       const subscription = body.subscription;
       if (!subscription || typeof subscription.endpoint !== 'string' ||
