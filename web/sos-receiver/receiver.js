@@ -9,7 +9,8 @@ let deviceId=localStorage.getItem(DEVICE_KEY)||localStorage.getItem(LEGACY_DEVIC
 let receiverToken=localStorage.getItem(TOKEN_KEY)||sessionStorage.getItem(LEGACY_TOKEN_KEY)||'';
 if(deviceId)localStorage.setItem(DEVICE_KEY,deviceId);
 if(receiverToken)localStorage.setItem(TOKEN_KEY,receiverToken);
-let pollTimer=null,speechTimer=null,lastEventId='',alarmAudio=null,wakeLock=null,isConnected=false,polling=false;\nlet videoPeer=null,videoSessionId='',videoCandidateCursor=0,videoPendingCandidates=[],videoAnswerCreated=false,videoPolling=false;
+let pollTimer=null,speechTimer=null,lastEventId='',alarmAudio=null,wakeLock=null,isConnected=false,polling=false;
+let videoPeer=null,videoSessionId='',videoCandidateCursor=0,videoPendingCandidates=[],videoAnswerCreated=false,videoPolling=false;
 
 function updateStatus(message){$('#receiver-status').textContent=message;}
 function base64UrlToBytes(value){
@@ -165,7 +166,8 @@ async function poll(){
   const data=await requestPublic('/api/sos/poll',{deviceId,receiverToken});
   if(data.active&&data.event)showAlert(data.event);
   else if($('#emergency-alert').hidden)$('#receiver-detail').textContent='Connected. No active SOS alert.';
-  updateStatus('Connected · listening for emergency alerts.');\n  await pollEmergencyVideo();
+  updateStatus('Connected · listening for emergency alerts.');
+  await pollEmergencyVideo();
  }catch(error){
   if(/replaced|revoked|receiver session/i.test(error.message)){clearReceiverSession('This receiver has been replaced. Ask the sender for a new six-character code.');return;}
   updateStatus('Connection interrupted: '+error.message+'. Retrying…');
