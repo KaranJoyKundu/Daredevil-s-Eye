@@ -96,6 +96,7 @@ export async function startEmergencyVideo({ deviceId, eventId, stream, onStatus 
       });
       if (!data.active) {
         closeLocal();
+        onEnded();
         onStatus('The paired receiver ended or the emergency video session expired.');
         return;
       }
