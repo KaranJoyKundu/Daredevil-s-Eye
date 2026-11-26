@@ -88,3 +88,18 @@ Each phase is gated by tests and, where relevant, physical-device validation. St
 - **Blocked:** requires credentials, hardware, platform approval, or owner action.
 
 Do not mark an item complete just because the code compiles. Keep an explicit open list of credentials, device tests, and platform limitations. Public-beta or production-ready status requires evidence, not optimism.
+
+
+## Implementation log — 2026-11-26
+
+The engineering branch now includes these code changes:
+- Native WebView WindowInsets for status/navigation bars, display cutout and keyboard.
+- Android Back: WebView history first; secondary routes fall back to `/action/`; root backgrounds the task.
+- Accessibility onboarding explicitly marks the service optional and describes Android's supported `Allow restricted settings` path. No attempt is made to bypass Android's security controls.
+- Native MediaStore photo writes now use `IS_PENDING` and remove partial entries on failure.
+- CI verification workflow runs on this release branch.
+- Selected navy/gold/white eye-and-signal brand is wired into Android vector launcher resources and the web/PWA SVG.
+
+**Not yet completed:** native FCM background SOS, native SpeechRecognizer, native ESP32 stream/snapshot bridge, Quick Settings/headset shortcuts, full SemVer-to-Gradle synchronization, staging Worker isolation, and release signing. These require further implementation and/or Firebase/keystore configuration.
+
+**Not yet verified:** Android CI for the latest commit, deployment, and all physical Galaxy A55 tests. The Android Back and Insets changes are code-level implementations only until exercised on device. See `ISSUES-v1.0.0.md` for acceptance gates.
