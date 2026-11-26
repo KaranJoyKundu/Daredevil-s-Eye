@@ -1,6 +1,7 @@
 # Daredevil's Eye — v1.0.0 Issue Tracker
 
 Release target: **v1.0.0**  
+Current prerelease metadata: **1.0.0-beta.1**  
 Status: **Engineering review accepted; implementation not yet verified**
 
 This tracker records observed issues and hypotheses. Items remain open until code changes, automated checks, and required physical-device tests are recorded.
@@ -31,6 +32,13 @@ This tracker records observed issues and hypotheses. Items remain open until cod
 - [ ] **Documentation and changelog refresh** — reconcile README, STATUS, ROADMAP, Android, SOS, accessibility, setup and release instructions.
 - [ ] **Security/privacy review** — audit credentials, permission scope, photo/audio handling, pairing tokens, remote WebView origin/navigation and public API abuse controls.
 - [ ] **Accessibility audit** — TalkBack labels/focus, touch targets, high contrast, voice controls and errors.
+
+## Work started on overhaul branch
+
+- [x] Draft issue tracker and engineering path committed in PR #74.
+- [x] WebView system Back now checks browser history before delegating to Android default behavior (automated compilation still pending).
+- [x] Set package metadata to `1.0.0-beta.1` as prerelease; not a final v1.0.0 release.
+- [x] Added initial vector logo asset at `web/icons/daredevils-eye-v1.svg`; app/launcher integration remains open.
 
 ## Validation gates
 
