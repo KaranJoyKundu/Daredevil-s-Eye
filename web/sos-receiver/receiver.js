@@ -166,6 +166,22 @@ $('#enable-alarm').addEventListener('click',async()=>{
  }catch(error){updateStatus('Could not enable the receiver: '+error.message);}
  finally{button.disabled=false;}
 });
+$('#remove-pairing').addEventListener('click',async()=>{
+ if(!deviceId||!receiverToken)return;
+ if(!window.confirm('Remove this phone as the paired SOS receiver? It will stop receiving SOS alerts until paired again.'))return;
+ const button=$('#remove-pairing');button.disabled=true;
+ try{
+  await requestPublic('/api/sos/revoke',{deviceId,receiverToken});
+  try{
+   const registration=await navigator.serviceWorker.getRegistration('/');
+   const subscription=await registration?.pushManager?.getSubscription();
+   if(subscription)await subscription.unsubscribe();
+  }catch{}
+  clearReceiverSession('This phone has been unpaired. It will no longer receive SOS alerts. Pair it again only if you want to use it as the receiver.');
+ }catch(error){
+  updateStatus('Could not remove this paired device: '+error.message);
+ }finally{button.disabled=false;}
+});
 $('#acknowledge-alert').addEventListener('click',async()=>{
  if(!deviceId||!receiverToken)return;
  const button=$('#acknowledge-alert');button.disabled=true;
