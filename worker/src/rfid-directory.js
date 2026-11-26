@@ -77,7 +77,7 @@ export class RFIDDirectory {
     if(!medicine||typeof medicine!=='object')return json({ok:false,error:'Medicine details are required.'},400);
     const uid=normalizeUid(medicine.uid),name=clean(medicine.name,100),strength=clean(medicine.strength,60);
     const expiryDate=clean(medicine.expiryDate,10),instructions=clean(medicine.instructions,500);
-    const announcementText=clean(medicine.announcementText,1000),expiredText=clean(medicine.expiredText,300);
+    const announcementText=clean(medicine.announcementText,1000),expiredText=clean(medicine.expiredText,300)||'Warning! This medicine has expired.';
     const originalUid=normalizeUid(medicine.originalUid||'');
     if(!validUid(uid))return json({ok:false,error:'Enter a valid RFID UID (4, 7, or 10 bytes in hexadecimal).'},400);
     if(!name)return json({ok:false,error:'Medicine name is required.'},400);
@@ -120,7 +120,10 @@ export class RFIDDirectory {
     const recentDuplicate=recentScans.find(item=>item.deviceId===device.deviceId&&item.uid===normalized&&now-item.scannedAt<6000);
     if(recentDuplicate)return json({ok:true,accepted:true,duplicate:true,eventId:recentDuplicate.eventId});
     const today=new Date().toISOString().slice(0,10),expired=Boolean(medicine.expiryDate&&medicine.expiryDate<today.slice(0,7));
-    const generated=[medicine.name,medicine.strength,medicine.expiryDate?'Expiry date: '+dateLabel(medicine.expiryDate):'',medicine.instructions].filter(Boolean).join('. ');
+    const medicineName=[medicine.name,medicine.strength].filter(Boolean).join(' ');
+    const instruction=String(medicine.instructions||'').trim();
+    const prescription=instruction?( /^your registered prescription says\b/i.test(instruction)?instruction:'Your registered prescription says '+instruction):'';
+    const generated=[medicineName,medicine.expiryDate?'Expiry date: '+dateLabel(medicine.expiryDate):'',prescription].filter(Boolean).join('. ');
     const speechText=expired?(medicine.expiredText||'Warning! This medicine has expired.'):(medicine.announcementText||generated||medicine.name);
     const event={id,deviceId:device.deviceId,userId:device.userId,uid:normalized,medicine:medicine.name,speechText,expired,createdAt:new Date().toISOString()};
     events.push(event);await this.storage.put('events',events.slice(-100));

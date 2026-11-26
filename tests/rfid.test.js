@@ -86,6 +86,22 @@ test('direct device provisioning sends UID-only scans into personalized account 
  assert.match(pending.events[0].speechText,/one tablet after food/);
 });
 
+
+test('normal medicine announcement follows the spoken name, expiry and prescription format',async()=>{
+ const {post}=fixture();
+ const device=await (await post('devices/provision',{userId:USER})).json();
+ await post('medicines/save',{userId:USER,medicine:medicine({instructions:'one tablet after food.'})});
+ await post('event/submit',{uid:'A1618C04'},device.deviceToken);
+ const events=(await (await post('event/poll',{userId:USER})).json()).events;
+ assert.equal(events[0].speechText,'Paracetamol 500 mg. Expiry date: December 2027. Your registered prescription says one tablet after food.');
+});
+
+test('blank expired warning is stored as the default warning and remains customizable',async()=>{
+ const {post}=fixture();
+ const saved=await (await post('medicines/save',{userId:USER,medicine:medicine({expiredText:''})})).json();
+ assert.equal(saved.medicine.expiredText,'Warning! This medicine has expired.');
+});
+
 test('expired medicine speaks the warning instead of normal prescription instructions',async()=>{
  const {post}=fixture();
  const device=await (await post('devices/provision',{userId:USER})).json();
@@ -155,6 +171,8 @@ test('medicine page exposes personal card management and shared listener speaks 
  assert.ok(listener.includes("localStorage.getItem(ENABLED_KEY)!=='0'"));
  assert.ok(listener.includes("addEventListener('scroll',onUserActivity"));
  assert.ok(listener.includes("addEventListener('wheel',onUserActivity"));
+ assert.ok(!listener.includes('||document.hidden'));
+ assert.ok(listener.includes('setInterval(()=>poll(false),1000)'));
  assert.ok(listener.includes('completedEventId'));
  assert.ok(page.includes('id="listener-enabled" type="checkbox" checked'));
  assert.ok(pageScript.includes("field('uid').readOnly=false"));

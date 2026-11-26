@@ -1,6 +1,6 @@
 import {speak} from '../shared/speech.js?v=20261126-rfid2';
 import {getSettings} from '../shared/settings.js?v=20261117-release5';
-import {setRFIDListenerEnabled,isRFIDListenerEnabled} from '../shared/rfid-listener.js?v=20261126-dedup1';
+import {setRFIDListenerEnabled,isRFIDListenerEnabled} from '../shared/rfid-listener.js?v=20261126-bg2';
 
 const $=id=>document.getElementById(id);
 const status=(id,message)=>{const el=$(id);if(el)el.textContent=message;};
@@ -60,9 +60,13 @@ const field=name=>$(fieldId(name));
 const normalizedUid=value=>String(value||'').replace(/[\s:-]/g,'').toUpperCase();
 function medicineMessage(item){
  const today=new Date().toISOString().slice(0,10);
- if(item.expiryDate&&item.expiryDate<today.slice(0,7))return item.expiredText||'Warning! This medicine has expired.';
+ if(item.expiryDate&&item.expiryDate<today.slice(0,7))return item.expiredText||DEFAULT_EXPIRED_TEXT;
  if(item.announcementText)return item.announcementText;
- return [item.name,item.strength,item.expiryDate?'Expiry date: '+new Date(item.expiryDate+'-01T00:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'}):'',item.instructions].filter(Boolean).join('. ')||'Add a medicine name to preview the announcement.';
+ const medicineName=[item.name,item.strength].filter(Boolean).join(' ');
+ const expiry=item.expiryDate?'Expiry date: '+new Date(item.expiryDate+'-01T00:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'}):'';
+ const instruction=String(item.instructions||'').trim();
+ const prescription=instruction?( /^your registered prescription says\b/i.test(instruction)?instruction:'Your registered prescription says '+instruction):'';
+ return [medicineName,expiry,prescription].filter(Boolean).join('. ')||'Add a medicine name to preview the announcement.';
 }
 function updateMedicinePreview(){
  const item=Object.fromEntries(medicineFields.map(name=>[name,name==='uid'?normalizedUid(field(name)?.value):String(field(name)?.value||'').trim()]));

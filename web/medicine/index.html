@@ -38,7 +38,7 @@
 <p class="eyebrow">Assistive hardware · New</p>
 <h1>Medicine, spoken aloud.</h1>
 <p>Test medicine speech, then authorize a real ESP32 reader to send scans to your signed-in account.</p>
-<div class="medicine-callout">The phone must be signed in and online. Announcements are enabled automatically and checked while the app is open. Scrolling or touching the page also wakes speech output if the browser has paused it; background and screen-locked delivery still needs separate Android testing.</div>
+<div class="medicine-callout">The phone must be signed in and online. Announcements are enabled automatically and checked while the app is open, including when this tab is in the background. Chrome may still throttle or freeze background tabs; keep the browser open and allow audio for the most reliable results.</div>
 </section>
 <div class="medicine-grid">
 <section class="medicine-card">
@@ -50,7 +50,7 @@
 <section class="medicine-card">
 <h2>2 · Speak across the app</h2>
 <p class="medicine-muted">Automatic announcements are on by default. The shared listener checks for new scans on Action, Blind mode, Account, Admin, and other app pages that load the common navigation.</p>
-<label class="medicine-toggle"><input id="listener-enabled" type="checkbox" checked><span><strong>Enable medicine announcements</strong><br><span class="medicine-muted">Speak incoming RFID medicine announcements automatically. Scroll or touch the page to wake speech if needed.</span></span></label>
+<label class="medicine-toggle"><input id="listener-enabled" type="checkbox" checked><span><strong>Enable medicine announcements</strong><br><span class="medicine-muted">Speak incoming RFID medicine announcements automatically, including best-effort background-tab playback.</span></span></label>
 <p id="listener-status" class="medicine-status" role="status" aria-live="polite"></p>
 <div class="medicine-actions"><button id="test-speech" type="button" class="secondary">Test announcement</button></div>
 </section>
@@ -64,7 +64,7 @@
 <div class="medicine-field"><label for="medicine-strength">Strength / dosage form</label><input id="medicine-strength" name="strength" maxlength="60" placeholder="500 mg tablet"></div>
 <div class="medicine-field"><label for="medicine-expiry">Expiry month</label><input id="medicine-expiry" name="expiryDate" type="month"></div>
 <div class="medicine-field full"><label for="medicine-instructions">Prescription / usage instructions</label><textarea id="medicine-instructions" name="instructions" maxlength="500" placeholder="Your registered prescription says one tablet after food."></textarea></div>
-<div class="medicine-field full"><label for="medicine-announcement">Custom spoken message (optional)</label><textarea id="medicine-announcement" name="announcementText" maxlength="1000" placeholder="Paracetamol 500 mg. Expiry date: December 2027. Your registered prescription says one tablet after food."></textarea><small class="medicine-muted">Leave blank to generate this format automatically: medicine name, strength, expiry date, then your registered prescription instructions. The two starter cards are included for every account and can be edited.</small></div>
+<div class="medicine-field full"><label for="medicine-announcement">Custom spoken message (optional)</label><textarea id="medicine-announcement" name="announcementText" maxlength="1000" placeholder="Paracetamol 500 mg. Expiry date: December 2027. Your registered prescription says one tablet after food."></textarea><small class="medicine-muted">Leave blank to generate: Medicine name + strength. Expiry date: Month Year. Your registered prescription says [instructions]. The two starter cards are included for every account and can be edited.</small></div>
 <div class="medicine-field full"><label for="medicine-expired">Message when expired (optional)</label><input id="medicine-expired" name="expiredText" maxlength="300" value="Warning! This medicine has expired."></div>
 <div class="medicine-field full"><strong>Speech preview</strong><div id="medicine-preview" class="medicine-preview" aria-live="polite">Your medicine announcement will appear here.</div><div class="medicine-actions"><button id="medicine-preview-speak" type="button" class="secondary">Hear this preview</button></div></div>
 <div class="medicine-actions medicine-field full"><button id="medicine-save" type="submit">Save medicine card</button><button id="medicine-cancel" type="button" class="secondary" hidden>Cancel edit</button></div>
@@ -95,6 +95,6 @@ GND    →  GND</pre>
 <p class="medicine-muted">Use 3.3V only. The reader's SDA pin is SPI chip-select, not I²C SDA.</p>
 </section>
 </main>
-<script type="module" src="/medicine/rfid.js?v=20261126-dedup1"></script>
-<script type="module" src="/shared/site-nav.js?v=20261126-rfid2"></script>
+<script type="module" src="/medicine/rfid.js?v=20261126-bg2"></script>
+<script type="module" src="/shared/site-nav.js?v=20261126-bg2"></script>
 </body></html>
