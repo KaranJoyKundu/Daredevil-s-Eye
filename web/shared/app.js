@@ -423,7 +423,9 @@ $('#phone-photo-camera')?.addEventListener('change',event=>{const file=event.tar
 $('#phone-photo-upload')?.addEventListener('change',event=>{const file=event.target.files?.[0];event.target.value='';preparePhonePhoto(file,'Uploaded photo');});
 async function savePreparedPhoto(){
  if(!phonePhoto)return;const button=$('#photo-save');if(button)button.disabled=true;
- try{const native=window.DaredevilVolumeControls;
+ try{let native=window.DaredevilVolumeControls;
+  if(window.Capacitor?.isNativePlatform?.()&&!native?.saveImage&&window.__deeNativePluginPromise){await window.__deeNativePluginPromise;native=window.DaredevilVolumeControls;}
+  if(window.Capacitor?.isNativePlatform?.()&&!native?.saveImage)throw new Error('Native photo saver is not ready. Close and reopen the app, then try again.');
   if(window.Capacitor?.isNativePlatform?.()&&native?.saveImage){
    const dataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('Could not read photo.'));reader.readAsDataURL(phonePhoto);});
    const result=await native.saveImage({dataUrl,filename:'daredevils-eye-'+Date.now()+'.jpg'});const message=result?.message||'Photo saved in Pictures/Daredevils Eye.';if(status)status.textContent=message;announce(message);
@@ -615,4 +617,4 @@ async function loadNativeVolumePlugin(){
   }
  }catch(error){console.warn('Native volume controls bridge unavailable',error);}
 }
-loadNativeVolumePlugin();
+window.__deeNativePluginPromise=loadNativeVolumePlugin();
