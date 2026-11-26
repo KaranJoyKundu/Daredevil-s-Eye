@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#161c1a">
+<title>Android app roadmap · Daredevil's Eye</title>
+<link rel="stylesheet" href="/assets/system.css"><link rel="stylesheet" href="/assets/ui/base.css">
+<style>
+body{max-width:980px;margin:auto;padding:24px 18px 64px;color:var(--p-ink,#e3e2da);background:var(--p-bg,#161c1a);font:16px/1.6 system-ui,sans-serif}
+main{display:grid;gap:18px}.hero,.panel{background:var(--p-surface,#1f2725);border:1px solid #ffffff20;border-radius:16px;padding:20px}
+h1,h2,h3{line-height:1.2}h1{font-size:clamp(2rem,7vw,3.5rem)}h2{font-size:1.5rem;margin:0 0 10px}h3{font-size:1.08rem}
+.muted{opacity:.75}.status{display:inline-block;border-radius:999px;padding:4px 10px;background:#24483d;color:#c5f2df;font-size:.82rem}
+.progress{height:10px;background:#ffffff20;border-radius:99px;overflow:hidden}.progress>span{display:block;height:100%;width:0;background:#9fc7b8;transition:width .2s}
+.phase{display:grid;gap:8px}.task{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #ffffff12}.task input{width:22px;height:22px;flex:none;margin-top:2px;accent-color:#9fc7b8}.task strong{display:block}.task small{display:block;opacity:.72}
+table{width:100%;border-collapse:collapse}td,th{text-align:left;vertical-align:top;padding:9px;border-bottom:1px solid #ffffff20}
+a{color:#b8ddce}button{padding:10px 14px;border-radius:10px;border:1px solid #ffffff30;background:#263b34;color:inherit;cursor:pointer}
+.actions{display:flex;gap:10px;flex-wrap:wrap}.warning{border-left:4px solid #d8ad5d;padding:10px 14px;background:#d8ad5d12}
+@media(max-width:600px){body{padding:14px 12px 40px}.hero,.panel{padding:15px}table{font-size:.9rem}}
+</style>
+</head>
+<body>
+<main>
+<section class="hero">
+<p class="status">IMPLEMENTATION IN PROGRESS · OWNER APPROVED</p>
+<h1>Daredevil's Eye<br>Android app roadmap</h1>
+<p>Samsung Galaxy A55 5G · Android 16 / One UI 8 · Capacitor + native Android</p>
+<p>This is the permanent progress page for the native Android app. Tick off tasks as they are completed on this device. Your checklist is saved in this browser. The linked Markdown plan in GitHub is the authoritative project record.</p>
+<div class="progress"><span id="bar"></span></div><p id="count" class="muted">0 of 0 tasks checked</p>
+<div class="actions"><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/blob/feat/native-android-capacitor-a55/docs/NATIVE-ANDROID-APP.md">Open full technical plan in GitHub</a><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/tree/feat/native-android-capacitor-a55">Implementation branch</a></div>
+</section>
+<section class="panel"><h2>Approved physical controls</h2>
+<table><tr><th>Button press</th><th>Action</th><th>Safety</th></tr>
+<tr><td>Volume Up</td><td>Describe</td><td>Wait for double-press window to avoid accidental duplicate.</td></tr>
+<tr><td>Volume Down</td><td>Ask AI</td><td>Microphone permission and visible recording state.</td></tr>
+<tr><td>Double Volume Up</td><td>Repeat</td><td>Must not also trigger Describe.</td></tr>
+<tr><td>Hold Volume Up + Down</td><td>SOS</td><td>Confirmation and cancellation required; no silent dispatch.</td></tr></table>
+</section>
+<section class="panel warning"><strong>Screen-off limitation:</strong> The app will implement the strongest Android-permitted shortcuts. Android may block background camera/microphone startup, and global volume-key filtering requires explicit Accessibility Service enablement and may conflict with TalkBack. No “always works with screen off” claim will be made without A55 evidence.</section>
+<div id="phases"></div>
+<section class="panel"><h2>Release requirements</h2><ul>
+<li>Signed APK through GitHub Releases first.</li><li>SHA-256 checksum and release notes.</li><li>Install/upgrade test on the Galaxy A55.</li><li>Play Store is a later phase.</li></ul>
+<p class="muted">No APK is downloadable until a successful Android build and release upload have been verified.</p></section>
+<section class="panel"><h2>Useful project links</h2><ul>
+<li><a href="https://daredevils-eye.karanjoykundu.workers.dev/blind/">Live Blind Mode</a></li>
+<li><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions">GitHub Actions builds</a></li>
+<li><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/releases">APK releases</a></li>
+<li><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/blob/main/docs/ACCESSIBILITY.md">Accessibility documentation</a></li></ul></section>
+</main>
+<script>
+const phases=[
+["Phase 0 — Safety, backup and documentation",[
+["Owner-approved controls and distribution recorded","The mapping, screen-off goal and APK-first release are fixed."],
+["Production backup branch created","Rollback point exists before Android changes."],
+["Isolated Android feature branch created","All Android work stays off main."],
+["Master plan and Documentation page created","This page and docs/NATIVE-ANDROID-APP.md are the source of truth."],
+["Architecture and security docs aligned","Native/web/backend responsibilities and permissions are documented."]
+]],
+["Phase 1 — Capacitor foundation",[
+["Capacitor configured","Native Android project and app identity are set up."],
+["Android project scaffold committed","Gradle and native project can be reproduced."],
+["WebView/API/authentication integration verified","Login cookies, Worker API and existing routes work."],
+["First debug APK built","A CI artifact exists and can be installed."],
+["Blind Mode smoke-tested","Existing touch controls and speech still work."]
+]],
+["Phase 2 — Volume-button controls",[
+["Foreground native volume-key handler","Controls work while app is open."],
+["Single/double press arbitration","Up triggers Describe once; double Up triggers Repeat only."],
+["Simultaneous hold SOS gesture","Both keys held opens a confirmation flow."],
+["Optional Accessibility Service","Global key events work only after explicit user enablement."],
+["Native-to-web action bridge","Events are delivered once, queued safely and acknowledged."],
+["TalkBack and normal-volume compatibility","Conflicts and fallback behaviour are measured."]
+]],
+["Phase 3 — Background and screen-off",[
+["Pending action storage and notification","Screen-off events are not silently lost."],
+["Foreground-service lifecycle","Only user-started, permitted work runs with visible notification."],
+["Locked-screen SOS confirmation","Notification can resume confirmation without falsely claiming dispatch."],
+["Repeat/background audio test","Cached answer behaviour is verified."],
+["Camera/microphone limits tested separately","Document actual Android restrictions on A55."]
+]],
+["Phase 4 — Existing feature integration",[
+["Account, guest and session cookies","WebView authentication and isolation work."],
+["Gemini Describe/Ask and Bangla/English speech","AI and voice paths work on phone."],
+["Phone camera and ESP32 camera","Both camera modes and upload are tested."],
+["RFID medicine announcements","Pairing, medicine text and duplicate prevention work."],
+["SOS sender and receiver","Two-phone alert, acknowledgement and push are tested."],
+["Admin, Diagnostics, privacy and Help","Existing supporting pages remain functional."]
+]],
+["Phase 5 — Galaxy A55 validation",[
+["Android 16 / One UI version recorded","Exact device/software build is documented."],
+["Button-pattern repeatability","100 press trials with no duplicate/wrong actions."],
+["Foreground/background/locked/screen-off matrix","Each phone state is tested separately."],
+["TalkBack on/off test","Accessibility conflicts are documented."],
+["Bangla/English speech and TTS test","Human listening check confirms pronunciation."],
+["Battery saver, Doze, reconnect and reboot","Recovery and restrictions are recorded."],
+["SOS cancellation safety","No accidental alert dispatch."]
+]],
+["Phase 6 — Signed APK and GitHub release",[
+["Release application ID and signing key","Keystore stays outside Git."],
+["Protected release signing workflow","Only protected secrets can sign release APK."],
+["Release APK and SHA-256 checksum","Artifacts are verifiable."],
+["GitHub Release and download page","APK can be downloaded without Play Store."],
+["Install/upgrade test on A55","Downloaded release installs and upgrades successfully."]
+]],
+["Phase 7 — Handoff",[
+["Documentation updated with evidence","No planned feature is marked done without proof."],
+["Known restrictions and setup guide published","Screen-off limitations are clear."],
+["APK/release/CI/PR links added","One place contains all handoff links."],
+["Owner-reviewed usable APK","Working build is ready for owner acceptance."]
+]]
+];
+const root=document.getElementById('phases');const key='dee-android-plan-v1';
+let saved={};try{saved=JSON.parse(localStorage.getItem(key)||'{}')}catch{}
+let index=0;
+for(const [name,tasks] of phases){const section=document.createElement('section');section.className='panel phase';const h=document.createElement('h2');h.textContent=name;section.append(h);
+for(const [title,desc] of tasks){const id='t'+index++;const label=document.createElement('label');label.className='task';const input=document.createElement('input');input.type='checkbox';input.checked=!!saved[id];input.addEventListener('change',()=>{saved[id]=input.checked;localStorage.setItem(key,JSON.stringify(saved));update()});const text=document.createElement('span');const strong=document.createElement('strong');strong.textContent=title;const small=document.createElement('small');small.textContent=desc;text.append(strong,small);label.append(input,text);section.append(label)}
+root.append(section)}
+function update(){const boxes=[...root.querySelectorAll('input')];const done=boxes.filter(x=>x.checked).length;document.getElementById('count').textContent=done+' of '+boxes.length+' tasks checked';document.getElementById('bar').style.width=(boxes.length?done/boxes.length*100:0)+'%'}
+update();
+</script>
+</body></html>
