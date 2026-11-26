@@ -198,6 +198,13 @@ bool transmitPayload(const String &body) {
   const int code = request("/api/rfid/events", body, response, deviceToken);
   if (code != 200 || response.indexOf("\"accepted\":true") < 0) {
     stageError(code == 401 ? "DEVICE_AUTH_FAILED" : "EVENT_TRANSMISSION_FAILED", "HTTP " + String(code) + " · " + response.substring(0, 160));
+    if (code == 401) {
+      preferences.begin("de-rfid", false);
+      preferences.remove("token"); preferences.remove("deviceId");
+      preferences.end();
+      deviceToken = ""; deviceId = ""; deviceReady = false;
+      Serial.println("[ACTION] Device token revoked. Generate a new pairing code in the app.");
+    }
     return false;
   }
   return true;
@@ -275,6 +282,7 @@ void loop() {
   if (millis() - lastQueueRetryAt >= QUEUE_RETRY_MS) {
     lastQueueRetryAt = millis();
     flushPendingEvent();
+    if (!deviceReady) return;
   }
   if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) { delay(20); return; }
   if (millis() - lastScanAt < SCAN_COOLDOWN_MS) {
