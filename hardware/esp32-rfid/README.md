@@ -33,7 +33,7 @@ Use 3.3V only. RC522 SDA is SPI chip select, not I²C SDA.
 Open hardware/esp32-rfid/esp32-rfid.ino in Arduino IDE.
 
 Install:
-- ESP32 board support (Arduino-ESP32)
+- ESP32 board support (Arduino-ESP32 core 3.x)
 - MFRC522 by Miguel Balboa
 
 Set WIFI_SSID and WIFI_PASSWORD for a 2.4 GHz network.
