@@ -1,6 +1,6 @@
 import {speak} from '../shared/speech.js?v=20261126-rfid2';
 import {getSettings} from '../shared/settings.js?v=20261117-release5';
-import {setRFIDListenerEnabled,isRFIDListenerEnabled} from '../shared/rfid-listener.js?v=20261126-rfid2';
+import {setRFIDListenerEnabled,isRFIDListenerEnabled} from '../shared/rfid-listener.js?v=20261126-medicine1';
 
 const $=id=>document.getElementById(id);
 const status=(id,message)=>{const el=$(id);if(el)el.textContent=message;};
