@@ -1,60 +1,76 @@
 # Daredevil's Eye — v1.0.0 Issue Tracker
 
-Release target: **v1.0.0**  
-Current prerelease metadata: **1.0.0-beta.1**  
-Status: **Engineering review accepted; implementation not yet verified**
+**Target:** v1.0.0 · **Prerelease:** `1.0.0-beta.1` · **Device:** Galaxy A55 / Android 16  
+**Branch:** `release/v1.0.0-engineering-overhaul`
 
-This tracker records observed issues and hypotheses. Items remain open until code changes, automated checks, and required physical-device tests are recorded.
+Status meanings: `DONE IN CODE` is not the same as device-tested or production-ready. All phone-only checks remain open until tested on real hardware.
 
-## P0 — Safety / background reliability
+## P0 — Safety and Android behavior
 
-- [ ] **SOS alert delivery outside the active pairing screen** — currently alerts are stored server-side but no push notification is accepted; receiver must reconnect/poll. Investigate delivery architecture and implement a supported Android background notification path. Do not label an alert delivered unless delivery state supports it.
-- [ ] **Notification sound/vibration reliability** — audit notification permissions, channel importance/sound, Android/Samsung background restrictions, DND and diagnostics.
-- [ ] **Accessibility service blocked by Restricted Settings** — provide accurate user-guided allow-restricted-settings steps where Android supports them; assess non-accessibility alternatives. No security bypass.
+### [ ] Background SOS delivery when receiver app is closed
+- Observed: PC sender reports that the SOS is stored but no push notification was accepted.
+- Current backend: Durable Objects store/pair events and the web receiver supports Web Push. Do not assume Android WebView can receive browser push when closed.
+- Path: native Firebase Cloud Messaging receiver + token registration + Worker FCM HTTP v1 sender + native high-priority notification channel + acknowledgement actions and deduplication.
+- External prerequisite: register the Android package in Firebase and provide CI-safe Firebase config plus service-account credentials through GitHub/Cloudflare secrets. Never commit credentials or paste them into chat.
+- Acceptance: two physical Android phones; test foreground, background, swiped away, locked, DND, battery saver, network transitions and reboot. Distinguish server-stored, FCM-accepted, notification-posted and acknowledged states.
+- Limits: force-stop, no network, revoked notification permission, DND and OEM restrictions can still prevent or silence delivery.
 
-## P1 — Core Android usability
+### [ ] Accessibility restricted setting
+- Observed: Android displays “Controlled by Restricted Setting” for the sideloaded app.
+- **DONE IN CODE:** first-run explanation now calls Accessibility optional and opens App info rather than repeatedly sending users to the blocked service screen.
+- Path: App info > ⋮ > Allow restricted settings (if shown), then Accessibility > Installed apps > Daredevil's Eye. Proper long-term route: Google Play internal/closed testing with the required accessibility declaration.
+- Do not bypass Android security or claim this permission can be silently enabled. Core camera/voice/SOS features must remain usable without it.
+- Acceptance: A55/One UI and another Android phone.
 
-- [ ] **Status-bar / safe-area overlap** — content is drawn underneath Android status bar; apply correct system insets/edge-to-edge handling.
-- [ ] **Android Back navigation** — Documentation page has no usable return path; unify internal route history and system Back/predictive Back handling.
-- [ ] **ESP32 live stream missing in Action tab** — investigate HTTP/MJPEG, WebView mixed content, local network and stream concurrency; propose/implement a reliable view.
-- [ ] **Background/global volume controls** — distinguish foreground support from global and screen-off support; Accessibility remains optional where possible and limitations must be explicit.
+### [ ] Global hardware shortcuts without Accessibility
+- Current: foreground volume shortcuts are native; global volume keys depend on the Accessibility Service.
+- Path: evaluate supported headset/media buttons, Quick Settings tile, launcher shortcuts and Samsung side-key launch. Avoid silent-audio tricks and unsupported global key interception.
+- Acceptance: test with Accessibility disabled, screen locked, TalkBack enabled and disabled.
 
-## P1 — Voice and image flows
+## P1 — Core UX
 
-- [ ] **Speech/TTS reliability** — native speech path, Bangla voice availability, English fallback, queue/interrupt behavior and errors.
-- [ ] **Photo saving** — verify Android Gallery/Pictures save through MediaStore and only show success when save succeeds.
-- [ ] **Microphone flow** — preserve currently working mic feature; test lifecycle and permission denial.
+### [x] Native system-bar and cutout insets added
+- WebView receives native system-bar, display-cutout and IME padding.
+- **DEVICE TEST REQUIRED:** A55 portrait/landscape, keyboard open, gesture navigation and status-bar contrast; check for duplicate CSS safe-area padding.
 
-## P2 — Identity and release readiness
+### [x] Android Back fallback improved
+- WebView history is used first; when empty, secondary routes return to `/action/`; Action/root backgrounds the task.
+- **DEVICE TEST REQUIRED:** predictive Back gesture, Documentation → Back, Blind Mode exit and TalkBack.
 
-- [ ] **Minimal professional logo and icon family** (four editable SVG concepts committed; final selection and Android/web integration still open) — master vector, Android adaptive foreground/background/monochrome, splash, favicon and web assets.
-- [ ] **SemVer and release metadata** — centralize version name/code; begin at 1.0.0 with monotonic versionCode and consistent APK naming.
-- [ ] **Documentation and changelog refresh** — reconcile README, STATUS, ROADMAP, Android, SOS, accessibility, setup and release instructions.
-- [ ] **Security/privacy review** — audit credentials, permission scope, photo/audio handling, pairing tokens, remote WebView origin/navigation and public API abuse controls.
-- [ ] **Accessibility audit** — TalkBack labels/focus, touch targets, high contrast, voice controls and errors.
+### [ ] ESP32 live preview in Android Action tab
+- Existing UI uses MJPEG `/stream` on port 81 in an image element; still capture uses `/capture`.
+- Path: reproduce in Android WebView and inspect WebView console/logcat, mixed content and local-network behavior. Preferred robust fallback: native private-IP snapshot polling with controlled frame rate and clear retry/disconnected states. Native MJPEG proxy can follow if true video is essential.
+- Acceptance: ESP32 on same Wi-Fi and phone hotspot; test stream contention, reconnect and screen rotation.
 
-## Work started on overhaul branch
+### [x] MediaStore photo save hardened
+- Native photo save now uses `IS_PENDING` while writing and removes partial MediaStore rows on failure.
+- **DEVICE TEST REQUIRED:** verify image appears in Gallery/Pictures on Android 10+ and A55.
 
-- [x] Draft issue tracker and engineering path committed in PR #74.
-- [x] WebView system Back now checks browser history before delegating to Android default behavior (automated compilation still pending).
-- [x] Set package metadata to `1.0.0-beta.1` as prerelease; not a final v1.0.0 release.
-- [x] Added initial vector logo asset at `web/icons/daredevils-eye-v1.svg`; app/launcher integration remains open.
+### [ ] Native speech recognition and Bangla voice readiness
+- User reports microphone capture works; speech output has worked in latest test, but browser may report no speech synthesis.
+- Path: use Android SpeechRecognizer for `bn-BD` and `en-US` inside Capacitor, Android TextToSpeech for output, and retain web/Gemini fallback. Explain missing voice/recognition packs with a settings shortcut.
+- Acceptance: both languages with packs installed/missing, screen locked/unlocked, TalkBack and audio interruptions.
 
-## Validation gates
+## P2 — Release quality
 
-- [ ] Automated test suite and web checks pass.
-- [ ] Android APK build passes and artifact/checksum verified.
-- [ ] A55 test: installation, insets, back gestures, volume shortcuts, TTS/STT, gallery saving and ESP32.
-- [ ] SOS two-device matrix: foreground, background, swipe-away, locked, reboot, battery saver, DND, network change and acknowledgement.
-- [ ] Release signing secrets/keystore are configured and securely backed up.
-- [ ] Release notes and v1.0.0 checklist complete.
+### [x] Selected eye/radar brand integrated into vector resources
+- Navy/gold/white eye + signal arcs are wired into Android launcher resources and PWA SVG.
+- **DEVICE TEST REQUIRED:** adaptive icon mask, Android monochrome themed icon, splash and 24/48/96 dp rendering.
 
-## Status convention
+### [ ] SemVer and signed release pipeline
+- package version currently `1.0.0-beta.1`.
+- Path: one source of truth for Android `versionName`/`versionCode`, changelog, tags and release APK naming. Use user-owned persistent keystore secrets only.
+- Acceptance: signed RC-to-final update test. Debug signing is not a production update identity.
 
-- **OPEN**: not implemented or not verified.
-- **IN PROGRESS**: active work on branch.
-- **AUTOMATED VERIFIED**: CI or automated checks passed; physical behavior is not implied.
-- **DEVICE VERIFIED**: tested on named hardware/OS with reproducible results.
-- **BLOCKED**: requires credentials, hardware, platform policy, or owner action.
+### [ ] Security and accessibility audit
+- Audit WebView origin/navigation allowlist, local-network camera access, CSP, permissions, data retention, photo metadata, pairing tokens, rate limits, TalkBack, focus order and touch targets.
 
-Do not close an issue based on code presence alone.
+## Work committed in this engineering branch
+- Optional Accessibility onboarding and supported restricted-setting guidance.
+- Back fallback for secondary routes.
+- Atomic MediaStore photo writes and failure cleanup.
+- CI verification trigger for this release branch.
+- Retained native WindowInsets handling and selected vector branding.
+
+## v1.0.0 release gate
+Do not label the app production-ready until P0 issues are resolved or explicitly accepted with documented limits, CI is green, a signed APK is produced, and the physical-device acceptance matrix is complete.
