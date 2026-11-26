@@ -914,6 +914,12 @@ async function transcribeGemini(audio, apiKey, outputLanguage = 'en-US') {
 }
 
 async function forwardSos(request, env, action) {
+  if (action.startsWith('video-')) {
+    const origin = request.headers.get('origin');
+    if (!origin) return json({ ok: false, error: 'A same-origin request is required for emergency video.' }, 403);
+    try { if (new URL(origin).origin !== new URL(request.url).origin) return json({ ok: false, error: 'Cross-origin emergency video is not allowed.' }, 403); }
+    catch { return json({ ok: false, error: 'Invalid request origin.' }, 403); }
+  }
   let body;
   try { body = await request.json(); } catch { return json({ ok: false, error: 'Invalid SOS request.' }, 400); }
   const ip = request.headers.get('cf-connecting-ip') || 'local-development';
@@ -1031,7 +1037,16 @@ export async function handleApi(request, env = {}) {
   const sosActions = {
     '/api/sos/invite': 'invite',
     '/api/sos/trigger': 'trigger',
-    '/api/sos/push-key': 'push-key'
+    '/api/sos/push-key': 'push-key',
+    '/api/sos/video/start': 'video-start',
+    '/api/sos/video/offer': 'video-offer',
+    '/api/sos/video/answer': 'video-answer',
+    '/api/sos/video/ice-sender': 'video-ice-sender',
+    '/api/sos/video/ice-receiver': 'video-ice-receiver',
+    '/api/sos/video/sender-poll': 'video-sender-poll',
+    '/api/sos/video/poll': 'video-poll',
+    '/api/sos/video/stop-sender': 'video-stop-sender',
+    '/api/sos/video/stop': 'video-stop'
   };
   if (request.method === 'POST' && sosActions[url.pathname]) {
     return forwardSos(request, env, sosActions[url.pathname]);
