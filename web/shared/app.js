@@ -514,10 +514,15 @@ handleDeepLinkAction();
 
 // Native Android hardware controls dispatch a DOM event through Capacitor's native bridge.
 let lastNativeVolumeEventId='';
+let nativeVolumePlugin=null;
+function acknowledgeNativeVolumeEvent(eventId){
+ if(!eventId||!nativeVolumePlugin?.ackPendingAction)return;
+ nativeVolumePlugin.ackPendingAction({eventId}).catch(()=>{});
+}
 function handleNativeVolumeAction(event){
  const detail=event?.detail||{};
  const eventId=String(detail.eventId||'');
- if(eventId&&eventId===lastNativeVolumeEventId)return;
+ if(eventId&&eventId===lastNativeVolumeEventId){acknowledgeNativeVolumeEvent(eventId);return;}
  if(eventId)lastNativeVolumeEventId=eventId;
  const action=String(detail.action||'');
  if(action==='describe')run('describe');
@@ -525,7 +530,22 @@ function handleNativeVolumeAction(event){
  else if(action==='repeat')repeatAnswer();
  else if(action==='sos')armSos({shortcut:true});
  else if(action==='help')speakHelp();
- if(eventId){const plugin=window.Capacitor?.Plugins?.VolumeControls;plugin?.ackPendingAction?.({eventId}).catch(()=>{});}
+ acknowledgeNativeVolumeEvent(eventId);
 }
 window.addEventListener('deeVolumeAction',handleNativeVolumeAction);
 window.__deeVolumeBridgeReady=true;
+
+async function loadNativeVolumePlugin(){
+ if(!window.Capacitor?.isNativePlatform?.())return;
+ try{
+  const core=await import('https://cdn.jsdelivr.net/npm/@capacitor/core@7.4.3/dist/index.js');
+  nativeVolumePlugin=core.registerPlugin('VolumeControls');
+  window.DaredevilVolumeControls=nativeVolumePlugin;
+  const pending=await nativeVolumePlugin.getPendingAction();
+  if(pending?.action){
+   if(pending.eventId===lastNativeVolumeEventId)acknowledgeNativeVolumeEvent(pending.eventId);
+   else handleNativeVolumeAction({detail:pending});
+  }
+ }catch(error){console.warn('Native volume controls bridge unavailable',error);}
+}
+loadNativeVolumePlugin();
