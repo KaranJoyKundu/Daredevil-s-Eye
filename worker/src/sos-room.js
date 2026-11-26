@@ -208,6 +208,14 @@ export class SOSRoom {
       return json({ ok: true, applicationServerKey: keys.publicKey });
     }
 
+    if (action === 'invalidate') {
+      await this.state.storage.delete('receiverTokenHash');
+      await this.state.storage.delete('activeEvent');
+      await this.state.storage.delete('pushSubscription');
+      await this.state.storage.delete('pairedAt');
+      return json({ ok: true, invalidated: true });
+    }
+
     if (action === 'pair') {
       const receiverToken = await randomToken();
       await this.state.storage.put('receiverTokenHash', await hashSecret(receiverToken));
