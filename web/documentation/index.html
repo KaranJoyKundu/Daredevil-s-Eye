@@ -124,29 +124,38 @@ for(const [title,desc] of tasks){const id='t'+index++;const label=document.creat
 root.append(section)}
 function update(){const boxes=[...root.querySelectorAll('input')];const done=boxes.filter(x=>x.checked).length;document.getElementById('count').textContent=done+' of '+boxes.length+' tasks checked';document.getElementById('bar').style.width=(boxes.length?done/boxes.length*100:0)+'%'}
 update();
-const native=window.Capacitor?.Plugins?.VolumeControls;
+let native=window.Capacitor?.Plugins?.VolumeControls||null;
 const nativeStatus=document.getElementById('accessibility-status');
-if(native?.getShortcutSettings){
- native.getShortcutSettings().then(settings=>{
+async function initialiseNativeSettings(){
+ if(!native&&window.Capacitor?.isNativePlatform?.()){
+  try{
+   const core=await import('https://cdn.jsdelivr.net/npm/@capacitor/core@7.4.3/dist/index.js');
+   native=core.registerPlugin('VolumeControls');
+  }catch(e){nativeStatus.textContent='Could not load native controls bridge: '+e.message;return;}
+ }
+ if(!native){nativeStatus.textContent='Open this Documentation page inside the Android APK to configure native volume shortcuts.';return;}
+ try{
+  const settings=await native.getShortcutSettings();
   document.getElementById('foreground-shortcuts').checked=!!settings.foregroundEnabled;
   document.getElementById('global-shortcuts').checked=!!settings.globalEnabled;
   nativeStatus.textContent=settings.accessibilityEnabled?'Global Accessibility Service is enabled.':'Global Accessibility Service is not enabled yet.';
- }).catch(()=>{});
+ }catch(e){nativeStatus.textContent='Native settings are unavailable: '+e.message;}
 }
+initialiseNativeSettings();
 document.getElementById('open-accessibility').addEventListener('click',async()=>{
- if(!native?.openAccessibilitySettings){nativeStatus.textContent='Open this page inside the Android APK to access native settings.';return;}
- try{await native.openAccessibilitySettings();nativeStatus.textContent='Find Daredevil’s Eye under Installed apps / Downloaded apps and enable the service.';}catch(e){nativeStatus.textContent='Could not open Android settings: '+e.message;}
+ if(!native){nativeStatus.textContent='Open this page inside the Android APK to access native settings.';return;}
+ try{await native.openAccessibilitySettings();nativeStatus.textContent='Find Daredevils Eye under Installed apps / Downloaded apps and enable the service.';}catch(e){nativeStatus.textContent='Could not open Android settings: '+e.message;}
 });
 document.getElementById('check-accessibility').addEventListener('click',async()=>{
- if(!native?.isAccessibilityEnabled){nativeStatus.textContent='Native status check is available inside the Android APK.';return;}
+ if(!native){nativeStatus.textContent='Native status check is available inside the Android APK.';return;}
  try{const result=await native.isAccessibilityEnabled();nativeStatus.textContent=result.enabled?'Global volume shortcut service is enabled.':'Global service is not enabled. Open Accessibility settings to enable it.';}catch(e){nativeStatus.textContent='Status check failed: '+e.message;}
 });
 document.getElementById('foreground-shortcuts').addEventListener('change',async e=>{
- if(!native?.setForegroundShortcutsEnabled){e.target.checked=!e.target.checked;nativeStatus.textContent='This setting is available inside the Android APK.';return;}
+ if(!native){e.target.checked=!e.target.checked;nativeStatus.textContent='This setting is available inside the Android APK.';return;}
  try{await native.setForegroundShortcutsEnabled({enabled:e.target.checked});}catch{e.target.checked=!e.target.checked;nativeStatus.textContent='Could not update foreground button settings.';}
 });
 document.getElementById('global-shortcuts').addEventListener('change',async e=>{
- if(!native?.setGlobalShortcutsEnabled){e.target.checked=!e.target.checked;nativeStatus.textContent='This setting is available inside the Android APK.';return;}
+ if(!native){e.target.checked=!e.target.checked;nativeStatus.textContent='This setting is available inside the Android APK.';return;}
  try{await native.setGlobalShortcutsEnabled({enabled:e.target.checked});}catch{e.target.checked=!e.target.checked;nativeStatus.textContent='Could not update global shortcut setting.';}
 });
 </script>
