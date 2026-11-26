@@ -399,3 +399,9 @@ a{text-underline-offset:3px}
 .sos-feedback[data-state="warning"]{border-color:#ffdc64;background:#493b13}
 .sos-feedback[data-state="error"]{border-color:#ff9b9b;background:#541d1d}
 .blind-page .sos-feedback{position:fixed;z-index:90;top:12px;left:12px;right:12px;width:auto;margin:0;box-shadow:0 5px 24px #000b}
+
+/* Action-page consent is an inline notice above the main actions, never a transient modal overlay. */
+.consent-gate.consent-inline{display:block;position:relative;inset:auto;z-index:auto;margin:16px 0;padding:0;background:transparent;overflow:visible}
+.consent-inline .consent-card{width:100%;max-height:none;overflow:visible;padding:18px;border:1px solid #d9b56f;border-radius:16px;background:#1f2725;box-shadow:none}
+.consent-inline .consent-card h2{margin-top:0}
+.consent-inline .consent-card p{line-height:1.5}
