@@ -23,3 +23,27 @@ toggle.addEventListener('change',()=>{
  status('listener-status',toggle.checked?'Medicine announcements enabled across app pages.':'Medicine announcements paused.');
 });
 $('test-speech').addEventListener('click',()=>announceMedicine('Napa One'));
+
+const provisionButton=$('provision-device');
+const tokenOutput=$('device-token');
+const copyButton=$('copy-device-token');
+let issuedToken='';
+provisionButton.addEventListener('click',async()=>{
+ provisionButton.disabled=true;
+ status('provision-status','Authorizing this browser account…');
+ try{
+  const response=await fetch('/api/rfid/devices/provision',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:'{}'});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.ok||!/^[a-f0-9]{64}$/i.test(data.deviceToken||''))throw new Error(data.error||'Could not authorize the ESP32. Sign in and try again.');
+  issuedToken=data.deviceToken;
+  tokenOutput.textContent=issuedToken;
+  copyButton.disabled=false;
+  status('provision-status','ESP32 authorized for this account. Copy the token into Serial Monitor. This token is shown only once.');
+ }catch(error){status('provision-status',error.message);}
+ finally{provisionButton.disabled=false;}
+});
+copyButton.addEventListener('click',async()=>{
+ if(!issuedToken)return;
+ try{await navigator.clipboard.writeText(issuedToken);status('provision-status','Device token copied. Paste it into the ESP32 Serial Monitor.');}
+ catch{status('provision-status','Clipboard unavailable. Select and copy the token above manually.');}
+});
