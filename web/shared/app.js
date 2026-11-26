@@ -14,6 +14,14 @@ let activeRecognition=null,voiceStarting=false,phonePhoto=null,phonePhotoUrl=nul
 let sosArmedUntil=0,sosArmTimer=null,deepLinkHandled=false;
 const requestedAction=new URLSearchParams(location.search).get('action');
 const isBlindMode=location.pathname.replace(/\/+$/,'')==='/blind';
+const blindFeedback=$('#blind-feedback');
+if(isBlindMode&&status&&blindFeedback&&'MutationObserver' in window){
+ new MutationObserver(()=>{
+  const message=status.textContent.trim();
+  blindFeedback.textContent=message;
+  blindFeedback.hidden=!message||message.startsWith('Ready. Four main actions');
+ }).observe(status,{subtree:true,childList:true,characterData:true});
+}
 const shakeTracker=createShakeSequenceTracker();
 let motionListenerAttached=false,sosVoiceRecognition=null,sosVoiceRestartTimer=null;
 let sosVoiceMode='wake',sosVoiceModeTimer=null,sosVoiceBlocked=false,sosVoiceFailures=0;
