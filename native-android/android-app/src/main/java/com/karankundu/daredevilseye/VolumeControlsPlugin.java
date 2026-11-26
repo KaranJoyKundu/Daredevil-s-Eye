@@ -112,6 +112,60 @@ public class VolumeControlsPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void fetchEsp32Snapshot(PluginCall call) {
+        String address = call.getString("url", "");
+        new Thread(() -> {
+            java.net.HttpURLConnection connection = null;
+            try {
+                java.net.URL url = new java.net.URL(address);
+                String host = url.getHost();
+                String[] octets = host.split("\\.");
+                if (url.getProtocol().equals("https") == false && !url.getProtocol().equals("http")) {
+                    throw new IllegalArgumentException("Only HTTP camera URLs are supported.");
+                }
+                if (octets.length != 4) throw new IllegalArgumentException("Camera must use a private IPv4 address.");
+                int a = Integer.parseInt(octets[0]), b = Integer.parseInt(octets[1]);
+                boolean privateHost = a == 10 || (a == 172 && b >= 16 && b <= 31) ||
+                    (a == 192 && b == 168) || (a == 169 && b == 254);
+                if (!privateHost) throw new IllegalArgumentException("Camera URL must point to a private local-network address.");
+                if (!url.getPath().equals("/capture")) throw new IllegalArgumentException("Only the ESP32 /capture endpoint is allowed.");
+                connection = (java.net.HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setConnectTimeout(3500);
+                connection.setReadTimeout(3500);
+                connection.setUseCaches(false);
+                connection.setRequestProperty("Accept", "image/jpeg");
+                int status = connection.getResponseCode();
+                if (status < 200 || status >= 300) throw new IllegalStateException("ESP32 returned HTTP " + status + ".");
+                String type = connection.getContentType();
+                if (type == null || !type.toLowerCase(java.util.Locale.ROOT).startsWith("image/")) {
+                    throw new IllegalStateException("ESP32 /capture did not return an image.");
+                }
+                java.io.InputStream input = connection.getInputStream();
+                java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream();
+                byte[] buffer = new byte[8192];
+                int total = 0, count;
+                while ((count = input.read(buffer)) != -1) {
+                    total += count;
+                    if (total > 4 * 1024 * 1024) throw new IllegalStateException("Camera image exceeds the 4 MB limit.");
+                    output.write(buffer, 0, count);
+                }
+                input.close();
+                if (total == 0) throw new IllegalStateException("ESP32 returned an empty image.");
+                JSObject result = new JSObject();
+                result.put("base64", Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP));
+                result.put("contentType", type);
+                result.put("bytes", total);
+                call.resolve(result);
+            } catch (Exception error) {
+                call.reject("ESP32 preview failed: " + error.getMessage(), error);
+            } finally {
+                if (connection != null) connection.disconnect();
+            }
+        }, "dee-esp32-snapshot").start();
+    }
+
+    @PluginMethod
     public void getPendingAction(PluginCall call) {
         android.content.SharedPreferences prefs = getContext().getSharedPreferences(VolumeKeyAccessibilityService.PREFS, Context.MODE_PRIVATE);
         JSObject result = new JSObject();
