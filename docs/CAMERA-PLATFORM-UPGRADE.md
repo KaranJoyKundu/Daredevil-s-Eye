@@ -177,7 +177,7 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - [x] Create fresh backup from current main.
 - [x] Create feature branch from current main.
 - [x] Record plan and PR #10 disposition.
-- [ ] Confirm current CI baseline on feature branch.
+- [x] Confirm current CI baseline on feature branch (GitHub Actions run 45731269120 passed on the exact PR head SHA).
 
 ### Phase 1 — device setup and camera foundation
 - [x] First-visit device selector after consent (initial UI and local state; requires browser QA).
@@ -197,7 +197,7 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - [x] No-flash and flash capture paths; Admin Image Lab now exposes a flash-capture action.
 - [ ] Validate all ESP32 controls on physical hardware.
 - [ ] Firmware CORS/preflight changes and actual hardware validation (firmware source is not in this repository branch).
-- [ ] Phone torch capability detection.
+- [x] Phone torch capability detection and guarded UI control (shown only when the active phone-camera track advertises torch support).
 
 ### Phase 3 — scene memory
 - [ ] Design and review Supabase migration/RLS.
@@ -273,3 +273,13 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - 2026-11-26: Use WebRTC for emergency video, Durable Objects for signalling only, and private R2 for incident media.
 - 2026-11-26: Camera and recording are never silently or unconditionally active; permission, visible status and explicit opt-in are required.
 - 2026-11-26: PR #10 remains an unmerged draft reference because it is based on an older backup and is not mergeable. Selectively port valuable fixes.
+
+
+### Phone torch implementation on 2026-11-26
+
+- Added feature detection using the active MediaStreamTrack capabilities; the phone-light control is hidden when the camera/browser does not advertise torch support.
+- Added guarded applyConstraints handling and user-visible failure feedback.
+- Added lifecycle handling so the torch control is hidden when the stream is stopped or the camera source changes.
+- Added regression coverage for capability detection, control wiring and Admin camera markup.
+- Updated the Action page cache-busting versions for the camera manager and app.
+- Physical torch behaviour still requires a real Android Chrome test; not every Galaxy A55/browser build exposes the torch constraint.
