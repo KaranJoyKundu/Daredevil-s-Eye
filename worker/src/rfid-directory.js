@@ -4,9 +4,9 @@ const randomHex=(bytes=32)=>Array.from(crypto.getRandomValues(new Uint8Array(byt
 const digest=async value=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',encoder.encode(value))),b=>b.toString(16).padStart(2,'0')).join('');
 const same=(a,b)=>{if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a.charCodeAt(i)^b.charCodeAt(i);return diff===0;};
 const validUser=id=>typeof id==='string'&&/^[0-9a-f-]{36}$/i.test(id);
-const normalizeUid=value=>String(value||'').replace(/[\\s:-]/g,'').toUpperCase();
+const normalizeUid=value=>String(value||'').replace(/[\s:-]/g,'').toUpperCase();
 const validUid=value=>/^(?:[A-F0-9]{8}|[A-F0-9]{14}|[A-F0-9]{20})$/.test(value);
-const validDate=value=>!value||/^\\d{4}-\\d{2}-\\d{2}$/.test(value);
+const validDate=value=>!value||/^\d{4}-\d{2}-\d{2}$/.test(value);
 const clean=(value,max)=>String(value||'').trim().slice(0,max);
 const dateLabel=value=>{if(!value)return '';const [year,month,day]=value.split('-').map(Number);const date=new Date(Date.UTC(year,month-1,day||1));return date.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});};
 
@@ -45,7 +45,7 @@ export class RFIDDirectory {
   }
   async claimPairing({code}){
     const value=String(code||'').trim();
-    if(!/^\\d{6}$/.test(value))return json({ok:false,error:'Enter the six-digit pairing code.'},400);
+    if(!/^\d{6}$/.test(value))return json({ok:false,error:'Enter the six-digit pairing code.'},400);
     const pairing=await this.storage.get('pairing');
     if(!pairing||pairing.expiresAt<Date.now()){await this.storage.delete('pairing');return json({ok:false,error:'Pairing code is invalid or expired.'},401);}
     if(pairing.attempts>=10){await this.storage.delete('pairing');return json({ok:false,error:'Pairing attempt limit reached. Generate a new code.'},429);}
