@@ -60,13 +60,21 @@ test('re-pairing invalidates the previous receiver token',async()=>{
  const newPoll=await room.fetch(post('/poll',{receiverToken:second.receiverToken}));
  assert.equal(newPoll.status,200);
 });
-test('revoking receiver session invalidates old token and active event',async()=>{
+test('revoking receiver session requires its token and invalidates the old session',async()=>{
  const room=new SOSRoom(makeRoomState());
  const paired=await (await room.fetch(post('/pair',{}))).json();
- await room.fetch(post('/trigger',{}));
- await room.fetch(post('/revoke',{}));
+ const triggered=await (await room.fetch(post('/trigger',{}))).json();
+ const denied=await room.fetch(post('/revoke',{}));
+ assert.equal(denied.status,403);
+ const stillActive=await (await room.fetch(post('/poll',{receiverToken:paired.receiverToken}))).json();
+ assert.equal(stillActive.active,true);
+ const revoked=await room.fetch(post('/revoke',{receiverToken:paired.receiverToken}));
+ assert.equal(revoked.status,200);
+ assert.equal((await revoked.json()).revoked,true);
  const response=await room.fetch(post('/poll',{receiverToken:paired.receiverToken}));
  assert.equal(response.status,403);
+ const state=await room.state.storage.get('activeEvent');
+ assert.equal(state,undefined);
 });
 test('new six-character invitation invalidates an old receiver and replaces old invitation',async()=>{
  const {directory,rooms}=makeDirectory();
