@@ -174,4 +174,14 @@ public class MainActivity extends BridgeActivity {
             }
         }, attempt == 0 ? 450L : 500L);
     }
+    /** Android system Back first navigates within the WebView, keeping secondary pages reachable. */
+    @Override
+    public void onBackPressed() {
+        if (getBridge() != null && getBridge().getWebView() != null && getBridge().getWebView().canGoBack()) {
+            getBridge().getWebView().goBack();
+            return;
+        }
+        super.onBackPressed();
+    }
+
 }
