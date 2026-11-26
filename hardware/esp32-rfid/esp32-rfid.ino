@@ -213,7 +213,7 @@ bool sendMedicine(const String &uid) {
     lastQueueRetryAt = millis();
     return false;
   }
-  Serial.printf("[PASS] EVENT ACCEPTED · %s · UID %s\n", medicine.c_str(), uid.c_str());
+  Serial.printf("[PASS] EVENT ACCEPTED · UID %s\n", uid.c_str());
   return true;
 }
 
