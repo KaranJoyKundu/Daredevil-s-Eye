@@ -56,7 +56,7 @@ let editingUid='';
 const medicineFields=['uid','name','strength','expiryDate','instructions','announcementText','expiredText'];
 const fieldId=name=>({uid:'medicine-uid',name:'medicine-name',strength:'medicine-strength',expiryDate:'medicine-expiry',instructions:'medicine-instructions',announcementText:'medicine-announcement',expiredText:'medicine-expired'}[name]);
 const field=name=>$(fieldId(name));
-const normalizedUid=value=>String(value||'').replace(/[\\s:-]/g,'').toUpperCase();
+const normalizedUid=value=>String(value||'').replace(/[\s:-]/g,'').toUpperCase();
 function medicineMessage(item){
  const today=new Date().toISOString().slice(0,10);
  if(item.expiryDate&&item.expiryDate<today)return item.expiredText||'Warning! This medicine has expired.';
