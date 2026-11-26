@@ -5,6 +5,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.provider.Settings;
+import android.speech.tts.TextToSpeech;
+import android.net.Uri;
+import android.content.ContentValues;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.util.Base64;
+import java.util.Locale;
 import android.text.TextUtils;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.PluginCall;
@@ -18,10 +25,13 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 @CapacitorPlugin(name = "VolumeControls")
 public class VolumeControlsPlugin extends Plugin {
     private BroadcastReceiver receiver;
+    private TextToSpeech textToSpeech;
+    private volatile boolean ttsReady = false;
 
     @Override
     public void load() {
         super.load();
+        textToSpeech = new TextToSpeech(getContext(), status -> ttsReady = status == TextToSpeech.SUCCESS);
         receiver = new BroadcastReceiver() {
             @Override public void onReceive(Context context, Intent intent) {
                 if (intent == null) return;
@@ -42,6 +52,34 @@ public class VolumeControlsPlugin extends Plugin {
 
 
 
+
+
+    @PluginMethod public void speakText(PluginCall call) {
+        String text=call.getString("text",""), language=call.getString("language","en-US");
+        float rate=(float)call.getDouble("rate",1.0), pitch=(float)call.getDouble("pitch",1.0);
+        if(text.trim().isEmpty()){call.reject("No text to speak.");return;}
+        if(!ttsReady||textToSpeech==null){call.reject("Android speech engine is still starting. Try again shortly.");return;}
+        Locale locale=language.toLowerCase().startsWith("bn")?new Locale("bn","BD"):Locale.US;
+        int availability=textToSpeech.setLanguage(locale);
+        if(availability==TextToSpeech.LANG_MISSING_DATA||availability==TextToSpeech.LANG_NOT_SUPPORTED){
+          if(language.toLowerCase().startsWith("bn")){call.reject("Bengali speech data is not installed. Install Bengali voice data in Android Text-to-Speech settings.");return;}
+          textToSpeech.setLanguage(Locale.US);
+        }
+        textToSpeech.setSpeechRate(Math.max(.65f,Math.min(1.5f,rate)));textToSpeech.setPitch(Math.max(.65f,Math.min(1.5f,pitch)));
+        if(textToSpeech.speak(text,TextToSpeech.QUEUE_ADD,null,"dee-"+System.currentTimeMillis())==TextToSpeech.ERROR)call.reject("Android could not start speech.");else call.resolve();
+    }
+    @PluginMethod public void stopSpeech(PluginCall call){if(textToSpeech!=null)textToSpeech.stop();call.resolve();}
+    @PluginMethod public void saveImage(PluginCall call){
+      String dataUrl=call.getString("dataUrl",""),filename=call.getString("filename","daredevils-eye-photo.jpg");
+      try{int comma=dataUrl.indexOf(',');if(comma<0)throw new IllegalArgumentException("Invalid image data.");
+        byte[] bytes=Base64.decode(dataUrl.substring(comma+1),Base64.DEFAULT);if(bytes.length==0)throw new IllegalArgumentException("Photo is empty.");
+        ContentValues values=new ContentValues();values.put(MediaStore.Images.Media.DISPLAY_NAME,filename);values.put(MediaStore.Images.Media.MIME_TYPE,"image/jpeg");
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.Q)values.put(MediaStore.Images.Media.RELATIVE_PATH,Environment.DIRECTORY_PICTURES+"/Daredevils Eye");
+        Uri uri=getContext().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values);if(uri==null)throw new IllegalStateException("Could not create Pictures entry.");
+        try(java.io.OutputStream out=getContext().getContentResolver().openOutputStream(uri)){if(out==null)throw new IllegalStateException("Could not open photo destination.");out.write(bytes);}
+        JSObject result=new JSObject();result.put("message","Photo saved in Pictures/Daredevils Eye.");result.put("uri",uri.toString());call.resolve(result);
+      }catch(Exception error){call.reject("Could not save photo: "+error.getMessage(),error);}
+    }
 
     @PluginMethod
     public void getPendingAction(PluginCall call) {
@@ -113,6 +151,7 @@ public class VolumeControlsPlugin extends Plugin {
 
     @Override
     protected void handleOnDestroy() {
+        if(textToSpeech!=null){textToSpeech.stop();textToSpeech.shutdown();textToSpeech=null;}
         if (receiver != null) {
             try { getContext().unregisterReceiver(receiver); } catch (Exception ignored) {}
             receiver = null;

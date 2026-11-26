@@ -195,6 +195,16 @@ function runSpeechQueue(chunks, options, settings, runId, voices) {
 }
 
 export function speak(text, options = {}) {
+  const nativeTts=window.DaredevilVolumeControls;
+  if(window.Capacitor?.isNativePlatform?.()&&nativeTts?.speakText){
+    const settings=getSettings(),language=options.lang||settings.speechLanguage||'en-US',chunks=splitSpeechText(text);
+    if(!chunks.length){options.onEnd?.();return {queued:false};}
+    stopSpeaking();let cancelled=false,index=0;
+    const next=async()=>{if(cancelled)return;if(index>=chunks.length){options.onEnd?.();return;}
+      try{await nativeTts.speakText({text:chunks[index],language:resolveSpeechLanguage(chunks[index],language),rate:options.rate??settings.speechRate??1,pitch:options.pitch??settings.speechPitch??1});index++;if(index===1)options.onStart?.();if(!cancelled)setTimeout(next,100);}
+      catch(error){if(!cancelled)options.onError?.('Android text-to-speech failed: '+(error?.message||'check installed speech engine and language data')+'.');}};
+    next();return {queued:true,cancel:()=>{cancelled=true;nativeTts.stopSpeech?.();}};
+  }
   if (typeof window === 'undefined' || !('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
     options.onError?.('Device speech synthesis is unavailable in this browser.');
     return false;
@@ -284,6 +294,7 @@ export async function speakResponse(text, options = {}) {
 }
 
 export function stopSpeaking() {
+  try { if (window.Capacitor?.isNativePlatform?.()) window.DaredevilVolumeControls?.stopSpeech?.(); } catch {}
   stopDeviceSpeech();
   if(currentAudio){currentAudio.pause();currentAudio=null;}
   if(currentAudioUrl){URL.revokeObjectURL(currentAudioUrl);currentAudioUrl=null;}
