@@ -340,6 +340,134 @@ async function handleSceneMemoryApi(request, env, url) {
   return json({ error: 'Visual-memory route not found.' }, 404);
 }
 
+
+function recordingOwnerFilter(owner) {
+  return owner.user
+    ? 'user_id=eq.' + encodeURIComponent(owner.user.id) + '&guest_session_hash=is.null'
+    : 'guest_session_hash=eq.' + encodeURIComponent(owner.guestHash) + '&user_id=is.null';
+}
+async function getOwnedRecording(env, owner, id) {
+  const query = 'emergency_recordings?select=id,object_prefix,status,total_bytes,chunk_count,mime_type,duration_seconds,created_at,expires_at,camera_source&' + recordingOwnerFilter(owner) + '&id=eq.' + encodeURIComponent(id) + '&limit=1';
+  const response = await supabaseRest(env, query);
+  if (!response.ok) throw new Error('Could not load the emergency recording.');
+  const rows = await response.json().catch(() => []);
+  return rows[0] || null;
+}
+async function deleteRecordingObjects(bucket, prefix) {
+  let cursor;
+  do {
+    const page = await bucket.list({ prefix, ...(cursor ? { cursor } : {}) });
+    const keys = (page.objects || []).map(item => item.key);
+    if (keys.length) await bucket.delete(keys);
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+}
+async function handleRecordingApi(request, env, url) {
+  if (['POST','DELETE'].includes(request.method)) {
+    const origin = request.headers.get('origin');
+    if (!origin) return json({ error: 'A same-origin request is required for emergency recording changes.' }, 403);
+    try { if (new URL(origin).origin !== url.origin) return json({ error: 'Cross-origin emergency recording changes are not allowed.' }, 403); }
+    catch { return json({ error: 'Invalid request origin.' }, 403); }
+  }
+  if (!supabaseConfigured(env) || !env.INCIDENT_RECORDINGS) {
+    return json({ error: 'Private emergency recording storage is not configured. The live SOS alert and video share can still work.' }, 503);
+  }
+  const owner = await resolveSceneMemoryOwner(request, env);
+  if (!owner) return json({ error: 'Sign in or create a private guest session before recording.' }, 401);
+  if (url.pathname === '/api/recordings' && request.method === 'GET') {
+    const query = 'emergency_recordings?select=id,camera_source,mime_type,status,duration_seconds,total_bytes,chunk_count,created_at,completed_at,expires_at&' + recordingOwnerFilter(owner) + '&order=created_at.desc&limit=50';
+    const response = await supabaseRest(env, query);
+    if (!response.ok) return json({ error: 'Could not load emergency recordings.' }, 502);
+    return json({ ok: true, recordings: await response.json() });
+  }
+  if (url.pathname === '/api/recordings' && request.method === 'POST') {
+    let body; try { body = await request.json(); } catch { return json({ error: 'Invalid emergency recording request.' }, 400); }
+    const deviceId = String(body.deviceId || '').toLowerCase();
+    const cameraSource = String(body.cameraSource || '');
+    const mimeType = String(body.mimeType || 'video/webm').toLowerCase();
+    if (!/^[a-f0-9]{32}$/.test(deviceId) || !['phone','esp32'].includes(cameraSource) || !/^video\/(?:webm|mp4)(?:;codecs=[a-z0-9,._-]+)?$/.test(mimeType)) {
+      return json({ error: 'Invalid recording device, camera source or video format.' }, 400);
+    }
+    const id = crypto.randomUUID();
+    const ownerKey = owner.user ? owner.user.id : 'guest-' + owner.guestHash;
+    const record = {
+      id, user_id: owner.user?.id || null, guest_session_hash: owner.guestHash,
+      device_id: deviceId, camera_source: cameraSource, mime_type: mimeType,
+      object_prefix: 'incidents/' + ownerKey + '/' + id + '/',
+      status: 'recording', duration_seconds: 0, total_bytes: 0, chunk_count: 0
+    };
+    const response = await supabaseRest(env, 'emergency_recordings', { method: 'POST', body: record });
+    if (!response.ok) return json({ error: 'Could not create private emergency recording metadata.' }, 502);
+    return json({ ok: true, recordingId: id, maxDurationSeconds: 300, retentionDays: 30 });
+  }
+  const match = /^\/api\/recordings\/([0-9a-f-]{36})(?:\/(?:chunks\/(\d+)|complete))?$/.exec(url.pathname);
+  if (!match) return json({ error: 'Emergency recording route not found.' }, 404);
+  const id = match[1], chunkIndex = match[2] === undefined ? null : Number(match[2]);
+  let row;
+  try { row = await getOwnedRecording(env, owner, id); }
+  catch (error) { return json({ error: error.message }, 502); }
+  if (!row) return json({ error: 'This recording does not exist in your private history.' }, 404);
+  if (request.method === 'POST' && chunkIndex !== null) {
+    if (row.status !== 'recording') return json({ error: 'This recording is no longer accepting video chunks.' }, 409);
+    if (!Number.isInteger(chunkIndex) || chunkIndex < 0 || chunkIndex >= 120) return json({ error: 'Invalid recording chunk number.' }, 400);
+    const bytes = await request.arrayBuffer();
+    if (!bytes.byteLength || bytes.byteLength > 1_000_000) return json({ error: 'Each recording chunk must be between 1 byte and 1 MB.' }, 413);
+    const key = row.object_prefix + String(chunkIndex).padStart(4, '0') + '.part';
+    if (chunkIndex < row.chunk_count) {
+      const existing = await env.INCIDENT_RECORDINGS.head(key);
+      if (existing) return json({ ok: true, duplicate: true, chunkCount: row.chunk_count });
+      return json({ error: 'A previously uploaded recording chunk is missing. Stop this recording and retry.' }, 409);
+    }
+    if (chunkIndex !== row.chunk_count) return json({ error: 'Recording chunks must be uploaded in order.' }, 409);
+    if (Number(row.total_bytes || 0) + bytes.byteLength > 50 * 1024 * 1024) return json({ error: 'The five-minute recording reached its 50 MB storage limit.' }, 413);
+    await env.INCIDENT_RECORDINGS.put(key, bytes, { httpMetadata: { contentType: 'application/octet-stream' } });
+    const patch = { total_bytes: Number(row.total_bytes || 0) + bytes.byteLength, chunk_count: Number(row.chunk_count || 0) + 1 };
+    const updated = await supabaseRest(env, 'emergency_recordings?id=eq.' + encodeURIComponent(id) + '&' + recordingOwnerFilter(owner), { method: 'PATCH', body: patch });
+    if (!updated.ok) { await env.INCIDENT_RECORDINGS.delete(key); return json({ error: 'Video chunk was uploaded but its metadata could not be updated.' }, 502); }
+    return json({ ok: true, chunkCount: patch.chunk_count, totalBytes: patch.total_bytes });
+  }
+  if (request.method === 'POST' && url.pathname.endsWith('/complete')) {
+    let body; try { body = await request.json(); } catch { return json({ error: 'Invalid recording completion request.' }, 400); }
+    const duration = Math.max(1, Math.min(300, Math.floor(Number(body.durationSeconds) || 0)));
+    if (row.status !== 'recording' || !row.chunk_count) return json({ error: 'No uploaded video chunks are available to complete.' }, 409);
+    const patch = { status: 'complete', duration_seconds: duration, completed_at: new Date().toISOString() };
+    const updated = await supabaseRest(env, 'emergency_recordings?id=eq.' + encodeURIComponent(id) + '&' + recordingOwnerFilter(owner), { method: 'PATCH', body: patch });
+    if (!updated.ok) return json({ error: 'Could not mark the emergency recording complete.' }, 502);
+    return json({ ok: true, recordingId: id, durationSeconds: duration });
+  }
+  if (request.method === 'GET' && chunkIndex === null) {
+    if (row.status !== 'complete' || !row.chunk_count) return json({ error: 'This recording is not ready for playback yet.' }, 409);
+    let index = 0;
+    const stream = new ReadableStream({
+      async pull(controller) {
+        if (index >= row.chunk_count) { controller.close(); return; }
+        try {
+          const object = await env.INCIDENT_RECORDINGS.get(row.object_prefix + String(index).padStart(4, '0') + '.part');
+          if (!object) throw new Error('A video segment is missing.');
+          controller.enqueue(await object.arrayBuffer());
+          index += 1;
+        } catch (error) { controller.error(error); }
+      }
+    });
+    const download = url.searchParams.get('download') === '1';
+    return new Response(stream, { headers: {
+      'content-type': row.mime_type || 'video/webm',
+      'content-length': String(row.total_bytes || 0),
+      'content-disposition': (download ? 'attachment' : 'inline') + '; filename="daredevils-eye-incident-' + id + '.' + (String(row.mime_type).includes('mp4') ? 'mp4' : 'webm') + '"',
+      'cache-control': 'private, no-store',
+      'x-content-type-options': 'nosniff'
+    }});
+  }
+  if (request.method === 'DELETE' && chunkIndex === null) {
+    try { await deleteRecordingObjects(env.INCIDENT_RECORDINGS, row.object_prefix); }
+    catch { return json({ error: 'Could not delete all private video chunks. The recording record was kept so deletion can be retried.' }, 502); }
+    const deleted = await supabaseRest(env, 'emergency_recordings?id=eq.' + encodeURIComponent(id) + '&' + recordingOwnerFilter(owner), { method: 'DELETE' });
+    if (!deleted.ok) return json({ error: 'Video files were removed, but the metadata could not be deleted.' }, 502);
+    return json({ ok: true, deleted: true });
+  }
+  return json({ error: 'Unsupported emergency recording method.' }, 405);
+}
+
 async function handleAccountApi(request,env,url) {
   if(['POST','PUT','PATCH','DELETE'].includes(request.method)){
     const origin=request.headers.get('origin');
@@ -1000,6 +1128,7 @@ export async function handleApi(request, env = {}) {
     return json({ok:false,error:'RFID route not found.'},404);
   }
   if(url.pathname.startsWith('/api/memory')) return handleSceneMemoryApi(request,env,url);
+  if(url.pathname.startsWith('/api/recordings')) return handleRecordingApi(request,env,url);
   if(url.pathname.startsWith('/api/account/')||url.pathname.startsWith('/api/guest/')) return handleAccountApi(request,env,url);
 
   if (request.method === 'GET' && url.pathname === '/api/health') {
