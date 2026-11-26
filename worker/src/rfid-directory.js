@@ -184,7 +184,10 @@ export class RFIDDirectory {
     if(!validUser(userId)||typeof eventId!=='string')return json({ok:false,error:'Invalid event acknowledgement.'},400);
     const events=await this.storage.get('events')||[],event=events.find(item=>item.id===eventId&&item.userId===userId);
     if(!event)return json({ok:false,error:'Event not found.'},404);
-    await this.storage.put('events',events.filter(item=>item.id!==eventId));\n    const activeKey='active-speech:'+userId,active=await this.storage.get(activeKey);\n    if(active?.eventId===eventId)await this.storage.delete(activeKey);\n    return json({ok:true,acknowledged:true});
+    await this.storage.put('events',events.filter(item=>item.id!==eventId));
+    const activeKey='active-speech:'+userId,active=await this.storage.get(activeKey);
+    if(active?.eventId===eventId)await this.storage.delete(activeKey);
+    return json({ok:true,acknowledged:true});
   }
   async listDevices({userId}){
     if(!validUser(userId))return json({ok:false,error:'A signed-in account is required.'},401);
