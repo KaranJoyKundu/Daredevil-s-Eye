@@ -74,6 +74,35 @@ export function getPhoneCameraState() {
   return { active: Boolean(track && track.readyState === 'live'), label: track?.label || '', settings: track?.getSettings?.() || {} };
 }
 
+/** Report whether the active phone camera exposes a controllable torch. */
+export function getPhoneTorchState() {
+  const track = phoneStream?.getVideoTracks().find(item => item.readyState === 'live');
+  if (!track) return { available: false, enabled: false };
+  let capabilities = {};
+  try { capabilities = track.getCapabilities?.() || {}; } catch {}
+  return {
+    available: Object.prototype.hasOwnProperty.call(capabilities, 'torch'),
+    enabled: track.getSettings?.().torch === true
+  };
+}
+
+/** Toggle the phone camera torch only when the active track advertises support. */
+export async function setPhoneTorch(enabled) {
+  const track = phoneStream?.getVideoTracks().find(item => item.readyState === 'live');
+  if (!track) throw new Error('Enable the phone camera before using its light.');
+  let capabilities = {};
+  try { capabilities = track.getCapabilities?.() || {}; } catch {}
+  if (!Object.prototype.hasOwnProperty.call(capabilities, 'torch')) {
+    throw new Error('This phone camera or browser does not support a controllable torch.');
+  }
+  try {
+    await track.applyConstraints({ advanced: [{ torch: Boolean(enabled) }] });
+  } catch {
+    throw new Error('The phone camera could not change its light. Try turning it off and on again.');
+  }
+  return getPhoneTorchState();
+}
+
 export function stopPhoneCamera() {
   phoneStream?.getTracks().forEach(track => track.stop());
   if (phoneVideo) phoneVideo.srcObject = null;
