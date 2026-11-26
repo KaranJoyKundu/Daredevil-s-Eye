@@ -44,6 +44,16 @@ For photos, use MediaStore/Pictures on Android 10+, correct pending-write lifecy
 ### 8. Logo and visual system
 Develop an original minimalist eye/perception/radar-inspired symbol that is readable at small sizes and high contrast, without cartoon, generic robot, or trademark imitation. Integrate master SVG/vector, adaptive launcher foreground/background/monochrome, splash, favicon and web/PWA variants. Verify generated artwork is actually integrated into assets.
 
+## Logo concept exploration
+
+Four original SVG directions are now committed under `web/icons/`:
+- `daredevils-eye-v1.svg` — Radar Eye: eye + outward signal arcs (recommended starting point).
+- `concept-b-voice-vision.svg` — Voice Vision: waveform inside an eye.
+- `concept-c-shield-eye.svg` — Shield Eye: protection + perception.
+- `concept-d-aperture-eye.svg` — Aperture Eye: camera/aperture geometry.
+
+The generated brand boards are concept references, not production assets. The SVGs are editable vector candidates. Before choosing one, preview at 24/48/96 dp, monochrome, light/dark backgrounds and Android adaptive-icon safe zones. Once selected, create the adaptive foreground/background/monochrome resources, web favicon/PWA assets and splash integration. Do not claim launcher branding is complete until an APK is built and inspected.
+
 ### 9. SemVer and release
 Use semantic versioning, starting target **1.0.0**. Establish a single source of truth for version name/build metadata, monotonic Android versionCode, changelog, tag/release notes and APK naming (e.g. `DaredevilsEye-v1.0.0-android.apk`). Maintain secure release keystore backup and protected GitHub secrets. Do not sign a public release with a debug key. Confirm upgrade signature continuity before publishing.
 
