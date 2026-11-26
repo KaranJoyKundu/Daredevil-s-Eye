@@ -1,5 +1,14 @@
 # Changelog
 
+## 26 November 2026 — Action/Blind startup recovery (hotfix in progress)
+
+- Fixed a fatal startup-order bug in the shared browser app: the removed consent-panel initializer called `showCameraSetup()` before camera-panel `const` bindings were initialized, aborting the module before any user-action handlers were registered.
+- Removed that obsolete initializer; camera panels continue to render after their bindings are initialized.
+- Bumped the Action and Blind app script URL to force browsers to fetch the corrected module.
+- Kept the requested privacy design: informational notice only, with no consent popup, buttons, checkbox or photo-history toggle.
+- Documented the failed explicit static-page routing attempt: PR #66 introduced a redirect loop and PR #67 reverted it. Do not restore that rewrite.
+- Production verification is pending CI, deployment and live interaction tests.
+
 ## 20 November 2026 — hackathon release (PRs #14–#24)
 
 - Fixed overlapping landing-page sections and footer on short desktop screens (#14).
