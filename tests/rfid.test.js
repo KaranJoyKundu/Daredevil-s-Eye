@@ -75,7 +75,7 @@ test('medicine page is a separate nav destination and global listener is loaded 
  assert.match(pageScript,/scan-napa/);
  assert.doesNotMatch(page,/generate-code|pair-code/);
  assert.match(page,/Authorize ESP32/);
- assert.match(pageScript,/api\\/rfid\\/devices\\/provision/);
+ assert.ok(pageScript.includes('/api/rfid/devices/provision'));
 });
 
 test('ESP32 firmware refuses unverified TLS and contains both registered UID mappings',()=>{
