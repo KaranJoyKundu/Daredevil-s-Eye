@@ -220,7 +220,7 @@ export class SOSRoom {
     const sessionId = String(body.sessionId || '');
     const sender = /^[a-f0-9]{32}$/.test(String(body.deviceId || '').toLowerCase());
     const receiver = await this.receiverAuthorized(body.receiverToken);
-    const activeSession = session && session.active && session.expiresAt > now && session.id === sessionId;
+    const activeSession = session && session.active && session.expiresAt > now && (action === 'video-poll' ? (!sessionId || session.id === sessionId) : session.id === sessionId);
     const stopSession = async reason => {
       if (!activeSession) return json({ ok: false, error: 'The emergency video session is no longer active.' }, 404);
       await this.state.storage.put('videoSession', { ...session, active: false, stoppedAt: now, stopReason: reason });
