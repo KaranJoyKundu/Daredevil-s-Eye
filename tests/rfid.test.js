@@ -225,3 +225,35 @@ test('ESP32 firmware sends arbitrary card UIDs and never contains a fixed medici
  assert.doesNotMatch(firmware,/UNKNOWN_CARD/);
  assert.doesNotMatch(firmware,/setInsecure\s*\(/);
 });
+
+
+test('RFID polling claims one event, coalesces backlog to newest, and does not replay while speech is active',async()=>{
+ const {post}=fixture();
+ const device=await (await post('devices/provision',{userId:USER})).json();
+ await post('medicines/save',{userId:USER,medicine:medicine()});
+ await post('medicines/save',{userId:USER,medicine:medicine({uid:'0A0B0C0D',name:'Second medicine'})});
+ await post('event/submit',{uid:'A1618C04',eventId:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'},device.deviceToken);
+ await post('event/submit',{uid:'0A0B0C0D',eventId:'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'},device.deviceToken);
+ const first=(await (await post('event/poll',{userId:USER})).json()).events;
+ assert.equal(first.length,1);
+ assert.equal(first[0].medicine,'Second medicine');
+ const repeated=(await (await post('event/poll',{userId:USER})).json()).events;
+ assert.equal(repeated.length,0);
+ await post('event/ack',{userId:USER,eventId:first[0].id});
+ assert.equal((await (await post('event/poll',{userId:USER})).json()).events.length,0);
+});
+
+test('a new scan waits until the current announcement is acknowledged',async()=>{
+ const {post}=fixture();
+ const device=await (await post('devices/provision',{userId:USER})).json();
+ await post('medicines/save',{userId:USER,medicine:medicine()});
+ await post('medicines/save',{userId:USER,medicine:medicine({uid:'0A0B0C0D',name:'Next medicine'})});
+ await post('event/submit',{uid:'A1618C04',eventId:'cccccccccccccccccccccccccccccccc'},device.deviceToken);
+ const current=(await (await post('event/poll',{userId:USER})).json()).events[0];
+ await post('event/submit',{uid:'0A0B0C0D',eventId:'dddddddddddddddddddddddddddddddd'},device.deviceToken);
+ assert.equal((await (await post('event/poll',{userId:USER})).json()).events.length,0);
+ await post('event/ack',{userId:USER,eventId:current.id});
+ const next=(await (await post('event/poll',{userId:USER})).json()).events;
+ assert.equal(next.length,1);
+ assert.equal(next[0].medicine,'Next medicine');
+});
