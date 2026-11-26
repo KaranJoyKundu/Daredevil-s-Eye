@@ -361,3 +361,27 @@ $('#test-image-button').addEventListener('click',async()=>{
  }catch(error){$('#test-status').textContent='AI test failed: '+(error.message||'Unknown error');}
  finally{button.disabled=!selectedFile;}
 });
+
+
+// Admin volume-key test: reports native bridge events without executing actions.
+const volumeTestStart=$('#volume-test-start'),volumeTestStop=$('#volume-test-stop');
+let volumeTestActive=false;
+function volumeActionLabel(action){return ({describe:'Volume Up → Describe',ask:'Volume Down → Ask AI',repeat:'Double Volume Up → Repeat',sos:'Both keys held → SOS confirmation'})[action]||('Detected: '+String(action||'unknown'));}
+window.addEventListener('deeVolumeAction',event=>{
+ const detail=event.detail||{};
+ const action=detail.action||detail;
+ if($('#volume-test-last'))$('#volume-test-last').textContent='Last detected action: '+volumeActionLabel(action);
+ if(volumeTestActive&&$('#volume-test-status'))$('#volume-test-status').textContent='Native volume shortcut event detected. '+volumeActionLabel(action);
+});
+volumeTestStart?.addEventListener('click',()=>{
+ volumeTestActive=true;
+ volumeTestStart.disabled=true;
+ if(volumeTestStop)volumeTestStop.disabled=false;
+ if($('#volume-test-status'))$('#volume-test-status').textContent='Listening while app is foregrounded. Press the mapped volume keys now.';
+});
+volumeTestStop?.addEventListener('click',()=>{
+ volumeTestActive=false;
+ volumeTestStart.disabled=false;
+ if(volumeTestStop)volumeTestStop.disabled=true;
+ if($('#volume-test-status'))$('#volume-test-status').textContent='Test stopped.';
+});
