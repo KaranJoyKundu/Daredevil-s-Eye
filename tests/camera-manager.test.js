@@ -50,7 +50,7 @@ test('Action camera setup is wired to the camera manager and persists device cho
   assert.match(app, /data-camera-source/);
   assert.match(app, /saveSettings\(\{cameraSource:source,cameraSetupComplete:true\}\)/);
   assert.match(app, /startPhoneCamera\(phoneCameraPreview/);
-  assert.match(app, /window\.addEventListener\('pagehide',\(\)=>stopPhoneCamera\(\)\)/);
+  assert.match(app, /window\\.addEventListener\\('pagehide',\\(\\)=>\\{stopPhoneCamera\\(\\);syncPhoneTorchControl\\(\\);\\}\\)/);
   assert.match(app, /document\.addEventListener\('visibilitychange'/);
 });
 
