@@ -207,6 +207,12 @@ document.addEventListener('visibilitychange',()=>{
   shakeTracker.reset();
  }else syncSosAutomation();
 });
+function setSosFeedback(message,state='info'){
+ const feedback=$('#sos-feedback');if(!feedback)return;
+ const settings=getSettings();feedback.textContent=settings.speechLanguage==='bn-BD'?localizeSpeech(message):message;
+ feedback.dataset.state=state;feedback.hidden=!message;
+}
+function resetSosButton(){const button=document.querySelector('[data-action="sos"]');if(button)button.setAttribute('aria-pressed','false');}
 function announce(message){const settings=getSettings(),spoken=localizeSpeech(message);if(status)status.textContent=settings.speechLanguage==='bn-BD'?spoken:message;speakSosStatus(message);}
 function actionVibration(action){const patterns={describe:[65],ask:[55,90,55],sos:[260],repeat:[45,65,45,65,45],help:[35,65,35]};vibrate(patterns[action]||60);}
 async function acquireWakeLock(){if(!navigator.wakeLock?.request)return null;try{return await navigator.wakeLock.request('screen');}catch{return null;}}
@@ -297,23 +303,39 @@ function speakHelp(){
 }
 async function deliverSos(){
  if(sosDispatching)return;
- sosDispatching=true;stopSosVoiceListener();
+ sosDispatching=true;stopSosVoiceListener();setSosFeedback('Sending SOS alert to the paired phone…','sending');
  const settings=getSettings(),button=document.querySelector('[data-action="sos"]');if(button)button.disabled=true;let wakeLock=null;
  try{
   wakeLock=await acquireWakeLock();actionVibration('sos');
   const result=await requestAI('/api/sos/trigger',{deviceId:settings.deviceId});
-  if(result.notificationAccepted)announce('SOS is stored. The push service accepted the notification request, but delivery is not confirmed.');
-  else announce('SOS is stored, but no push notification was accepted. Keep the receiver connected to the internet and notifications enabled.');
+  const message=result.message||(result.notificationAccepted?'SOS alert accepted by the push service. Delivery is not yet confirmed.':'SOS alert stored. The receiver must be online and notifications enabled.');
+  setSosFeedback(message,result.notificationAccepted?'success':'warning');announce(message);
   const callLink=$('#sos-call-link');if(settings.emergencyPhone&&callLink){callLink.href='tel:'+settings.emergencyPhone.replace(/[^+0-9]/g,'');callLink.hidden=false;callLink.style.display='block';callLink.textContent='Call '+(settings.emergencyName||'trusted contact')+' now';}
- }catch(error){const message=error.message||'SOS alert could not be sent. Pair a receiver in Admin first.';if(status)status.textContent=message;speak(spokenError(error),{lang:getSettings().speechLanguage||'en-US'});}
- finally{if(button)button.disabled=false;await releaseWakeLock(wakeLock);sosDispatching=false;startSosVoiceListener();}
+ }catch(error){
+  const message=error.message||'SOS alert could not be sent. Pair a receiver in Admin first.';
+  setSosFeedback(message,'error');if(status)status.textContent=message;
+  speak(spokenError(error),{lang:getSettings().speechLanguage||'en-US'});
+ }finally{
+  if(button)button.disabled=false;resetSosButton();await releaseWakeLock(wakeLock);sosDispatching=false;startSosVoiceListener();
+ }
 }
 function armSos({shortcut=false}={}){
- const now=Date.now();
- if(sosArmedUntil>now){clearTimeout(sosArmTimer);sosArmedUntil=0;announce('SOS confirmed. Sending the alert now.');deliverSos();return;}
+ const now=Date.now(),button=document.querySelector('[data-action="sos"]');
+ if(sosArmedUntil>now){
+  clearTimeout(sosArmTimer);sosArmedUntil=0;
+  if(button)button.setAttribute('aria-pressed','false');
+  setSosFeedback('SOS confirmed. Sending the alert to the paired phone…','sending');
+  announce('SOS confirmed. Sending the alert now.');deliverSos();return;
+ }
  const windowMs=shortcut?30000:5000;sosArmedUntil=now+windowMs;actionVibration('sos');
- announce(shortcut?'SOS shortcut opened. Tap the SOS button once within thirty seconds to confirm sending the alert.':'SOS is armed. Tap SOS again within five seconds to confirm and send the alert. No alert has been sent yet.');
- clearTimeout(sosArmTimer);sosArmTimer=setTimeout(()=>{sosArmedUntil=0;announce('SOS confirmation expired. No alert was sent.');},windowMs);
+ if(button)button.setAttribute('aria-pressed','true');
+ const message=shortcut?'SOS shortcut opened. Tap the SOS button once within thirty seconds to confirm sending the alert.':'SOS is armed. Tap SOS again within five seconds to confirm and send the alert. No alert has been sent yet.';
+ setSosFeedback(message,'armed');announce(message);
+ clearTimeout(sosArmTimer);sosArmTimer=setTimeout(()=>{
+  sosArmedUntil=0;resetSosButton();
+  const expired='SOS confirmation expired. No alert was sent. Tap SOS again to start.';
+  setSosFeedback(expired,'info');announce('SOS confirmation expired. No alert was sent.');
+ },windowMs);
 }
 function repeatAnswer(){actionVibration('repeat');if(lastAnswer)announceAnswer(lastAnswer);else announce('There is no answer to repeat yet.');}
 function handleDeepLinkAction(){
