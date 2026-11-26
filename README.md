@@ -116,7 +116,7 @@ Details: [Safety](docs/SAFETY.md), [Security policy](SECURITY.md), [Threat model
 | [Accessibility](docs/ACCESSIBILITY.md) / [Phone controls](docs/PHONE-CONTROLS.md) | Blind mode, voice and Android integrations |
 | [Safety](docs/SAFETY.md) / [Threat model](docs/THREAT-MODEL.md) / [Security](SECURITY.md) | Safety boundaries, risks and how to report a vulnerability |
 | [Supabase setup](docs/SUPABASE-ACCOUNT-HISTORY-SETUP.md) | Account and photo-history backend |
-| [Roadmap](docs/ROADMAP.md) / [Changelog](CHANGELOG.md) | What is planned next and what has changed |\n| [Native Android app](docs/NATIVE-ANDROID-APP.md) | Galaxy A55 app architecture, volume-button mapping, screen-off limitations, implementation phases and APK release checklist |
+| [Roadmap](docs/ROADMAP.md) / [Changelog](CHANGELOG.md) | What is planned next and what has changed |\n| [Native Android app](docs/NATIVE-ANDROID-APP.md) | Galaxy A55 app architecture, volume-button mapping, screen-off limitations, implementation phases and APK release checklist |\n| [Android release signing](docs/ANDROID-RELEASE-SETUP.md) | Windows keystore creation, protected GitHub secrets and signed APK publishing steps |
 | [Implementation plan](docs/IMPLEMENTATION-PLAN.md) | The 17 November work plan, kept as a record |
 | [Next-generation camera and emergency roadmap](docs/NEXT-GENERATION-CAMERA-AND-EMERGENCY-ROADMAP.md) | Full proposed plan for device setup, persistent phone/ESP32 cameras, five-photo visual memory, emergency live sharing, private video recording, architecture, milestones and acceptance tests |
 
