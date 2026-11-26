@@ -71,7 +71,7 @@ test('ESP32 firmware refuses unverified TLS and contains both registered UID map
  const firmware=readFileSync(new URL('../hardware/esp32-rfid/esp32-rfid.ino',import.meta.url),'utf8');
  assert.match(firmware,/A1618C04.*Napa One/);
  assert.match(firmware,/1474D505.*Monus 10/);
- assert.match(firmware,/setCACert/);
+ assert.match(firmware,/useBuiltinCACertBundle/);
  assert.match(firmware,/MAX_PENDING_EVENTS = 5/);
  assert.match(firmware,/savePendingQueue/);
  assert.match(firmware,/DEVICE_AUTH_FAILED/);
