@@ -34,7 +34,7 @@ Daredevil's Eye takes a photo from a phone or an ESP32-CAM, sends it to Google G
 | Blind mode | Four large tiles (Describe, Ask AI, SOS, Repeat), spoken help, vibration patterns and a screen that stays on while working. |
 | SOS | Alerts a trusted person on a paired second phone through a web push notification. SOS needs two taps to confirm. Shake SOS and voice-phrase SOS are optional and off by default. |
 | History | Optional private photo-and-answer history: kept for signed-in users until they delete it; guest history is deleted after 30 days. |
-| Installable web app | Can be installed from Chrome as a home-screen app, with long-press shortcuts for Describe, Ask AI and SOS. |\n| Native Android app | In progress for Galaxy A55: Volume Up = Describe, Volume Down = Ask AI, double Up = Repeat, both held = SOS confirmation. Screen-off behaviour is best-effort and must be device-tested. |
+| Installable web app | Can be installed from Chrome as a home-screen app, with long-press shortcuts for Describe, Ask AI and SOS. |\n| Native Android app | Debug APK built and production bridge deployed for Galaxy A55; physical testing remains. Controls: Volume Up = Describe, Volume Down = Ask AI, double Up = Repeat, both held = SOS confirmation. Screen-off behaviour is best-effort and must be device-tested. |
 | Model fallback | Uses Gemini 3.8 Flash by default. If a model hits a quota or is unavailable, it tries other Gemini vision models. |
 
 ## Pages

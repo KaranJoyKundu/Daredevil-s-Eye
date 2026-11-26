@@ -62,3 +62,14 @@ See CURRENT-RELEASE-CHECKLIST.md for detailed acceptance criteria and device-tes
 - Release signing still needs protected Android keystore secrets. Do not upload a debug-signed build as a production release or claim that it can be updated with a future release key.
 
 - Android signing guide: `docs/ANDROID-RELEASE-SETUP.md` explains persistent keystore creation and the four GitHub Actions secrets required for a signed GitHub Release.
+
+
+## Native Android companion — live status (26 November 2026)
+
+- PR #64 merged; main commit: `5e525a0dd8b48f54170fbc3d5d80de25a3774d5b`.
+- Production deployment workflow #45756257754: successful.
+- Android debug APK workflow #45755955230: successful; artifact ID `15086769593`, artifact name `daredevils-eye-android-debug`.
+- Debug APK SHA-256: `410ccff91587d07f8c7a819e6e2a4cc2b84c3bc69e6ea283720185bd6feb851a`.
+- Documentation page is live at `/documentation/`; permanent plan is `docs/NATIVE-ANDROID-APP.md`.
+- Current APK is debug-signed for initial A55 testing. Permanent signed GitHub Release requires the owner-controlled keystore and four protected GitHub Actions secrets in `docs/ANDROID-RELEASE-SETUP.md`.
+- Physical Galaxy A55 tests remain open: volume gesture accuracy, global Accessibility Service, screen-off/lock-screen handling, TalkBack coexistence, camera/microphone, RFID and SOS.

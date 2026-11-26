@@ -199,8 +199,30 @@ See [ANDROID-RELEASE-SETUP.md](ANDROID-RELEASE-SETUP.md) for the exact Windows P
 - Do not merge or deploy to production until the owner has reviewed and installed a usable APK.
 - Do not claim a physical test from a CI build.
 
-## 9. Current progress and handoff notes
+## 9. Current progress and handoff notes — 26 November 2026
 
-The backup and feature branches have been created. This document and the Documentation page are the first deliverables. No Android APK is considered available until the Android workflow has built it and its artifact has been verified. No screen-off capability is considered verified until the Galaxy A55 has been tested.
+- Production rollback branch: `backup/main-before-native-android-2026-11-26`.
+- Android implementation branch: `feat/native-android-capacitor-a55`.
+- PR #64: [merged](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/64).
+- Main merge commit: `5e525a0dd8b48f54170fbc3d5d80de25a3774d5b`.
+- Production deployment: [workflow run 45756257754 — success](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/45756257754).
+- Android debug build: [workflow run 45755955230 — success](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/45755955230).
+- GitHub Actions artifact: `daredevils-eye-android-debug`, artifact ID `15086769593`, 4,313,560 bytes. It expires 10 December 2026.
+- Extracted APK size: 4,688,232 bytes. SHA-256: `410ccff91587d07f8c7a819e6e2a4cc2b84c3bc69e6ea283720185bd6feb851a`.
+- This is an installable **debug-signed test build**, not the permanent release-signed APK. The CI debug signing identity is not suitable for long-term updates. A later release APK will have a different signature; uninstall the debug build before installing that release.
+- The first wrapper loads the production HTTPS Worker app at `/blind/`; the web-side native bridge and Documentation page are deployed.
+- The release workflow is in `.github/workflows/android-release.yml`. A persistent owner-controlled keystore and four protected GitHub Actions secrets are required before publishing an updateable signed APK. See [ANDROID-RELEASE-SETUP.md](ANDROID-RELEASE-SETUP.md).
 
-Update this section with commit SHA, PR number, CI run, artifact URL, release URL and actual device-test evidence as work proceeds.
+### Still outstanding — physical Galaxy A55 validation
+
+- Install the debug APK on the Samsung Galaxy A55 (Android 16 / One UI 8).
+- Verify first-run permissions, native Accessibility Service setup and Documentation page settings.
+- Test Volume Up, Volume Down, double Volume Up and simultaneous hold with the app open.
+- Test global key handling while another app is foregrounded and with the screen locked/off.
+- Test TalkBack enabled/disabled and normal volume behaviour when shortcut toggles are off.
+- Verify Bangla/English speech, Ask AI microphone permission, phone camera and ESP32 camera.
+- Verify RFID medicine announcements and SOS pairing/receiver delivery from the native wrapper.
+- Record missed/duplicate actions, latency and false SOS activation; tune the 360 ms double-press and 700 ms SOS-hold defaults only from measured A55 results.
+- Create the persistent release keystore, add the four GitHub secrets, run the signed release workflow, and verify install/upgrade on the A55.
+
+**Do not mark screen-off camera/microphone or TalkBack coexistence complete from CI alone.** The debug APK is built and the production web bridge is deployed, but real-device acceptance remains open.
