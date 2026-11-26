@@ -44,3 +44,12 @@ test('Admin exposes ESP32 connection, LED brightness and stream controls', () =>
   assert.match(admin, /id="esp32-stream-start"/);
   assert.match(admin, /id="esp32-stream-stop"/);
 });
+
+test('Action camera setup is wired to the camera manager and persists device choice', () => {
+  assert.match(app, /function showCameraSetup\(\)/);
+  assert.match(app, /data-camera-source/);
+  assert.match(app, /saveSettings\(\{cameraSource:source,cameraSetupComplete:true\}\)/);
+  assert.match(app, /startPhoneCamera\(phoneCameraPreview/);
+  assert.match(app, /window\.addEventListener\('pagehide',\(\)=>stopPhoneCamera\(\)\)/);
+  assert.match(app, /document\.addEventListener\('visibilitychange'/);
+});
