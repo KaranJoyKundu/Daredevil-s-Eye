@@ -83,3 +83,11 @@ See CURRENT-RELEASE-CHECKLIST.md for detailed acceptance criteria and device-tes
 - Privacy requirement retained: no popup, no Accept button, no checkbox, and no photo-history toggle. The always-visible informational privacy notice remains.
 - Routing review: PR #66's explicit `/action/index.html` and `/blind/index.html` Worker rewrite caused `ERR_TOO_MANY_REDIRECTS`; PR #67 correctly reverted that rewrite. Do not reintroduce the PR #66 rewrite.
 - Verification status: source-level root cause and patch identified. Do not mark production fixed until CI passes, deployment succeeds, and live browser checks confirm Describe, Ask AI, SOS arm/cancel, Repeat/Stop, camera-source controls, phone gallery picker, phone camera and ESP32 controls.
+
+
+## Live browser follow-up — 26 November 2026
+
+- After PR #68 deployment, the live Action page loaded without reported JavaScript runtime errors and the native photo picker opened.
+- A browser check clicked SOS once and later found the expected `SOS confirmation expired` message. The automation took longer than the five-second confirmation window before reading the state; this confirms the first tap did arm the flow, not that the SOS API was dispatched. No alert was sent.
+- The same check found that device text-to-speech failure overwrote the visible action status with a speech-engine error. Follow-up fix on `fix/preserve-action-feedback-on-speech-error` keeps the action's visible feedback intact when TTS fails.
+- Repeat with no previous answer and Stop with no active speech are no-op actions by design; the next live verification should inspect the visible status immediately after tapping, not after the SOS timeout.
