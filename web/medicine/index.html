@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Medicine RFID · Daredevil’s Eye</title>
+<meta name="description" content="Pair an RFID medicine reader with your Daredevil’s Eye account and hear medicine names spoken across the app.">
+<link rel="icon" href="/icons/daredevils-eye.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/shared/style.css">
+<style>
+:root{color-scheme:dark}
+.medicine-shell{width:min(920px,calc(100% - 32px));margin:42px auto 72px}
+.medicine-hero{padding:28px;border:1px solid var(--p-border,#39433f);border-radius:22px;background:linear-gradient(135deg,#203a32,#1b2421)}
+.medicine-hero .eyebrow{letter-spacing:.14em;text-transform:uppercase;font-size:.76rem;color:#9fc7b8}
+.medicine-hero h1{font-size:clamp(2rem,6vw,3.4rem);line-height:1.05;margin:.5rem 0}
+.medicine-hero p{max-width:680px;color:#c2ccc6;line-height:1.65}
+.medicine-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:18px}
+.medicine-card{padding:22px;border:1px solid var(--p-border,#39433f);border-radius:18px;background:var(--p-surface,#1f2725);min-width:0}
+.medicine-card h2{font-size:1.2rem;margin:0 0 10px}
+.medicine-muted{color:var(--p-muted,#a9aea7);line-height:1.55}
+.medicine-code{font:700 clamp(2rem,7vw,3rem)/1.2 ui-monospace,monospace;letter-spacing:.16em;padding:18px 10px;border-radius:12px;background:#111916;text-align:center;margin:14px 0;user-select:all}
+.medicine-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.medicine-actions button,.medicine-actions a{min-height:46px;padding:11px 16px;border:0;border-radius:10px;background:#9fc7b8;color:#15201b;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.medicine-actions .secondary{background:#303b36;color:#e3e2da;border:1px solid #526159}
+.medicine-status{min-height:1.5em;margin-top:12px;color:#b9d9ca}
+.medicine-list{display:grid;gap:10px;margin-top:14px}
+.medicine-device{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-radius:12px;background:#141c19}
+.medicine-device small{display:block;color:#a9aea7;margin-top:3px;overflow-wrap:anywhere}
+.medicine-device button{background:#4a2b28;color:#ffe5de;border:1px solid #74443d;border-radius:8px;padding:8px 10px}
+.medicine-toggle{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1px solid #46554c;border-radius:12px;background:#15201b;margin-top:12px}
+.medicine-toggle input{width:22px;height:22px;accent-color:#9fc7b8;flex:none;margin-top:2px}
+.medicine-callout{padding:14px;border-left:3px solid #9fc7b8;background:#18231e;border-radius:0 10px 10px 0;margin-top:14px;line-height:1.55;color:#c6d1ca}
+@media(max-width:680px){.medicine-grid{grid-template-columns:1fr}.medicine-shell{margin-top:24px}.medicine-hero,.medicine-card{padding:18px}.medicine-device{align-items:flex-start}}
+</style>
+</head>
+<body>
+<main class="medicine-shell">
+<section class="medicine-hero">
+<p class="eyebrow">Assistive hardware · New</p>
+<h1>Medicine, spoken aloud.</h1>
+<p>Test medicine speech, then authorize a real ESP32 reader to send scans to your signed-in account.</p>
+<div class="medicine-callout">The phone must be signed in, online, and have the RFID listener enabled. Keep Daredevil’s Eye open for the first version; background and screen-locked delivery needs separate Android testing.</div>
+</section>
+<div class="medicine-grid">
+<section class="medicine-card">
+<h2>1 · Test a medicine scan</h2>
+<p class="medicine-muted">These sample buttons test speech only. Real scans arrive from an authorized ESP32.</p>
+<div class="medicine-actions"><button id="scan-napa" type="button">Simulate Napa One</button><button id="scan-monus" type="button" class="secondary">Simulate Monus 10</button></div>
+<p id="scan-status" class="medicine-status" role="status" aria-live="polite">Ready for a simulated scan.</p>
+</section>
+<section class="medicine-card">
+<h2>2 · Speak across the app</h2>
+<p class="medicine-muted">Turn this on once. The shared listener runs on Action, Blind mode, Account, Admin, and other app pages that load the common navigation.</p>
+<label class="medicine-toggle"><input id="listener-enabled" type="checkbox"><span><strong>Enable medicine announcements</strong><br><span class="medicine-muted">Speak incoming RFID medicine names automatically.</span></span></label>
+<p id="listener-status" class="medicine-status" role="status" aria-live="polite"></p>
+<div class="medicine-actions"><button id="test-speech" type="button" class="secondary">Test announcement</button></div>
+</section>
+</div>
+<section class="medicine-card" style="margin-top:16px">
+<h2>3 · Connect your ESP32</h2>
+<p class="medicine-muted">Sign in first, then authorize this ESP32. This creates a device credential linked to your account. Copy it into the ESP32 Serial Monitor when the sketch asks for it. The token is shown only once.</p>
+<div class="medicine-actions"><button id="provision-device" type="button">Authorize ESP32 &amp; generate token</button><button id="copy-device-token" type="button" class="secondary" disabled>Copy device token</button></div>
+<pre id="device-token" class="medicine-code" style="font-size:clamp(.8rem,2.6vw,1.1rem);letter-spacing:.04em;overflow-wrap:anywhere;user-select:text" aria-live="polite">No device token generated.</pre>
+<p id="provision-status" class="medicine-status" role="status" aria-live="polite">Sign in to authorize your reader.</p>
+<div class="medicine-actions"><a href="/account/" class="secondary">Account</a><a href="/action/" class="secondary">Back to Action</a></div>
+</section>
+<section class="medicine-card" style="margin-top:16px">
+<h2>RC522 wiring reference</h2>
+<p class="medicine-muted">The hardware connection is unchanged. Actual ESP32-to-cloud scans still require secure device authentication; this temporary page test does not bypass that security.</p>
+<pre style="white-space:pre-wrap;line-height:1.6;color:#c8d4cd">RC522  →  ESP32
+SDA/SS →  GPIO 5
+SCK    →  GPIO 18
+MOSI   →  GPIO 23
+MISO   →  GPIO 19
+RST    →  GPIO 22
+3.3V   →  3V3
+GND    →  GND</pre>
+<p class="medicine-muted">Use 3.3V only. The reader's SDA pin is SPI chip-select, not I²C SDA.</p>
+</section>
+</main>
+<script type="module" src="/medicine/rfid.js?v=20261126-rfid3"></script>
+<script type="module" src="/shared/site-nav.js?v=20261126-rfid1"></script>
+</body></html>

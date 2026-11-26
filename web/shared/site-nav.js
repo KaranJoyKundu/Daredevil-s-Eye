@@ -1,9 +1,10 @@
 import {hasCurrentConsent,acceptConsent,rejectConsent} from './consent.js?v=20261117-release5';
 import {saveSettings} from './settings.js?v=20261117-release5';
 import {mountLanguageSwitch} from './language.js?v=20261117-release5';
+import {startRFIDListener} from './rfid-listener.js?v=20261126-rfid1';
 
 const links = [
-  ['Home','/action/'],['Blind mode','/blind/'],['Admin / Settings','/admin/'],
+  ['Home','/action/'],['Medicine RFID','/medicine/'],['Blind mode','/blind/'],['Admin / Settings','/admin/'],
   ['Diagnostics','/diagnostics/'],['Account & History','/account/'],['Help','/help/'],['SOS Receiver','/sos-receiver/'],
   ['Contact','/contact/'],['Support','/support/'],['Terms & Conditions','/terms/'],['Privacy','/privacy/']
 ];
@@ -19,10 +20,11 @@ for(const [label,href] of links){
 }
 document.body.prepend(bar);
 mountLanguageSwitch(bar);
+startRFIDListener();
 
 // Require the same explicit consent before any app surface can be used,
 // including direct visits to Admin, Diagnostics, Account and the SOS receiver.
-const protectedPaths=new Set(['/','/action/','/blind/','/admin/','/diagnostics/','/account/','/help/','/sos-receiver/']);
+const protectedPaths=new Set(['/','/action/','/blind/','/admin/','/diagnostics/','/account/','/help/','/sos-receiver/','/medicine/']);
 const currentPath=location.pathname.replace(/\/?$/,'/');
 if(protectedPaths.has(currentPath)&&!hasCurrentConsent()&&!document.querySelector('#consent-panel')){
  const gate=document.createElement('section');
