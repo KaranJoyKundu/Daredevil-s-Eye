@@ -22,7 +22,7 @@ const medicine=(overrides={})=>({uid:'A1618C04',name:'Paracetamol',strength:'500
 test('RFID pairing is single-use, account-bound, and returns a device token only once',async()=>{
  const {post}=fixture();
  const started=await (await post('pair/start',{userId:USER})).json();
- assert.equal(started.ok,true);assert.match(started.code,/^\\d{6}$/);
+ assert.equal(started.ok,true);assert.match(started.code,/^\d{6}$/);
  const claimed=await (await post('pair/claim',{code:started.code})).json();
  assert.equal(claimed.ok,true);assert.match(claimed.deviceToken,/^[a-f0-9]{64}$/);
  assert.match(claimed.deviceId,/^[a-f0-9]{32}$/);
@@ -105,20 +105,20 @@ test('medicine page exposes personal card management and shared listener speaks 
  const listener=readFileSync(new URL('../web/shared/rfid-listener.js',import.meta.url),'utf8');
  assert.match(nav,/startRFIDListener/);
  assert.match(page,/medicine-form/);assert.match(page,/medicine-uid/);assert.match(page,/medicine-expiry/);
- assert.match(pageScript,/api\\/rfid\\/medicines/);assert.match(page,/Custom spoken message/);
- assert.match(listener,/event\\.speechText\\|\\|event\\.medicine/);
+ assert.match(pageScript,/api\/rfid\/medicines/);assert.match(page,/Custom spoken message/);
+ assert.match(listener,/event\.speechText\|\|event\.medicine/);
  assert.ok(pageScript.includes('/api/rfid/devices/provision'));
 });
 
 test('ESP32 firmware sends arbitrary card UIDs and never contains a fixed medicine map',()=>{
  const firmware=readFileSync(new URL('../hardware/esp32-rfid/esp32-rfid.ino',import.meta.url),'utf8');
- assert.match(firmware,/sendMedicine\\(const String &uid\\)/);
- assert.match(firmware,/\\\"uid\\\":\\\"/);
+ assert.match(firmware,/sendMedicine\(const String &uid\)/);
+ assert.match(firmware,/\\"uid\\":\\"/);
  assert.match(firmware,/useBuiltinCACertBundle/);
  assert.match(firmware,/MAX_PENDING_EVENTS = 5/);
  assert.match(firmware,/savePendingQueue/);
  assert.match(firmware,/64-character device token/);
- assert.doesNotMatch(firmware,/MEDICINES\\[\\]/);
+ assert.doesNotMatch(firmware,/MEDICINES\[\]/);
  assert.doesNotMatch(firmware,/UNKNOWN_CARD/);
- assert.doesNotMatch(firmware,/setInsecure\\s*\\(/);
+ assert.doesNotMatch(firmware,/setInsecure\s*\(/);
 });
