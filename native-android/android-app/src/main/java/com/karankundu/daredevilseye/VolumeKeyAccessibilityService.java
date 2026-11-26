@@ -43,6 +43,7 @@ public class VolumeKeyAccessibilityService extends AccessibilityService {
             if (upDown && downDown && !chordConsumed) {
                 cancelDescribe();
                 chordConsumed = true;
+                upPending = false;
                 sosRunnable = () -> dispatch("sos");
                 handler.postDelayed(sosRunnable, SOS_HOLD_MS);
             }
