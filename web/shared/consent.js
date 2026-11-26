@@ -30,20 +30,8 @@ export function grantLegacyAccountAccess() {
 }
 
 export function hasCurrentConsent() {
-  // Returning devices and authenticated pre-existing accounts are grandfathered
-  // past the blocking first-run gate. This does not create or falsify a consent record.
-  if (isGrandfatheredReturningUser()) return true;
-  let raw;
-  try { raw = localStorage.getItem(CONSENT_KEY); } catch { return false; }
-  // A prior versioned record exists: do not silently migrate an old boolean
-  // after the privacy policy version changes. Require fresh acceptance.
-  if (raw !== null) return Boolean(getConsentRecord());
-  // One-time migration of the first prototype's legacy accepted boolean.
-  try {
-    const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
-    if (settings.consentAccepted === true) return acceptConsent({ migrated: true });
-  } catch {}
-  return false;
+  // The app is always usable. The privacy notice is informational; history saving is optional.
+  return true;
 }
 
 export function acceptConsent({ migrated = false } = {}) {
