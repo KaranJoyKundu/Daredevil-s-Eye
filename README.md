@@ -27,6 +27,12 @@
 
 **Live services:** [Website](https://daredevils-eye.karanjoykundu.workers.dev/) · [Action app](https://daredevils-eye.karanjoykundu.workers.dev/action/) · [Blind mode](https://daredevils-eye.karanjoykundu.workers.dev/blind/) · [Project documentation](https://daredevils-eye.karanjoykundu.workers.dev/documentation/)
 
+## Download the Android app
+
+<a href="https://appdistribution.firebase.google.com/testerapps/1:196832423983:android:5398d21c07fd260c21d6da/releases/5u4gh86a181lo?utm_source=firebase-console">Download Daredevil's Eye for Android via Firebase App Distribution</a>
+
+This is the current Firebase App Distribution tester release. Open the link on your Android device, sign in with the Google account that has been invited to the tester distribution, and follow Firebase's install prompts. If Firebase reports that access is unavailable, ask the project owner to add your Google account as a tester. This is a tester distribution link, not a public Play Store listing or a permanent signed-release download.
+
 ## What it does
 
 Daredevil's Eye connects a camera, a phone-friendly interface, speech input/output and Google's Gemini models. The Cloudflare Worker handles the server-side API; optional account/guest photo history uses Supabase; SOS pairing and alert state use Cloudflare Durable Objects.
