@@ -152,3 +152,17 @@ test('emergency video signalling rejects an unpaired or revoked receiver',async(
  const poll=await room.fetch(post('/video-poll',{receiverToken:invite.receiverToken,sessionId:started.sessionId}));
  assert.equal(poll.status,403);
 });
+
+test('re-pairing stops any previous emergency video session',async()=>{
+ const room=new SOSRoom(makeRoomState());
+ const first=await (await room.fetch(post('/pair',{}))).json();
+ const event=await (await room.fetch(post('/trigger',{}))).json();
+ const session=await (await room.fetch(post('/video-start',{deviceId:deviceA,eventId:event.eventId}))).json();
+ assert.equal(session.ok,true);
+ const second=await (await room.fetch(post('/pair',{}))).json();
+ assert.notEqual(second.receiverToken,first.receiverToken);
+ const oldPoll=await room.fetch(post('/video-poll',{receiverToken:first.receiverToken,sessionId:session.sessionId}));
+ assert.equal(oldPoll.status,403);
+ const newPoll=await room.fetch(post('/video-poll',{receiverToken:second.receiverToken,sessionId:session.sessionId}));
+ assert.equal((await newPoll.json()).active,false);
+});
