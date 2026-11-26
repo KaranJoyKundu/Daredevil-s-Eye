@@ -19,6 +19,10 @@ Welcome. This folder is organised around the questions people actually arrive wi
 3. [Testing and acceptance matrix](TESTING.md)
 4. [Deployment](DEPLOYMENT.md)
 
+### I want to install the Android test app
+
+- **[Download Daredevil's Eye for Android]( https://appdistribution.firebase.google.com/testerapps/1:196832423983:android:5398d21c07fd260c21d6da/releases/5u4gh86a181lo?utm_source=firebase-console )** — Firebase App Distribution tester release. Sign in with the invited Google account and follow the installation prompts. Access is limited to invited testers; this is not a public Play Store listing.
+
 ### I am working on the Android companion
 
 1. [Native Android master plan](NATIVE-ANDROID-APP.md)
