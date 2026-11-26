@@ -447,10 +447,13 @@ $('#enable-phone-camera')?.addEventListener('click',async()=>{
  }catch(error){if(cameraSetupStatus)cameraSetupStatus.textContent=error.message;if(phoneCameraStatus)phoneCameraStatus.textContent=error.message;show(error.message);}
  finally{button.disabled=false;}
 });
-$('#change-camera-source')?.addEventListener('click',()=>{
+const resetCameraSource=()=>{
  stopPhoneCamera();stopEsp32Stream(esp32StreamPreview);if(esp32StreamPreview)esp32StreamPreview.hidden=true;
  saveSettings({cameraSetupComplete:false});showCameraSetup();
-});
+};
+$('#change-camera-source, #esp32-change-camera-source').forEach?.(()=>{});
+$('#change-camera-source')?.addEventListener('click',resetCameraSource);
+$('#esp32-change-camera-source')?.addEventListener('click',resetCameraSource);
 $('#esp32-action-stream-start')?.addEventListener('click',()=>{
  try{
   const url=getEsp32Endpoints().stream;
