@@ -948,7 +948,8 @@ export async function handleApi(request, env = {}) {
     '/api/sos/pair': 'pair',
     '/api/sos/poll': 'poll',
     '/api/sos/ack': 'ack',
-    '/api/sos/subscribe': 'subscribe'
+    '/api/sos/subscribe': 'subscribe',
+    '/api/sos/revoke': 'revoke'
   };
   if (request.method === 'POST' && receiverActions[url.pathname]) {
     return forwardSos(request, env, receiverActions[url.pathname]);

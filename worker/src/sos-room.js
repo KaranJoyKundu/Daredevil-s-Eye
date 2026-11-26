@@ -208,12 +208,12 @@ export class SOSRoom {
       return json({ ok: true, applicationServerKey: keys.publicKey });
     }
 
-    if (action === 'revoke') {
+    if (action === 'invalidate') {
       await this.state.storage.delete('receiverTokenHash');
       await this.state.storage.delete('activeEvent');
       await this.state.storage.delete('pushSubscription');
-      await this.state.storage.put('pairedAt', null);
-      return json({ ok: true, revoked: true });
+      await this.state.storage.delete('pairedAt');
+      return json({ ok: true, invalidated: true });
     }
 
     if (action === 'pair') {
@@ -254,6 +254,14 @@ export class SOSRoom {
     const expectedHash = await this.state.storage.get('receiverTokenHash');
     if (!expectedHash || !safeEqual(await hashSecret(token), expectedHash)) {
       return json({ ok: false, error: 'This receiver session has been replaced or revoked. Pair again using a new invitation.' }, 403);
+    }
+
+    if (action === 'revoke') {
+      await this.state.storage.delete('receiverTokenHash');
+      await this.state.storage.delete('activeEvent');
+      await this.state.storage.delete('pushSubscription');
+      await this.state.storage.delete('pairedAt');
+      return json({ ok: true, revoked: true });
     }
 
     if (action === 'subscribe') {

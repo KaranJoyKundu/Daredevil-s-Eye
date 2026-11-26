@@ -72,7 +72,7 @@ export class SOSDirectory {
       const previousHash = await this.state.storage.get('current:' + deviceId);
       if (previousHash) await this.state.storage.delete('invite:' + previousHash);
       // A new invite immediately revokes the previously paired receiver.
-      await this.room(deviceId, 'revoke');
+      await this.room(deviceId, 'invalidate');
       let code = '';
       let codeHash = '';
       for (let attempt = 0; attempt < 16; attempt += 1) {

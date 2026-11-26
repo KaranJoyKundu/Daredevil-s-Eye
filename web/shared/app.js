@@ -18,7 +18,6 @@ const shakeTracker=createShakeSequenceTracker();
 let motionListenerAttached=false,sosVoiceRecognition=null,sosVoiceRestartTimer=null;
 let sosVoiceMode='wake',sosVoiceModeTimer=null,sosVoiceBlocked=false,sosVoiceFailures=0;
 let sosCountdownTimer=null,sosCountdownWakeLock=null,sosDispatching=false;
-let localSosSiren=null,localSosSirenTimer=null;
 
 function stopSosVoiceListener(){
  if(sosVoiceRestartTimer){clearTimeout(sosVoiceRestartTimer);sosVoiceRestartTimer=null;}
@@ -296,45 +295,17 @@ function speakHelp(){
  const settings=getSettings();const message=settings.speechLanguage==='bn-BD'?'ডেয়ারডেভিলস আই-এর সহায়িকা। প্রধান চারটি বোতাম হলো বর্ণনা, এআই-কে জিজ্ঞাসা, এসওএস এবং আবার শোনান। বর্ণনা চাপলে ক্যামেরায় যা দেখা যায় তা বলা হবে। এআই-কে জিজ্ঞাসা চাপুন, বাংলায় প্রশ্ন করুন এবং কথা শেষ হলে একটু থামুন। এসওএস পাঠাতে এসওএস বোতাম দুইবার চাপুন। আবার শোনান চাপলে শেষ উত্তরটি শোনা যাবে। অ্যাডমিনে ঐচ্ছিক স্বয়ংক্রিয় এসওএস চালু করলে তিনবার ফোন নাড়ালে আট সেকেন্ডের সতর্কীকরণ সময় শুরু হবে। ভয়েস এসওএস চালু থাকলে “ডেয়ারডেভিল এসওএস” বলুন, তারপর “নিশ্চিত করুন” বলুন। বাতিল করতে “এসওএস বাতিল” বলুন। এটি পরীক্ষামূলক সহায়ক, সাদা ছড়ি বা গাইড কুকুরের বিকল্প নয়। স্বাভাবিক চলাচলের সহায়তা ব্যবহার করতে থাকুন।':'Spoken help for Daredevil’s Eye. The four main buttons are Describe, Ask AI, SOS and Repeat. Tap Describe to hear what the camera can see. Tap Ask AI, ask a question in Bangla, English or a mixture, then pause. Tap SOS once to arm it. Tap SOS again within five seconds to confirm and send an alert to your paired receiver. Tap Repeat to hear the last answer again. Spoken Help is the separate button below the four main actions. If you enable the optional SOS triggers in Admin, three deliberate shakes start an eight-second SOS countdown. The optional voice trigger listens only while Blind mode is visible: say Daredevil SOS, then say Confirm SOS; say Cancel SOS to stop a pending alert. This is an experimental tool, not a cane or guide dog. Continue using your normal mobility aid. To leave Blind mode, edit the browser address and remove the word blind between the slashes.';
  show('Playing spoken help.');speakSosStatus(message);
 }
-function stopLocalSosSiren(){
- if(localSosSirenTimer){clearTimeout(localSosSirenTimer);localSosSirenTimer=null;}
- if(localSosSiren){localSosSiren.pause();localSosSiren.currentTime=0;}
-}
-function startLocalSosSiren(){
- try{
-  if(!localSosSiren){
-   localSosSiren=new Audio('/shared/emergency-siren.mp3?v=20261126-sender-siren1');
-   localSosSiren.preload='auto';localSosSiren.loop=true;localSosSiren.volume=0.85;
-  }
-  if(localSosSirenTimer){clearTimeout(localSosSirenTimer);localSosSirenTimer=null;}
-  localSosSiren.currentTime=0;
-  const playback=localSosSiren.play();
-  if(playback&&typeof playback.catch==='function'){
-   playback.catch(()=>{
-    stopLocalSosSiren();
-    show('SOS was sent, but this phone blocked siren playback. Check media volume and browser sound permissions.');
-   });
-  }
-  // Keep the sender-side warning audible briefly without leaving a loud alarm running indefinitely.
-  localSosSirenTimer=setTimeout(stopLocalSosSiren,12000);
- }catch{
-  stopLocalSosSiren();
-  show('SOS was sent, but this phone could not play the siren.');
- }
-}
 async function deliverSos(){
  if(sosDispatching)return;
  sosDispatching=true;stopSosVoiceListener();
  const settings=getSettings(),button=document.querySelector('[data-action="sos"]');if(button)button.disabled=true;let wakeLock=null;
-  // Start during the confirming tap, before any await, to satisfy mobile autoplay rules.
-  startLocalSosSiren();
  try{
   wakeLock=await acquireWakeLock();actionVibration('sos');
   const result=await requestAI('/api/sos/trigger',{deviceId:settings.deviceId});
   if(result.notificationAccepted)announce('SOS is stored. The push service accepted the notification request, but delivery is not confirmed.');
   else announce('SOS is stored, but no push notification was accepted. Keep the receiver connected to the internet and notifications enabled.');
   const callLink=$('#sos-call-link');if(settings.emergencyPhone&&callLink){callLink.href='tel:'+settings.emergencyPhone.replace(/[^+0-9]/g,'');callLink.hidden=false;callLink.style.display='block';callLink.textContent='Call '+(settings.emergencyName||'trusted contact')+' now';}
- }catch(error){stopLocalSosSiren();const message=error.message||'SOS alert could not be sent. Pair a receiver in Admin first.';if(status)status.textContent=message;speak(spokenError(error),{lang:getSettings().speechLanguage||'en-US'});}
+ }catch(error){const message=error.message||'SOS alert could not be sent. Pair a receiver in Admin first.';if(status)status.textContent=message;speak(spokenError(error),{lang:getSettings().speechLanguage||'en-US'});}
  finally{if(button)button.disabled=false;await releaseWakeLock(wakeLock);sosDispatching=false;startSosVoiceListener();}
 }
 function armSos({shortcut=false}={}){
