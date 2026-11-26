@@ -19,6 +19,7 @@ import com.getcapacitor.BridgeActivity;
 import org.json.JSONObject;
 
 public class MainActivity extends BridgeActivity {
+    public static volatile boolean isActivityResumed = false;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean upDown, downDown, chordConsumed, upPending, sosTriggered;
     private long lastUpRelease;
@@ -38,7 +39,14 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onResume() {
         super.onResume();
+        isActivityResumed = true;
         dispatchPendingAction();
+    }
+
+    @Override
+    public void onPause() {
+        isActivityResumed = false;
+        super.onPause();
     }
 
     @Override
