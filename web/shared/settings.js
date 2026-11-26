@@ -8,7 +8,11 @@ function createDeviceId() {
 }
 
 const DEFAULTS = Object.freeze({
-  cameraBaseUrl: 'http://192.168.0.104',
+  cameraBaseUrl: 'http://192.168.0.100',
+  cameraSource: 'upload',
+  cameraSetupComplete: false,
+  phoneCameraFacingMode: 'environment',
+  sceneMemoryEnabled: false,
   captureCount: 3,
   requirePhotoConfirmation: true,
   savePhotoHistory: true,
