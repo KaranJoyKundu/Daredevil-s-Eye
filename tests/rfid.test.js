@@ -74,5 +74,7 @@ test('ESP32 firmware refuses unverified TLS and contains both registered UID map
  assert.match(firmware,/setCACert/);
  assert.match(firmware,/MAX_PENDING_EVENTS = 5/);
  assert.match(firmware,/savePendingQueue/);
+ assert.match(firmware,/DEVICE_AUTH_FAILED/);
+ assert.match(firmware,/preferences.remove\("token"\)/);
  assert.doesNotMatch(firmware,/setInsecure\s*\(/);
 });
