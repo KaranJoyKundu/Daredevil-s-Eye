@@ -424,3 +424,10 @@ a{text-underline-offset:3px}
 /* Visible status for Blind mode when device speech is unavailable or quiet. */
 .blind-action-feedback{flex:0 0 auto;width:calc(100% - 20px);margin:0 10px 6px;padding:8px 11px;border:1px solid #55716b;border-radius:10px;background:#121816;color:#fff;font-size:.88rem;line-height:1.35;text-align:center;overflow-wrap:anywhere}
 .blind-action-feedback[hidden]{display:none!important}
+
+/* Grouped product navigation: compact labels, no oversized menu panels. */
+.site-menu nav{min-width:245px;max-height:min(78vh,620px);overflow:auto;gap:7px}
+.site-menu-group{display:grid;gap:1px;padding:5px 0;border-bottom:1px solid #ffffff12}
+.site-menu-group:last-child{border-bottom:0}
+.site-menu-group-title{padding:7px 12px 4px;color:#82cdb5;font-size:.68rem;font-weight:850;letter-spacing:.13em}
+.site-menu nav a{padding:8px 12px;font-size:.9rem}
