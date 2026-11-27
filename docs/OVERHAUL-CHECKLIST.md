@@ -108,6 +108,9 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 - [ ] **Account & Data:** account/session/history/privacy controls only where those controls actually exist and are supported.
 - [x] Forbidden content removed from Admin: Documentation index, roadmap, developer tutorials, GitHub project history, hardware wiring tutorials, release notes and long status reports.
 - [ ] Confirm no Admin page section duplicates a canonical Devices, SOS, Medicine, Account or Diagnostics control.
+- [x] Remove the photo-history toggle from Admin and its stale bindings.
+- [x] Correct homepage and Privacy copy to state that new photo-history requests default off.
+- [ ] Owner decision required: keep new history disabled or approve a privacy-consistent opt-in control outside Admin; do not silently change the default.
 
 ## 5. Devices vs Admin vs Diagnostics — boundary acceptance
 
