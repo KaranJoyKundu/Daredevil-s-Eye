@@ -45,12 +45,6 @@
 <p>This is not a production privacy or safety certification. Account history requires an explicit client-side save request and server configuration. The current client default is off and there is no active user-facing opt-in control after the Admin toggle was removed. Account deletion is not yet self-service; you can delete existing saved photos/answers, usage and personal Gemini keys from your Account page, and contact the project owner for account removal.</p>
 </section>
 <nav class="navlinks"><a href="/action/">Action</a><a href="/account/">Account &amp; History</a><a href="/blind/">Blind mode</a><a href="/sos/">SOS Center</a><a href="/medicine/">Medicine</a><a href="/devices/">Devices</a><a href="/documentation/">Documentation</a><a href="/terms/">Terms &amp; Conditions</a><a href="/support/">Support</a><a href="/help/">Help</a></nav>
-<script type="module">
-import {resetConsent} from '/shared/consent.js?v=20261117-release5';
-document.querySelector('#reset-consent').addEventListener('click',()=>{
- const ok=resetConsent();
- document.querySelector('#consent-reset-status').textContent=ok?'Consent reset. The notice will appear the next time you open Home.':'Could not reset consent in this browser.';
-});
-</script>
+
 <script type="module" src="/shared/site-nav.js?v=20261128-groups2"></script>
 </main></body></html>
