@@ -2,7 +2,7 @@ name: CodeQL security analysis
 
 on:
   push:
-    branches: [main]
+    branches: [main, docs/product-map-and-ux-overhaul]
   pull_request:
     branches: [main]
   schedule:
