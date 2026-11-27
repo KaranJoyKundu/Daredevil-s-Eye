@@ -42,7 +42,7 @@
 
 ## Documentation and navigation overhaul
 
-<badge>In progress</badge>
+**Status: In progress.**
 
 The work is isolated on `docs/product-map-and-ux-overhaul`. The pre-overhaul backup is `backup/pre-documentation-overhaul-2026-11-28`.
 
