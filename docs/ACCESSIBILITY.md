@@ -68,4 +68,4 @@ Global controls require the user to explicitly enable Daredevil's Eye in Android
 
 The strongest supported background behaviour is best-effort: store a pending action, surface a notification and resume the app when Android allows it. Android background-start restrictions and foreground-service rules can prevent immediate camera or microphone use while locked. Phone-camera capture and microphone recording are not promised with the display off. SOS always requires confirmation and backend acknowledgement before the UI may say it was sent.
 
-See [Native Android app master plan](NATIVE-ANDROID-APP.md) for the release checklist and device-test matrix.
+See [Native Android app master plan](ANDROID.md) for the release checklist and device-test matrix.
