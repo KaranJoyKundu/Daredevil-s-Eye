@@ -22,7 +22,7 @@ npm test
 npm run check
 ```
 
-The Node suite (80 tests on `main` as of 20 November 2026) covers prompt safety and language rules, API input validation, public API behaviour, model ranking and fallback, consent, Bangla defaults, colour contrast, guest-history cleanup, web push and SOS invitation and room state. The syntax check parses the Worker, the Durable Objects and the browser modules listed in `package.json`.
+The Node suite covers prompt safety and language rules, API input validation, public API behaviour, model ranking and fallback, privacy/consent behaviour, Bangla defaults, colour contrast, guest-history cleanup, web push and SOS invitation/room state. The exact test count changes over time; use the CI run for the commit under review rather than copying a historical count. The syntax check parses the Worker, Durable Objects and browser modules listed in `package.json`.
 
 Check every CI result against the exact commit SHA. A pass on another branch does not prove anything about this one.
 
