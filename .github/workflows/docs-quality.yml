@@ -1,0 +1,33 @@
+name: Documentation quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    name: Markdown, links and route inventory
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Lint Markdown
+        run: npx --yes markdownlint-cli2@0.17.2 "**/*.md" "#node_modules"
+      - name: Check internal documentation links
+        run: node scripts/check-doc-links.mjs
+      - name: Check canonical route files
+        run: node scripts/check-routes.mjs
