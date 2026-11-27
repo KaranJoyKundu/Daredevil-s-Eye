@@ -1,10 +1,40 @@
 import {mountLanguageSwitch} from './language.js?v=20261117-release5';
 import {startRFIDListener} from './rfid-listener.js?v=20261126-bg2';
 
-const links = [
-  ['Home','/action/'],['Medicine RFID','/medicine/'],['Blind mode','/blind/'],['Admin / Settings','/admin/'],
-  ['Diagnostics','/diagnostics/'],['Account & History','/account/'],['Help','/help/'],['SOS Receiver','/sos-receiver/'],
-  ['Documentation','/documentation/'],['Contact','/contact/'],['Support','/support/'],['Terms & Conditions','/terms/'],['Privacy','/privacy/']
+const groups = [
+  ['USE', [['Action','/action/'],['Blind mode','/blind/']]],
+  ['SAFETY', [['SOS Center','/sos/'],['Medicine','/medicine/']]],
+  ['DEVICES', [['Device setup','/devices/']]],
+  ['CONTROL CENTER', [['Admin / Settings','/admin/'],['Diagnostics','/diagnostics/']]],
+  ['INFORMATION', [['About','/'],['Help','/help/'],['Documentation','/documentation/'],['Privacy','/privacy/'],['Terms','/terms/'],['Support','/support/'],['Contact','/contact/'],['Account & History','/account/']]]
+];
+const bar=document.createElement('div');
+bar.className='site-nav';
+bar.innerHTML='<details class="site-menu"><summary aria-label="Open site menu"><span aria-hidden="true">☰</span><span class="menu-label">Menu</span></summary><nav aria-label="Main navigation"></nav></details><a class="site-brand" href="/action/" aria-label="Daredevil’s Eye — return to home">Daredevil’s Eye</a>';
+const menu=bar.querySelector('nav');
+for(const [groupName,items] of groups){
+  const group=document.createElement('div');
+  group.className='site-menu-group';
+  const heading=document.createElement('span');
+  heading.className='site-menu-group-title';
+  heading.textContent=groupName;
+  group.append(heading);
+  for(const [label,href] of items){
+    const link=document.createElement('a');
+    link.href=href;link.textContent=label;
+    if(location.pathname.replace(/\/?$/,'/')===href)link.setAttribute('aria-current','page');
+    group.append(link);
+  }
+  menu.append(group);
+}eSwitch} from './language.js?v=20261117-release5';
+import {startRFIDListener} from './rfid-listener.js?v=20261126-bg2';
+
+const groups = [
+  ['USE', [['Action','/action/'],['Blind mode','/blind/']]],
+  ['SAFETY', [['SOS Center','/sos/'],['Medicine','/medicine/']]],
+  ['DEVICES', [['Device setup','/devices/']]],
+  ['CONTROL CENTER', [['Admin / Settings','/admin/'],['Diagnostics','/diagnostics/']]],
+  ['INFORMATION', [['About','/'],['Help','/help/'],['Documentation','/documentation/'],['Privacy','/privacy/'],['Terms','/terms/'],['Support','/support/'],['Contact','/contact/'],['Account & History','/account/']]]
 ];
 const bar=document.createElement('div');
 bar.className='site-nav';
