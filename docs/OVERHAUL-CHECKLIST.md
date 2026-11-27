@@ -83,15 +83,15 @@
 
 The Documentation hub must organise content by reader intent, not by an unstructured list of files.
 
-- [ ] **Getting started:** quick start, install, first-time setup, language/voice, camera setup.
-- [ ] **User guides:** Action, Blind Mode, Describe/Ask AI, photo upload, SOS, Medicine.
-- [ ] **Hardware guides:** ESP32-CAM, RFID/RC522, Arduino IDE, wiring, firmware, authorization/token provisioning.
-- [ ] **Android:** installation, volume-button mapping, permissions, accessibility service, background/lock-screen limitations, APK/release.
-- [ ] **Technical reference:** architecture, routes, APIs/Worker, Supabase, authentication, security and data flows.
-- [ ] **Project planning:** current status, feature map, roadmap, decisions and release gates.
+- [x] **Getting started:** quick start, install, first-time setup, language/voice, camera setup.
+- [x] **User guides:** Action, Blind Mode, Describe/Ask AI, photo upload, SOS, Medicine.
+- [x] **Hardware guides:** ESP32-CAM, RFID/RC522, Arduino IDE, wiring, firmware, authorization/token provisioning.
+- [x] **Android:** installation, volume-button mapping, permissions, accessibility service, background/lock-screen limitations, APK/release.
+- [x] **Technical reference:** architecture, routes, APIs/Worker, Supabase, authentication, security and data flows.
+- [x] **Project planning:** current status, feature map, roadmap, decisions and release gates.
 - [x] Provide a single documentation landing/index with links to the source guides.
 - [x] Add a searchable index that filters guide titles and summaries, plus direct section anchors and section navigation. Full article body search remains a future enhancement.
-- [ ] Give every long guide a useful table of contents and stable section headings.
+- [x] Give every long guide a useful table of contents and stable section headings.
 - [ ] Distinguish tutorials, how-to guides, reference and explanations; do not mix all four writing modes into one article.
 - [ ] Label future/unimplemented features visibly as planned, incomplete or blocked.
 - [ ] Preserve useful historical decisions and completed plans without presenting them as current instructions.
