@@ -36,7 +36,7 @@ startRFIDListener();
 const privacyNotice=document.createElement('aside');
 privacyNotice.className='privacy-notice';
 privacyNotice.setAttribute('role','note');
-privacyNotice.innerHTML='<span><strong>Privacy:</strong> Photos and voice are processed by this app and Google Gemini when you use AI features. <a href="/privacy/">Details</a>.</span>';
+privacyNotice.innerHTML='<span><strong>Privacy:</strong> Photos and voice are processed by this app and Google Gemini when you use AI features. New photo-history saves are off by default. <a href="/privacy/">Details</a>.</span>';
 document.body.insertBefore(privacyNotice,bar.nextSibling);
 const details=bar.querySelector('details');
 document.addEventListener('pointerdown',event=>{
