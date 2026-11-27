@@ -1,5 +1,8 @@
 # Android companion — installation, controls and release
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 **Purpose:** The single maintained guide for the Capacitor Android companion, volume-key behaviour, Android permissions and release signing.
 
 **Evidence warning:** Source code and a CI-built debug APK do not prove physical-device reliability. The Samsung Galaxy A55 / Android 16 validation checklist below remains mandatory. Screen-off and background behaviour are best-effort and must not be promised.
