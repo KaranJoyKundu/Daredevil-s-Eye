@@ -1,5 +1,8 @@
 # Recovery checkpoint — 2026-11-28
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 ## Verified safe checkpoint
 
 - Repository: `KaranJoyKundu/Daredevil-s-Eye`
