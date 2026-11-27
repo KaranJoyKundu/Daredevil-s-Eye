@@ -3,14 +3,18 @@ name: Dependency review
 on:
   pull_request:
     branches: [main]
+    paths:
+      - package-lock.json
+      - npm-shrinkwrap.json
+      - pnpm-lock.yaml
+      - yarn.lock
+      - android/**/gradle.lockfile
 
 permissions:
   contents: read
 
 jobs:
   dependency-review:
-    # Advisory until repository dependency-graph access is confirmed.
-    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
