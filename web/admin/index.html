@@ -6,28 +6,26 @@
 <link rel="stylesheet" href="/shared/style.css?v=20261117-release5">
 </head>
 <body><main>
-<header><p class="eyebrow">DEVICE SETTINGS</p><h1>Admin / Settings</h1><p class="subtitle">Tune the camera, AI behaviour and spoken voice. Settings stay in this browser on this device.</p></header>
+<header><p class="eyebrow">CONTROL CENTER / CONFIGURATION</p><h1>Admin / Settings</h1><p class="subtitle">Configure app behaviour, AI, voice and SOS trigger preferences. Start hardware connection setup in <a href="/devices/">Devices</a>.</p></header>
 
-<nav class="quick-jump" aria-label="Settings sections"><a href="#camera-settings">Camera &amp; SOS</a><a href="#ai-settings">AI models</a><a href="#voice-settings">Voice</a><a href="#image-lab">Image tester</a></nav>
+<nav class="quick-jump" aria-label="Settings sections"><a href="#camera-settings">Camera &amp; Devices</a><a href="#ai-settings">AI &amp; Intelligence</a><a href="#voice-settings">Voice &amp; Accessibility</a><a href="#sos-settings">SOS &amp; Triggers</a><a href="#image-lab">Testing tools</a></nav>
 <form id="settings-form">
 <section id="camera-settings" class="panel settings-section">
-<h2>Camera & trusted contact</h2>
+<h2>Camera &amp; Devices</h2>
 <label for="camera">ESP32-CAM address</label>
 <input id="camera" type="text" inputmode="url" required placeholder="192.168.0.100 or http://192.168.0.100">
 <small>Current camera address: http://192.168.0.100. The app adds http:// when you enter a plain IP.</small><div class="field-grid"><div><label for="esp32-test">Connection test</label><button id="esp32-test" type="button" class="secondary">Test ESP32 connection</button></div><div><label for="esp32-brightness">LED brightness: <output id="esp32-brightness-value">0</output> / 255</label><input id="esp32-brightness" type="range" min="0" max="255" step="1" value="0"><button id="esp32-set-brightness" type="button" class="secondary">Apply brightness</button></div></div><p id="esp32-status" class="hint" role="status" aria-live="polite">ESP32 controls require the phone and camera to be on the same Wi-Fi network. Chrome may ask for local-network permission.</p><div class="field-grid"><div><button id="esp32-stream-start" type="button" class="secondary">Start live stream</button></div><div><button id="esp32-stream-stop" type="button" class="secondary">Stop live stream</button></div></div><img id="esp32-stream-preview" alt="ESP32-CAM live stream preview" hidden style="display:none;width:100%;max-height:360px;object-fit:contain;background:#000;border-radius:12px">
 <label class="inline-checkbox" for="require-photo-confirmation"><input id="require-photo-confirmation" type="checkbox" checked> Preview every phone photo before sending (recommended)</label>
 <small>When enabled, the selected camera/upload photo stays on this device until the user reviews it and presses Ask AI. Turn this off to automatically describe a selected photo.</small>
+</section>
+
+<section id="sos-settings" class="panel settings-section">
+<h2>SOS &amp; Triggers</h2>
+<p>Pair the sender and receiver in the <a href="/sos/">SOS Center</a>. Configure only the optional trigger preferences here.</p>
 <div class="field-grid">
 <div><label for="contact-name">Trusted contact name</label><input id="contact-name" maxlength="80" placeholder="Name"></div>
 <div><label for="contact-phone">Trusted contact phone</label><input id="contact-phone" type="tel" maxlength="30" placeholder="+880..."></div>
 </div>
-<h3>SOS receiver pairing</h3>
-<p>Create a one-time six-character invitation, then enter it on the second phone at <a href="/sos/">SOS Sender &amp; Receiver</a>. A new invitation immediately replaces the old receiver and expires after 10 minutes.</p>
-<div class="field-grid">
-<div><label for="sos-code">Receiver pairing code</label><input id="sos-code" maxlength="6" minlength="6" readonly autocomplete="off" placeholder="Generate a six-character code"></div>
-<div><label>&nbsp;</label><button id="generate-sos-code" type="button" class="secondary">Generate pairing code</button></div>
-</div>
-<small>Share this one-time code privately. It is not stored permanently. Generating another code disconnects the previous receiver.</small>
 <h3>Optional hands-free SOS triggers</h3>
 <p>These are disabled by default. They work only while Blind mode is open and visible on a supported phone. Shake sensing stays on the device; voice wake-word recognition may send audio to the browser's speech provider. Each automatic trigger has a cancellation window.</p>
 <div class="field-grid">
@@ -45,13 +43,7 @@
 <label for="sos-voice-language">Voice SOS recognition language</label>
 <select id="sos-voice-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
 <small>Voice SOS uses the browser's continuous speech-recognition API, not Gemini. The microphone is monitored only in the visible Blind mode page. English: say “Daredevil SOS”, then “Confirm SOS”. Bangla: say “ডেয়ারডেভিল এসওএস”, then “নিশ্চিত করুন” or “এসওএস পাঠান”. Say “Cancel SOS” / “এসওএস বাতিল” during the countdown to stop it. Recognition availability depends on Android/Chrome and installed speech services.</small>
-<label for="language">AI response language</label>
-<select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
-<label for="speech-input-mode">Voice input mode</label>
-<select id="speech-input-mode"><option value="auto">Automatic multilingual detection (recommended — Gemini)</option><option value="browser">Browser speech recognition first</option></select>
-<label for="input-language">Browser recognition language</label>
-<select id="input-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
-<small>Automatic mode records a short clip and sends it to Gemini to detect Bangla, English or mixed speech. Browser mode uses the selected language first and switches to Gemini if it fails. Audio is processed externally; do not speak confidential information.</small>
+
 </section>
 
 <section id="ai-settings" class="panel settings-section">
@@ -92,7 +84,14 @@
 </section>
 
 <section id="voice-settings" class="panel settings-section">
-<h2>Voice & speech</h2>
+<h2>Voice &amp; Accessibility</h2>
+<label for="language">AI response language</label>
+<select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
+<label for="speech-input-mode">Voice input mode</label>
+<select id="speech-input-mode"><option value="auto">Automatic multilingual detection (recommended — Gemini)</option><option value="browser">Browser speech recognition first</option></select>
+<label for="input-language">Browser recognition language</label>
+<select id="input-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
+<small>Automatic mode records a short clip and sends it to Gemini to detect Bangla, English or mixed speech. Browser mode uses the selected language first and switches to Gemini if it fails. Audio is processed externally; do not speak confidential information.</small>
 <label for="voice-preset">Voice style</label>
 <select id="voice-preset">
 <option value="gentle">Gentle · soft and slightly higher</option>
