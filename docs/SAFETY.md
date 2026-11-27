@@ -1,5 +1,8 @@
 # Safety, privacy and threat model
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 **Purpose:** This is the authoritative safety and security model for the prototype. It describes what the product can and cannot safely promise, what data and trust boundaries exist, and which mitigations and residual risks must be reviewed before broader release.
 
 ## Product safety and privacy guidance
