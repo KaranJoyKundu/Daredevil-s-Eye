@@ -1,5 +1,8 @@
 # Release and verification handbook
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 **Purpose:** One authoritative place for automated test commands, manual acceptance scenarios, release gates and evidence. A successful build is not a substitute for browser or physical-device verification.
 
 ## Contents
