@@ -1,5 +1,8 @@
 # Contributing to Daredevil's Eye
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 Thank you for helping improve Daredevil's Eye. This is an assistive vision prototype, so correctness, accessibility, privacy and honest safety claims matter more than shipping quickly.
 
 ## Before you change anything
