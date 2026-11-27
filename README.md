@@ -75,7 +75,7 @@ The native implementation is present in the repository, but the mapping, global 
 | `/medicine/` | Medicine identification and RFID-assisted workflow |
 | `/admin/` | App and device configuration only |
 | `/diagnostics/` | Camera, microphone, speaker, AI and backend health checks |
-| `/account/` | Sign-in and optional photo history |
+| `/account/` | Sign-in, optional photo history and encrypted saved Gemini key |
 | `/documentation/` | Documentation index and structured reference |
 | `/help/` | Task-oriented user help |
 | `/privacy/`, `/terms/` | Privacy notice and terms |
