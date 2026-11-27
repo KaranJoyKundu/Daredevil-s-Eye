@@ -1,136 +1,69 @@
-# Roadmap — original goals, current state and next phases
+# Roadmap — future work only
 
-This roadmap replaces the old token/rate-limit checklist, which no longer describes the current public demo. “Implemented” means source/configuration exists; it does not mean a real user or device test has passed.
+**Purpose:** This file contains work that is not yet complete. It is not a feature catalogue, current status report or historical implementation diary.
 
-## Hackathon release — 20 November 2026 (done)
+For current capabilities and canonical page ownership, use [FEATURE-MAP](FEATURE-MAP.md). For evidence and current state, use [STATUS](STATUS.md) and [RELEASE](RELEASE.md). For the rationale behind durable choices, use [DECISIONS](DECISIONS.md). Older proposals are preserved in [HISTORY](HISTORY.md).
 
-- [x] Landing page at `/`, with the app restyled using a shared palette, type and Lucide icons.
-- [x] Full English / বাংলা interface switch; Bangla is the default.
-- [x] Bangla speech on desktop through the Gemini cloud voice (`/api/speech`).
-- [x] Editable system prompt and assistant presets (All-in-one, Single object, Medicine, Read text, Taka, Colour, Custom).
-- [x] Installable app with home-screen shortcuts.
-- [x] One recorded shutter click per capture.
-- [x] Account and guest photo history (Supabase) with 30-day guest cleanup (17 November).
-- [ ] Real-device checks: listed in the [release checklist](CURRENT-RELEASE-CHECKLIST.md).
-- [ ] Native Android app for Galaxy A55 (Capacitor + native Android): approved mapping is Up = Describe, Down = Ask AI, double Up = Repeat, both held = SOS confirmation. Implementation is in progress; APK build, global Accessibility Service, screen-off tests and signed release remain open. See [Native Android app master plan](NATIVE-ANDROID-APP.md).
+> **Status language:** Planned = not implemented. In progress = implementation is underway but not accepted. Blocked = cannot proceed until a named dependency is resolved. Completed work moves out of this file and into CHANGELOG/STATUS; do not leave a stale completed checklist here.
 
-## Phase 0 — working public prototype foundation
+## Priority 0 — product structure and release hygiene
 
-- [x] Cloudflare Worker serves the web app, API and Durable Objects.
-- [x] Gemini camera-photo analysis using a server-side project key.
-- [x] Public demo without app access-token login.
-- [x] No additional Cloudflare-wide API rate-limit bindings; Google provider quotas remain.
-- [x] ESP32-CAM still-photo helper and phone image upload fallback.
-- [x] Standard four-action home screen.
-- [x] Admin settings for camera, AI response options, speech and SOS configuration.
-- [x] Diagnostics page with six cards, including Check all at once.
-- [x] Informational privacy notice and privacy-first photo-history controls; no blocking consent popup, Accept button, checkbox or history opt-in toggle.
-- [x] One-time SOS invitations, receiver tokens, replacement and acknowledgement.
-- [x] GitHub Actions test/syntax workflow and conditional Cloudflare deployment.
-- [x] Public Cloudflare URL deployed: https://daredevils-eye.karanjoykundu.workers.dev/
+- [ ] Complete the [product/documentation overhaul checklist](OVERHAUL-CHECKLIST.md), including navigation, route ownership, documentation consolidation and automated link checks.
+- [ ] Add Markdown linting and internal-link validation to GitHub Actions.
+- [ ] Add route smoke tests for canonical pages and legacy compatibility routes.
+- [ ] Add a pull-request template, bug report template, accessibility feedback template and feature request template.
+- [ ] Add dependency and secret scanning where supported; verify that the workflows actually run before advertising badges.
+- [ ] Keep README badges and status links connected to real workflow files and current project URLs.
 
-## Phase 1 — blind-first and voice-resilience improvements (merged)
+## Priority 1 — physical-device and accessibility validation
 
-- [x] Dedicated Blind mode at /blind/ with four main actions (Describe, Ask AI, SOS, Repeat), separate spoken Help and no visible exit button.
-- [x] Shared navigation menu and brand link on standard pages.
-- [x] Six Admin quick-jump shortcuts.
-- [x] Expanded Help and privacy text.
-- [x] Optional personal Gemini key kept only in tab session storage.
-- [x] Vision model ranking and best-effort rotation/fallback on model-specific errors.
-- [x] Gemini-first multilingual audio transcription for Bangladeshi Bengali, English and mixed-language speech; browser-first mode remains optional.
-- [x] Browser recognition falls back after service, language and no-speech failures.
-- [x] Bengali-specific speech synthesis voice selection when a Bengali device voice is installed.
-- [x] Progressive written answer reveal while speech is playing.
-- [x] Spoken Help, spoken errors, first-use spoken safety notice, haptic action patterns and wake lock where supported.
-- [x] SOS tap-to-confirm and URL actions / Android shortcut definitions.
-- [x] Up to three camera frames and sharpness-based best-frame selection.
-- [x] Phone-control setup documentation and empty real-scene scorecard template.
-- [x] Project phone/WhatsApp contact link.
-- [x] Optional three-shake SOS and opt-in spoken wake phrase with a separate confirmation and cancellation countdown.
-- [x] PR CI passed on commit 9c68fcf: 55 tests, 0 failures; JavaScript syntax check passed. Production deployment was skipped for the PR.
-- [ ] Android Chrome hands-on voice test with English, Bangla and mixed-language speech.
-- [ ] Confirm Bengali voice installation and pronunciation; source code cannot install phone TTS language data.
-- [ ] TalkBack test of Blind mode, focus order, touch targets and spoken status.
-- [ ] Verify model fallback with controlled test responses and no quota-spending experiment.
-- [ ] Evaluate three-frame sharpness selection for latency, low-texture images and dark scenes.
-- [ ] Security review of BYOK flow and tab session lifecycle.
-- [ ] Usability review and colour/visual refinement after functional acceptance.
-- [ ] Test MacroDroid/Tasker volume triggers and Android home-screen shortcuts on the target device.
-- [ ] Measure three-shake false-positive/false-negative rates and test Bangla/English voice-SOS wake and confirmation phrases on the target phone.
+- [ ] Complete Galaxy A55 5G / Android 16 / One UI 8 acceptance for the current debug APK.
+- [ ] Verify foreground and global volume-key mapping, event arbitration, normal volume restoration and Accessibility Service behaviour.
+- [ ] Test TalkBack coexistence, focus order, accessible names, touch targets and spoken status.
+- [ ] Test camera, microphone, speaker, Bengali/English/mixed-language input, and installed Bengali TTS voices on the target handset.
+- [ ] Test foreground, background, locked and screen-off states separately; document Android restrictions and failures accurately.
+- [ ] Test SOS sender and receiver on two physical phones and different networks, including confirmation, cancellation, push delivery, acknowledgement, reconnect and offline failure.
+- [ ] Test ESP32-CAM and RFID/RC522 workflows with the exact flashed boards and wiring.
+- [ ] Conduct supervised, informed usability sessions with blind and low-vision participants before making broad accessibility claims.
 
-## Device-control notes
+## Priority 2 — camera experience improvements (planned)
 
-The ordinary web/PWA cannot reliably intercept Android hardware volume keys. MacroDroid/Tasker URL triggers and manifest shortcuts are web fallbacks. A native Capacitor Android companion and native volume-key/Accessibility Service implementation are now merged; the debug APK builds in CI. Physical A55 validation, TalkBack compatibility, background/lock-screen behaviour and signed release remain open. See [Native Android master plan](NATIVE-ANDROID-APP.md) and [Phone controls](PHONE-CONTROLS.md).
+- [ ] Evaluate a persistent in-page phone-camera session for foreground Action use.
+- [ ] Evaluate a first-run camera choice: phone camera, ESP32-CAM or upload-only.
+- [ ] Improve camera connection diagnostics and recovery without blocking upload fallback.
+- [ ] Validate ESP32 MJPEG streaming, still capture, flash/LED controls and Android Chrome Local Network Access on the target network.
+- [ ] Define a secure remote-camera architecture before implementing access beyond the local network.
+- [ ] Never expose an unauthenticated ESP32 HTTP endpoint to the public internet.
 
-## Phase 2 — physical prototype verification
+## Priority 3 — visual memory (planned; not implemented)
 
-- [ ] Confirm the actual ESP32-CAM board/firmware and `/capture` endpoint across target devices.
-- [ ] Confirm HTTPS microphone permission and Gemini recording fallback on current Android browsers.
-- [ ] Measure transcription accuracy for Bangladeshi English, Bengali and code-switching.
-- [ ] Test actual local camera network constraints, CORS and browser private-network handling.
-- [ ] Verify phone speech synthesis, volume, interrupt and replay.
-- [ ] Pair two physical phones on different networks and test SOS, replacement, acknowledgement and reconnection.
-- [ ] Test receiver when screen locks, browser backgrounds, phone enters battery saver or connectivity drops; document failures rather than claim delivery.
-- [ ] NVDA, TalkBack and VoiceOver accessibility review.
-- [ ] Supervised feedback sessions with blind/low-vision participants, with informed consent.
+- [ ] Define user stories, threat model, retention and opt-in/opt-out behaviour before implementation.
+- [ ] Prototype structured scene facts from vision responses, including uncertainty and observation timestamps.
+- [ ] Store a bounded five-observation window with strict account/guest isolation.
+- [ ] Distinguish remembered facts from current camera evidence in every answer.
+- [ ] Respect photo-history settings, account deletion and guest expiry.
+- [ ] Add tests for stale facts, uncertain recognition, deletion, expiry and cross-account isolation.
+- [ ] Measure latency and cost before enabling by default.
 
-## Phase 3 — remote camera access
+## Priority 4 — emergency media (planned; not implemented)
 
-- [ ] Choose a secured local gateway or outbound ESP32 relay.
-- [ ] Define camera identity, provisioning, mutual authentication, image transport, revocation and updates.
-- [ ] Evaluate TLS, memory constraints and firmware support on the exact ESP32 board.
-- [ ] Never expose an unauthenticated camera HTTP endpoint to the public Internet.
+- [ ] Preserve ordinary SOS alert delivery as an independent path.
+- [ ] Define explicit opt-in for live video and a separate opt-in for recording.
+- [ ] Design short-lived receiver authorization, visible sharing indicator, stop/revoke action and session expiry.
+- [ ] Evaluate WebRTC signalling and TURN relay requirements; do not send bulk video through Durable Objects.
+- [ ] Define private object storage, encryption, access policy, retention, deletion and audit logs before recording.
+- [ ] Test failure handling, receiver rejection, network loss and user cancellation.
+- [ ] Do not claim emergency video is available until end-to-end tests pass on real devices.
 
-## Phase 4 — accounts, guest trial and usage tracking
+## Priority 5 — public release readiness
 
-Partly done. Email and password accounts, private photo history, guest history, encrypted saved keys and keyed-hash IP usage counts are live (see [Supabase setup](SUPABASE-ACCOUNT-HISTORY-SETUP.md)). The items below are still open.
+- [ ] Complete independent security review and privacy impact assessment.
+- [ ] Establish supported release channels, versioning, signed Android release and artifact checksums.
+- [ ] Establish support/incident response and vulnerability triage expectations.
+- [ ] Measure real-world latency, reliability, provider quotas and cost.
+- [ ] Review legal/privacy requirements for any new account fields, email OTP, usage tracking or analytics before collection.
+- [ ] Define an accessibility evaluation programme and publish only evidence-backed claims.
 
-- [ ] Choose a transactional database and email provider; define secrets and deployment environments.
-- [ ] On first visit, show a sign-in / sign-up option and a clearly labelled guest path with **10 free image detections**.
-- [ ] Enforce guest usage on the server, not only in local storage. Use IP-based abuse signals with care: shared networks, carrier NAT, VPNs and changing IPs mean IP alone is not a reliable person identifier.
-- [ ] Collect only the fields needed at signup: name, email, phone number and “How did you hear about us?” with a clear purpose and consent.
-- [ ] Require an expiring, single-use email verification code (OTP); rate-limit sending and attempts; hash codes at rest; prevent enumeration and resend abuse.
-- [ ] Validate phone numbers server-side as digits with an optional leading plus and bounded length; reject letters, words, control characters and invalid formats. A valid phone-number library should be evaluated for country-specific formatting.
-- [ ] Create user records, verified-email state, per-user detection usage, timestamps and provider/model outcome records.
-- [ ] Show profile usage: detections used, remaining guest/trial or account quota, recent request history and account settings.
-- [ ] Add a protected admin usage console with search/filter by user/email/date, aggregate statistics and controlled CSV export.
-- [ ] Add server-enforced per-user quotas and abuse controls. Never allow a browser-supplied count to decide quota.
-- [ ] Document data retention, IP handling, deletion/export, access roles, privacy consent and breach response before collecting personal information.
-- [ ] Consider storing a keyed hash or shortened IP signal where sufficient; minimise raw IP retention and set an explicit deletion period.
-- [ ] Add tests for OTP expiry, reuse, brute-force resistance, quota concurrency, duplicate accounts, phone validation, admin authorisation and data deletion.
+## Roadmap maintenance
 
-## Phase 5 — research and public release readiness
-
-- [ ] Threat model and independent security review.
-- [ ] Privacy impact assessment and clear data-use notices.
-- [ ] Accessibility review with blind/low-vision testers and documented consent.
-- [ ] Reliability, latency and cost/quota measurements under realistic loads.
-- [ ] Clear incident/support process, limitation statements and versioned release notes.
-- [ ] No safety-readiness claims without supporting test evidence.
-
-
-## Phase 6 — Native Android companion (implementation merged; device validation in progress)
-
-The owner approved a native Capacitor application for Samsung Galaxy A55 5G on Android 16 / One UI 8. The implementation checklist and platform limitations are maintained in [NATIVE-ANDROID-APP.md](NATIVE-ANDROID-APP.md); device-side shortcut controls are in the [Device control centre](/devices/). The in-app [Documentation hub](/documentation/) is a guide index, not an Android progress tracker.
-
-- [x] Create rollback branch and isolated implementation branch.
-- [x] Add owner-approved interaction mapping and screen-off safety requirements.
-- [x] Add Capacitor configuration, Android native source overlay and debug APK CI workflow.
-- [x] Add native foreground volume-key handling and optional global Accessibility Service source.
-- [x] Add native-to-web event bridge and Android settings controls.
-- [x] Verify Android build and installable debug APK (CI run 45755955230; artifact 15086769593).
-- [ ] Test foreground, background, lock screen and screen-off key delivery on the actual Galaxy A55.
-- [ ] Validate TalkBack coexistence, Bangla/English speech, ESP32 camera, RFID and SOS.
-- [ ] Configure protected release signing secrets and publish signed APK to GitHub Releases.
-- [ ] Later: evaluate Google Play distribution.
-
-Do not claim screen-off operation is guaranteed. The optional Accessibility Service is user-enabled and may conflict with TalkBack; background camera/microphone startup remains subject to Android restrictions.
-
-
-### Native Android release checkpoint — 26 November 2026
-
-- [x] PR #64 merged and production Worker deployed (run 45756257754).
-- [x] Android debug APK built and uploaded (run 45755955230; artifact 15086769593).
-- [x] Native Android shortcut settings surfaced at `/devices/`; the structured documentation hub is at `/documentation/`.
-- [ ] Install and validate on the physical Galaxy A55.
-- [ ] Configure persistent release keystore secrets and publish signed GitHub Release.
+Every new item must include a user outcome, owner, dependencies, safety/privacy impact and acceptance criteria. Remove duplicate ideas. When work ships, update [FEATURE-MAP](FEATURE-MAP.md), [STATUS](STATUS.md) and [CHANGELOG](../CHANGELOG.md), then remove it from this future-work list.
