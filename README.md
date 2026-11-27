@@ -5,6 +5,7 @@
 <p align="left">
   <a href="https://daredevils-eye.karanjoykundu.workers.dev/"><img src="https://img.shields.io/badge/Live%20demo-Open%20app-167c68?style=for-the-badge" alt="Open live demo"></a>
   <a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions"><img src="https://img.shields.io/badge/CI-GitHub%20Actions-2088ff?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions"></a>
+  <a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/workflows/docs-quality.yml"><img src="https://img.shields.io/badge/Docs%20Quality-Checks-0f766e?style=for-the-badge" alt="Documentation quality checks"></a>
   <a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/blob/main/SECURITY.md"><img src="https://img.shields.io/badge/Security-Policy-334155?style=for-the-badge" alt="Security policy"></a>
 </p>
 
