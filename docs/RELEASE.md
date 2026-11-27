@@ -154,7 +154,7 @@ For every device test, record: date, exact handset/model code, Android and One U
 
 The documentation/layout fix PR #72 is merged. Main deployment workflow [#45843735382](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/45843735382) completed successfully. This proves the deployment workflow completed; it does not replace a manual smoke test of every page.
 
-See [Project status](STATUS.md), [Native Android plan](NATIVE-ANDROID-APP.md), [Testing](TESTING.md) and [Deployment](DEPLOYMENT.md).
+See [Project status](STATUS.md), [Native Android plan](ANDROID.md), [Testing](RELEASE.md) and [Deployment](OPERATIONS.md).
 
 ## Maintenance rule
 
