@@ -95,3 +95,12 @@ The project follows the [Diátaxis framework](https://diataxis.fr/): tutorials t
 - **Planned / incomplete / blocked:** not yet delivered or not yet validated; never present as available.
 
 A passing build does not prove that a camera, microphone, speaker, screen-off shortcut, RFID reader or SOS receiver works on a physical device.
+
+
+## Search and future scale
+
+The current in-app Documentation search filters guide titles and short descriptions by category. It is intentionally lightweight, client-side and dependency-free; it does not yet index every paragraph or code example.
+
+If the guide collection grows, keep Markdown as the source of truth and generate a small static search index at build time. A lightweight client-side index such as MiniSearch or Fuse.js is the preferred next step; consider a hosted documentation search service only if the project later needs versioned documentation, analytics or a much larger corpus. Do not add a heavyweight documentation platform just to search this small set of guides. Never index private user data, secrets or local device addresses.
+
+The complete product/navigation/docs redesign work is tracked in [OVERHAUL-CHECKLIST](OVERHAUL-CHECKLIST.md).
