@@ -1,5 +1,8 @@
 # Operations — deployment, data and account services
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 **Purpose:** Operational source of truth for Cloudflare deployment, secrets, Supabase, account/guest history, encrypted saved keys, verification and recovery. Never put secret values in this file.
 
 ## Hosting and production topology
