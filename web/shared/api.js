@@ -21,9 +21,9 @@ let guestSessionRefresh=null;
 let accountSessionCheckedAt=0;
 let accountSessionRefresh=null;
 
-async function refreshSavedAccountSession() {
+async function refreshSavedAccountSession(force=false) {
   const now=Date.now();
-  if(now-accountSessionCheckedAt<5*60*1000)return;
+  if(!force&&now-accountSessionCheckedAt<5*60*1000)return;
   if(!accountSessionRefresh){
     accountSessionRefresh=fetch('/api/account/session',{
       method:'GET',credentials:'same-origin',cache:'no-store'
@@ -50,7 +50,7 @@ export async function apiFetch(path, options = {}) {
   const target = String(path);
     // Refresh a returning user's HttpOnly session before the Worker resolves
   if(/^\/api\/(health|models|config|describe|ask|transcribe|speech)$/.test(target)||target==='/api/rfid/devices/provision'){
-    await refreshSavedAccountSession();
+    await refreshSavedAccountSession(target==='/api/rfid/devices/provision');
   }
   // Ensure guests have an HttpOnly history cookie before a photo is submitted.
   if(/^\/api\/(describe|ask)$/.test(target))await ensureGuestHistorySession();
