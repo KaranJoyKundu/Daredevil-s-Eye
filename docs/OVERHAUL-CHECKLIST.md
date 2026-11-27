@@ -90,12 +90,12 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 - [ ] **Technical reference:** architecture, routes, APIs/Worker, Supabase, authentication, security and data flows.
 - [ ] **Project planning:** current status, feature map, roadmap, decisions and release gates.
 - [x] Provide a single documentation landing/index with links to the source guides.
-- [ ] Add a searchable index that searches titles, summaries and section headings (or document an explicit limitation and provide reliable browser/GitHub search).
+- [x] Add a searchable index that filters guide titles and summaries, plus direct section anchors and section navigation. Full article body search remains a future enhancement.
 - [ ] Give every long guide a useful table of contents and stable section headings.
 - [ ] Distinguish tutorials, how-to guides, reference and explanations; do not mix all four writing modes into one article.
 - [ ] Label future/unimplemented features visibly as planned, incomplete or blocked.
 - [ ] Preserve useful historical decisions and completed plans without presenting them as current instructions.
-- [ ] Provide a clear back-to-Documentation and back-to-App path from every guide.
+- [x] Provide a clear back-to-Documentation and back-to-App path from every guide.
 
 ## 4. Admin boundary and required settings taxonomy
 
@@ -163,11 +163,11 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 - [x] Merge `docs/THREAT-MODEL.md` into `docs/SAFETY.md`; preserve all assets, boundaries, threat scenarios, mitigations and residual risks.
 - [x] Merge `docs/DEPLOYMENT.md` and `docs/SUPABASE-ACCOUNT-HISTORY-SETUP.md` into `docs/OPERATIONS.md`; preserve exact environment-variable names and deployment/verification procedures without exposing values.
 - [x] Reconcile `docs/IMPLEMENTATION-PLAN.md`, `docs/CAMERA-PLATFORM-UPGRADE.md` and `docs/NEXT-GENERATION-CAMERA-AND-EMERGENCY-ROADMAP.md` into current Decisions/Roadmap/Changelog as appropriate; preserve historical context and clearly mark superseded proposals in [HISTORY](HISTORY.md).
-- [ ] Only after link/content audit, remove superseded duplicate files or replace them with short migration pointers; do not leave two full competing copies.
-- [ ] Update every link in README, documentation hub, hardware guides, workflows and website to the new canonical files.
-- [ ] Recount Markdown files and document the final maintained total.
+- [x] After link migration, remove 11 superseded duplicate documents; preserve their historical material in [HISTORY](HISTORY.md) and consolidated guides.
+- [x] Update active Markdown, README, Documentation hub and Devices page links to the consolidated guides.
+- [x] Recounted 23 Markdown files on this branch, including the temporary recovery note and PR template; expected maintained total after recovery retirement is 22.
 
-**Target:** 21 maintained Markdown files after the temporary recovery note is retired (3 root files + 13 core guides + the master checklist + the history archive + 3 component-local READMEs). During this transition, the recovery note makes 22. The count is a maintainability target, not a reason to split or merge content unnaturally.
+**Target:** 22 maintained Markdown files after the temporary recovery note is retired (3 root files + 13 core guides + the master checklist + the history archive + the PR template + 3 component-local READMEs). During this transition, the recovery note makes 23. The count is a maintainability target, not a reason to split or merge content unnaturally.
 
 ## 7. Writing quality and documentation maintenance system
 
@@ -184,19 +184,19 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 
 ## 8. Repository quality additions
 
-- [ ] Add Markdown linting with a documented configuration and a CI check.
-- [ ] Add internal Markdown link validation that handles anchors, relative paths and known generated routes.
-- [ ] Add a route inventory/smoke test so every canonical route is checked after UI/navigation changes.
+- [x] Add Markdown linting with a documented configuration and a CI check.
+- [x] Add internal Markdown link validation that handles relative paths, Markdown anchors and app routes.
+- [x] Add a route inventory/smoke test so every canonical route and legacy compatibility page is checked.
 - [ ] Add a documentation build/preview or static docs rendering check; avoid adding a heavyweight docs platform unless search/navigation needs justify it.
-- [ ] Add issue templates for bug reports, accessibility feedback and feature requests.
-- [ ] Add a pull-request template with test evidence, screenshots, accessibility checks, documentation updates and security/privacy impact.
-- [ ] Add CODEOWNERS or clear ownership guidance if the project gains more contributors.
+- [x] Add issue templates for bug reports, accessibility feedback and feature requests.
+- [x] Add a pull-request template with test evidence, screenshots, accessibility checks, documentation updates and security/privacy impact.
+- [x] Add CODEOWNERS with the current repository owner as the default reviewer.
 - [ ] Add architecture/data-flow diagrams and a threat-boundary diagram that match actual code.
 - [ ] Add release artifacts/checksums and reproducible release instructions; do not label debug APKs as production releases.
-- [ ] Add a public demo/CI/security/documentation status area to README using real workflow URLs and accurate status.
-- [ ] Add dependency/security scanning and secret scanning where supported by repository settings; never claim a scan is active without a workflow/result.
+- [x] Add live demo, CI, security policy and documentation-quality links/badges to README; validate workflow status before claiming passing.
+- [x] Add CodeQL analysis, dependency review and Dependabot update configuration. Secret scanning/push protection still requires repository-level settings verification.
 - [ ] Add accessibility checks to CI where automatable, while keeping real TalkBack/blind-user evaluation as separate evidence.
-- [ ] Add a lightweight project health/maintenance policy: supported runtime, branch/PR rules, issue triage and release cadence.
+- [x] Add a contribution, ownership, issue-triage and PR maintenance policy in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## 9. Testing and acceptance
 
