@@ -1,5 +1,6 @@
 import {speak} from '../shared/speech.js?v=20261126-rfid2';
 import {getSettings} from '../shared/settings.js?v=20261117-release5';
+import {apiFetch} from '../shared/api.js?v=20261128-rfid-session-fix';
 import {setRFIDListenerEnabled,isRFIDListenerEnabled} from '../shared/rfid-listener.js?v=20261126-bg2';
 
 const $=id=>document.getElementById(id);
@@ -33,7 +34,7 @@ provisionButton.addEventListener('click',async()=>{
  provisionButton.disabled=true;
  status('provision-status','Authorizing this browser account…');
  try{
-  const response=await fetch('/api/rfid/devices/provision',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:'{}'});
+  const response=await apiFetch('/api/rfid/devices/provision',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:'{}'});
   const data=await response.json().catch(()=>({}));
   if(!response.ok||!data.ok||!/^[a-f0-9]{64}$/i.test(data.deviceToken||''))throw new Error(data.error||'Could not authorize the ESP32. Sign in and try again.');
   issuedToken=data.deviceToken;
