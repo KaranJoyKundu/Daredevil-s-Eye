@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#641313"><title>SOS Center · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css?v=20261126-siren1"></head>
+<body><main>
+<header><p class="eyebrow">EMERGENCY · SENDER & RECEIVER</p><h1>SOS Center</h1><p class="subtitle">Pair once, then enable the Emergency Siren and browser notifications. The siren plays while this receiver page is active; screen-off alerts use Android notification sound settings.</p></header>
+<div class="field-grid" role="tablist" aria-label="SOS mode">
+<button id="sos-mode-sender" type="button" aria-selected="true">SOS Sender</button>
+<button id="sos-mode-receiver" type="button" aria-selected="false" class="secondary-button">SOS Receiver</button>
+</div>
+<section id="sos-sender-panel" class="panel settings-section">
+<h2>Send emergency alerts</h2>
+<p>Generate a short-lived invitation code to pair a trusted receiver phone. This phone’s sender identity is saved locally. Generate a one-time code and enter it on the receiver phone.</p>
+<button id="sos-generate-code" type="button">Generate receiver pairing code</button>
+<label for="sos-invite-code">One-time invitation code</label>
+<input id="sos-invite-code" readonly maxlength="6" placeholder="Generate a code" style="text-transform:uppercase;font-size:1.5rem;letter-spacing:.18em">
+<p id="sos-sender-status" class="hint" role="status" aria-live="polite">Generate a code to pair another phone. It expires in 10 minutes.</p>
+</section>
+<section id="sos-receiver-panel" hidden>
+<section id="pairing-panel" class="panel settings-section">
+<h2>Pair this phone</h2>
+<p>Enter the one-time six-character invitation from Admin / Settings on the sender phone. Pairing a new receiver invalidates the previous receiver.</p>
+<label for="pairing-code">Six-character invitation</label>
+<input id="pairing-code" type="text" inputmode="text" autocomplete="one-time-code" maxlength="6" minlength="6" placeholder="ABC123" style="text-transform:uppercase">
+<button id="pair-receiver" type="button">Pair receiver</button>
+</section>
+<section id="connected-panel" class="panel settings-section" hidden>
+<h2>Receiver paired</h2>
+<p>This receiver is saved on this device. Tap below to unlock the Emergency Siren and register background notifications. The operating system may still delay or suppress notifications.</p>
+<button id="enable-alarm" type="button">Enable Emergency Siren & Notifications</button>
+<button id="test-alarm" type="button" class="secondary-button">Test Emergency Siren</button>
+<button id="remove-pairing" type="button" class="secondary-button">Remove paired device</button>
+</section>
+<p id="receiver-status" class="hint" role="status" aria-live="polite">Not connected.</p>
+<section id="emergency-alert" class="sos-alert" hidden>
+<p class="eyebrow">URGENT SOS</p>
+<h2>EMERGENCY ALERT</h2>
+<p id="alert-message">Someone may be in danger. Please check immediately.</p>
+<p id="alert-time"></p>
+<button id="acknowledge-alert" type="button" class="acknowledge-button">I have seen this alert — stop siren</button>
+</section>
+<section class="panel settings-section">
+<h2>Receiver status</h2>
+<p id="receiver-detail">No active alert.</p>
+<p class="hint">Allow notifications for this site in Android settings and keep notification sound enabled. Push notifications may still be delayed by network loss, Do Not Disturb, battery restrictions or vendor settings. Foreground polling is only a backup. This is a convenience alert, not emergency dispatch.</p>
+</section>
+<nav class="navlinks"><a href="/action/">Home</a><a href="/admin/">Admin / Settings</a><a href="/diagnostics/">Diagnostics</a></nav>
+</section></main><script type="module" src="/sos/sender.js?v=20261128-combined1"></script><script type="module" src="/sos-receiver/receiver.js?v=20261128-combined1"></script><script type="module" src="/shared/site-nav.js?v=20261126-privacy-notice1"></script></body></html>
