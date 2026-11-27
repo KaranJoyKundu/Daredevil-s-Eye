@@ -17,7 +17,7 @@
 - [x] Create a pre-overhaul backup branch from the known main checkpoint.
 - [x] Create a separate working branch; do not edit `main` directly.
 - [x] Record the baseline SHA and recovery instructions in [RECOVERY.md](RECOVERY.md).
-- [ ] Recheck that `main` still matches the recorded baseline before opening the PR; if it has moved, review and rebase/merge deliberately.
+- [x] Recheck that `main` still matches the recorded baseline before opening the PR; if it has moved, review and rebase/merge deliberately.
 - [ ] Keep this phase limited to product information architecture, UI/navigation, documentation, tests and release plumbing.
 - [ ] Do not change Worker business logic, AI prompts, camera capture, SOS delivery, RFID authorization, firmware, Android native behaviour, Supabase schema, authentication or data-retention behaviour as part of this structural overhaul.
 - [ ] Review the full diff for accidental changes, generated files, secrets, private data and unrelated formatting.
@@ -154,12 +154,12 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 - [ ] `docs/ROADMAP.md` — future work only; no duplicate current-status claims.
 - [ ] `docs/ARCHITECTURE.md` — actual runtime components, routes, data flows, trust boundaries and dependencies.
 - [ ] `docs/SETUP.md` — local development setup and first-run configuration.
-- [ ] `docs/OPERATIONS.md` — Cloudflare deployment, secrets, Supabase operations, storage/history and release operations (merge current Deployment + Supabase setup without losing exact steps).
-- [ ] `docs/RELEASE.md` — automated/manual test matrix, release gates, evidence and current release checklist (merge TESTING + CURRENT-RELEASE-CHECKLIST).
+- [x] `docs/OPERATIONS.md` — Cloudflare deployment, secrets, Supabase operations, storage/history and release operations (merge current Deployment + Supabase setup without losing exact steps).
+- [x] `docs/RELEASE.md` — automated/manual test matrix, release gates, evidence and current release checklist (merge TESTING + CURRENT-RELEASE-CHECKLIST).
 - [ ] `docs/ACCESSIBILITY.md` — assistive technology, blind-mode interaction, voice and evaluation guidance.
-- [ ] `docs/SAFETY.md` — product safety, privacy boundaries, threat model, assets, trust boundaries and mitigations (merge THREAT-MODEL without losing threats/controls).
-- [ ] `docs/ANDROID.md` — Capacitor architecture, volume mapping, phone controls, permissions, limitations, signing and APK release (merge NATIVE-ANDROID-APP + PHONE-CONTROLS + ANDROID-RELEASE-SETUP).
-- [ ] `docs/CONTRIBUTING.md` — contribution workflow, documentation style, file ownership, PR checklist and local validation.
+- [x] `docs/SAFETY.md` — product safety, privacy boundaries, threat model, assets, trust boundaries and mitigations (merge THREAT-MODEL without losing threats/controls).
+- [x] `docs/ANDROID.md` — Capacitor architecture, volume mapping, phone controls, permissions, limitations, signing and APK release (merge NATIVE-ANDROID-APP + PHONE-CONTROLS + ANDROID-RELEASE-SETUP).
+- [x] `docs/CONTRIBUTING.md` — contribution workflow, documentation style, file ownership, PR checklist and local validation.
 - [ ] Keep `firmware/esp32-cam-ai-thinker/README.md`, `hardware/esp32-rfid/README.md` and `native-android/README.md` close to their code because hardware/source-specific setup belongs beside that component.
 - [x] `docs/RECOVERY.md` records the temporary safe checkpoint for this overhaul; remove or replace it with a general recovery section once the work is merged and the checkpoint is no longer special.
 
@@ -212,25 +212,25 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 - [ ] Parse-check every edited JavaScript module.
 - [ ] Run the full existing automated test suite and record pass/fail counts.
 - [ ] Run route smoke tests for all canonical pages and legacy redirects.
-- [ ] Run Markdown lint and internal link validation.
+- [x] Run Markdown lint and internal link validation.
 - [ ] Test shared navigation on desktop and mobile widths, keyboard and screen reader.
 - [ ] Test Admin settings load/save and confirm no removed history setting is read/written.
 - [ ] Test Diagnostics independently from Admin.
 - [ ] Test Documentation hub, search/index and every guide link.
-- [ ] Test Devices page inside the Android wrapper and in a normal browser fallback.
+- [x] Test Devices page in the normal browser preview.\n- [ ] Test Devices page inside the Android wrapper on the physical target device.
 - [ ] Verify the live Cloudflare production Worker is unchanged until explicit release approval.
-- [ ] Record browser verification separately from physical-device verification.
+- [x] Record browser verification separately from physical-device verification.
 - [ ] Review accessibility, privacy, security and safety language.
 - [ ] Inspect complete diff and verify no functional backend/firmware/Android logic changed.
 
 ## 10. Pull request, deployment and handoff
 
-- [ ] Create a PR from `docs/product-map-and-ux-overhaul` into `main` with a complete scope summary and test evidence.
+- [x] Create a PR from `docs/product-map-and-ux-overhaul` into `main` with a complete scope summary and test evidence.
 - [ ] Wait for required GitHub Actions checks and resolve failures.
 - [ ] Review all changed files and links in the PR.
-- [ ] Keep the PR unmerged until the owner has reviewed the preview and explicitly approved merge.
-- [ ] If using Vercel, create a separate preview deployment only; do not replace the existing Cloudflare production deployment or change DNS.
-- [ ] Verify the preview routes and clearly document that Vercel preview API/Worker integration may differ from production.
+- [x] Keep the PR unmerged until the owner has reviewed the preview and explicitly approved merge.
+- [x] If using Vercel, create a separate preview deployment only; do not replace the existing Cloudflare production deployment or change DNS.
+- [x] Verify the preview routes and clearly document that Vercel preview API/Worker integration may differ from production.
 - [ ] After approval and merge, verify the Cloudflare production deployment and update STATUS/CHANGELOG with exact commit and deployment evidence.
 - [ ] Retire the temporary recovery checkpoint only after the merged branch and backup are confirmed.
 - [ ] Publish a final handoff with PR, preview URL, production URL, test evidence, remaining limitations and final Markdown count.
