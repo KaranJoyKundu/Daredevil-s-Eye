@@ -2,7 +2,7 @@
 
 ## Runtime
 
-A Cloudflare Worker serves the static files in `web/` and the API routes in `worker/src/index.js`. The project's Gemini API key stays a Worker secret. Admin can send a tab-scoped personal key in a same-origin request header. Signed-in users can separately save an account key through Account & History; the Worker encrypts it with AES-256-GCM and stores ciphertext plus IV in Supabase. Durable Objects store SOS invitations and alert state. Supabase (Postgres plus a private storage bucket) stores optional account and guest photo history. A daily cron trigger deletes guest history older than 30 days.
+A Cloudflare Worker serves the static files in `web/` and the API routes in `worker/src/index.js`. The project's Gemini API key stays a Worker secret. Admin can send a tab-scoped personal key in a same-origin request header. Signed-in users can separately save an account key through Account & History; the Worker encrypts it with AES-256-GCM and stores ciphertext plus IV in Supabase. Durable Objects store SOS invitations and alert state. Supabase (Postgres plus a private storage bucket) stores optional account and guest photo history plus encrypted signed-in Gemini API keys. A daily cron trigger deletes guest history older than 30 days.
 
 ## Browser and route layout
 
