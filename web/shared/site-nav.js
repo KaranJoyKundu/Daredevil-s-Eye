@@ -38,6 +38,13 @@ privacyNotice.className='privacy-notice';
 privacyNotice.setAttribute('role','note');
 privacyNotice.innerHTML='<span><strong>Privacy:</strong> Photos and voice are processed by this app and Google Gemini when you use AI features. New photo-history saves are off by default. <a href="/privacy/">Details</a>.</span>';
 document.body.insertBefore(privacyNotice,bar.nextSibling);
+if(location.hostname.endsWith('.vercel.app')){
+  const previewNotice=document.createElement('aside');
+  previewNotice.className='preview-notice';
+  previewNotice.setAttribute('role','note');
+  previewNotice.textContent='Vercel preview — UI review only. AI, SOS and account APIs are not connected here; use the live Cloudflare app for real operations.';
+  document.body.insertBefore(previewNotice,privacyNotice.nextSibling);
+}
 const details=bar.querySelector('details');
 document.addEventListener('pointerdown',event=>{
   if(details?.open&&!bar.querySelector('.site-menu')?.contains(event.target))details.removeAttribute('open');
