@@ -7,8 +7,6 @@
 
 ## Hosting and production topology
 
-## Hosting
-
 Use Cloudflare Workers with Static Assets and Durable Objects. GitHub remains the source repository. GitHub Pages alone cannot host the Worker API and SOS Durable Objects required by this app.
 
 Live main deployment (current baseline): https://daredevils-eye.karanjoykundu.workers.dev/
