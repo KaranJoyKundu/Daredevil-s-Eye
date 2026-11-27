@@ -72,7 +72,7 @@ This log records durable decisions and their rationale. It is not a roadmap or a
 
 **Rationale:** The intended flow should remain usable without a nonfunctional consent interaction while still disclosing processing.
 
-**Consequences:** The privacy notice remains visible and links to the full privacy page. Do not silently imply that optional photo history is mandatory. Keep retention and deletion descriptions aligned with Worker and Supabase behaviour.
+**Consequences:** The privacy notice remains visible and links to the full privacy page. Do not silently imply that optional photo history is mandatory. Current client requests default photo-history saving off, and no user-facing opt-in control is exposed after the Admin toggle was removed. Keep history disabled until the owner approves a privacy-consistent control or explicitly chooses not to offer new history saving. Keep retention and deletion descriptions aligned with Worker and Supabase behaviour.
 
 ### DEC-009 — Secrets remain outside client source and repository
 
