@@ -1,5 +1,8 @@
 # Project history and superseded proposals
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 **Purpose:** Preserve useful context from older planning documents without allowing old proposals to masquerade as current architecture, implementation or roadmap. This file is archival. For current facts use [STATUS](STATUS.md), for current capabilities use [FEATURE-MAP](FEATURE-MAP.md), for durable decisions use [DECISIONS](DECISIONS.md), and for future work use [ROADMAP](ROADMAP.md).
 
 > **Important:** The proposals below were written at different dates and against different repository baselines. Paths, IP addresses, endpoints, feature status, branch names, PR numbers and implementation assumptions may be stale. Never execute a historical instruction without checking the current source and configuration. Do not copy a historical device IP or secret into production.
