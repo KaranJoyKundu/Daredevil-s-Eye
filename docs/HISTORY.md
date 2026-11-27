@@ -887,7 +887,7 @@ Update this section as implementation proceeds. Keep planned work unchecked unti
 
 ## Historical document: Implementation plan
 
-> **Historical plan:** This records the November 2026 reliability/photo-history work and its acceptance criteria at that time. It is not the current feature inventory or status. Use [FEATURE-MAP.md](FEATURE-MAP.md), [STATUS.md](STATUS.md), [CURRENT-RELEASE-CHECKLIST.md](CURRENT-RELEASE-CHECKLIST.md) and [DECISIONS.md](DECISIONS.md) for current ownership, evidence and decisions. Rows below are retained as historical implementation notes.
+> **Historical plan:** This records the November 2026 reliability/photo-history work and its acceptance criteria at that time. It is not the current feature inventory or status. Use [FEATURE-MAP.md](FEATURE-MAP.md), [STATUS.md](STATUS.md), [RELEASE.md](RELEASE.md) and [DECISIONS.md](DECISIONS.md) for current ownership, evidence and decisions. Rows below are retained as historical implementation notes.
 
 > **Historical record (20 November 2026):** this plan was merged and deployed in PRs #7–#9. Item 7 has since changed: each capture now plays one recorded shutter click, not three generated clicks. The test counts below are from that time; `main` now passes 80 tests.
 
