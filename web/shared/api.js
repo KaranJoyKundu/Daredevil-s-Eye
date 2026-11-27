@@ -49,7 +49,7 @@ export async function apiFetch(path, options = {}) {
   if (options.body && !headers.has('content-type')) headers.set('content-type', 'application/json');
   const target = String(path);
     // Refresh a returning user's HttpOnly session before the Worker resolves
-  if(/^\/api\/(health|models|config|describe|ask|transcribe|speech)$/.test(target)){
+  if(/^\/api\/(health|models|config|describe|ask|transcribe|speech)$/.test(target)||target==='/api/rfid/devices/provision'){
     await refreshSavedAccountSession();
   }
   // Ensure guests have an HttpOnly history cookie before a photo is submitted.
