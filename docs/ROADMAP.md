@@ -111,7 +111,7 @@ Partly done. Email and password accounts, private photo history, guest history, 
 
 ## Phase 6 — Native Android companion (implementation merged; device validation in progress)
 
-The owner approved a native Capacitor application for Samsung Galaxy A55 5G on Android 16 / One UI 8. The complete implementation checklist and status are maintained in [NATIVE-ANDROID-APP.md](NATIVE-ANDROID-APP.md) and the in-app [Documentation page](/documentation/).
+The owner approved a native Capacitor application for Samsung Galaxy A55 5G on Android 16 / One UI 8. The implementation checklist and platform limitations are maintained in [NATIVE-ANDROID-APP.md](NATIVE-ANDROID-APP.md); device-side shortcut controls are in the [Device control centre](/devices/). The in-app [Documentation hub](/documentation/) is a guide index, not an Android progress tracker.
 
 - [x] Create rollback branch and isolated implementation branch.
 - [x] Add owner-approved interaction mapping and screen-off safety requirements.
@@ -131,6 +131,6 @@ Do not claim screen-off operation is guaranteed. The optional Accessibility Serv
 
 - [x] PR #64 merged and production Worker deployed (run 45756257754).
 - [x] Android debug APK built and uploaded (run 45755955230; artifact 15086769593).
-- [x] Documentation page published at `/documentation/`.
+- [x] Native Android shortcut settings surfaced at `/devices/`; the structured documentation hub is at `/documentation/`.
 - [ ] Install and validate on the physical Galaxy A55.
 - [ ] Configure persistent release keystore secrets and publish signed GitHub Release.
