@@ -162,7 +162,7 @@ async function loadModels(){
   select.value=selected;
   $('#model-status').textContent=data.models.length+' ranked vision models available. Automatic fallback is enabled. Selected: '+selected+'.';
  }catch(error){
-  $('#model-status').textContent='Model list unavailable: '+error.message+'. The saved model remains selected.';
+  $('#model-status').textContent=location.hostname.endsWith('.vercel.app')?'Vercel preview: the Cloudflare Worker API is not connected here. Model refresh and AI tests require the live app.':'Model list unavailable: '+error.message+'. The saved model remains selected.';
   const select=$('#model');
   if(![...select.options].some(option=>option.value===(saved.aiModel||'gemini-3.8-flash'))){
    const option=document.createElement('option');option.value=saved.aiModel||'gemini-3.8-flash';option.textContent=option.value;select.append(option);
