@@ -8,8 +8,15 @@
 <body><main>
 <header><p class="eyebrow">CONTROL CENTER / CONFIGURATION</p><h1>Admin / Settings</h1><p class="subtitle">Configure app behaviour, AI, voice and SOS trigger preferences. Start hardware connection setup in <a href="/devices/">Devices</a>.</p></header>
 
-<nav class="quick-jump" aria-label="Settings sections"><a href="#camera-settings">Camera &amp; Devices</a><a href="#ai-settings">AI &amp; Intelligence</a><a href="#voice-settings">Voice &amp; Accessibility</a><a href="#sos-settings">SOS &amp; Triggers</a><a href="#image-lab">Testing tools</a></nav>
+<nav class="quick-jump" aria-label="Settings sections"><a href="#general-settings">General</a><a href="#camera-settings">Camera &amp; Devices</a><a href="#ai-settings">AI &amp; Intelligence</a><a href="#voice-settings">Voice &amp; Accessibility</a><a href="#sos-settings">SOS &amp; Triggers</a><a href="#image-lab">Testing tools</a><a href="/account/">Account &amp; Data</a></nav>
 <form id="settings-form">
+<section id="general-settings" class="panel settings-section">
+<h2>General</h2>
+<p>Choose the default language used for AI descriptions and spoken responses.</p>
+<label for="language">AI response language</label>
+<select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
+<p class="hint">Account, history and privacy records live in <a href="/account/">Account &amp; Data</a>. Device health checks live in <a href="/diagnostics/">Diagnostics</a>.</p>
+</section>
 <section id="camera-settings" class="panel settings-section">
 <h2>Camera &amp; Devices</h2>
 <label for="camera">ESP32-CAM address</label>
@@ -47,13 +54,13 @@
 </section>
 
 <section id="ai-settings" class="panel settings-section">
-<h2>AI model & response</h2>
+<h2>AI &amp; Intelligence</h2>
 <label for="model">Vision / photo-analysis model</label>
 <select id="model"><option value="gemini-3.8-flash">Gemini 3.8 Flash (configured default)</option></select>
 <div class="inline-actions"><button id="refresh-models" type="button" class="secondary">Refresh available models</button></div>
 <p id="model-status" class="hint" role="status" aria-live="polite">Loading models enabled for this public demo…</p>
 <small>Models are ranked for camera-photo understanding, not image generation. Image-generation-only models cannot analyse your camera photo. Compatible models rotate automatically after model-specific quota or availability errors; Google project-wide limits still apply.</small>
-<section class="key-panel" aria-labelledby="own-key-title"><h3 id="own-key-title">Use your own Gemini API key (optional)</h3><p>Useful during a showcase if the shared demo key reaches a limit. Your key stays in this browser tab only and is sent in a same-site request header. It is not saved in Admin settings or stored by this app on the server.</p><label for="personal-api-key">Your Gemini API key</label><input id="personal-api-key" type="password" autocomplete="off" placeholder="Paste your own Gemini API key"><div class="inline-actions"><button id="save-personal-key" type="button" class="secondary">Use key for this tab</button><button id="remove-personal-key" type="button" class="secondary">Remove my key</button></div><p id="personal-key-status" class="hint" role="status" aria-live="polite">No personal key is set in this tab.</p></section>
+<section class="key-panel" aria-labelledby="own-key-title"><h3 id="own-key-title">Use your own Gemini API key (optional)</h3><p>Useful during a showcase if the shared demo key reaches a limit. This Admin key stays in this browser tab only and is sent in a same-site request header. Signed-in users can separately manage an encrypted account key in <a href="/account/">Account &amp; History</a>.</p><label for="personal-api-key">Your Gemini API key</label><input id="personal-api-key" type="password" autocomplete="off" placeholder="Paste your own Gemini API key"><div class="inline-actions"><button id="save-personal-key" type="button" class="secondary">Use key for this tab</button><button id="remove-personal-key" type="button" class="secondary">Remove my key</button></div><p id="personal-key-status" class="hint" role="status" aria-live="polite">No personal key is set in this tab.</p></section>
 <div class="field-grid">
 <div><label for="wait-seconds">Maximum wait for Gemini</label>
 <select id="wait-seconds">
@@ -85,8 +92,7 @@
 
 <section id="voice-settings" class="panel settings-section">
 <h2>Voice &amp; Accessibility</h2>
-<label for="language">AI response language</label>
-<select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
+
 <label for="speech-input-mode">Voice input mode</label>
 <select id="speech-input-mode"><option value="auto">Automatic multilingual detection (recommended — Gemini)</option><option value="browser">Browser speech recognition first</option></select>
 <label for="input-language">Browser recognition language</label>
