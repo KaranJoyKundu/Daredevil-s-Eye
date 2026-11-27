@@ -80,7 +80,7 @@ This log records durable decisions and their rationale. It is not a roadmap or a
 
 **Rationale:** Browser and APK contents are inspectable by users.
 
-**Consequences:** Personal Gemini keys are tab-scoped only when explicitly entered; they are not an account vault. ESP32 local HTTP endpoints must remain on trusted LANs.
+**Consequences:** A key entered in Admin is tab-scoped in sessionStorage. A signed-in user may separately save an account key through Account & History; the Worker stores encrypted ciphertext and IV in Supabase using AES-256-GCM and decrypts it only for the provider request. These are separate flows and must never be described as the same storage mechanism. ESP32 local HTTP endpoints must remain on trusted LANs.
 
 ### DEC-010 — Assistive AI is not a certified safety or medical system
 
