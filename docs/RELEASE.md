@@ -15,8 +15,6 @@
 
 ## Automated checks
 
-## Automated checks
-
 Run:
 
 ```powershell
