@@ -99,9 +99,9 @@ SOS is started by the user. A push service accepting the notification does not p
 - Usage counts use a keyed hash of the IP address (HMAC). Raw IP addresses are never stored.
 - Not built yet: email OTP, guest trial limits, per-user quotas and an admin usage dashboard (see [Roadmap](ROADMAP.md)). An IP address alone must not be treated as one person.
 
-See [Supabase setup](SUPABASE-ACCOUNT-HISTORY-SETUP.md).
+See [Supabase setup](OPERATIONS.md).
 
 
 ## Native Android application
 
-The native Android companion is merged into `main` and documented in [NATIVE-ANDROID-APP.md](NATIVE-ANDROID-APP.md). It uses Capacitor for the Android WebView and a native volume-key plugin plus an optional, explicitly enabled Accessibility Service. The current wrapper loads the existing HTTPS Worker app so same-origin API calls and HttpOnly session cookies remain intact; it is online-first. A debug APK was built successfully by CI, but this is not evidence of physical Galaxy A55 acceptance. WebView mixed content and Android cleartext are enabled for the existing configurable HTTP ESP32-CAM LAN endpoint; keep that endpoint on a trusted local network and never expose it to the public Internet. Global volume shortcuts, screen-off event delivery, TalkBack coexistence and camera/microphone behaviour require physical Galaxy A55 validation. Never assume a WebView can run camera or microphone actions after Android suspends it.
+The native Android companion is merged into `main` and documented in [NATIVE-ANDROID-APP.md](ANDROID.md). It uses Capacitor for the Android WebView and a native volume-key plugin plus an optional, explicitly enabled Accessibility Service. The current wrapper loads the existing HTTPS Worker app so same-origin API calls and HttpOnly session cookies remain intact; it is online-first. A debug APK was built successfully by CI, but this is not evidence of physical Galaxy A55 acceptance. WebView mixed content and Android cleartext are enabled for the existing configurable HTTP ESP32-CAM LAN endpoint; keep that endpoint on a trusted local network and never expose it to the public Internet. Global volume shortcuts, screen-off event delivery, TalkBack coexistence and camera/microphone behaviour require physical Galaxy A55 validation. Never assume a WebView can run camera or microphone actions after Android suspends it.
