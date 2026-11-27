@@ -40,7 +40,7 @@
 ### 03 — DEVICES
 - [x] Add a dedicated `/devices/` destination for phone shortcut settings and device setup entry points.
 - [x] Keep Android physical-button setup out of Admin and out of the Documentation roadmap.
-- [ ] Audit phone-camera permission/capture/torch ownership and link it from Devices without duplicating Action controls.
+- [x] Audit phone-camera permission/capture/torch ownership and link it from Devices without duplicating Action controls.
 - [ ] Organise ESP32-CAM connection, stream, capture and firmware guidance under Devices with canonical guides.
 - [ ] Organise RFID/RC522/Arduino wiring, firmware and authorization/token provisioning under Devices with canonical guides.
 - [ ] Verify every device control has one canonical owner and every guide links back to its relevant device page.
@@ -50,7 +50,7 @@
 - [x] **Diagnostics** is for running checks and reporting health only.
 - [x] Remove the photo-history checkbox from Admin and its obsolete JavaScript bindings.
 - [x] Remove Documentation/roadmap-style shortcuts from Admin quick navigation.
-- [ ] Audit every Admin control and classify it under General, Camera & Devices, AI & Intelligence, Voice & Accessibility, SOS & Triggers, Testing tools, or Account & Data where appropriate.
+- [x] Audit every Admin control and classify it under General, Camera & Devices, AI & Intelligence, Voice & Accessibility, SOS & Triggers, Testing tools, or Account & Data where appropriate.
 - [ ] Keep Image Lab/live testing tools in Admin only if they are genuinely interactive testing tools; move health checks to Diagnostics.
 - [ ] Audit Diagnostics to ensure it tests and reports rather than changing persistent settings.
 - [ ] Add small contextual help links only where useful; links must open the exact canonical guide.
@@ -99,15 +99,15 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 
 ## 4. Admin boundary and required settings taxonomy
 
-- [ ] **General:** language, defaults and user preferences.
-- [ ] **Camera & Devices:** phone camera, ESP32 connection and device preferences that genuinely configure app behaviour.
-- [ ] **AI & Intelligence:** model selection, prompt presets, fallback preferences and personal API-key entry.
-- [ ] **Voice & Accessibility:** speech recognition mode, TTS voice/language and haptics.
-- [ ] **SOS & Triggers:** shake, voice trigger, confirmation, cancellation and alert preferences.
-- [ ] **Testing tools:** Image Lab and controlled live tests only; not general health reporting.
-- [ ] **Account & Data:** account/session/history/privacy controls only where those controls actually exist and are supported.
+- [x] **General:** language, defaults and user preferences.
+- [x] **Camera & Devices:** phone camera, ESP32 connection and device preferences that genuinely configure app behaviour.
+- [x] **AI & Intelligence:** model selection, prompt presets, fallback preferences and personal API-key entry.
+- [x] **Voice & Accessibility:** speech recognition mode, TTS voice/language and haptics.
+- [x] **SOS & Triggers:** shake, voice trigger, confirmation, cancellation and alert preferences.
+- [x] **Testing tools:** Image Lab and controlled live tests only; not general health reporting.
+- [x] **Account & Data:** account/session/history/privacy controls only where those controls actually exist and are supported.
 - [x] Forbidden content removed from Admin: Documentation index, roadmap, developer tutorials, GitHub project history, hardware wiring tutorials, release notes and long status reports.
-- [ ] Confirm no Admin page section duplicates a canonical Devices, SOS, Medicine, Account or Diagnostics control.
+- [x] Confirm no Admin page section duplicates a canonical Devices, SOS, Medicine, Account or Diagnostics control.
 - [x] Remove the photo-history toggle from Admin and its stale bindings.
 - [x] Correct homepage, Privacy, Terms and Account copy to state that new photo-history requests default off.
 - [ ] Owner decision required: keep new history disabled or approve a privacy-consistent opt-in control outside Admin; do not silently change the default.
