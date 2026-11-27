@@ -209,7 +209,7 @@ Do not mark optional roadmap work (scene memory, WebRTC SOS video, R2 incident r
 
 ## 8. Build and release policy
 
-See [ANDROID-RELEASE-SETUP.md](ANDROID-RELEASE-SETUP.md) for the exact Windows PowerShell commands to create the persistent signing keystore, add protected GitHub Actions secrets and publish the APK.
+See [ANDROID-RELEASE-SETUP.md](ANDROID.md) for the exact Windows PowerShell commands to create the persistent signing keystore, add protected GitHub Actions secrets and publish the APK.
 
 - Main remains production; do all Android work on `feat/native-android-capacitor-a55`.
 - Keep `backup/main-before-native-android-2026-11-26` as the rollback point.
@@ -231,7 +231,7 @@ See [ANDROID-RELEASE-SETUP.md](ANDROID-RELEASE-SETUP.md) for the exact Windows P
 - Extracted APK size: 4,688,232 bytes. SHA-256: `410ccff91587d07f8c7a819e6e2a4cc2b84c3bc69e6ea283720185bd6feb851a`.
 - This is an installable **debug-signed test build**, not the permanent release-signed APK. The CI debug signing identity is not suitable for long-term updates. A later release APK will have a different signature; uninstall the debug build before installing that release.
 - The first wrapper loads the production HTTPS Worker app at `/blind/`; the web-side native bridge and Android device-control page are deployed separately from the Documentation hub.
-- The release workflow is in `.github/workflows/android-release.yml`. A persistent owner-controlled keystore and four protected GitHub Actions secrets are required before publishing an updateable signed APK. See [ANDROID-RELEASE-SETUP.md](ANDROID-RELEASE-SETUP.md).
+- The release workflow is in `.github/workflows/android-release.yml`. A persistent owner-controlled keystore and four protected GitHub Actions secrets are required before publishing an updateable signed APK. See [ANDROID-RELEASE-SETUP.md](ANDROID.md).
 
 ### Still outstanding — physical Galaxy A55 validation
 
@@ -266,7 +266,7 @@ The native Activity handles foreground key events. Global handling uses an optio
 
 ### First-use setup and testing
 
-1. Install the current debug APK from the Android build workflow artifact linked in [Native Android status](NATIVE-ANDROID-APP.md). It is a test build, not a permanent signed release.
+1. Install the current debug APK from the Android build workflow artifact linked in [Native Android status](ANDROID.md). It is a test build, not a permanent signed release.
 2. Open the app while online. The first wrapper loads the production HTTPS app, so cloud AI requires an internet connection.
 3. Test the four mappings with the app in the foreground. Verify the visible and spoken feedback for every action.
 4. Open the in-app Documentation page and review the volume-shortcut settings.
@@ -327,7 +327,7 @@ Launcher and browser support varies. These shortcuts open URLs; they do not prov
 - The receiver must be paired and online; push delivery is best-effort and not guaranteed.
 - SOS does not call emergency services.
 
-See [Native Android master plan](NATIVE-ANDROID-APP.md), [Accessibility](ACCESSIBILITY.md), [Safety](SAFETY.md) and [Current release checklist](CURRENT-RELEASE-CHECKLIST.md).
+See [Native Android master plan](ANDROID.md), [Accessibility](ACCESSIBILITY.md), [Safety](SAFETY.md) and [Current release checklist](RELEASE.md).
 
 ## Owner-only signing setup
 
