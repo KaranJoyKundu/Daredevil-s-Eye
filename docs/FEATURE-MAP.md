@@ -1,5 +1,8 @@
 # Feature map — Daredevil's Eye
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 **Reviewed:** 28 November 2026  
 **Purpose:** One index for where each capability belongs, where its implementation lives, and what evidence is still required. This is an inventory, not a claim that every feature has passed end-to-end testing.
 
