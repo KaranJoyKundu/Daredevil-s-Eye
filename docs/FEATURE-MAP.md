@@ -24,7 +24,7 @@ The site navigation should use these five groups consistently. A shortcut may ap
 - **Incomplete / blocked** — implementation or validation is unfinished.
 - **Planned** — not implemented; do not describe as available.
 
-A higher evidence level must never be inferred from a lower one. Check [STATUS](STATUS.md), [release checklist](CURRENT-RELEASE-CHECKLIST.md), and [Testing](TESTING.md) for current evidence.
+A higher evidence level must never be inferred from a lower one. Check [STATUS](STATUS.md), [release checklist](RELEASE.md), and [Testing](RELEASE.md) for current evidence.
 
 ## Feature inventory
 
@@ -54,7 +54,7 @@ A higher evidence level must never be inferred from a lower one. Check [STATUS](
 | PWA install and shortcuts | Install from browser; help in INFORMATION | `web/manifest.webmanifest`, `web/sw.js` | Browser support, HTTPS | Verify install/shortcuts on target browser; capability varies by platform. |
 | Native Android wrapper and volume keys | DEVICES / Android companion | `native-android/`, Capacitor plugin and Android source | Android permissions, optional Accessibility Service | CI debug APK exists; physical A55, screen-off, TalkBack and signed-release checks remain open. |
 | Support and contact | `/support/`, `/contact/` — INFORMATION | Corresponding `web/` routes | External contact channels | Verify links and current contact details. |
-| Threat model and security reporting | Technical documentation | [Threat model](THREAT-MODEL.md), [Security policy](../SECURITY.md) | Repository security process | Keep reporting instructions and threat analysis out of Admin. |
+| Threat model and security reporting | Technical documentation | [Threat model](SAFETY.md), [Security policy](../SECURITY.md) | Repository security process | Keep reporting instructions and threat analysis out of Admin. |
 
 ## Route inventory
 
@@ -85,4 +85,4 @@ A higher evidence level must never be inferred from a lower one. Check [STATUS](
 
 ## Maintenance contract
 
-When a feature changes, update this map only after checking its actual source, then update the relevant guide and status/evidence. Do not infer a route from a document title. Keep source links, route links and tests grounded in the current repository tree. Update [Decisions](DECISIONS.md), [Status](STATUS.md) and [Release checklist](CURRENT-RELEASE-CHECKLIST.md) when a change alters architecture or validation state.
+When a feature changes, update this map only after checking its actual source, then update the relevant guide and status/evidence. Do not infer a route from a document title. Keep source links, route links and tests grounded in the current repository tree. Update [Decisions](DECISIONS.md), [Status](STATUS.md) and [Release checklist](RELEASE.md) when a change alters architecture or validation state.
