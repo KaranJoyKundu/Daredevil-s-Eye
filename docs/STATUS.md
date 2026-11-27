@@ -40,7 +40,7 @@
 | Camera | Phone photo input and ESP32-CAM stream/capture support exist in source; owner reported board capture working | Current A55 WebView permission/local-network/torch checks against exact firmware |
 | SOS | Pairing, confirmation, push and receiver workflows exist in source | Two-phone, cross-network push, acknowledgement, cancellation and offline tests |
 | Medicine/RFID | Medicine page, RFID listener and hardware guide exist | Exact board/wiring/tag provisioning and real medicine-label verification workflow |
-| Account/history | Supabase schema, Worker paths and private storage are documented | End-to-end signed-in/guest save, view, delete and scheduled expiry checks |
+| Account/history | Supabase schema, Worker paths, account UI and private storage exist in source | New photo saves default off and no user-facing opt-in control is currently exposed after Admin toggle removal; verify existing-record view/delete and key management. Owner decision needed before restoring a privacy control. |
 | Android | CI-built debug APK | Physical A55 acceptance and owner-managed signed release |
 
 ## Documentation and navigation overhaul
