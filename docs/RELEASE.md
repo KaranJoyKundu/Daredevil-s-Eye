@@ -10,8 +10,10 @@
 - [Automated checks](#automated-checks)
 - [Manual acceptance matrix](#manual-acceptance-matrix)
 - [Release evidence and current open validation](#release-evidence-and-current-open-validation)
-- [Safe release workflow](#safe-release-workflow)
-- [Historical incidents](#historical-incidents)
+- [Release acceptance](#release-acceptance)
+- [Production deployment record](#production-deployment-record)
+- [Signed APK release gate](#signed-apk-release-gate)
+- [Maintenance rule](#maintenance-rule)
 
 ## Automated checks
 
@@ -145,7 +147,7 @@ For every device test, record: date, exact handset/model code, Android and One U
 
 - [ ] Create a persistent owner-controlled Android keystore.
 - [ ] Keep at least one encrypted offline backup and store passwords in a password manager.
-- [ ] Add the four protected GitHub Actions secrets described in [Android release signing](ANDROID-RELEASE-SETUP.md).
+- [ ] Add the four protected GitHub Actions secrets described in [Android release signing](ANDROID.md).
 - [ ] Run the signed release workflow using a new version tag.
 - [ ] Verify APK signature and SHA-256 checksum.
 - [ ] Install and upgrade-test the signed APK on the A55.
