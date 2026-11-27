@@ -38,7 +38,7 @@
   --display-tracking: -0.03em;
   --display-tracking-xl: -0.04em;
 }
-.home-privacy-note{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;padding:9px 18px;border-bottom:1px solid rgba(120,190,170,.24);background:rgba(16,34,31,.94);color:#dceee8;font-size:13px;line-height:1.45}.home-privacy-note a{color:#8de0c2;text-decoration:underline;text-underline-offset:3px}@media(max-width:640px){.home-privacy-note{justify-content:flex-start;padding:9px 14px;font-size:12px}}
+.home-preview-note{display:none;padding:7px 16px;border-bottom:1px solid #705d32;background:#2b2519;color:#ead9b6;font-size:12px;text-align:center}.home-privacy-note{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;padding:9px 18px;border-bottom:1px solid rgba(120,190,170,.24);background:rgba(16,34,31,.94);color:#dceee8;font-size:13px;line-height:1.45}.home-privacy-note a{color:#8de0c2;text-decoration:underline;text-underline-offset:3px}@media(max-width:640px){.home-privacy-note{justify-content:flex-start;padding:9px 14px;font-size:12px}}
 </style>
 <link rel="stylesheet" href="/assets/ui/base.css">
 <link rel="stylesheet" href="/assets/ui/chat/fragment.css">
@@ -121,6 +121,7 @@
 </style>
 </head>
 <body>
+<aside class="home-preview-note" id="home-preview-note" hidden>Vercel preview — UI review only. AI, SOS and account APIs are not connected here; use the live Cloudflare app for real operations.</aside>
 <aside class="home-privacy-note" role="note"><strong>Privacy:</strong> Photos and voice are processed by this app and Google Gemini when you use AI features. New photo-history saves are off by default. <a href="/privacy/">Read the privacy details</a>.</aside>
 <!-- type: software
      deal: hero centred, nav nav-centre, close close-word, footer footer-statement, rhythm space, buttons tonal, mark arc, palette green-black-bone, type familjen, effect painterly-landscape (hero window)
@@ -181,7 +182,7 @@
     <div class="wrap">
       <div class="grid">
         <h2 id="app-h" class="span-5">Optional private photo and answer history</h2>
-        <p class="span-6 start-7 muted">Photo history is currently off by default. Existing saved records remain private and can be managed in Account &amp; History; new submissions are not saved unless history is explicitly enabled. Open one to hear it again, or delete it. <a class="link" href="/privacy/">Read the privacy details</a></p>
+        <p class="span-6 start-7 muted">Photo history is currently off by default. Existing saved records remain private and can be managed in Account &amp; History; new submissions are not saved unless history is explicitly enabled. The sample entries below are illustrative demo content, not real user records. Open one to hear it again, or delete it. <a class="link" href="/privacy/">Read the privacy details</a></p>
       </div>
       <div class="ui app fill" role="img" aria-label="The history list beside an open Ask AI answer in Bangla about a bus number" data-ui-pause-host>
         <div class="app__pane app__pane--list">
@@ -330,7 +331,7 @@
           <h2 id="human-h">The AI assistant reports, you decide</h2>
           <p class="t-lead">Built as a Human+AI copilot: the person holding the phone makes every decision.</p>
           <p>Copilot: Gemini vision with spoken Bangla answers.</p>
-          <p>Memory: a private history of photos and answers.</p>
+          <p>History: optional saved records, currently off by default.</p>
           <p>Orchestration: one Worker for models, speech and SOS.</p>
           <p><a class="link" href="https://github.com/KaranJoyKundu/Daredevil-s-Eye">Read the code on GitHub</a></p>
         </div>
@@ -389,6 +390,7 @@
   </div>
 </footer>
 
+<script>if(location.hostname.endsWith(".vercel.app")){const n=document.getElementById("home-preview-note");n.hidden=false;n.style.display="block";}</script>
 <script type="module" src="/assets/system.js"></script>
 <script>navigator.serviceWorker?.register('/sw.js',{scope:'/'}).catch(()=>{})</script>
 <script type="module" src="/assets/motion/motion.js"></script>
