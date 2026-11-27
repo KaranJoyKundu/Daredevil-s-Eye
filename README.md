@@ -23,7 +23,8 @@
 | Install and run the project locally | [Setup guide](docs/SETUP.md) |
 | Understand the system | [Architecture](docs/ARCHITECTURE.md) |
 | Find a guide for a specific task | [Documentation hub](docs/README.md) |
-| See what is verified and what still needs testing | [Release handbook](docs/RELEASE.md) |\n| Understand Android controls and release signing | [Android guide](docs/ANDROID.md) |
+| See what is verified and what still needs testing | [Release handbook](docs/RELEASE.md) |
+| Understand Android controls and release signing | [Android guide](docs/ANDROID.md) |
 | Report a security issue | [Security policy](SECURITY.md) |
 
 **Live services:** [Website](https://daredevils-eye.karanjoykundu.workers.dev/) · [Action app](https://daredevils-eye.karanjoykundu.workers.dev/action/) · [Blind mode](https://daredevils-eye.karanjoykundu.workers.dev/blind/) · [Project documentation](https://daredevils-eye.karanjoykundu.workers.dev/documentation/)
@@ -178,7 +179,9 @@ The [documentation hub](docs/README.md) is the navigation index. The [feature ma
 
 | Document | What it covers |
 |---|---|
-| [Feature map](docs/FEATURE-MAP.md) | Complete feature inventory and canonical page ownership |\n| [Decisions](docs/DECISIONS.md) | Product/architecture decisions and rationale |\n| [Status](docs/STATUS.md) | Current verified state, recent incidents and outstanding validation |
+| [Feature map](docs/FEATURE-MAP.md) | Complete feature inventory and canonical page ownership |
+| [Decisions](docs/DECISIONS.md) | Product/architecture decisions and rationale |
+| [Status](docs/STATUS.md) | Current verified state, recent incidents and outstanding validation |
 | [Architecture](docs/ARCHITECTURE.md) | Components, routes, data flows, AI, storage and SOS |
 | [Setup](docs/SETUP.md) | Local development, camera, voice, BYOK and web install |
 | [Deployment](docs/OPERATIONS.md) | Cloudflare configuration, secrets, CI and release procedure |
