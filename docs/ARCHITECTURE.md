@@ -2,7 +2,7 @@
 
 ## Runtime
 
-A Cloudflare Worker serves the static files in `web/` and the API routes in `worker/src/index.js`. The project's Gemini API key stays a Worker secret. A personal key can be sent by the browser in a same-origin request header; the current BYOK implementation is tab-scoped in sessionStorage and is not an account-level encrypted key vault. Durable Objects store SOS invitations and alert state. Supabase (Postgres plus a private storage bucket) stores optional account and guest photo history. A daily cron trigger deletes guest history older than 30 days.
+A Cloudflare Worker serves the static files in `web/` and the API routes in `worker/src/index.js`. The project's Gemini API key stays a Worker secret. Admin can send a tab-scoped personal key in a same-origin request header. Signed-in users can separately save an account key through Account & History; the Worker encrypts it with AES-256-GCM and stores ciphertext plus IV in Supabase. Durable Objects store SOS invitations and alert state. Supabase (Postgres plus a private storage bucket) stores optional account and guest photo history. A daily cron trigger deletes guest history older than 30 days.
 
 ## Browser and route layout
 
@@ -69,7 +69,7 @@ The audio is processed transiently by the Worker and forwarded to Google. App co
 - Worker reads the custom request header or the project secret.
 - The Worker does not write the personal key to the database or durable storage.
 - Closing the tab clears the browser session key.
-- This is not an account-level key vault or an encrypted saved-key feature.
+- This Admin path is not an account-level key vault. Signed-in users can manage a separately encrypted saved key from Account & History; the Worker decrypts it only for the provider request.
 
 ## Public API and provider quotas
 
