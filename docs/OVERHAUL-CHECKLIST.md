@@ -217,7 +217,8 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 - [ ] Test Admin settings load/save and confirm no removed history setting is read/written.
 - [ ] Test Diagnostics independently from Admin.
 - [ ] Test Documentation hub, search/index and every guide link.
-- [x] Test Devices page in the normal browser preview.\n- [ ] Test Devices page inside the Android wrapper on the physical target device.
+- [x] Test Devices page in the normal browser preview.
+- [ ] Test Devices page inside the Android wrapper on the physical target device.
 - [ ] Verify the live Cloudflare production Worker is unchanged until explicit release approval.
 - [x] Record browser verification separately from physical-device verification.
 - [ ] Review accessibility, privacy, security and safety language.
