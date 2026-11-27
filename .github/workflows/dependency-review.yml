@@ -9,6 +9,8 @@ permissions:
 
 jobs:
   dependency-review:
+    # Advisory until repository dependency-graph access is confirmed.
+    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
