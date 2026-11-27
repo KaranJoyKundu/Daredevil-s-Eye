@@ -1,5 +1,8 @@
 # Accessibility notes
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 Daredevil's Eye is an experimental audio-first interface. It is not accessibility-certified and must not replace a white cane, guide dog, orientation and mobility training, or human assistance.
 
 ## Blind mode
