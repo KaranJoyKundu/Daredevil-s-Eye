@@ -68,16 +68,19 @@ The native implementation is present in the repository, but the mapping, global 
 
 | Route | Purpose |
 |---|---|
-| `/` | Project landing page |
-| `/action/` | Main app and camera/action controls |
+| `/` | Project landing page and About |
+| `/action/` | Main task interface: Describe, Ask AI, camera and uploads |
 | `/blind/` | Blind-first four-action interface |
-| `/admin/` | Camera, SOS pairing, model, assistant, voice and preference settings |
-| `/diagnostics/` | Camera, microphone, speaker, AI and backend checks |
+| `/sos/` | Canonical SOS Center: sender, receiver, pairing and acknowledgement |
+| `/medicine/` | Medicine identification and RFID-assisted workflow |
+| `/admin/` | App and device configuration only |
+| `/diagnostics/` | Camera, microphone, speaker, AI and backend health checks |
 | `/account/` | Sign-in and optional photo history |
-| `/sos-receiver/` | Pair a trusted receiver and listen for alerts |
-| `/help/` | User help |
+| `/documentation/` | Documentation index and structured reference |
+| `/help/` | Task-oriented user help |
 | `/privacy/`, `/terms/` | Privacy notice and terms |
-| `/documentation/` | Native Android implementation and progress tracker |
+| `/support/`, `/contact/` | Support and contact |
+| `/sos-receiver/` | Legacy compatibility route; use canonical `/sos/` |
 
 ## How it works
 
@@ -169,11 +172,11 @@ Read [Safety and privacy](docs/SAFETY.md), [Security policy](SECURITY.md) and [T
 
 ## Documentation map
 
-The [documentation hub](docs/README.md) is the navigation index. Key references:
+The [documentation hub](docs/README.md) is the navigation index. The [feature map](docs/FEATURE-MAP.md) defines canonical ownership; [decisions](docs/DECISIONS.md) record durable rationale. Key references:
 
 | Document | What it covers |
 |---|---|
-| [Status](docs/STATUS.md) | Current verified state, recent incidents and outstanding validation |
+| [Feature map](docs/FEATURE-MAP.md) | Complete feature inventory and canonical page ownership |\n| [Decisions](docs/DECISIONS.md) | Product/architecture decisions and rationale |\n| [Status](docs/STATUS.md) | Current verified state, recent incidents and outstanding validation |
 | [Architecture](docs/ARCHITECTURE.md) | Components, routes, data flows, AI, storage and SOS |
 | [Setup](docs/SETUP.md) | Local development, camera, voice, BYOK and web install |
 | [Deployment](docs/DEPLOYMENT.md) | Cloudflare configuration, secrets, CI and release procedure |
