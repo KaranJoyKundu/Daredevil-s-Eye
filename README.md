@@ -19,6 +19,7 @@
 | Try the live app | [Open Daredevil's Eye](https://daredevils-eye.karanjoykundu.workers.dev/) |
 | Use the simplified blind-first interface | [Blind mode](https://daredevils-eye.karanjoykundu.workers.dev/blind/) |
 | Read the current project status | [Implementation status](docs/STATUS.md) |
+| Track the full product/documentation overhaul | [Master overhaul checklist](docs/OVERHAUL-CHECKLIST.md) |
 | Install and run the project locally | [Setup guide](docs/SETUP.md) |
 | Understand the system | [Architecture](docs/ARCHITECTURE.md) |
 | Find a guide for a specific task | [Documentation hub](docs/README.md) |
@@ -70,7 +71,8 @@ The native implementation is present in the repository, but the mapping, global 
 |---|---|
 | `/` | Project landing page and About |
 | `/action/` | Main task interface: Describe, Ask AI, camera and uploads |
-| `/blind/` | Blind-first four-action interface |\n| `/devices/` | Android shortcut settings and hardware setup entry points |
+| `/blind/` | Blind-first four-action interface |
+| `/devices/` | Android shortcut settings and hardware setup entry points |
 | `/sos/` | Canonical SOS Center: sender, receiver, pairing and acknowledgement |
 | `/medicine/` | Medicine identification and RFID-assisted workflow |
 | `/admin/` | App and device configuration only |
