@@ -98,7 +98,7 @@ Save the choice in local device settings (not a global server setting). Do not s
 - Do not claim unrestricted or silent control. Browser permission, browser camera indicator and OS controls remain authoritative.
 
 ### ESP32-CAM
-Default address for this project: `http://192.168.0.100` (user-supplied current LAN IP). It is configurable in Admin and saved per browser/device. Never hard-code the IP in multiple modules; centralize URL construction.
+Default address for this project: `http://ESP32_LAN_IP_PLACEHOLDER` (user-supplied current LAN IP). It is configurable in Admin and saved per browser/device. Never hard-code the IP in multiple modules; centralize URL construction.
 
 Endpoints:
 - Still without flash: `GET /capture`
@@ -194,7 +194,7 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - [x] Persistent phone camera stream and visible preview (foreground session; permission remains user-controlled).
 - [x] Capture frame from existing phone stream and route Describe through it.
 - [x] Preserve upload-only fallback.
-- [x] Centralize ESP32 endpoint construction and set default IP to 192.168.0.100.
+- [x] Centralize ESP32 endpoint construction and set default IP to ESP32_LAN_IP_PLACEHOLDER.
 - [x] Add ESP32 /capture connection test in Admin.
 - [x] Ensure cleanup on source change/page lifecycle (phone tracks stop on source change, pagehide and hidden-page transitions; user must re-enable after returning).
 - [x] Add static regression tests for camera setup, phone capture, ESP32 endpoint generation and Admin controls.
@@ -245,7 +245,7 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 - Describe captures the current video frame without opening the native camera app.
 - Upload fallback remains available.
 - Changing source or leaving page releases camera tracks.
-- Default ESP32 address is `http://192.168.0.100`; Admin can override it.
+- Default ESP32 address is `http://ESP32_LAN_IP_PLACEHOLDER`; Admin can override it.
 - Existing SOS, language, consent, voice and AI behaviour remains intact.
 - `npm test` and `npm run check` pass on the exact PR SHA.
 - Manual test results on a physical Android phone and ESP32 are recorded separately.
@@ -254,7 +254,7 @@ Recommended storage: private Cloudflare R2 bucket, separate from Supabase JPEG p
 
 - Added this plan and repository handoff document.
 - Created fresh backup and feature branch.
-- Added per-device camera source/setup settings and migrated the legacy ESP32 default IP to 192.168.0.100.
+- Added per-device camera source/setup settings and migrated the legacy ESP32 default IP to ESP32_LAN_IP_PLACEHOLDER.
 - Added shared phone/ESP32 camera manager: persistent phone MediaStream, canvas still capture, stream cleanup, configurable ESP32 endpoints, LED brightness, flash/no-flash capture and connection test.
 - Added first-time camera selector after consent and phone camera preview/enable flow to Action page.
 - Routed Describe to the selected phone stream or ESP32 still capture; upload-only selection triggers the existing upload flow.
@@ -433,7 +433,7 @@ Build a complete ESP32 camera panel, not just an IP-address text field.
 
 ### Camera address configuration
 
-The original proposal recorded the then-supplied ESP32 address as `192.168.0.100` and noticed older hard-coded references to `192.168.0.104`. Treat `192.168.0.100` as the proposed default from that plan, not as a guarantee of the board's current address. Verify the actual firmware and network before changing production configuration.
+The original proposal recorded the then-supplied ESP32 address as `ESP32_LAN_IP_PLACEHOLDER` and noticed older hard-coded references to `ESP32_LAN_IP_PLACEHOLDER`. Treat `ESP32_LAN_IP_PLACEHOLDER` as the proposed default from that plan, not as a guarantee of the board's current address. Verify the actual firmware and network before changing production configuration.
 
 Centralize the camera address in one configuration. Every endpoint must derive from that setting; do not scatter IP literals across the app.
 
@@ -479,7 +479,7 @@ Important behavior:
 
 The app is served over HTTPS while the ESP32 may use a private HTTP address. Modern browsers may require Local Network Access permission for private-network connections. Initiate connection from a user action and handle permission denial clearly. The camera firmware needs appropriate CORS headers for cross-origin access. In particular, reading stream frames into a canvas for recording requires successful CORS handling; displaying a stream alone does not prove that canvas pixel access will work.
 
-The browser is the bridge between the local ESP32 and the internet. The Cloudflare Worker cannot directly reach a private LAN address such as `192.168.0.100`.
+The browser is the bridge between the local ESP32 and the internet. The Cloudflare Worker cannot directly reach a private LAN address such as `ESP32_LAN_IP_PLACEHOLDER`.
 
 ## 4. Five-photo visual memory
 
@@ -619,7 +619,7 @@ For the phone camera:
 
 For ESP32-CAM:
 
-- Read the MJPEG stream from the configured local address (the original proposal used `http://192.168.0.100:81/stream`).
+- Read the MJPEG stream from the configured local address (the original proposal used `http://ESP32_LAN_IP_PLACEHOLDER:81/stream`).
 - Display it in the application.
 - Where CORS permits, convert incoming frames to a browser `MediaStream` using a canvas.
 - Use that stream for WebRTC and recording.
@@ -680,7 +680,7 @@ Build this as separate, independently testable releases. Do not create one enorm
 
 - [ ] Add first-time camera selection.
 - [ ] Save camera choice per device.
-- [ ] Centralize camera address configuration; verify whether `192.168.0.100` is still correct before using it.
+- [ ] Centralize camera address configuration; verify whether `ESP32_LAN_IP_PLACEHOLDER` is still correct before using it.
 - [ ] Create a shared camera manager.
 - [ ] Implement persistent phone camera preview and capture.
 - [ ] Implement ESP32 connection testing, live preview and diagnostics.
@@ -808,7 +808,7 @@ Record browser version, Android version, firmware version, network conditions, t
 | Area | Proposed decision |
 |---|---|
 | Default camera | User chooses during first setup |
-| ESP32 address | `192.168.0.100` was the supplied address in the original plan; verify before use |
+| ESP32 address | `ESP32_LAN_IP_PLACEHOLDER` was the supplied address in the original plan; verify before use |
 | Phone camera | Persistent in-page stream |
 | ESP32 preview | Actual MJPEG stream |
 | Scene memory | Optional, latest five photo observations |
