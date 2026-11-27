@@ -1,5 +1,8 @@
 # Project status — Daredevil's Eye
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 **Last reviewed:** 28 November 2026  
 **Production URL:** https://daredevils-eye.karanjoykundu.workers.dev/  
 **Production platform:** Cloudflare Worker + static web assets  
