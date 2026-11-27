@@ -101,6 +101,8 @@ Run the current repository scripts from the root:
 ```powershell
 npm test
 npm run check
+npm run docs:check
+npx --yes markdownlint-cli2@0.17.2 "**/*.md" "#node_modules"
 ```
 
 If a script is missing, report that clearly rather than inventing a passing result.
