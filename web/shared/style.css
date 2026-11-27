@@ -431,3 +431,6 @@ a{text-underline-offset:3px}
 .site-menu-group:last-child{border-bottom:0}
 .site-menu-group-title{padding:7px 12px 4px;color:#82cdb5;font-size:.68rem;font-weight:850;letter-spacing:.13em}
 .site-menu nav a{padding:8px 12px;font-size:.9rem}
+
+/* Vercel previews are for UI review; production APIs remain on the Cloudflare Worker. */
+.preview-notice{padding:7px 16px;border-bottom:1px solid #705d32;background:#2b2519;color:#ead9b6;font-size:.78rem;line-height:1.45;text-align:center}
