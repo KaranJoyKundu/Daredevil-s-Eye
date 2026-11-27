@@ -76,7 +76,6 @@ $('#camera').value=saved.cameraBaseUrl;
 $('#require-photo-confirmation').checked=saved.requirePhotoConfirmation!==false;
 $('#contact-name').value=saved.emergencyName;
 $('#contact-phone').value=saved.emergencyPhone;
-$('#sos-code').value=saved.sosPairingCode;
 $('#language').value=saved.speechLanguage;
 $('#speech-input-mode').value=saved.speechInputMode||'auto';
 $('#input-language').value=saved.speechInputLanguage||'bn-BD';
@@ -142,16 +141,6 @@ $('#enable-voice-sos').addEventListener('click',async()=>{
   $('#sos-voice-enabled').checked=false;saveSettings({sosVoiceEnabled:false});
   $('#sos-voice-status').textContent='Could not enable voice SOS: '+error.message;
  }finally{button.disabled=false;}
-});
-
-$('#generate-sos-code').addEventListener('click',async()=>{
- const button=$('#generate-sos-code');button.disabled=true;
- try{
-  const result=await requestAI('/api/sos/invite',{deviceId:saved.deviceId});
-  $('#sos-code').value=result.code;
-  $('#message').textContent='New six-character code generated. It expires in 10 minutes and immediately disconnects the previous receiver. Give it to the receiver phone now.';
- }catch(error){$('#message').textContent='Could not create SOS invitation: '+error.message;}
- finally{button.disabled=false;}
 });
 
 async function loadModels(){
@@ -279,7 +268,7 @@ form.addEventListener('submit',async event=>{
   const next=formSettings();
   saveSettings(next);
   $('#camera').value=next.cameraBaseUrl;
-  $('#message').textContent='All settings saved on this device. Generate a fresh SOS invitation whenever you want to pair or replace the receiver.';
+  $('#message').textContent='All settings saved on this device. Pair or replace the receiver in the SOS Center.';
  }catch(error){$('#message').textContent=error.message;}
  finally{if(submitButton)submitButton.disabled=false;}
 });
