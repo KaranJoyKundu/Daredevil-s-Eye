@@ -9,16 +9,13 @@
 
 ## Contents
 
-1. [Product and architecture](#product-and-architecture)
-2. [Approved physical-button mapping](#approved-physical-button-mapping)
-3. [Permissions, background behaviour and limitations](#permissions-background-behaviour-and-limitations)
-4. [Web/PWA alternatives](#webpwa-alternatives)
-5. [Build, install and release](#build-install-and-release)
-6. [Owner-only signing setup](#owner-only-signing-setup)
-7. [Device acceptance checklist](#device-acceptance-checklist)
-8. [Implementation notes and history](#implementation-notes-and-history)
+1. [Native Android implementation plan](#native-android-implementation-plan)
+2. [Android controls and web fallbacks](#android-controls-and-web-fallbacks)
+3. [Owner-only signing setup](#owner-only-signing-setup)
+4. [Device acceptance checklist](#device-acceptance-checklist)
+5. [Implementation notes and history](#implementation-notes-and-history)
 
-## Product and architecture
+## Native Android implementation plan
 
 **Project:** Daredevil's Eye  
 **Primary handset:** Samsung Galaxy A55 5G  
@@ -250,7 +247,7 @@ See [ANDROID-RELEASE-SETUP.md](ANDROID.md) for the exact Windows PowerShell comm
 
 **Do not mark screen-off camera/microphone or TalkBack coexistence complete from CI alone.** The debug APK is built and the production web bridge is deployed, but real-device acceptance remains open.
 
-## Approved physical-button mapping
+## Android controls and web fallbacks
 
 This guide distinguishes the **web/PWA controls** from the **native Capacitor Android controls**. They are not interchangeable. A browser page cannot reliably intercept hardware volume keys; the native companion includes Android-side key handling, but the target handset still needs physical validation.
 
