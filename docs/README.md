@@ -40,6 +40,10 @@ Admin is settings only. Diagnostics is health/testing only. Neither is a documen
 - [Android release signing](ANDROID-RELEASE-SETUP.md)
 - [Current release checklist](CURRENT-RELEASE-CHECKLIST.md)
 
+## Active overhaul and acceptance tracking
+
+- [Master overhaul checklist](OVERHAUL-CHECKLIST.md) — the complete acceptance checklist for product grouping, page boundaries, navigation, documentation consolidation, repository quality, testing, PR and deployment. Checkboxes are evidence-based and must be updated with the implementation.
+
 ## Project source of truth
 
 | Document | Owns |
@@ -50,7 +54,7 @@ Admin is settings only. Diagnostics is health/testing only. Neither is a documen
 | [CURRENT-RELEASE-CHECKLIST.md](CURRENT-RELEASE-CHECKLIST.md) | Release gates and device acceptance evidence. |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Actual components, routes, data flows and trust boundaries. |
 | [ROADMAP.md](ROADMAP.md) | Future work and explicitly incomplete items. |
-| [RECOVERY.md](RECOVERY.md) | Safe checkpoint and recovery instructions for this documentation overhaul. |
+| [RECOVERY.md](RECOVERY.md) | Safe checkpoint and recovery instructions for this documentation overhaul. |\n| [OVERHAUL-CHECKLIST.md](OVERHAUL-CHECKLIST.md) | Master acceptance checklist and tracked completion record. |
 | [CHANGELOG.md](../CHANGELOG.md) | User-visible history. |
 
 ## Reference library
@@ -82,6 +86,8 @@ Admin is settings only. Diagnostics is health/testing only. Neither is a documen
 A successful build does not prove a physical camera, microphone, speaker, screen-off shortcut or SOS receiver works.
 
 ## Documentation maintenance rules
+
+The active file-count reduction plan and merge map are tracked in [OVERHAUL-CHECKLIST](OVERHAUL-CHECKLIST.md). Do not delete or merge a guide until its unique instructions, commands, warnings and links have been migrated and reviewed.
 
 - Keep the root [README](../README.md) concise: project purpose, safety, quick start and links.
 - Keep current state in [STATUS](STATUS.md), inventory in [FEATURE-MAP](FEATURE-MAP.md), durable rationale in [DECISIONS](DECISIONS.md), future work in [ROADMAP](ROADMAP.md), and acceptance evidence in [CURRENT-RELEASE-CHECKLIST](CURRENT-RELEASE-CHECKLIST.md).
