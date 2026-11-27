@@ -108,7 +108,7 @@ Do not mark optional roadmap work (scene memory, WebRTC SOS video, R2 incident r
 - [x] Record the owner's approved mapping and release preference.
 - [x] Create backup branch from current main.
 - [x] Create isolated Android feature branch from current main.
-- [x] Write this master plan and add a revisit-able Documentation page.
+- [x] Write this master plan and add a revisit-able Android device settings surface.
 - [ ] Add Android implementation and security decisions to the architecture docs.
 - [x] Record baseline main SHA and verify the implementation was developed on a feature branch.
 
@@ -174,7 +174,7 @@ Do not mark optional roadmap work (scene memory, WebRTC SOS video, R2 incident r
 ### Phase 7 — handoff
 - [ ] Update all checkboxes based on actual evidence.
 - [ ] Record known limitations and device-specific setup.
-- [ ] Link the latest APK, release notes, workflow and PR from the Documentation page.
+- [ ] Link the latest APK and release evidence from the Android release guide; keep the Documentation hub as an index.
 - [ ] Keep the feature branch/PR unmerged until owner reviews the working APK and explicitly approves merge.
 
 ## 7. Security and privacy requirements
@@ -213,13 +213,13 @@ See [ANDROID-RELEASE-SETUP.md](ANDROID-RELEASE-SETUP.md) for the exact Windows P
 - GitHub Actions artifact: `daredevils-eye-android-debug`, artifact ID `15086769593`, 4,313,560 bytes. It expires 10 December 2026.
 - Extracted APK size: 4,688,232 bytes. SHA-256: `410ccff91587d07f8c7a819e6e2a4cc2b84c3bc69e6ea283720185bd6feb851a`.
 - This is an installable **debug-signed test build**, not the permanent release-signed APK. The CI debug signing identity is not suitable for long-term updates. A later release APK will have a different signature; uninstall the debug build before installing that release.
-- The first wrapper loads the production HTTPS Worker app at `/blind/`; the web-side native bridge and Documentation page are deployed.
+- The first wrapper loads the production HTTPS Worker app at `/blind/`; the web-side native bridge and Android device-control page are deployed separately from the Documentation hub.
 - The release workflow is in `.github/workflows/android-release.yml`. A persistent owner-controlled keystore and four protected GitHub Actions secrets are required before publishing an updateable signed APK. See [ANDROID-RELEASE-SETUP.md](ANDROID-RELEASE-SETUP.md).
 
 ### Still outstanding — physical Galaxy A55 validation
 
 - Install the debug APK on the Samsung Galaxy A55 (Android 16 / One UI 8).
-- Verify first-run permissions, native Accessibility Service setup and Documentation page settings.
+- Verify first-run permissions and native Accessibility Service setup in the Device control centre at `/devices/`.
 - Test Volume Up, Volume Down, double Volume Up and simultaneous hold with the app open.
 - Test global key handling while another app is foregrounded and with the screen locked/off.
 - Test TalkBack enabled/disabled and normal volume behaviour when shortcut toggles are off.
