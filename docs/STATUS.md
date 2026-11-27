@@ -12,6 +12,19 @@
 
 > This page is a factual snapshot, not a roadmap. “Implemented in source”, “CI passed”, “browser verified” and “physical device verified” are different evidence levels. When evidence is missing, the feature remains unverified.
 
+## Current overhaul verification
+
+- **Review PR:** [#77 — Overhaul product navigation, documentation and repository quality](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/77) — open, draft, unmerged.
+- **Main/base checkpoint:** `98c9864fabf068ca7a904f5b91d6ad8264561108`. The `main` branch is unchanged.
+- **Overhaul branch head at verification:** `15afbada7cca4f732586caf03099ae1883f67acd`.
+- **Vercel preview:** [Open UI preview](https://daredevils-eye-rfid-preview-q54mfl520-kundu2409056-5098.vercel.app/). Vercel reports READY. This is a UI-only preview; API-backed AI, SOS and Account operations are not connected. A visible warning is shown in the preview.
+- **CI:** Node tests, JavaScript syntax, Worker bundle and Durable Object migration validation passed in [run 46083840536](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46083840536).
+- **Documentation quality:** Markdown lint, internal Markdown links and canonical route smoke checks passed in [run 46083840639](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46083840639).
+- **CodeQL:** passed in [run 46083840579](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46083840579).
+- **Android build:** debug APK build and artifact upload passed in [run 46083840617](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46083840617), artifact ID `15238251682`. This is CI build evidence only, not a signed release or physical-device verification.
+- **Browser verification:** Documentation sections and ESP32 search; Admin section navigation and absence of duplicate photo-history/pairing controls; SOS Receiver tab and legacy redirect; informational privacy notice and Terms; homepage privacy/preview banners all passed on the Vercel preview.
+- **Production deployment:** skipped for the PR branch. No Cloudflare Worker, production route, DNS or main-branch change was made.
+
 ## Current production and project state
 
 - The public production application remains hosted on Cloudflare Workers at the URL above.
@@ -57,10 +70,10 @@ The work is isolated on `docs/product-map-and-ux-overhaul`. The pre-overhaul bac
 - [x] Remove the photo-history toggle from Admin and remove its stale JavaScript bindings.
 - [x] Consolidate Android, release/testing, safety/threat-model and deployment/Supabase source guides into canonical drafts.
 - [x] Add contribution/documentation standards and preserve older plans in a history archive.
-- [ ] Complete Markdown consolidation, link migration and stale-content audit.
-- [ ] Run automated tests, Markdown/link checks, route smoke tests and responsive/accessibility review.
-- [ ] Open and review the PR; do not merge until explicit owner approval.
-- [ ] Verify preview deployment and production release separately.
+- [x] Complete Markdown consolidation, link migration and stale-content audit.
+- [x] Run automated tests, Markdown lint, internal link checks and route smoke tests.\n- [x] Browser-check the Documentation hub/search, Admin boundaries, SOS receiver redirect and privacy/Terms behaviour on the Vercel preview.\n- [ ] Complete responsive/mobile and accessibility evaluation, including real TalkBack and blind/low-vision testing.
+- [x] Open draft [PR #77](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/77); owner review is pending. Do not merge until explicit owner approval.
+- [x] Verify the Vercel UI preview separately; production deployment was intentionally skipped and remains unchanged.
 
 **Production has not been changed by this branch.** Do not treat branch-only pages or documentation as live until deployment evidence is recorded.
 
