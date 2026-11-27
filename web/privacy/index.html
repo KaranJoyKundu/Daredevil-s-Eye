@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Privacy · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css?v=20261117-release5"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Privacy · Daredevil's Eye</title><link rel="stylesheet" href="/shared/style.css?v=20261128-privacy2"></head>
 <body><main>
 <header><p class="eyebrow">DATA & PERMISSIONS</p><h1>Privacy</h1><p class="subtitle">What the app processes, what it stores, which services receive it and how you can remove saved data.</p></header>
 
@@ -24,7 +24,7 @@
 <p>The Supabase project, private photo bucket and account/guest history schema have been provisioned. Persistence becomes active on the live site when the Cloudflare Worker receives the Supabase URL, publishable key, Secret key and encryption secrets. Until the Account page reports that the history service is ready, do not assume a photo was saved. Personal Gemini keys are encrypted by the Worker before database storage.</p>
 
 <h2>Device storage</h2>
-<p>Camera address, speech preferences, consent state, emergency contact details and a per-install SOS sender identifier are saved in this browser's local storage. The paired SOS receiver token is stored in local storage on the receiver device so it can reconnect after the tab closes. A browser push subscription (endpoint and cryptographic subscription keys) is held in the sender's Cloudflare Durable Object so screen-off Web Push notifications can be sent. Re-pairing replaces the old receiver subscription.</p>
+<p>Camera address, speech preferences, emergency contact details and a per-install SOS sender identifier are saved in this browser's local storage. A legacy consent record may exist on returning devices, but it is not an access gate. The paired SOS receiver token is stored in local storage on the receiver device so it can reconnect after the tab closes. A browser push subscription (endpoint and cryptographic subscription keys) is held in the sender's Cloudflare Durable Object so screen-off Web Push notifications can be sent. Re-pairing replaces the old receiver subscription.</p>
 
 <h2>Emergency alerts and notifications</h2>
 <p>The SOS relay stores the active alert and its timestamps for up to ten minutes. Push notifications are sent through the browser's push service and contain only a generic alert message; the receiver retrieves the alert details over its paired session. Push acceptance is not proof that the other phone displayed the notification. Delivery may be delayed or blocked by offline devices, notification settings, Do Not Disturb, browser support or Android battery policy. Chrome on Android is recommended for this VAPID push implementation. SOS does not call emergency services.</p>
@@ -38,14 +38,13 @@
 <h2>External services and free-tier use</h2>
 <p>Images and voice recordings submitted for AI analysis/transcription are processed by Google Gemini. Account authentication, database records and private photo objects use Supabase once configured. SOS push notifications are handled by the browser's push provider. Each provider has its own privacy terms and service availability. Google may treat free-tier and paid-tier content differently; review the current terms for the key you use and avoid sending confidential images or audio through a shared free-tier key.</p>
 
-<h2>Reset consent</h2>
-<p>You can reset the privacy-consent record on this device below. The notice will be shown again before camera use. Resetting local consent does not delete account history; use the Account page to delete saved photos, answers and usage.</p>
-<button id="reset-consent" type="button">Reset privacy consent on this device</button><p id="consent-reset-status" class="hint" role="status" aria-live="polite"></p>
+<h2>Privacy notice and consent</h2>
+<p>The privacy notice is shown at the top of the app and links to this page. It is informational: there is no blocking accept/reject popup, no required checkbox and no consent button. The app remains usable. This does not change the processing described above: when you use AI features, the selected image, question or voice input is sent to the services needed to provide that feature.</p>
 
 <h2>Prototype status</h2>
 <p>This is not a production privacy or safety certification. Account history requires an explicit client-side save request and server configuration. The current client default is off and there is no active user-facing opt-in control after the Admin toggle was removed. Account deletion is not yet self-service; you can delete existing saved photos/answers, usage and personal Gemini keys from your Account page, and contact the project owner for account removal.</p>
 </section>
-<nav class="navlinks"><a href="/action/">Home</a><a href="/account/">Account &amp; History</a><a href="/blind/">Blind mode</a><a href="/terms/">Terms &amp; Conditions</a><a href="/support/">Support</a><a href="/help/">Help</a></nav>
+<nav class="navlinks"><a href="/action/">Action</a><a href="/account/">Account &amp; History</a><a href="/blind/">Blind mode</a><a href="/sos/">SOS Center</a><a href="/medicine/">Medicine</a><a href="/devices/">Devices</a><a href="/documentation/">Documentation</a><a href="/terms/">Terms &amp; Conditions</a><a href="/support/">Support</a><a href="/help/">Help</a></nav>
 <script type="module">
 import {resetConsent} from '/shared/consent.js?v=20261117-release5';
 document.querySelector('#reset-consent').addEventListener('click',()=>{
