@@ -1,5 +1,8 @@
 # Product structure and documentation overhaul — master checklist
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 > **This is the acceptance checklist for the complete overhaul.** Keep it in the repository and update it in the same pull request as the work it tracks. Do not mark an item complete because a page or file merely exists: use the evidence rule at the end.
 
 **Working branch:** `docs/product-map-and-ux-overhaul`  
