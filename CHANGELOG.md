@@ -1,3 +1,14 @@
+## Unreleased — documentation, navigation and Admin cleanup
+
+These changes are on `docs/product-map-and-ux-overhaul` and are not deployed to production yet.
+
+- Added a canonical feature map and architecture/product decisions log; reorganized the documentation index around the five product groups.
+- Replaced the Android-only `/documentation/` progress tracker with a structured guide hub.
+- Added `/devices/` for Android volume-shortcut settings and device setup links.
+- Grouped shared navigation into USE, SAFETY, DEVICES, CONTROL CENTER and INFORMATION; made SOS Center and Medicine visible canonical destinations.
+- Removed the photo-history toggle and stale JavaScript bindings from Admin; narrowed Admin shortcuts to settings sections.
+- Corrected route ownership, SOS setup links, Android documentation references and the tab-scoped versus encrypted account API-key descriptions.
+
 # Changelog
 
 ## 26 November 2026 — Documentation layout and project documentation
