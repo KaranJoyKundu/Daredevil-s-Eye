@@ -71,7 +71,9 @@ The work is isolated on `docs/product-map-and-ux-overhaul`. The pre-overhaul bac
 - [x] Consolidate Android, release/testing, safety/threat-model and deployment/Supabase source guides into canonical drafts.
 - [x] Add contribution/documentation standards and preserve older plans in a history archive.
 - [x] Complete Markdown consolidation, link migration and stale-content audit.
-- [x] Run automated tests, Markdown lint, internal link checks and route smoke tests.\n- [x] Browser-check the Documentation hub/search, Admin boundaries, SOS receiver redirect and privacy/Terms behaviour on the Vercel preview.\n- [ ] Complete responsive/mobile and accessibility evaluation, including real TalkBack and blind/low-vision testing.
+- [x] Run automated tests, Markdown lint, internal link checks and route smoke tests.
+- [x] Browser-check the Documentation hub/search, Admin boundaries, SOS receiver redirect and privacy/Terms behaviour on the Vercel preview.
+- [ ] Complete responsive/mobile and accessibility evaluation, including real TalkBack and blind/low-vision testing.
 - [x] Open draft [PR #77](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/77); owner review is pending. Do not merge until explicit owner approval.
 - [x] Verify the Vercel UI preview separately; production deployment was intentionally skipped and remains unchanged.
 
