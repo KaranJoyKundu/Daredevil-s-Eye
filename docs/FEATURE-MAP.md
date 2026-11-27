@@ -55,7 +55,8 @@ A higher evidence level must never be inferred from a lower one. Check [STATUS](
 | Accounts, photo history and saved key | `/account/` — INFORMATION / account service | Supabase Auth, Worker history routes, encrypted API-key endpoints, private bucket | Supabase project, RLS, service credentials, guest cookie, API_KEY_ENCRYPTION_KEY | Source and schema exist; verify save/view/delete, saved-key replace/delete and scheduled guest cleanup end-to-end. New photo-history requests default off unless explicitly enabled. |
 | Privacy notice and data controls | `/privacy/` — INFORMATION | Shared navigation notice, privacy page, Worker retention | Google processing, optional Supabase history | Keep notice informational; do not reintroduce blocking consent popup, Accept button, checkbox or photo-history opt-in toggle. |
 | PWA install and shortcuts | Install from browser; help in INFORMATION | `web/manifest.webmanifest`, `web/sw.js` | Browser support, HTTPS | Verify install/shortcuts on target browser; capability varies by platform. |
-| Native Android wrapper and volume keys | `/devices/` — DEVICES; full guide in `ANDROID.md` | `native-android/`, Capacitor plugin and Android source | Android permissions, optional Accessibility Service | CI debug APK exists; physical A55, screen-off, TalkBack and signed-release checks remain open. |\n| Android shortcut preferences | `/devices/` — DEVICES | `web/devices/index.html`, `VolumeControlsPlugin.java` | Native Capacitor bridge; Accessibility Service for global shortcuts | Settings bridge exists in source; verify each control on the physical A55 before relying on it. |
+| Native Android wrapper and volume keys | `/devices/` — DEVICES; full guide in `ANDROID.md` | `native-android/`, Capacitor plugin and Android source | Android permissions, optional Accessibility Service | CI debug APK exists; physical A55, screen-off, TalkBack and signed-release checks remain open. |
+| Android shortcut preferences | `/devices/` — DEVICES | `web/devices/index.html`, `VolumeControlsPlugin.java` | Native Capacitor bridge; Accessibility Service for global shortcuts | Settings bridge exists in source; verify each control on the physical A55 before relying on it. |
 | Support and contact | `/support/`, `/contact/` — INFORMATION | Corresponding `web/` routes | External contact channels | Verify links and current contact details. |
 | Threat model and security reporting | Technical documentation | [Threat model](SAFETY.md), [Security policy](../SECURITY.md) | Repository security process | Keep reporting instructions and threat analysis out of Admin. |
 
@@ -68,7 +69,8 @@ A higher evidence level must never be inferred from a lower one. Check [STATUS](
 | `/blind/` | USE | Blind-first four-action interface. |
 | `/sos/` | SAFETY | Combined SOS Center: sender and receiver. |
 | `/medicine/` | SAFETY | Medicine identification and RFID result. |
-| `/devices/` | DEVICES | Android shortcut settings and hardware setup entry points. |\n| `/admin/` | CONTROL CENTER | Settings only. |
+| `/devices/` | DEVICES | Android shortcut settings and hardware setup entry points. |
+| `/admin/` | CONTROL CENTER | Settings only. |
 | `/diagnostics/` | CONTROL CENTER | Health checks and diagnostics report. |
 | `/documentation/` | INFORMATION | In-app documentation hub; not an Android-only roadmap. |
 | `/help/` | INFORMATION | Task-oriented user instructions. |
