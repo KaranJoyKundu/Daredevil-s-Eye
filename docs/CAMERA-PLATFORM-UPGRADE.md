@@ -6,7 +6,7 @@
 **Plan date:** 2026-11-26  
 **Production baseline at this handoff:** `8cfcfa53e0515f61da2eb901f1b24e928cdbffa1`
 
-This document is the handoff source of truth. Read it before continuing work. Update the status/checklists and decision log as implementation progresses. Do not assume a planned feature is implemented merely because it appears here.
+**Document role:** historical camera-platform implementation proposal and handoff notes. It is not the global product source of truth. Use [FEATURE-MAP](FEATURE-MAP.md) for canonical ownership, [STATUS](STATUS.md) for current evidence, [DECISIONS](DECISIONS.md) for durable decisions and [ROADMAP](ROADMAP.md) for future work. Do not assume a planned feature is implemented merely because it appears here.
 
 ## 1. Product goal
 
@@ -18,7 +18,7 @@ Turn Daredevil's Eye into a camera-first assistive experience with:
 5. Optional, consent-based SOS live video to an already paired trusted receiver.
 6. Secure, private incident recordings with download and retention controls.
 
-Keep existing consent, Bangla/English speech, AI request, photo history, guest/account isolation and SOS alert behaviour working. A camera/video failure must never prevent an SOS alert from being sent.
+Keep the visible informational privacy notice, Bangla/English speech, AI request, optional photo-history behaviour, guest/account isolation and SOS alert behaviour working. A camera/video failure must never prevent an SOS alert from being sent.
 
 ## 2. Current architecture and verified baseline
 
