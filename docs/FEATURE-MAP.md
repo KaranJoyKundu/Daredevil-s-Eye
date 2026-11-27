@@ -10,11 +10,11 @@
 
 | Group | Canonical destination | Responsibility |
 |---|---|---|
-| **USE** | [Action](/action/), [Blind mode](/blind/) | The two ways a person uses the assistant. |
-| **SAFETY** | [SOS Center](/sos/), [Medicine](/medicine/) | Trusted-contact alerts and medicine identification. |
-| **DEVICES** | [Devices](/devices/), [ESP32-CAM guide](../firmware/esp32-cam-ai-thinker/README.md), [RFID guide](../hardware/esp32-rfid/README.md) | Phone camera, ESP32-CAM, RFID and hardware provisioning. |
-| **CONTROL CENTER** | [Admin](/admin/), [Diagnostics](/diagnostics/) | Admin changes preferences; Diagnostics tests health. These are separate jobs. |
-| **INFORMATION** | [Help](/help/), [Documentation](/documentation/), [Privacy](/privacy/), [About](/), [Support](/support/), [Contact](/contact/) | User guidance, technical reference, transparency and project information. |
+| **USE** | [Action](https://daredevils-eye.karanjoykundu.workers.dev/action/), [Blind mode](https://daredevils-eye.karanjoykundu.workers.dev/blind/) | The two ways a person uses the assistant. |
+| **SAFETY** | [SOS Center](https://daredevils-eye.karanjoykundu.workers.dev/sos/), [Medicine](https://daredevils-eye.karanjoykundu.workers.dev/medicine/) | Trusted-contact alerts and medicine identification. |
+| **DEVICES** | [Devices](https://daredevils-eye.karanjoykundu.workers.dev/devices/), [ESP32-CAM guide](../firmware/esp32-cam-ai-thinker/README.md), [RFID guide](../hardware/esp32-rfid/README.md) | Phone camera, ESP32-CAM, RFID and hardware provisioning. |
+| **CONTROL CENTER** | [Admin](https://daredevils-eye.karanjoykundu.workers.dev/admin/), [Diagnostics](https://daredevils-eye.karanjoykundu.workers.dev/diagnostics/) | Admin changes preferences; Diagnostics tests health. These are separate jobs. |
+| **INFORMATION** | [Help](https://daredevils-eye.karanjoykundu.workers.dev/help/), [Documentation](https://daredevils-eye.karanjoykundu.workers.dev/documentation/), [Privacy](https://daredevils-eye.karanjoykundu.workers.dev/privacy/), [About](https://daredevils-eye.karanjoykundu.workers.dev/), [Support](https://daredevils-eye.karanjoykundu.workers.dev/support/), [Contact](https://daredevils-eye.karanjoykundu.workers.dev/contact/) | User guidance, technical reference, transparency and project information. |
 
 The site navigation should use these five groups consistently. A shortcut may appear elsewhere, but the canonical destination owns the feature and its controls. Do not duplicate settings or place documentation indexes inside Admin.
 
