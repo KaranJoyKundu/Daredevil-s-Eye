@@ -192,6 +192,8 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 - [x] Add a pull-request template with test evidence, screenshots, accessibility checks, documentation updates and security/privacy impact.
 - [x] Add CODEOWNERS with the current repository owner as the default reviewer.
 - [ ] Add architecture/data-flow diagrams and a threat-boundary diagram that match actual code.
+- [ ] Choose and add an explicit repository licence only after the owner decides the reuse terms; no LICENSE file currently exists, so do not imply that the code is open-source licensed.
+- [ ] Add a signed release provenance/SBOM and artifact checksums when the first supported public Android release is prepared.
 - [ ] Add release artifacts/checksums and reproducible release instructions; do not label debug APKs as production releases.
 - [x] Add live demo, CI, security policy and documentation-quality links/badges to README; validate workflow status before claiming passing.
 - [x] Add CodeQL analysis, dependency review and Dependabot update configuration. Secret scanning/push protection still requires repository-level settings verification.
