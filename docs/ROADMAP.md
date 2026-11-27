@@ -9,7 +9,9 @@ For current capabilities and canonical page ownership, use [FEATURE-MAP](FEATURE
 
 > **Status language:** Planned = not implemented. In progress = implementation is underway but not accepted. Blocked = cannot proceed until a named dependency is resolved. Completed work moves out of this file and into CHANGELOG/STATUS; do not leave a stale completed checklist here.
 
-## Priority 0 — product structure and release hygiene
+## Priority 0 — product structure, privacy and release hygiene
+
+- [ ] Owner decision: keep new photo-history saves disabled, or approve a clear, accessible opt-in/opt-out control outside Admin. Do not re-enable saving by changing the default alone; align the UI, privacy notice, consent model and retention tests first.
 
 - [ ] Complete the [product/documentation overhaul checklist](OVERHAUL-CHECKLIST.md), including navigation, route ownership, documentation consolidation and automated link checks.
 - [ ] Add Markdown linting and internal-link validation to GitHub Actions.
