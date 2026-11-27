@@ -163,7 +163,7 @@ See [Deployment](docs/DEPLOYMENT.md). Documentation-only commits also trigger th
 - The requested privacy experience is informational: no blocking consent popup, Accept button, checkbox or photo-history opt-in toggle.
 - Photo history is optional and stored privately when enabled by the relevant account/guest flow. Guest history has a 30-day retention policy in the Worker.
 - The project does not intentionally retain raw microphone recordings for the photo-history feature. Provider processing and provider terms still apply.
-- Personal Gemini keys entered through Admin are held in the current browser tab's session storage and sent only to relevant same-origin Worker endpoints.
+- A personal Gemini key entered in Admin is held in the current browser tab's session storage and sent only to relevant same-origin Worker endpoints. Signed-in users can separately save an encrypted account key through Account & History; the Worker decrypts it only for provider requests.
 - The ESP32-CAM local HTTP endpoint may be unauthenticated. Keep it on a trusted LAN; never expose it directly to the public Internet.
 - SOS alerts a paired trusted receiver; it does not contact emergency services, and delivery is not guaranteed.
 - AI may hallucinate, misread text or fail to detect hazards. Confirm medicine, money, labels and safety-critical information with a person or trusted source.
