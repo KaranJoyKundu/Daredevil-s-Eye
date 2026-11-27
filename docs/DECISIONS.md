@@ -1,5 +1,8 @@
 # Architecture and product decisions
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 **Reviewed:** 28 November 2026  
 This log records durable decisions and their rationale. It is not a roadmap or a release-status report. Current implementation status belongs in [STATUS](STATUS.md); future work belongs in [ROADMAP](ROADMAP.md).
 
