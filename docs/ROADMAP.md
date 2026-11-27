@@ -1,5 +1,8 @@
 # Roadmap — future work only
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 **Purpose:** This file contains work that is not yet complete. It is not a feature catalogue, current status report or historical implementation diary.
 
 For current capabilities and canonical page ownership, use [FEATURE-MAP](FEATURE-MAP.md). For evidence and current state, use [STATUS](STATUS.md) and [RELEASE](RELEASE.md). For the rationale behind durable choices, use [DECISIONS](DECISIONS.md). Older proposals are preserved in [HISTORY](HISTORY.md).
