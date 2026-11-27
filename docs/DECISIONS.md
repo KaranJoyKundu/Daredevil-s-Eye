@@ -111,7 +111,7 @@ This log records durable decisions and their rationale. It is not a roadmap or a
 
 **Rationale:** Sender/receiver state must not rely only on one browser's local storage.
 
-**Consequences:** Invitations expire and can be replaced; receiver tokens are sensitive. Push acceptance is not delivery confirmation. See [Architecture](ARCHITECTURE.md) and [Threat model](THREAT-MODEL.md).
+**Consequences:** Invitations expire and can be replaced; receiver tokens are sensitive. Push acceptance is not delivery confirmation. See [Architecture](ARCHITECTURE.md) and [Threat model](SAFETY.md).
 
 ### DEC-014 — Supabase history is optional and private
 
@@ -119,7 +119,7 @@ This log records durable decisions and their rationale. It is not a roadmap or a
 
 **Rationale:** AI processing and durable personal history are distinct purposes.
 
-**Consequences:** Verify RLS, Worker ownership checks, deletion and guest cleanup. Describe actual retention accurately; never infer it solely from UI state. See [Supabase setup](SUPABASE-ACCOUNT-HISTORY-SETUP.md).
+**Consequences:** Verify RLS, Worker ownership checks, deletion and guest cleanup. Describe actual retention accurately; never infer it solely from UI state. See [Supabase setup](OPERATIONS.md).
 
 ## Supersession and maintenance
 
