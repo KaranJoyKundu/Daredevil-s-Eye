@@ -12,7 +12,7 @@
 |---|---|---|
 | **USE** | [Action](/action/), [Blind mode](/blind/) | The two ways a person uses the assistant. |
 | **SAFETY** | [SOS Center](/sos/), [Medicine](/medicine/) | Trusted-contact alerts and medicine identification. |
-| **DEVICES** | [Devices](/devices/), [ESP32-CAM guide](SETUP.md#esp32-cam), [RFID guide](../hardware/esp32-rfid/README.md) | Phone camera, ESP32-CAM, RFID and hardware provisioning. |
+| **DEVICES** | [Devices](/devices/), [ESP32-CAM guide](../firmware/esp32-cam-ai-thinker/README.md), [RFID guide](../hardware/esp32-rfid/README.md) | Phone camera, ESP32-CAM, RFID and hardware provisioning. |
 | **CONTROL CENTER** | [Admin](/admin/), [Diagnostics](/diagnostics/) | Admin changes preferences; Diagnostics tests health. These are separate jobs. |
 | **INFORMATION** | [Help](/help/), [Documentation](/documentation/), [Privacy](/privacy/), [About](/), [Support](/support/), [Contact](/contact/) | User guidance, technical reference, transparency and project information. |
 
