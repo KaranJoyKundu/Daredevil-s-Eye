@@ -109,6 +109,10 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 - [x] Forbidden content removed from Admin: Documentation index, roadmap, developer tutorials, GitHub project history, hardware wiring tutorials, release notes and long status reports.
 - [x] Confirm no Admin page section duplicates a canonical Devices, SOS, Medicine, Account or Diagnostics control.
 - [x] Remove the photo-history toggle from Admin and its stale bindings.
+- [x] Remove the nonfunctional Reset consent button/script; keep the privacy notice informational and non-blocking.
+- [x] Move SOS invitation generation into the canonical SOS Center Sender tab and remove the duplicate Admin pairing control.
+- [x] Redirect the legacy `/sos-receiver/` route into the canonical Receiver tab.
+- [x] Add Phone camera, ESP32-CAM and RFID entry points to Devices; keep existing configuration controls linked rather than duplicated.
 - [x] Correct homepage, Privacy, Terms and Account copy to state that new photo-history requests default off.
 - [ ] Owner decision required: keep new history disabled or approve a privacy-consistent opt-in control outside Admin; do not silently change the default.
 
