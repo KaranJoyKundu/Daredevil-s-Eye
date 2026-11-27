@@ -1,90 +1,73 @@
 # Project status — Daredevil's Eye
 
-**Last reviewed:** 26 November 2026  
-**Production:** https://daredevils-eye.karanjoykundu.workers.dev/  
-**Target Android handset:** Samsung Galaxy A55 5G · Android 16 · One UI 8  
-**Default branch:** `main`
+**Last reviewed:** 28 November 2026  
+**Production URL:** https://daredevils-eye.karanjoykundu.workers.dev/  
+**Production platform:** Cloudflare Worker + static web assets  
+**Default branch:** `main`  
+**Current overhaul branch:** `docs/product-map-and-ux-overhaul`  
+**Android target for physical acceptance:** Samsung Galaxy A55 5G · Android 16 · One UI 8
 
-This is the current snapshot. Historical notes are retained below only when they explain a decision or incident. A source implementation, a passing CI run, a browser check and a physical-device test are different kinds of evidence.
+> This page is a factual snapshot, not a roadmap. “Implemented in source”, “CI passed”, “browser verified” and “physical device verified” are different evidence levels. When evidence is missing, the feature remains unverified.
 
-## Current verified snapshot
+## Current production and project state
 
-### Production web app
+- The public production application remains hosted on Cloudflare Workers at the URL above.
+- Action startup and visible speech-status regressions were fixed in merged PRs [#68](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/68) and [#69](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/69).
+- Documentation layout corrections were merged in PR [#72](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/72); the associated main deployment workflow completed successfully.
+- The app is Bangla-first with English selection, Action and Blind Mode, camera/photo input, AI analysis, voice feedback, ESP32-CAM integration, Medicine/RFID workflows, SOS pairing, Admin, Diagnostics, accounts/history and installable web-app support in source.
+- The canonical SOS route is `/sos/`; `/sos-receiver/` is compatibility only.
+- The product's canonical five-group architecture is USE, SAFETY, DEVICES, CONTROL CENTER and INFORMATION. Details are in [FEATURE-MAP](FEATURE-MAP.md).
 
-- The Action startup failure was fixed in merged PR [#68](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/68). The obsolete consent-panel startup call had triggered a temporal-dead-zone error before Action event handlers registered.
-- Merged PR [#69](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/69) prevents a device speech-synthesis error from overwriting the visible action status.
-- The owner subsequently confirmed that the app was working again.
-- The documentation layout correction in PR [#72](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/72) is merged. Main deployment workflow [#45843735382](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/45843735382) completed successfully.
-- Live routes: [Home](https://daredevils-eye.karanjoykundu.workers.dev/) · [Action](https://daredevils-eye.karanjoykundu.workers.dev/action/) · [Blind mode](https://daredevils-eye.karanjoykundu.workers.dev/blind/) · [Documentation](https://daredevils-eye.karanjoykundu.workers.dev/documentation/).
+## Android evidence
 
-### Privacy and Action behaviour
-
-- The requested privacy design is a visible informational notice, not a blocking consent popup.
-- Do not reintroduce a consent popup, Accept button, checkbox or “save submitted photos to history” toggle.
-- Do not restore the failed explicit Worker rewrite from PR #66. PR #67 reverted it after it caused a redirect loop.
-- The phone gallery/photo picker was confirmed to open after the Action startup repair. The owner later confirmed the app was working.
-- SOS browser automation did not prove alert delivery. A first tap armed the confirmation window, which expired before the automation inspected it; no alert was sent in that check.
-
-### Native Android companion
-
-- Native Android/Capacitor work is merged through PR [#64](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/64).
-- Production bridge deployment workflow [#45756257754](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/45756257754) succeeded.
-- Android debug APK workflow [#45755955230](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/45755955230) succeeded. Artifact: `daredevils-eye-android-debug`, artifact ID `15086769593`. The artifact was recorded as expiring 10 December 2026.
+- Native Android/Capacitor implementation is merged through PR [#64](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/64).
+- A CI workflow built a debug APK (workflow [#45755955230](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/45755955230)); recorded artifact ID: `15086769593`.
 - Recorded debug APK SHA-256: `410ccff91587d07f8c7a819e6e2a4cc2b84c3bc69e6ea283720185bd6feb851a`.
-- This is a debug-signed test APK, not a permanent updateable release. A persistent owner-controlled keystore and four protected GitHub Actions secrets are still required. See [Android release signing](ANDROID-RELEASE-SETUP.md).
-- Physical Galaxy A55 validation remains open: install/launch, volume-key accuracy, global Accessibility Service, TalkBack coexistence, lock/screen-off behaviour, camera/microphone, RFID and two-phone SOS.
+- The debug APK is a test artifact, not a persistent signed production release.
+- Physical Galaxy A55 validation remains open: install/launch, volume-key mapping, global Accessibility Service, TalkBack coexistence, lock/screen-off behaviour, camera/microphone, RFID and two-phone SOS.
+- Android limitations and release signing steps are in [ANDROID](ANDROID.md).
 
-### Existing web capabilities
+## Verification still required
 
-The current product includes a Bangla-first interface, Describe and Ask AI flows, device speech, phone photo capture/upload, ESP32-CAM integration, Blind mode, Admin presets, Diagnostics, SOS pairing, optional account/guest photo history and an installable web app. See the [README](../README.md) and [architecture](ARCHITECTURE.md) for component-level detail.
-
-## Release evidence and open validation
-
-| Area | Evidence currently recorded | Still required |
+| Area | Evidence currently available | Still required |
 |---|---|---|
-| Action page startup | PR #68 merged; browser page loaded and phone photo picker opened; owner confirmed app works | Re-run the critical Action flows after future shared-script changes |
-| Speech feedback | PR #69 merged; visible action status is preserved when device TTS fails | Real-device speech engine coverage |
-| SOS | Confirmation window armed in browser check; no alert dispatched in that check | Pair two physical phones; verify push, sound/vibration, acknowledgement, cancellation and offline failure |
-| Android APK | CI built a debug APK and recorded its checksum | Install and validate on the Galaxy A55 |
-| Volume shortcuts | Native Activity/Accessibility Service implementation is in the repository | Repeatability, key arbitration, normal volume behaviour and TalkBack conflict tests |
-| Screen-off behaviour | Android restrictions and intended best-effort design are documented | Test each action with screen locked/off; never claim universal support |
-| Camera | ESP32 stream/capture and browser upload support exist | A55 WebView local-network access, phone capture and flash/LED checks |
-| Account/guest history | Supabase schema/storage and Worker paths are documented | End-to-end guest/signed-in save, view, delete and 30-day cleanup verification |
-| Accessibility | Blind mode, spoken help, labels and haptics exist in source | TalkBack/NVDA and supervised blind/low-vision evaluation |
-| Signed APK | Signing guide exists | Owner creates and securely backs up keystore, configures secrets, then publishes and tests a signed release |
+| Action | Merged startup repair; owner confirmed the app works after the fix | Repeat critical camera, upload, Describe and Ask AI flows after shared UI changes |
+| Blind Mode | Interface and accessible actions exist in source | TalkBack and supervised blind/low-vision evaluation |
+| Speech | Browser/cloud speech paths and visible status fallback exist | Galaxy A55 Bengali/English/mixed-language and installed TTS checks |
+| Camera | Phone photo input and ESP32-CAM stream/capture support exist in source; owner reported board capture working | Current A55 WebView permission/local-network/torch checks against exact firmware |
+| SOS | Pairing, confirmation, push and receiver workflows exist in source | Two-phone, cross-network push, acknowledgement, cancellation and offline tests |
+| Medicine/RFID | Medicine page, RFID listener and hardware guide exist | Exact board/wiring/tag provisioning and real medicine-label verification workflow |
+| Account/history | Supabase schema, Worker paths and private storage are documented | End-to-end signed-in/guest save, view, delete and scheduled expiry checks |
+| Android | CI-built debug APK | Physical A55 acceptance and owner-managed signed release |
 
-## Safe release workflow
+## Documentation and navigation overhaul
 
-1. Work on a separate branch; do not experiment directly on `main`.
-2. Keep changes scoped and review the complete diff.
-3. Require the exact PR head's automated checks to pass.
-4. For Worker changes, wait for the main deployment workflow to succeed.
-5. Smoke-test production routes and the specific user flow changed.
-6. Record physical-device evidence separately from CI/browser evidence.
-7. Update this file only when a result has actually been observed.
+<badge>In progress</badge>
 
-## Historical incident notes
+The work is isolated on `docs/product-map-and-ux-overhaul`. The pre-overhaul backup is `backup/pre-documentation-overhaul-2026-11-28`.
 
-### 26 November — Action startup regression
+- [x] Create the backup branch and isolated work branch.
+- [x] Add [RECOVERY](RECOVERY.md) and the permanent [OVERHAUL CHECKLIST](OVERHAUL-CHECKLIST.md).
+- [x] Add the feature map and decisions log.
+- [x] Create the five-group navigation structure and the dedicated Devices page.
+- [x] Replace the Android-only Documentation page with a structured guide hub.
+- [x] Remove the photo-history toggle from Admin and remove its stale JavaScript bindings.
+- [x] Consolidate Android, release/testing, safety/threat-model and deployment/Supabase source guides into canonical drafts.
+- [x] Add contribution/documentation standards and preserve older plans in a history archive.
+- [ ] Complete Markdown consolidation, link migration and stale-content audit.
+- [ ] Run automated tests, Markdown/link checks, route smoke tests and responsive/accessibility review.
+- [ ] Open and review the PR; do not merge until explicit owner approval.
+- [ ] Verify preview deployment and production release separately.
 
-The obsolete `updateConsentPanel()` startup call invoked `showCameraSetup()` before the camera-panel `const` bindings were initialized. The resulting temporal-dead-zone error stopped the shared module before event handlers were registered. PR #68 removed the premature call while preserving later camera-panel rendering and cache-busted the affected scripts.
+**Production has not been changed by this branch.** Do not treat branch-only pages or documentation as live until deployment evidence is recorded.
 
-### 26 November — visible action status and speech failure
+## How to interpret status
 
-A device TTS error could overwrite the visible status of SOS/Repeat/action feedback. PR #69 changed the speech error handling so speech remains optional feedback and does not erase the action result.
+- **Implemented in source:** code/configuration exists.
+- **Automated-tested:** automated test and exact CI result are recorded.
+- **Browser-verified:** named route/scenario was exercised in a browser.
+- **Device-verified:** named physical device, OS, build and steps were tested.
+- **User-evaluated:** informed accessibility/usability evaluation was completed.
+- **Planned / incomplete / blocked:** not yet delivered or not yet validated.
 
-### 26 November — documentation layout
-
-PR #71 introduced the visual refresh. PR #72 corrected oversized full-height sections inherited from the shared stylesheet and was merged; its main deployment workflow succeeded.
-
-### Routing rollback
-
-PR #66's explicit `/action/index.html` and `/blind/index.html` rewrite caused a redirect loop. PR #67 reverted it. Do not reintroduce that rewrite without a different, verified routing design.
-
-## Source-of-truth documents
-
-- [Current release checklist](CURRENT-RELEASE-CHECKLIST.md)
-- [Native Android master plan](NATIVE-ANDROID-APP.md)
-- [Testing plan](TESTING.md)
-- [Deployment guide](DEPLOYMENT.md)
-- [Documentation hub](README.md)
+See [RELEASE](RELEASE.md) for the detailed acceptance matrix, [ROADMAP](ROADMAP.md) for future work and [HISTORY](HISTORY.md) for dated superseded proposals.
