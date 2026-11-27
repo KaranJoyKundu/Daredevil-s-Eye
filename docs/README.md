@@ -6,11 +6,11 @@ This is the documentation portal for users, testers, contributors and maintainer
 
 | Group | Canonical destination | Responsibility |
 |---|---|---|
-| **USE** | [Action](/action/) · [Blind Mode](/blind/) | Describe a scene, ask a question, use camera/upload or the four-action accessible interface. |
-| **SAFETY** | [SOS Center](/sos/) · [Medicine](/medicine/) | Trusted-contact alert workflows and medicine identification. |
-| **DEVICES** | [Devices](/devices/) | Phone shortcut settings, connected camera and hardware setup entry points. |
-| **CONTROL CENTER** | [Admin](/admin/) · [Diagnostics](/diagnostics/) | Admin changes preferences; Diagnostics tests and reports health. |
-| **INFORMATION** | [Help](/help/) · [Documentation](/documentation/) · [Privacy](/privacy/) · [About](/) · [Support](/support/) · [Contact](/contact/) | User guidance, technical reference, transparency and support. |
+| **USE** | [Action](https://daredevils-eye.karanjoykundu.workers.dev/action/) · [Blind Mode](https://daredevils-eye.karanjoykundu.workers.dev/blind/) | Describe a scene, ask a question, use camera/upload or the four-action accessible interface. |
+| **SAFETY** | [SOS Center](https://daredevils-eye.karanjoykundu.workers.dev/sos/) · [Medicine](https://daredevils-eye.karanjoykundu.workers.dev/medicine/) | Trusted-contact alert workflows and medicine identification. |
+| **DEVICES** | [Devices](https://daredevils-eye.karanjoykundu.workers.dev/devices/) | Phone shortcut settings, connected camera and hardware setup entry points. |
+| **CONTROL CENTER** | [Admin](https://daredevils-eye.karanjoykundu.workers.dev/admin/) · [Diagnostics](https://daredevils-eye.karanjoykundu.workers.dev/diagnostics/) | Admin changes preferences; Diagnostics tests and reports health. |
+| **INFORMATION** | [Help](https://daredevils-eye.karanjoykundu.workers.dev/help/) · [Documentation](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Privacy](https://daredevils-eye.karanjoykundu.workers.dev/privacy/) · [About](https://daredevils-eye.karanjoykundu.workers.dev/) · [Support](https://daredevils-eye.karanjoykundu.workers.dev/support/) · [Contact](https://daredevils-eye.karanjoykundu.workers.dev/contact/) | User guidance, technical reference, transparency and support. |
 
 **Ownership rules:** Admin is configuration only. Diagnostics is health/testing only. Documentation is a guide index/reference library. Hardware setup belongs under Devices; the detailed instructions live in these guides. SOS sender and receiver share the canonical SOS Center. Medicine is separate from general settings.
 
