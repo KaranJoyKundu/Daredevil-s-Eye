@@ -158,4 +158,4 @@ See [Project status](STATUS.md), [Native Android plan](NATIVE-ANDROID-APP.md), [
 
 ## Maintenance rule
 
-Update this document only when a command or test result has actually been observed. Record the commit SHA and workflow URL for CI, the exact route/build for browser tests, and model/OS/build/steps for physical-device tests. Keep the latest concise state in [STATUS](STATUS.md); keep future work in [ROADmap](ROADMAP.md).
+Update this document only when a command or test result has actually been observed. Record the commit SHA and workflow URL for CI, the exact route/build for browser tests, and model/OS/build/steps for physical-device tests. Keep the latest concise state in [STATUS](STATUS.md); keep future work in [ROADMAP](ROADMAP.md).
