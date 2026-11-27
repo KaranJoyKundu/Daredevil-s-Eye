@@ -1,5 +1,8 @@
 # Local setup (Windows 11 / PowerShell)
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 ## Requirements
 
 - Node.js 24 or supported current LTS.
