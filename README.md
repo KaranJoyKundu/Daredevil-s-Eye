@@ -103,7 +103,7 @@ flowchart TD
 - **State and storage:** Durable Objects coordinate SOS state. Supabase stores optional account/guest history in a private bucket.
 - **Secrets:** Gemini and Supabase service credentials belong in Worker/GitHub secrets, never in browser code, committed files or APK assets.
 
-For detailed data flows and trust boundaries, see [Architecture](docs/ARCHITECTURE.md) and [Threat model](docs/THREAT-MODEL.md).
+For detailed data flows and trust boundaries, see [Architecture](docs/ARCHITECTURE.md) and [Threat model](docs/SAFETY.md).
 
 ## Run locally
 
@@ -144,7 +144,7 @@ npm test
 npm run check
 ```
 
-Then follow the [manual test matrix](docs/TESTING.md) and [current release checklist](docs/CURRENT-RELEASE-CHECKLIST.md). Record the device model, Android/One UI version, browser, test date and result. Keep **implemented in source**, **automated-tested**, **browser-tested** and **physically verified** as separate evidence levels.
+Then follow the [manual test matrix](docs/RELEASE.md) and [current release checklist](docs/RELEASE.md). Record the device model, Android/One UI version, browser, test date and result. Keep **implemented in source**, **automated-tested**, **browser-tested** and **physically verified** as separate evidence levels.
 
 ## Deployment
 
@@ -157,7 +157,7 @@ The production app is served by Cloudflare Workers with Static Assets and Durabl
 5. Confirm the main-branch deployment succeeds.
 6. Smoke-test the live routes and critical user flows.
 
-See [Deployment](docs/DEPLOYMENT.md). Documentation-only commits also trigger the current main deployment workflow; do not assume a green PR check means production has updated.
+See [Deployment](docs/OPERATIONS.md). Documentation-only commits also trigger the current main deployment workflow; do not assume a green PR check means production has updated.
 
 ## Privacy, safety and security
 
@@ -170,7 +170,7 @@ See [Deployment](docs/DEPLOYMENT.md). Documentation-only commits also trigger th
 - SOS alerts a paired trusted receiver; it does not contact emergency services, and delivery is not guaranteed.
 - AI may hallucinate, misread text or fail to detect hazards. Confirm medicine, money, labels and safety-critical information with a person or trusted source.
 
-Read [Safety and privacy](docs/SAFETY.md), [Security policy](SECURITY.md) and [Threat model](docs/THREAT-MODEL.md).
+Read [Safety and privacy](docs/SAFETY.md), [Security policy](SECURITY.md) and [Threat model](docs/SAFETY.md).
 
 ## Documentation map
 
@@ -181,18 +181,18 @@ The [documentation hub](docs/README.md) is the navigation index. The [feature ma
 | [Feature map](docs/FEATURE-MAP.md) | Complete feature inventory and canonical page ownership |\n| [Decisions](docs/DECISIONS.md) | Product/architecture decisions and rationale |\n| [Status](docs/STATUS.md) | Current verified state, recent incidents and outstanding validation |
 | [Architecture](docs/ARCHITECTURE.md) | Components, routes, data flows, AI, storage and SOS |
 | [Setup](docs/SETUP.md) | Local development, camera, voice, BYOK and web install |
-| [Deployment](docs/DEPLOYMENT.md) | Cloudflare configuration, secrets, CI and release procedure |
-| [Testing](docs/TESTING.md) | Automated commands and manual acceptance matrix |
+| [Deployment](docs/OPERATIONS.md) | Cloudflare configuration, secrets, CI and release procedure |
+| [Testing](docs/RELEASE.md) | Automated commands and manual acceptance matrix |
 | [Accessibility](docs/ACCESSIBILITY.md) | Blind mode, speech, assistive technology and evaluation |
-| [Phone controls](docs/PHONE-CONTROLS.md) | Web shortcuts, Android hardware keys and limitations |
-| [Native Android app](docs/NATIVE-ANDROID-APP.md) | Capacitor architecture, button mapping, phases and A55 validation |
-| [Android release signing](docs/ANDROID-RELEASE-SETUP.md) | Owner-controlled keystore and signed APK workflow |
-| [Current release checklist](docs/CURRENT-RELEASE-CHECKLIST.md) | Evidence-based release gates |
+| [Phone controls](docs/ANDROID.md) | Web shortcuts, Android hardware keys and limitations |
+| [Native Android app](docs/ANDROID.md) | Capacitor architecture, button mapping, phases and A55 validation |
+| [Android release signing](docs/ANDROID.md) | Owner-controlled keystore and signed APK workflow |
+| [Current release checklist](docs/RELEASE.md) | Evidence-based release gates |
 | [Roadmap](docs/ROADMAP.md) | Product phases and future work |
 | [Changelog](CHANGELOG.md) | User-visible project changes |
-| [Supabase setup](docs/SUPABASE-ACCOUNT-HISTORY-SETUP.md) | Account and private photo-history setup |
-| [Implementation plan](docs/IMPLEMENTATION-PLAN.md) | Historical implementation plan |
-| [Camera and emergency roadmap](docs/NEXT-GENERATION-CAMERA-AND-EMERGENCY-ROADMAP.md) | Proposed camera and emergency features |
+| [Supabase setup](docs/OPERATIONS.md) | Account and private photo-history setup |
+| [Implementation plan](docs/HISTORY.md) | Historical implementation plan |
+| [Camera and emergency roadmap](docs/HISTORY.md) | Proposed camera and emergency features |
 | [Security](SECURITY.md) | Vulnerability reporting |
 
 ## Project principles
