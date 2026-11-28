@@ -238,13 +238,13 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 
 ## 11. Visual system and product polish
 
-- [x] Use design exploration to establish a distinct product direction: **Quiet Clarity** — calm, editorial, task-first and accessibility-led rather than a generic AI dashboard.
-- [x] Define shared semantic colors, typography, surfaces, spacing, borders, focus states and reduced-motion behavior in the app-wide stylesheet.
-- [x] Apply a matching landing-page treatment with a clear two-column desktop hero, restrained product preview, quiet surfaces and responsive stacking.
-- [x] Reduce decorative gradients, oversized card treatments and heavy shadows across shared app surfaces without changing product workflows.
-- [x] Preserve Blind Mode's separate full-screen, high-contrast 2×2 interaction surface.
-- [x] Browser-verify the new styles on the Vercel preview across homepage, Action, Admin, Documentation, Devices, SOS and Blind Mode; all routes loaded without visible styling errors.
-- [x] Verify 390×844 mobile-width and desktop layouts with no observed horizontal overflow; physical handset and tablet checks remain open.
+- [x] Use design exploration to establish a distinct product direction: **Quiet Clarity** — calm, editorial, task-first and accessibility-led rather than a generic AI dashboard (implemented in separate PR #78, not PR #77).
+- [x] Define shared semantic colors, typography, surfaces, spacing, borders, focus states and reduced-motion behavior in separate design PR #78.
+- [x] Apply a matching landing-page treatment in separate design PR #78.
+- [x] Reduce decorative gradients, oversized card treatments and heavy shadows in separate design PR #78.
+- [x] Preserve Blind Mode's separate full-screen, high-contrast 2×2 interaction surface in separate design PR #78.
+- [ ] Re-verify separate PR #78 preview across homepage, Action, Admin, Documentation, Devices, SOS and Blind Mode after the PR split.
+- [ ] Re-verify 390×844 mobile-width and desktop layouts on PR #78 preview; physical handset and tablet checks remain open.
 - [x] Tab-test landing navigation and primary CTA focus order; [ ] complete full-site keyboard, rendered contrast measurement and screen-reader/live-region testing.
 - [ ] Run supervised blind/low-vision usability evaluation and physical Galaxy A55 acceptance; CSS review alone is not accessibility certification.
 
