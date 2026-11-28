@@ -472,7 +472,7 @@ html body:not(.blind-page) label{color:var(--qe-ink);font-size:.92rem;font-weigh
 html body:not(.blind-page) input:not([type=checkbox]):not([type=range]),
 html body:not(.blind-page) textarea,
 html body:not(.blind-page) select{
-  background:#fff!important;color:var(--qe-ink)!important;border:1px solid #aebdb4!important;
+  background:#fff!important;color:var(--qe-ink)!important;border:1px solid #7D8D83!important;
   border-radius:8px!important;min-height:48px;font:inherit;
 }
 html body:not(.blind-page) input:focus-visible,
@@ -569,7 +569,7 @@ html body:has(.docs-layout) .notice,html body:has(.control) .warn{
 }
 html body:has(.control) button{background:var(--qe-primary)!important;color:#fff!important;border:1px solid var(--qe-primary)!important;border-radius:8px!important}
 html body:has(.control) .switch{accent-color:var(--qe-primary)}
-html body:has(.docs-layout) .docs-search input{background:#fff!important;color:var(--qe-ink)!important;border:1px solid var(--qe-border)!important}
+html body:has(.docs-layout) .docs-search input{background:#fff!important;color:var(--qe-ink)!important;border:1px solid #7D8D83!important}
 html body:has(.docs-layout) .docs-sidebar a{color:var(--qe-muted)!important;border-color:var(--qe-border)!important}
 html body:has(.docs-layout) .docs-sidebar a:hover{color:var(--qe-primary)!important;border-color:var(--qe-primary)!important}
 @media(max-width:700px){
