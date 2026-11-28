@@ -92,3 +92,11 @@ A higher evidence level must never be inferred from a lower one. Check [STATUS](
 ## Maintenance contract
 
 When a feature changes, update this map only after checking its actual source, then update the relevant guide and status/evidence. Do not infer a route from a document title. Keep source links, route links and tests grounded in the current repository tree. Update [Decisions](DECISIONS.md), [Status](STATUS.md) and [Release checklist](RELEASE.md) when a change alters architecture or validation state.
+
+
+## Admin, Devices and diagnostics UX follow-up (PR #81)
+
+- Admin now uses a card-based quick-access hub for General, Camera & Devices, AI, Voice, SOS, Diagnostics, Account & Data and Image Lab; the original setting IDs and configuration handlers are retained.
+- Devices uses anchored topic navigation and card/panel styling for Android volume controls, connected hardware, approved mapping and setup guides.
+- Diagnostics adds shortcuts for recently expanded features and a route-response check for Action, Blind, Medicine/RFID, Devices, SOS, Account, Admin, Help and Documentation. This route test is not an end-to-end test and does not trigger account, AI, SOS or RFID state changes.
+- Shared button feedback has been polished with active/hover/focus treatment. Verify reduced-motion, keyboard and physical-device behaviour before claiming accessibility acceptance.
