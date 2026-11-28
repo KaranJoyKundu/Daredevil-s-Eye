@@ -583,3 +583,35 @@ html body:has(.docs-layout) .docs-sidebar a:hover{color:var(--qe-primary)!import
  html:not(.blind-page){scroll-behavior:auto}
  html body:not(.blind-page) *,html body:not(.blind-page) *::before,html body:not(.blind-page) *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+
+/* Keyboard access in Blind Mode: keep the screen uncluttered until a hidden text control receives focus. */
+body.blind-page .site-menu summary:focus-visible,
+body.blind-page .site-brand:focus-visible,
+body.blind-page .blind-tile:focus-visible,
+body.blind-page .blind-help-button:focus-visible,
+body.blind-page #sos-trigger-cancel:focus-visible{
+  outline:5px solid #ffeb3b!important;outline-offset:4px!important;
+  box-shadow:0 0 0 3px #161c1a!important;
+}
+body.blind-page #question-form:focus-within{
+  position:fixed!important;left:12px!important;right:12px!important;bottom:12px!important;
+  z-index:250!important;width:auto!important;height:auto!important;margin:0!important;padding:14px!important;
+  overflow:visible!important;clip:auto!important;clip-path:none!important;white-space:normal!important;
+  background:#1f2725!important;color:#fff!important;border:2px solid #9fc7b8!important;
+  border-radius:12px!important;box-shadow:0 10px 35px #000b!important;
+}
+body.blind-page #question-form:focus-within label{
+  position:static!important;width:auto!important;height:auto!important;margin:0 0 8px!important;
+  padding:0!important;overflow:visible!important;clip:auto!important;white-space:normal!important;
+  color:#fff!important;
+}
+body.blind-page #question-form:focus-within input{
+  width:100%!important;min-height:52px!important;margin:0!important;padding:10px 12px!important;
+  border:2px solid #9fc7b8!important;border-radius:8px!important;
+  background:#121816!important;color:#fff!important;
+}
+body.blind-page #question-form:focus-within button{
+  width:100%!important;min-height:48px!important;margin:10px 0 0!important;
+  background:#1f5446!important;color:#fff!important;border:2px solid #9fc7b8!important;
+}
