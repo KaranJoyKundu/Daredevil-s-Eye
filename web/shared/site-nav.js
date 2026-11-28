@@ -23,7 +23,7 @@ for(const [groupName,items] of groups){
     const link=document.createElement('a');
     link.href=href;
     link.textContent=label;
-    if(location.pathname.replace(/\\/?$/,'/')===href)link.setAttribute('aria-current','page');
+    if(location.pathname.replace(/\/?$/,'/')===href)link.setAttribute('aria-current','page');
     group.append(link);
   }
   menu.append(group);
