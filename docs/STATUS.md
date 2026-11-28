@@ -16,13 +16,14 @@
 
 - **Review PR:** [#77 — Overhaul product navigation, documentation and repository quality](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/77) — open, draft, unmerged.
 - **Main/base checkpoint:** `98c9864fabf068ca7a904f5b91d6ad8264561108`. The `main` branch is unchanged.
-- **Overhaul branch head at verification:** `15afbada7cca4f732586caf03099ae1883f67acd`.
-- **Vercel preview:** [Open UI preview](https://daredevils-eye-rfid-preview-q54mfl520-kundu2409056-5098.vercel.app/). Vercel reports READY. This is a UI-only preview; API-backed AI, SOS and Account operations are not connected. A visible warning is shown in the preview.
-- **CI:** Node tests, JavaScript syntax, Worker bundle and Durable Object migration validation passed in [run 46083840536](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46083840536).
-- **Documentation quality:** Markdown lint, internal Markdown links and canonical route smoke checks passed in [run 46083840639](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46083840639).
-- **CodeQL:** passed in [run 46083840579](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46083840579).
-- **Android build:** debug APK build and artifact upload passed in [run 46083840617](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46083840617), artifact ID `15238251682`. This is CI build evidence only, not a signed release or physical-device verification.
-- **Browser verification:** Documentation sections and ESP32 search; Admin section navigation and absence of duplicate photo-history/pairing controls; SOS Receiver tab and legacy redirect; informational privacy notice and Terms; homepage privacy/preview banners all passed on the Vercel preview.
+- **Overhaul branch head at latest design deployment:** `706353077bc173d236c2cb978d157bde287a0312`.
+- **Vercel preview:** [Open Quiet Clarity UI preview](https://daredevils-eye-rfid-preview-mvvcsquvn-kundu2409056-5098.vercel.app/). Deployment `dpl_Aa23frPtF8NEi9yCXaFVxvoWKfsE` is READY. This is a UI-only preview; API-backed AI, SOS and Account operations are not connected. A visible warning is shown in the preview.
+- **CI:** Node tests, JavaScript syntax, Worker bundle and Durable Object migration validation passed in [run 46086314817](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46086314817).
+- **Documentation quality:** Markdown lint, internal Markdown links and canonical route smoke checks passed in [run 46086314690](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46086314690).
+- **CodeQL:** passed in [run 46086314700](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46086314700).
+- **Android build:** debug APK build and artifact upload passed in [run 46086314709](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46086314709). This is CI build evidence only, not a signed release or physical-device verification.
+- **Visual direction:** Added the Quiet Clarity shared design system to the app surfaces and a matching landing-page stylesheet. It replaces the heavy dark/gradient/card treatment with warm off-white surfaces, dark forest-green actions, restrained borders, editorial headings and consistent focus styling. Blind Mode retains its dedicated high-contrast 2×2 interface.
+- **Browser verification:** The prior preview deployment was stale and did not contain the new styles. A fresh preview was deployed from the exact design commit above; its visual verification is in progress. Do not treat the new styles as browser-verified until that run completes.
 - **Production deployment:** skipped for the PR branch. No Cloudflare Worker, production route, DNS or main-branch change was made.
 
 ## Current production and project state
