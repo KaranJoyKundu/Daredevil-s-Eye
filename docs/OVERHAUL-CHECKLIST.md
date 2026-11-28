@@ -259,3 +259,12 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 - Planned Android background/lock-screen behaviour, AI accuracy, SOS delivery and medical identification must never be presented as guaranteed.
 - If an item is blocked, leave it unchecked and explain the blocker in the relevant source-of-truth document.
 - Update this checklist in the same pull request as the work; never silently delete unfinished items.
+
+
+## 12. Clear removal and revocation paths
+
+- [x] Add an account-owned list of authorized RFID ESP32 readers to the Medicine page.
+- [x] Add a clear per-reader Revoke authorization action backed by the existing server-side revocation endpoint.
+- [x] Explain the distinction between immediate server revocation and clearing the old token from the physical ESP32 NVS namespace.
+- [x] Expand the homepage FAQ with RFID authorization, medicine-card deletion and lost-token answers.
+- [ ] Browser-test reader listing/revocation with an authenticated test account and verify a revoked token receives HTTP 401; do not revoke a real user's reader without their explicit choice.
