@@ -278,3 +278,14 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 - [x] Keep the menu usable on narrow screens and add visible keyboard focus styling.
 - [ ] Browser-verify menu open/close, scroll, focus, active route and all five groups at desktop and 390px mobile width.
 - [ ] Recheck that Action page-specific layout and styling remain unchanged.
+
+
+## 14. Admin, Devices and Diagnostics UX follow-up
+
+- [x] Add an Admin quick-access card hub while preserving existing setting IDs and JavaScript handlers.
+- [x] Reorganize Device setup into four anchor sections: Android controls, connected hardware, button mapping, setup guides.
+- [x] Add feature-entry cards and safe GET route-response checks to Diagnostics (no account mutations, AI requests, SOS sending or RFID revocation).
+- [x] Improve common tactile button hover/press feedback and focus states.
+- [ ] Browser-test Admin navigation and form save; Devices anchor navigation and native toggles; route check results; diagnostics individual and combined tests.
+- [ ] Check mobile width, keyboard, reduced-motion and screen-reader flow.
+- [ ] Ensure feature routes reflect current navigation after PR #77/#80 stack is approved and merged.
