@@ -30,6 +30,8 @@ const provisionButton=$('provision-device');
 const tokenOutput=$('device-token');
 const copyButton=$('copy-device-token');
 let issuedToken='';
+let issuedDeviceId='';
+const deviceList=$('authorized-devices');
 provisionButton.addEventListener('click',async()=>{
  provisionButton.disabled=true;
  status('provision-status','Authorizing this browser account…');
@@ -38,9 +40,11 @@ provisionButton.addEventListener('click',async()=>{
   const data=await response.json().catch(()=>({}));
   if(!response.ok||!data.ok||!/^[a-f0-9]{64}$/i.test(data.deviceToken||''))throw new Error(data.error||'Could not authorize the ESP32. Sign in and try again.');
   issuedToken=data.deviceToken;
+  issuedDeviceId=data.deviceId||'';
   tokenOutput.textContent=issuedToken;
   copyButton.disabled=false;
   status('provision-status','ESP32 authorized for this account. Copy the token into Serial Monitor. This token is shown only once.');
+  await loadAuthorizedDevices();
  }catch(error){status('provision-status',error.message);}
  finally{provisionButton.disabled=false;}
 });
@@ -49,6 +53,42 @@ copyButton.addEventListener('click',async()=>{
  try{await navigator.clipboard.writeText(issuedToken);status('provision-status','Device token copied. Paste it into the ESP32 Serial Monitor.');}
  catch{status('provision-status','Clipboard unavailable. Select and copy the token above manually.');}
 });
+
+
+async function loadAuthorizedDevices(){
+ if(!deviceList)return;
+ try{
+  const data=await medicineApi('/api/rfid/devices');
+  const devices=Array.isArray(data.devices)?data.devices:[];
+  deviceList.replaceChildren();
+  if(!devices.length){const empty=document.createElement('p');empty.className='medicine-muted';empty.textContent='No authorized ESP32 readers. Authorize one above when you are ready.';deviceList.append(empty);return;}
+  for(const item of devices){
+   const row=document.createElement('article');row.className='medicine-record';
+   const info=document.createElement('div');
+   const title=document.createElement('strong');title.textContent='ESP32 RFID reader';
+   const detail=document.createElement('small');detail.className='medicine-muted';
+   const created=item.createdAt?new Date(item.createdAt).toLocaleString():'Date unavailable';
+   const seen=item.lastSeenAt?new Date(item.lastSeenAt).toLocaleString():'Not yet connected';
+   detail.textContent='Authorized: '+created+' · Last seen: '+seen+' · Device ID: '+item.deviceId.slice(0,8)+'…';
+   info.append(title,document.createElement('br'),detail);
+   const revoke=document.createElement('button');revoke.type='button';revoke.className='danger';revoke.textContent='Revoke authorization';
+   revoke.setAttribute('aria-label','Revoke authorization for ESP32 reader '+item.deviceId.slice(0,8));
+   revoke.addEventListener('click',async()=>{
+    if(!confirm('Revoke this ESP32 reader? It will immediately stop being able to send medicine scans to your account.'))return;
+    revoke.disabled=true;status('devices-status','Revoking reader authorization…');
+    try{
+     await medicineApi('/api/rfid/devices/'+encodeURIComponent(item.deviceId),{method:'DELETE'});
+     if(item.deviceId===issuedDeviceId){issuedToken='';issuedDeviceId='';tokenOutput.textContent='Token revoked. Generate a new token to authorize again.';copyButton.disabled=true;}
+     status('devices-status','Reader authorization revoked. The ESP32 still holds its old token locally; erase its de-rfid Preferences namespace before re-authorizing it.');
+     await loadAuthorizedDevices();
+    }catch(error){status('devices-status',error.message);revoke.disabled=false;}
+   });
+   const actions=document.createElement('div');actions.className='medicine-record-actions';actions.append(revoke);
+   row.append(info,actions);deviceList.append(row);
+  }
+  status('devices-status',devices.length+' authorized reader(s). You can revoke any of them here.');
+ }catch(error){deviceList.textContent='Sign in to view authorized readers.';status('devices-status',error.message);}
+}
 
 const medicineForm=$('medicine-form');
 const medicineRecords=$('medicine-records');
@@ -128,5 +168,6 @@ medicineForm.addEventListener('submit',async event=>{
  finally{save.disabled=false;}
 });
 loadMedicines();
+loadAuthorizedDevices();
 
 $('medicine-preview-speak').addEventListener('click',()=>announceMedicine($('medicine-preview').textContent));
