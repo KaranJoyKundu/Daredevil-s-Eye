@@ -11,15 +11,22 @@ on:
       - 'package-lock.json'
       - '.github/workflows/android.yml'
   push:
-    branches: [feat/native-android-capacitor-a55]
+    branches: [feat/native-android-capacitor-a55, release/v1.0.0-engineering-overhaul]
+    paths:
+      - 'android/**'
+      - 'native-android/**'
+      - 'capacitor.config.*'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/android.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: daredevils-eye-android-v2-${{ github.head_ref || github.ref_name }}
-  cancel-in-progress: true
+  group: daredevils-eye-android-v2-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   build-debug:
@@ -55,6 +62,8 @@ jobs:
           if [ -d native-android/android-root ]; then
             cp -R native-android/android-root/. android/
           fi
+      - name: Sync Android version from package.json
+        run: node native-android/sync-version.mjs
       - name: Build debug APK
         working-directory: android
         run: gradle --no-daemon assembleDebug

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Daredevil's Eye">
+  <rect width="512" height="512" rx="112" fill="#0B1220"/>
+  <path d="M82 256c44-79 106-126 174-126s130 47 174 126c-44 79-106 126-174 126S126 335 82 256Z" fill="none" stroke="#FFC400" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="256" cy="256" r="68" fill="#FFC400"/>
+  <circle cx="256" cy="256" r="29" fill="#0B1220"/>
+  <path d="M256 158v30M256 324v30M158 256h30M324 256h30" stroke="#FFC400" stroke-width="16" stroke-linecap="round" opacity=".85"/>
+</svg>

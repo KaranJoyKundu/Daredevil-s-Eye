@@ -34,6 +34,15 @@ This is the current snapshot. Historical notes are retained below only when they
 - This is a debug-signed test APK, not a permanent updateable release. A persistent owner-controlled keystore and four protected GitHub Actions secrets are still required. See [Android release signing](ANDROID-RELEASE-SETUP.md).
 - Physical Galaxy A55 validation remains open: install/launch, volume-key accuracy, global Accessibility Service, TalkBack coexistence, lock/screen-off behaviour, camera/microphone, RFID and two-phone SOS.
 
+### v1.0.0 engineering candidate (not merged to production)
+
+- Draft PR [#74](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/74) contains the current Android UX, camera-preview, media, icon and documentation work on `release/v1.0.0-engineering-overhaul`.
+- The candidate commit `5310e454643b42811a4bddb0298d191e7a790b4c` passed Android build run [#45870190784](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/45870190784) and web verification run [#45870190657](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/45870190657). Artifact `15142052564` was downloaded and inspected as an APK; SHA-256 `b176389ee6bcbd62ed8044777ca4cba459e75245b5d0fcac7f27c8bdbab041a5`.
+- The candidate also includes SemVer-to-Gradle synchronization, native-plugin initialization waits for speech/photo/camera actions, and launcher shortcuts for Describe, Ask AI, Repeat and SOS confirmation.
+- Android Action camera preview uses native JPEG snapshots from the ESP32 `/capture` endpoint (not full-motion MJPEG). Device network/frame-rate testing remains open.
+- The candidate still does **not** implement native FCM background SOS or native SpeechRecognizer. FCM requires the Firebase Android app/configuration and protected sender credentials; SpeechRecognizer remains a code task.
+- This candidate has not been merged to `main`; the APK loads the live production Worker URL configured in Capacitor, so branch-only web changes are not live in installed APKs until the corresponding web release is deployed.
+
 ### Existing web capabilities
 
 The current product includes a Bangla-first interface, Describe and Ask AI flows, device speech, phone photo capture/upload, ESP32-CAM integration, Blind mode, Admin presets, Diagnostics, SOS pairing, optional account/guest photo history and an installable web app. See the [README](../README.md) and [architecture](ARCHITECTURE.md) for component-level detail.

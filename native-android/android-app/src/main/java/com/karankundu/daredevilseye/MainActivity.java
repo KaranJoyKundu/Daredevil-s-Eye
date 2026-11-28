@@ -11,6 +11,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.view.KeyEvent;
+import android.view.View;
+
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import android.webkit.WebSettings;
 
 import androidx.core.app.ActivityCompat;
@@ -30,11 +35,29 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(VolumeControlsPlugin.class);
         super.onCreate(savedInstanceState);
-        if(getBridge()!=null&&getBridge().getWebView()!=null)getBridge().getWebView().getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            android.webkit.WebView webView = getBridge().getWebView();
+            webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+            final int initialLeft = webView.getPaddingLeft();
+            final int initialTop = webView.getPaddingTop();
+            final int initialRight = webView.getPaddingRight();
+            final int initialBottom = webView.getPaddingBottom();
+            ViewCompat.setOnApplyWindowInsetsListener(webView, (view, windowInsets) -> {
+                Insets bars = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()
+                );
+                Insets ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
+                view.setPadding(initialLeft + bars.left, initialTop + bars.top,
+                    initialRight + bars.right, initialBottom + Math.max(bars.bottom, ime.bottom));
+                return windowInsets;
+            });
+            ViewCompat.requestApplyInsets(webView);
+        }
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 8401);
         }
         dispatchPendingAction();
+        handleLauncherShortcut(getIntent());
         showAccessibilitySetupOnce();
     }
 
@@ -56,6 +79,7 @@ public class MainActivity extends BridgeActivity {
         super.onNewIntent(intent);
         setIntent(intent);
         dispatchPendingAction();
+        handleLauncherShortcut(intent);
     }
 
     private void showAccessibilitySetupOnce() {
@@ -63,10 +87,14 @@ public class MainActivity extends BridgeActivity {
         if (prefs.getBoolean("accessibility_prompt_shown", false)) return;
         prefs.edit().putBoolean("accessibility_prompt_shown", true).apply();
         new AlertDialog.Builder(this)
-            .setTitle("Enable volume-button shortcuts?")
-            .setMessage("Optional: enable Daredevil's Eye in Android Accessibility settings to use the volume buttons while another app is open. The service only observes Volume Up and Volume Down. It does not read screen content. TalkBack compatibility must be tested on this phone.")
-            .setPositiveButton("Open settings", (dialog, which) -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)))
-            .setNegativeButton("Not now", null)
+            .setTitle("Optional background volume shortcuts")
+            .setMessage("Foreground volume shortcuts work while Daredevil's Eye is open. To use them over other apps, Android requires an optional Accessibility Service. On some phones, Android blocks this permission for sideloaded apps. If blocked, open App info > ⋮ > Allow restricted settings, then return to Accessibility > Installed apps > Daredevil's Eye. This permission is never required for the main camera, voice or SOS features.")
+            .setPositiveButton("Open app info", (dialog, which) -> {
+                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    android.net.Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+            })
+            .setNegativeButton("Later", null)
             .show();
     }
 
@@ -136,6 +164,16 @@ public class MainActivity extends BridgeActivity {
         describeRunnable = null;
     }
 
+    private void handleLauncherShortcut(Intent intent) {
+        if (intent == null || !intent.hasExtra("dee_shortcut_action")) return;
+        String action = intent.getStringExtra("dee_shortcut_action");
+        intent.removeExtra("dee_shortcut_action");
+        if ("describe".equals(action) || "ask".equals(action) ||
+            "repeat".equals(action) || "sos".equals(action)) {
+            dispatchAction(action);
+        }
+    }
+
     private void dispatchAction(String action) {
         SharedPreferences prefs = getSharedPreferences(VolumeKeyAccessibilityService.PREFS, MODE_PRIVATE);
         String eventId = Long.toString(System.currentTimeMillis()) + "-" + action;
@@ -174,4 +212,26 @@ public class MainActivity extends BridgeActivity {
             }
         }, attempt == 0 ? 450L : 500L);
     }
+    /** Back follows web history, then returns secondary app routes to the Action page. */
+    @Override
+    public void onBackPressed() {
+        if (getBridge() == null || getBridge().getWebView() == null) {
+            moveTaskToBack(true);
+            return;
+        }
+        android.webkit.WebView webView = getBridge().getWebView();
+        String current = webView.getUrl() == null ? "" : webView.getUrl();
+        if (webView.canGoBack()) {
+            webView.goBack();
+            return;
+        }
+        android.net.Uri uri = android.net.Uri.parse(current);
+        String path = uri.getPath() == null ? "/" : uri.getPath();
+        if (!path.equals("/") && !path.equals("/action/")) {
+            webView.loadUrl("https://daredevils-eye.karanjoykundu.workers.dev/action/");
+            return;
+        }
+        moveTaskToBack(true);
+    }
+
 }

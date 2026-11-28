@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="describe" android:enabled="true" android:icon="@drawable/ic_launcher_legacy" android:shortcutShortLabel="@string/shortcut_describe_short" android:shortcutLongLabel="@string/shortcut_describe_long">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.karankundu.daredevilseye" android:targetClass="com.karankundu.daredevilseye.MainActivity">
+            <extra android:name="dee_shortcut_action" android:value="describe" />
+        </intent>
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+    <shortcut android:shortcutId="ask" android:enabled="true" android:icon="@drawable/ic_launcher_legacy" android:shortcutShortLabel="@string/shortcut_ask_short" android:shortcutLongLabel="@string/shortcut_ask_long">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.karankundu.daredevilseye" android:targetClass="com.karankundu.daredevilseye.MainActivity">
+            <extra android:name="dee_shortcut_action" android:value="ask" />
+        </intent>
+    </shortcut>
+    <shortcut android:shortcutId="repeat" android:enabled="true" android:icon="@drawable/ic_launcher_legacy" android:shortcutShortLabel="@string/shortcut_repeat_short" android:shortcutLongLabel="@string/shortcut_repeat_long">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.karankundu.daredevilseye" android:targetClass="com.karankundu.daredevilseye.MainActivity">
+            <extra android:name="dee_shortcut_action" android:value="repeat" />
+        </intent>
+    </shortcut>
+    <shortcut android:shortcutId="sos" android:enabled="true" android:icon="@drawable/ic_launcher_legacy" android:shortcutShortLabel="@string/shortcut_sos_short" android:shortcutLongLabel="@string/shortcut_sos_long">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.karankundu.daredevilseye" android:targetClass="com.karankundu.daredevilseye.MainActivity">
+            <extra android:name="dee_shortcut_action" android:value="sos" />
+        </intent>
+    </shortcut>
+</shortcuts>

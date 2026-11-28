@@ -71,16 +71,104 @@ public class VolumeControlsPlugin extends Plugin {
         if(textToSpeech.speak(text,TextToSpeech.QUEUE_ADD,null,"dee-"+System.currentTimeMillis())==TextToSpeech.ERROR)call.reject("Android could not start speech.");else call.resolve();
     }
     @PluginMethod public void stopSpeech(PluginCall call){if(textToSpeech!=null)textToSpeech.stop();call.resolve();}
-    @PluginMethod public void saveImage(PluginCall call){
-      String dataUrl=call.getString("dataUrl",""),filename=call.getString("filename","daredevils-eye-photo.jpg");
-      try{int comma=dataUrl.indexOf(',');if(comma<0)throw new IllegalArgumentException("Invalid image data.");
-        byte[] bytes=Base64.decode(dataUrl.substring(comma+1),Base64.DEFAULT);if(bytes.length==0)throw new IllegalArgumentException("Photo is empty.");
-        ContentValues values=new ContentValues();values.put(MediaStore.Images.Media.DISPLAY_NAME,filename);values.put(MediaStore.Images.Media.MIME_TYPE,"image/jpeg");
-        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.Q)values.put(MediaStore.Images.Media.RELATIVE_PATH,Environment.DIRECTORY_PICTURES+"/Daredevils Eye");
-        Uri uri=getContext().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values);if(uri==null)throw new IllegalStateException("Could not create Pictures entry.");
-        try(java.io.OutputStream out=getContext().getContentResolver().openOutputStream(uri)){if(out==null)throw new IllegalStateException("Could not open photo destination.");out.write(bytes);}
-        JSObject result=new JSObject();result.put("message","Photo saved in Pictures/Daredevils Eye.");result.put("uri",uri.toString());call.resolve(result);
-      }catch(Exception error){call.reject("Could not save photo: "+error.getMessage(),error);}
+    @PluginMethod public void saveImage(PluginCall call) {
+      String dataUrl = call.getString("dataUrl", "");
+      String filename = call.getString("filename", "daredevils-eye-photo.jpg");
+      Uri uri = null;
+      try {
+        int comma = dataUrl.indexOf(',');
+        if (comma < 0) throw new IllegalArgumentException("Invalid image data.");
+        byte[] bytes = Base64.decode(dataUrl.substring(comma + 1), Base64.DEFAULT);
+        if (bytes.length == 0) throw new IllegalArgumentException("Photo is empty.");
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, filename);
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+          values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Daredevils Eye");
+          values.put(MediaStore.Images.Media.IS_PENDING, 1);
+        }
+        uri = getContext().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        if (uri == null) throw new IllegalStateException("Could not create Pictures entry.");
+        try (java.io.OutputStream out = getContext().getContentResolver().openOutputStream(uri, "w")) {
+          if (out == null) throw new IllegalStateException("Could not open photo destination.");
+          out.write(bytes);
+          out.flush();
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+          ContentValues ready = new ContentValues();
+          ready.put(MediaStore.Images.Media.IS_PENDING, 0);
+          getContext().getContentResolver().update(uri, ready, null, null);
+        }
+        JSObject result = new JSObject();
+        result.put("message", "Photo saved in Pictures/Daredevils Eye.");
+        result.put("uri", uri.toString());
+        call.resolve(result);
+      } catch (Exception error) {
+        if (uri != null) {
+          try { getContext().getContentResolver().delete(uri, null, null); } catch (Exception ignored) {}
+        }
+        call.reject("Could not save photo: " + error.getMessage(), error);
+      }
+    }
+
+    @PluginMethod
+    public void fetchEsp32Snapshot(PluginCall call) {
+        String address = call.getString("url", "");
+        new Thread(() -> {
+            java.net.HttpURLConnection connection = null;
+            try {
+                java.net.URL url = new java.net.URL(address);
+                String host = url.getHost();
+                String[] octets = host.split("\\.");
+                if (!url.getProtocol().equals("https") && !url.getProtocol().equals("http")) {
+                    throw new IllegalArgumentException("Only HTTP camera URLs are supported.");
+                }
+                if (octets.length != 4) throw new IllegalArgumentException("Camera must use a private IPv4 address.");
+                int[] ip = new int[4];
+                for (int i = 0; i < 4; i++) {
+                    if (!octets[i].matches("\\d{1,3}")) throw new IllegalArgumentException("Camera must use a private IPv4 address.");
+                    ip[i] = Integer.parseInt(octets[i]);
+                    if (ip[i] < 0 || ip[i] > 255) throw new IllegalArgumentException("Camera IPv4 address is invalid.");
+                }
+                int a = ip[0], b = ip[1];
+                boolean privateHost = a == 10 || (a == 172 && b >= 16 && b <= 31) ||
+                    (a == 192 && b == 168) || (a == 169 && b == 254);
+                if (!privateHost) throw new IllegalArgumentException("Camera URL must point to a private local-network address.");
+                if (!url.getPath().equals("/capture")) throw new IllegalArgumentException("Only the ESP32 /capture endpoint is allowed.");
+                connection = (java.net.HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setConnectTimeout(3500);
+                connection.setReadTimeout(3500);
+                connection.setUseCaches(false);
+                connection.setRequestProperty("Accept", "image/jpeg");
+                int status = connection.getResponseCode();
+                if (status < 200 || status >= 300) throw new IllegalStateException("ESP32 returned HTTP " + status + ".");
+                String type = connection.getContentType();
+                if (type == null || !type.toLowerCase(java.util.Locale.ROOT).startsWith("image/")) {
+                    throw new IllegalStateException("ESP32 /capture did not return an image.");
+                }
+                java.io.InputStream input = connection.getInputStream();
+                java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream();
+                byte[] buffer = new byte[8192];
+                int total = 0, count;
+                while ((count = input.read(buffer)) != -1) {
+                    total += count;
+                    if (total > 4 * 1024 * 1024) throw new IllegalStateException("Camera image exceeds the 4 MB limit.");
+                    output.write(buffer, 0, count);
+                }
+                input.close();
+                if (total == 0) throw new IllegalStateException("ESP32 returned an empty image.");
+                JSObject result = new JSObject();
+                result.put("base64", Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP));
+                result.put("contentType", type);
+                result.put("bytes", total);
+                call.resolve(result);
+            } catch (Exception error) {
+                call.reject("ESP32 preview failed: " + error.getMessage(), error);
+            } finally {
+                if (connection != null) connection.disconnect();
+            }
+        }, "dee-esp32-snapshot").start();
     }
 
     @PluginMethod

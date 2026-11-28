@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0-beta.1 — 26 November 2026 (Android engineering candidate; not a production release)
+
+- Added native Android window insets, predictable Back handling, optional Accessibility onboarding and launcher shortcuts for Describe, Ask AI, Repeat and SOS confirmation.
+- Added native ESP32 `/capture` snapshot preview for the Android Action helper, with private IPv4 and endpoint validation.
+- Hardened native photo saving through MediaStore pending writes and cleanup on failure.
+- Added Android TextToSpeech bridge integration and wait-for-plugin initialization for voice, photo and camera actions.
+- Integrated the selected navy/gold eye-radar brand into Android launcher vector resources and web/PWA icons.
+- Synced Android `versionName` and `versionCode` from package SemVer in debug and signed-release workflows.
+- Verified Android debug APK build #45870190784 and web checks #45870190657. Physical-device acceptance, FCM background SOS, native SpeechRecognizer and signed release remain open.
+
 ## 26 November 2026 — Documentation layout and project documentation
 
 - PR #71 refreshed the Android documentation page styling; PR #72 corrected oversized sections inherited from the shared site stylesheet.

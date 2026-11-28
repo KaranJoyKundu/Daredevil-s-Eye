@@ -1,3 +1,11 @@
 <resources>
     <string name="volume_service_description">Daredevils Eye uses volume-button presses as optional blind-mode shortcuts: Volume Up for Describe, Volume Down for Ask AI, double Volume Up for Repeat, and holding both for the SOS confirmation screen. It does not read screen content.</string>
+    <string name="shortcut_describe_short">Describe</string>
+    <string name="shortcut_describe_long">Describe surroundings</string>
+    <string name="shortcut_ask_short">Ask AI</string>
+    <string name="shortcut_ask_long">Ask the AI a question</string>
+    <string name="shortcut_repeat_short">Repeat</string>
+    <string name="shortcut_repeat_long">Repeat last answer</string>
+    <string name="shortcut_sos_short">SOS</string>
+    <string name="shortcut_sos_long">Open SOS confirmation</string>
 </resources>
