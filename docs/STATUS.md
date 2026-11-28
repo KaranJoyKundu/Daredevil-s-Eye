@@ -16,8 +16,8 @@
 
 - **Structural review PR:** [#77 — Product navigation, documentation, FAQ and RFID management](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/77) — open, draft, unmerged. **Separate visual proposal:** [#79 — Quiet Clarity design refresh](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/79) — open, draft, unmerged; stacked on PR #77 and independently closable without affecting the structural changes. Superseded design-only PR #78 is closed.
 - **Main/base checkpoint:** `98c9864fabf068ca7a904f5b91d6ad8264561108`. The `main` branch is unchanged.
-- **Structural branch head:** `b811d8e8eccdf6a950999a1b92b8264770609f29`. The Quiet Clarity CSS is not included in this branch; it lives only in PR #79.
-- **Vercel previews:** [Structural-only preview](https://daredevils-eye-rfid-preview-h7g6r6phf-kundu2409056-5098.vercel.app/) · [Quiet Clarity preview stacked on the structural branch](https://daredevils-eye-rfid-preview-4fplblc3j-kundu2409056-5098.vercel.app/). Both are UI-only; API-backed AI, SOS, Account and authenticated RFID operations are not connected.
+- **Structural branch head:** `a2f12fbd7bf005bdb4290ea9c50000922b04e7a0` (PR #77). The Quiet Clarity CSS is not included in this branch; it lives only in PR #79.
+- **Vercel previews:** [Structural-only preview](https://daredevils-eye-rfid-preview-lyamu576o-kundu2409056-5098.vercel.app/) · [Quiet Clarity proposal preview](https://daredevils-eye-rfid-preview-4fplblc3j-kundu2409056-5098.vercel.app/) · [Navigation/FAQ follow-up preview (PR #80)](https://daredevils-eye-rfid-preview-qicl4atnf-kundu2409056-5098.vercel.app/). Both are UI-only; API-backed AI, SOS, Account and authenticated RFID operations are not connected.
 - **CI:** Node tests, JavaScript syntax, Worker bundle and Durable Object migration validation passed in [run 46086974521](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46086974521).
 - **Documentation quality:** Markdown lint, internal Markdown links and canonical route smoke checks passed in [run 46086974459](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46086974459).
 - **CodeQL:** passed in [run 46086974454](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46086974454).
@@ -25,6 +25,15 @@
 - **Visual direction:** Quiet Clarity is a separate optional design proposal in PR #79. PR #77 contains no visual redesign, so the existing production look is retained if PR #78 is closed.
 - **Browser verification:** The prior preview deployment was stale and did not contain the new styles. A fresh preview was deployed from the exact design commit above and browser-verified: homepage, Action, Admin, Documentation, Devices, SOS and Blind Mode all loaded; no visible console/CSS errors or horizontal overflow were observed at desktop or a 390×844 viewport; keyboard Tab focus was confirmed on landing navigation and CTA. Blind Mode remained dark and high-contrast. The browser inspection did not independently identify the stylesheet URL in the DOM, and this is not a screen-reader or physical-device accessibility evaluation.
 - **Production deployment:** skipped for the PR branch. No Cloudflare Worker, production route, DNS or main-branch change was made.
+
+
+
+### Follow-up polish PR #80
+
+- **PR:** [#80 — grouped navigation and FAQ cleanup](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/80), draft and stacked on PR #77.
+- **Preview:** https://daredevils-eye-rfid-preview-qicl4atnf-kundu2409056-5098.vercel.app/ — Vercel reports READY for commit `e0f9f021570071ebb99339a07adb568b0ed65673`.
+- **Scope:** screenshot-aligned grouped/scrollable menu styling and removal of duplicated RFID FAQ entries. No page-specific Action markup or backend behavior changed.
+- **Remaining:** rendered browser acceptance for menu scrolling/focus/mobile layout and explicit Action-page visual comparison. Authenticated RFID revoke/HTTP 401 and physical ESP32 cleanup remain separate acceptance tasks.
 
 ## Current production and project state
 

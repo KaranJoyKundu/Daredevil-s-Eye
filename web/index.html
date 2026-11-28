@@ -358,9 +358,7 @@
           <div class="faq__item"><h3>Can I remove an RFID reader after authorizing it?</h3><p>Yes. Open Medicine, find Authorized ESP32 readers, and choose Revoke authorization. The reader immediately loses permission to send scans to your account. Then erase the ESP32's saved credential by clearing its Preferences namespace <code>de-rfid</code> before setting it up again.</p></div>
           <div class="faq__item"><h3>Can I remove a medicine card or RFID tag?</h3><p>Yes. In Medicine, find Registered medicine cards and choose Delete beside the card. This removes that UID from your account; scans for it will no longer resolve to your medicine record.</p></div>
           <div class="faq__item"><h3>What if I lose my ESP32 token?</h3><p>Revoke the old reader in Medicine, clear the old token from the ESP32's <code>de-rfid</code> storage, and authorize it again to generate a fresh one-time token. Never share a device token.</p></div>
-          <div class="faq__item"><h3>Can I remove an RFID reader after authorizing it?</h3><p>Yes. Open Medicine, find Authorized ESP32 readers, and choose Revoke authorization. The reader immediately loses permission to send scans to your account. Then erase the ESP32's saved credential by clearing its Preferences namespace <code>de-rfid</code> before setting it up again.</p></div>
-          <div class="faq__item"><h3>Can I remove a medicine card or RFID tag?</h3><p>Yes. In Medicine, find Registered medicine cards and choose Delete beside the card. This removes that UID from your account; scans for it will no longer resolve to your medicine record.</p></div>
-          <div class="faq__item"><h3>What if I lose my ESP32 token?</h3><p>Revoke the old reader in Medicine, clear the old token from the ESP32's <code>de-rfid</code> storage, and authorize it again to generate a fresh one-time token. Never share a device token.</p></div>
+          
         </div>
       </div>
     </div>
