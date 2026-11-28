@@ -1,6 +1,12 @@
 import {mountLanguageSwitch} from './language.js?v=20261117-release5';
 import {startRFIDListener} from './rfid-listener.js?v=20261126-bg2';
 
+// Apply one shared visual system after page-specific styles so every route stays coherent.
+const unifiedTheme=document.createElement('link');
+unifiedTheme.rel='stylesheet';
+unifiedTheme.href='/shared/unified-theme.css?v=20261128-action-theme1';
+document.head.append(unifiedTheme);
+
 const groups = [
   ['USE', [['Action','/action/'],['Blind mode','/blind/']]],
   ['SAFETY', [['SOS Center','/sos/'],['Medicine','/medicine/']]],
