@@ -14,15 +14,15 @@
 
 ## Current overhaul verification
 
-- **Review PR:** [#77 — Overhaul product navigation, documentation and repository quality](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/77) — open, draft, unmerged.
+- **Structural review PR:** [#77 — Product navigation, documentation, FAQ and RFID management](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/77) — open, draft, unmerged. **Separate visual proposal:** [#78 — Quiet Clarity design refresh](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/78) — open, draft, unmerged; intentionally isolated so it can be closed/reverted without affecting PR #77.
 - **Main/base checkpoint:** `98c9864fabf068ca7a904f5b91d6ad8264561108`. The `main` branch is unchanged.
-- **Overhaul branch head:** `5c22eab2bdacfc2c0834ecc38fd945a2175287ff` (latest docs/checklist commits); **visual source commit:** `706353077bc173d236c2cb978d157bde287a0312`.
-- **Vercel preview:** [Open Quiet Clarity UI preview](https://daredevils-eye-rfid-preview-mvvcsquvn-kundu2409056-5098.vercel.app/). Deployment `dpl_Aa23frPtF8NEi9yCXaFVxvoWKfsE` is READY. This is a UI-only preview; API-backed AI, SOS and Account operations are not connected. A visible warning is shown in the preview.
+- **Structural branch head:** `b462f6954688d339e9106f650ac6bd8f253edcf1`. The Quiet Clarity CSS is not included in this branch; it lives only in PR #78.
+- **Vercel previews:** Structural and visual proposals are deployed independently; use the links in the PR descriptions. Both are UI-only previews; API-backed AI, SOS, Account and authenticated RFID operations are not connected.
 - **CI:** Node tests, JavaScript syntax, Worker bundle and Durable Object migration validation passed in [run 46086974521](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46086974521).
 - **Documentation quality:** Markdown lint, internal Markdown links and canonical route smoke checks passed in [run 46086974459](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46086974459).
 - **CodeQL:** passed in [run 46086974454](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46086974454).
 - **Android build:** debug APK build and artifact upload passed in [run 46086974450](https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/runs/46086974450), artifact ID `15240050087`, SHA-256 `47e491c586e20faed71bb3b269620623de1a9ce5d7faf24278eb78231f916622`. This is CI build evidence only, not a signed release or physical-device verification.
-- **Visual direction:** Added the Quiet Clarity shared design system to the app surfaces and a matching landing-page stylesheet. It replaces the heavy dark/gradient/card treatment with warm off-white surfaces, dark forest-green actions, restrained borders, editorial headings and consistent focus styling. Blind Mode retains its dedicated high-contrast 2×2 interface.
+- **Visual direction:** Quiet Clarity is a separate optional design proposal in PR #78. PR #77 contains no visual redesign, so the existing production look is retained if PR #78 is closed.
 - **Browser verification:** The prior preview deployment was stale and did not contain the new styles. A fresh preview was deployed from the exact design commit above and browser-verified: homepage, Action, Admin, Documentation, Devices, SOS and Blind Mode all loaded; no visible console/CSS errors or horizontal overflow were observed at desktop or a 390×844 viewport; keyboard Tab focus was confirmed on landing navigation and CTA. Blind Mode remained dark and high-contrast. The browser inspection did not independently identify the stylesheet URL in the DOM, and this is not a screen-reader or physical-device accessibility evaluation.
 - **Production deployment:** skipped for the PR branch. No Cloudflare Worker, production route, DNS or main-branch change was made.
 
