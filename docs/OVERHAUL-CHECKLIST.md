@@ -243,9 +243,9 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 - [x] Apply a matching landing-page treatment with a clear two-column desktop hero, restrained product preview, quiet surfaces and responsive stacking.
 - [x] Reduce decorative gradients, oversized card treatments and heavy shadows across shared app surfaces without changing product workflows.
 - [x] Preserve Blind Mode's separate full-screen, high-contrast 2×2 interaction surface.
-- [ ] Verify the new styles on the exact latest Vercel preview deployment across homepage, Action, Admin, Documentation, Devices, SOS and Blind Mode.
-- [ ] Verify 390×844 phone layout, tablet and desktop, including no horizontal overflow and no clipped controls.
-- [ ] Keyboard-test focus visibility and navigation; verify contrast with rendered colors and test screen-reader labels/live regions.
+- [x] Browser-verify the new styles on the Vercel preview across homepage, Action, Admin, Documentation, Devices, SOS and Blind Mode; all routes loaded without visible styling errors.
+- [x] Verify 390×844 mobile-width and desktop layouts with no observed horizontal overflow; physical handset and tablet checks remain open.
+- [x] Tab-test landing navigation and primary CTA focus order; [ ] complete full-site keyboard, rendered contrast measurement and screen-reader/live-region testing.
 - [ ] Run supervised blind/low-vision usability evaluation and physical Galaxy A55 acceptance; CSS review alone is not accessibility certification.
 
 ---
