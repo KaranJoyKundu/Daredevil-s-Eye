@@ -99,3 +99,11 @@ The work is isolated on `docs/product-map-and-ux-overhaul`. The pre-overhaul bac
 - **Planned / incomplete / blocked:** not yet delivered or not yet validated.
 
 See [RELEASE](RELEASE.md) for the detailed acceptance matrix, [ROADMAP](ROADMAP.md) for future work and [HISTORY](HISTORY.md) for dated superseded proposals.
+
+
+### Admin / Devices / Diagnostics UX PR #81
+
+- **PR:** [#81 — Admin hub, device setup and expanded diagnostics](https://github.com/KaranJoyKundu/Daredevil-s-Eye/pull/81) — new branch stacked on PR #80, draft/unmerged.
+- **Source changes:** Admin quick-access card hub; Devices anchor navigation and clearer setup sections; Diagnostics route-response test and feature shortcuts; tactile shared button feedback.
+- **Safety scope:** route checks are read-only GET checks and do not perform AI calls, SOS sends, account mutations, RFID revocation or hardware operations.
+- **Browser and device verification:** pending. Production remains untouched.

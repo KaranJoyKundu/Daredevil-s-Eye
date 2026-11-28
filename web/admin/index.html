@@ -6,9 +6,10 @@
 <link rel="stylesheet" href="/shared/style.css?v=20261128-groups3">
 </head>
 <body><main>
-<header><p class="eyebrow">CONTROL CENTER / CONFIGURATION</p><h1>Admin / Settings</h1><p class="subtitle">Configure app behaviour, AI, voice and SOS trigger preferences. Start hardware connection setup in <a href="/devices/">Devices</a>.</p></header>
+<header><p class="eyebrow">CONTROL CENTER / CONFIGURATION</p><h1>Admin / Settings</h1><p class="subtitle">Find settings by category. Hardware connection setup is in <a href="/devices/">Devices</a>.</p></header>
 
-<nav class="quick-jump" aria-label="Settings sections"><a href="#general-settings">General</a><a href="#camera-settings">Camera &amp; Devices</a><a href="#ai-settings">AI &amp; Intelligence</a><a href="#voice-settings">Voice &amp; Accessibility</a><a href="#sos-settings">SOS &amp; Triggers</a><a href="#image-lab">Testing tools</a><a href="/account/">Account &amp; Data</a></nav>
+<nav class="quick-jump admin-hub" aria-label="Settings sections">
+<a class="diagnostic-card diag-slate" href="#general-settings"><span class="diag-icon">☰</span><strong>General</strong><small>Language and defaults</small></a><a class="diagnostic-card diag-teal" href="#camera-settings"><span class="diag-icon">📷</span><strong>Camera &amp; devices</strong><small>ESP32, LED and photo behaviour</small></a><a class="diagnostic-card diag-blue" href="#ai-settings"><span class="diag-icon">✨</span><strong>AI &amp; intelligence</strong><small>Models, prompts and analysis</small></a><a class="diagnostic-card diag-purple" href="#voice-settings"><span class="diag-icon">🎙</span><strong>Voice &amp; accessibility</strong><small>Language and voice controls</small></a><a class="diagnostic-card diag-orange" href="#sos-settings"><span class="diag-icon">🛡</span><strong>SOS &amp; triggers</strong><small>Emergency preferences</small></a><a class="diagnostic-card diag-mint" href="/diagnostics/"><span class="diag-icon">⚙</span><strong>Diagnostics</strong><small>Health checks and tests</small></a><a class="diagnostic-card diag-cyan" href="/account/"><span class="diag-icon">◉</span><strong>Account &amp; data</strong><small>History, privacy and keys</small></a><a class="diagnostic-card diag-indigo" href="#image-lab"><span class="diag-icon">🧪</span><strong>Image lab</strong><small>Image and AI testing</small></a></nav>
 <form id="settings-form">
 <section id="general-settings" class="panel settings-section">
 <h2>General</h2>
@@ -152,6 +153,6 @@
 <nav class="navlinks"><a href="/action/">Home</a><a href="/diagnostics/">Diagnostics</a><a href="/contact/">Contact</a><a href="/privacy/">Privacy</a></nav>
 <div class="inline-actions admin-save-actions"><button type="submit" form="settings-form">Save all settings</button></div>
 </main>
-<script type="module" src="/admin/admin.js?v=20261126-camera2"></script>
+<script type="module" src="/admin/admin.js?v=20261128-admin-hub"></script>
 <script type="module" src="/shared/site-nav.js?v=20261128-groups3"></script>
 </body></html>

@@ -428,3 +428,14 @@ a{text-underline-offset:3px}
 /* Visible status for Blind mode when device speech is unavailable or quiet. */
 .blind-action-feedback{flex:0 0 auto;width:calc(100% - 20px);margin:0 10px 6px;padding:8px 11px;border:1px solid #55716b;border-radius:10px;background:#121816;color:#fff;font-size:.88rem;line-height:1.35;text-align:center;overflow-wrap:anywhere}
 .blind-action-feedback[hidden]{display:none!important}
+
+/* Admin settings quick-access cards and tactile buttons */
+.admin-hub.quick-jump{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0 28px}.admin-hub .diagnostic-card{min-height:112px;border-radius:16px;padding:16px;gap:6px}.admin-hub .diag-icon{font-size:1.4rem}.settings-section{scroll-margin-top:20px;margin:18px 0;padding:22px;border:1px solid #35413c;border-radius:18px;background:linear-gradient(145deg,#1f2725,#1b2321)}.settings-section>h2{font-size:1.25rem;margin-bottom:12px}.settings-section label{margin-top:12px}.settings-section button:active{transform:translateY(1px) scale(.985);box-shadow:0 0 0 2px #9fc7b833}.settings-section input,.settings-section select,.settings-section textarea{border-radius:11px}@media(max-width:520px){.admin-hub.quick-jump{grid-template-columns:1fr;gap:9px}.admin-hub .diagnostic-card{min-height:92px}.settings-section{padding:16px}}
+
+/* Distinct diagnostic shortcut card tones */
+.diagnostic-grid .diag-mint{background:#205647}
+.diagnostic-grid .diag-cyan{background:#15556b}
+.diagnostic-grid .diag-indigo{background:#3d4678}
+.diagnostic-grid .diag-rose{background:#7c3347}
+.diagnostic-grid .diag-olive{background:#59602c}
+.diagnostic-grid .diag-lavender{background:#65517c}
