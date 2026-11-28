@@ -4,7 +4,9 @@
 
 <p align="left">
   <a href="https://daredevils-eye.karanjoykundu.workers.dev/"><img src="https://img.shields.io/badge/Live%20demo-Open%20app-167c68?style=for-the-badge" alt="Open live demo"></a>
-  <a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions"><img src="https://img.shields.io/badge/CI-GitHub%20Actions-2088ff?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions"></a>
+  <a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/workflows/ci.yml"><img src="https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/workflows/ci.yml/badge.svg" alt="Build, test and deploy workflow"></a>
+  <a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/workflows/docs-quality.yml"><img src="https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/workflows/docs-quality.yml/badge.svg" alt="Documentation quality checks"></a>
+  <a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/workflows/codeql.yml"><img src="https://github.com/KaranJoyKundu/Daredevil-s-Eye/actions/workflows/codeql.yml/badge.svg" alt="CodeQL security analysis"></a>
   <a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye/blob/main/SECURITY.md"><img src="https://img.shields.io/badge/Security-Policy-334155?style=for-the-badge" alt="Security policy"></a>
 </p>
 
@@ -19,10 +21,12 @@
 | Try the live app | [Open Daredevil's Eye](https://daredevils-eye.karanjoykundu.workers.dev/) |
 | Use the simplified blind-first interface | [Blind mode](https://daredevils-eye.karanjoykundu.workers.dev/blind/) |
 | Read the current project status | [Implementation status](docs/STATUS.md) |
+| Track the full product/documentation overhaul | [Master overhaul checklist](docs/OVERHAUL-CHECKLIST.md) |
 | Install and run the project locally | [Setup guide](docs/SETUP.md) |
 | Understand the system | [Architecture](docs/ARCHITECTURE.md) |
 | Find a guide for a specific task | [Documentation hub](docs/README.md) |
-| See what is verified and what still needs testing | [Release checklist](docs/CURRENT-RELEASE-CHECKLIST.md) |
+| See what is verified and what still needs testing | [Release handbook](docs/RELEASE.md) |
+| Understand Android controls and release signing | [Android guide](docs/ANDROID.md) |
 | Report a security issue | [Security policy](SECURITY.md) |
 
 **Live services:** [Website](https://daredevils-eye.karanjoykundu.workers.dev/) · [Action app](https://daredevils-eye.karanjoykundu.workers.dev/action/) · [Blind mode](https://daredevils-eye.karanjoykundu.workers.dev/blind/) · [Project documentation](https://daredevils-eye.karanjoykundu.workers.dev/documentation/)
@@ -68,16 +72,20 @@ The native implementation is present in the repository, but the mapping, global 
 
 | Route | Purpose |
 |---|---|
-| `/` | Project landing page |
-| `/action/` | Main app and camera/action controls |
+| `/` | Project landing page and About |
+| `/action/` | Main task interface: Describe, Ask AI, camera and uploads |
 | `/blind/` | Blind-first four-action interface |
-| `/admin/` | Camera, SOS pairing, model, assistant, voice and preference settings |
-| `/diagnostics/` | Camera, microphone, speaker, AI and backend checks |
-| `/account/` | Sign-in and optional photo history |
-| `/sos-receiver/` | Pair a trusted receiver and listen for alerts |
-| `/help/` | User help |
+| `/devices/` | Android shortcut settings and hardware setup entry points |
+| `/sos/` | Canonical SOS Center: sender, receiver, pairing and acknowledgement |
+| `/medicine/` | Medicine identification and RFID-assisted workflow |
+| `/admin/` | App and device configuration only |
+| `/diagnostics/` | Camera, microphone, speaker, AI and backend health checks |
+| `/account/` | Sign-in, optional photo history and encrypted saved Gemini key |
+| `/documentation/` | Documentation index and structured reference |
+| `/help/` | Task-oriented user help |
 | `/privacy/`, `/terms/` | Privacy notice and terms |
-| `/documentation/` | Native Android implementation and progress tracker |
+| `/support/`, `/contact/` | Support and contact |
+| `/sos-receiver/` | Legacy compatibility route; use canonical `/sos/` |
 
 ## How it works
 
@@ -98,7 +106,7 @@ flowchart TD
 - **State and storage:** Durable Objects coordinate SOS state. Supabase stores optional account/guest history in a private bucket.
 - **Secrets:** Gemini and Supabase service credentials belong in Worker/GitHub secrets, never in browser code, committed files or APK assets.
 
-For detailed data flows and trust boundaries, see [Architecture](docs/ARCHITECTURE.md) and [Threat model](docs/THREAT-MODEL.md).
+For detailed data flows and trust boundaries, see [Architecture](docs/ARCHITECTURE.md) and [Threat model](docs/SAFETY.md).
 
 ## Run locally
 
@@ -139,7 +147,7 @@ npm test
 npm run check
 ```
 
-Then follow the [manual test matrix](docs/TESTING.md) and [current release checklist](docs/CURRENT-RELEASE-CHECKLIST.md). Record the device model, Android/One UI version, browser, test date and result. Keep **implemented in source**, **automated-tested**, **browser-tested** and **physically verified** as separate evidence levels.
+Then follow the [manual test matrix](docs/RELEASE.md) and [current release checklist](docs/RELEASE.md). Record the device model, Android/One UI version, browser, test date and result. Keep **implemented in source**, **automated-tested**, **browser-tested** and **physically verified** as separate evidence levels.
 
 ## Deployment
 
@@ -152,7 +160,7 @@ The production app is served by Cloudflare Workers with Static Assets and Durabl
 5. Confirm the main-branch deployment succeeds.
 6. Smoke-test the live routes and critical user flows.
 
-See [Deployment](docs/DEPLOYMENT.md). Documentation-only commits also trigger the current main deployment workflow; do not assume a green PR check means production has updated.
+See [Deployment](docs/OPERATIONS.md). Documentation-only commits also trigger the current main deployment workflow; do not assume a green PR check means production has updated.
 
 ## Privacy, safety and security
 
@@ -160,34 +168,36 @@ See [Deployment](docs/DEPLOYMENT.md). Documentation-only commits also trigger th
 - The requested privacy experience is informational: no blocking consent popup, Accept button, checkbox or photo-history opt-in toggle.
 - Photo history is optional and stored privately when enabled by the relevant account/guest flow. Guest history has a 30-day retention policy in the Worker.
 - The project does not intentionally retain raw microphone recordings for the photo-history feature. Provider processing and provider terms still apply.
-- Personal Gemini keys entered through Admin are held in the current browser tab's session storage and sent only to relevant same-origin Worker endpoints.
+- A personal Gemini key entered in Admin is held in the current browser tab's session storage and sent only to relevant same-origin Worker endpoints. Signed-in users can separately save an encrypted account key through Account & History; the Worker decrypts it only for provider requests.
 - The ESP32-CAM local HTTP endpoint may be unauthenticated. Keep it on a trusted LAN; never expose it directly to the public Internet.
 - SOS alerts a paired trusted receiver; it does not contact emergency services, and delivery is not guaranteed.
 - AI may hallucinate, misread text or fail to detect hazards. Confirm medicine, money, labels and safety-critical information with a person or trusted source.
 
-Read [Safety and privacy](docs/SAFETY.md), [Security policy](SECURITY.md) and [Threat model](docs/THREAT-MODEL.md).
+Read [Safety and privacy](docs/SAFETY.md), [Security policy](SECURITY.md) and [Threat model](docs/SAFETY.md).
 
 ## Documentation map
 
-The [documentation hub](docs/README.md) is the navigation index. Key references:
+The [documentation hub](docs/README.md) is the navigation index. The [feature map](docs/FEATURE-MAP.md) defines canonical ownership; [decisions](docs/DECISIONS.md) record durable rationale. Key references:
 
 | Document | What it covers |
 |---|---|
+| [Feature map](docs/FEATURE-MAP.md) | Complete feature inventory and canonical page ownership |
+| [Decisions](docs/DECISIONS.md) | Product/architecture decisions and rationale |
 | [Status](docs/STATUS.md) | Current verified state, recent incidents and outstanding validation |
 | [Architecture](docs/ARCHITECTURE.md) | Components, routes, data flows, AI, storage and SOS |
 | [Setup](docs/SETUP.md) | Local development, camera, voice, BYOK and web install |
-| [Deployment](docs/DEPLOYMENT.md) | Cloudflare configuration, secrets, CI and release procedure |
-| [Testing](docs/TESTING.md) | Automated commands and manual acceptance matrix |
+| [Deployment](docs/OPERATIONS.md) | Cloudflare configuration, secrets, CI and release procedure |
+| [Testing](docs/RELEASE.md) | Automated commands and manual acceptance matrix |
 | [Accessibility](docs/ACCESSIBILITY.md) | Blind mode, speech, assistive technology and evaluation |
-| [Phone controls](docs/PHONE-CONTROLS.md) | Web shortcuts, Android hardware keys and limitations |
-| [Native Android app](docs/NATIVE-ANDROID-APP.md) | Capacitor architecture, button mapping, phases and A55 validation |
-| [Android release signing](docs/ANDROID-RELEASE-SETUP.md) | Owner-controlled keystore and signed APK workflow |
-| [Current release checklist](docs/CURRENT-RELEASE-CHECKLIST.md) | Evidence-based release gates |
+| [Phone controls](docs/ANDROID.md) | Web shortcuts, Android hardware keys and limitations |
+| [Native Android app](docs/ANDROID.md) | Capacitor architecture, button mapping, phases and A55 validation |
+| [Android release signing](docs/ANDROID.md) | Owner-controlled keystore and signed APK workflow |
+| [Current release checklist](docs/RELEASE.md) | Evidence-based release gates |
 | [Roadmap](docs/ROADMAP.md) | Product phases and future work |
 | [Changelog](CHANGELOG.md) | User-visible project changes |
-| [Supabase setup](docs/SUPABASE-ACCOUNT-HISTORY-SETUP.md) | Account and private photo-history setup |
-| [Implementation plan](docs/IMPLEMENTATION-PLAN.md) | Historical implementation plan |
-| [Camera and emergency roadmap](docs/NEXT-GENERATION-CAMERA-AND-EMERGENCY-ROADMAP.md) | Proposed camera and emergency features |
+| [Supabase setup](docs/OPERATIONS.md) | Account and private photo-history setup |
+| [Implementation plan](docs/HISTORY.md) | Historical implementation plan |
+| [Camera and emergency roadmap](docs/HISTORY.md) | Proposed camera and emergency features |
 | [Security](SECURITY.md) | Vulnerability reporting |
 
 ## Project principles

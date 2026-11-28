@@ -38,6 +38,7 @@
   --display-tracking: -0.03em;
   --display-tracking-xl: -0.04em;
 }
+.home-preview-note{display:none;padding:7px 16px;border-bottom:1px solid #705d32;background:#2b2519;color:#ead9b6;font-size:12px;text-align:center}.home-privacy-note{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;padding:9px 18px;border-bottom:1px solid rgba(120,190,170,.24);background:rgba(16,34,31,.94);color:#dceee8;font-size:13px;line-height:1.45}.home-privacy-note a{color:#8de0c2;text-decoration:underline;text-underline-offset:3px}@media(max-width:640px){.home-privacy-note{justify-content:flex-start;padding:9px 14px;font-size:12px}}
 </style>
 <link rel="stylesheet" href="/assets/ui/base.css">
 <link rel="stylesheet" href="/assets/ui/chat/fragment.css">
@@ -120,6 +121,8 @@
 </style>
 </head>
 <body>
+<aside class="home-preview-note" id="home-preview-note" hidden>Vercel preview — UI review only. AI, SOS and account APIs are not connected here; use the live Cloudflare app for real operations.</aside>
+<aside class="home-privacy-note" role="note"><strong>Privacy:</strong> Photos and voice are processed by this app and Google Gemini when you use AI features. New photo-history saves are off by default. <a href="/privacy/">Read the privacy details</a>.</aside>
 <!-- type: software
      deal: hero centred, nav nav-centre, close close-word, footer footer-statement, rhythm space, buttons tonal, mark arc, palette green-black-bone, type familjen, effect painterly-landscape (hero window)
      moments: word-highlight (#why), line-carries-colour (#human) -->
@@ -178,8 +181,8 @@
   <section class="section" id="app" aria-labelledby="app-h">
     <div class="wrap">
       <div class="grid">
-        <h2 id="app-h" class="span-5">Every answer, saved to private history</h2>
-        <p class="span-6 start-7 muted">Each photo and its answer go to your own history: your account, or this browser for 30 days as a guest. Open one to hear it again, or delete it. <a class="link" href="/privacy/">Read the privacy details</a></p>
+        <h2 id="app-h" class="span-5">Optional private photo and answer history</h2>
+        <p class="span-6 start-7 muted">Photo history is currently off by default. Existing saved records remain private and can be managed in Account &amp; History; new submissions are not saved unless history is explicitly enabled. The sample entries below are illustrative demo content, not real user records, and are not connected to your account. <a class="link" href="/privacy/">Read the privacy details</a></p>
       </div>
       <div class="ui app fill" role="img" aria-label="The history list beside an open Ask AI answer in Bangla about a bus number" data-ui-pause-host>
         <div class="app__pane app__pane--list">
@@ -328,7 +331,7 @@
           <h2 id="human-h">The AI assistant reports, you decide</h2>
           <p class="t-lead">Built as a Human+AI copilot: the person holding the phone makes every decision.</p>
           <p>Copilot: Gemini vision with spoken Bangla answers.</p>
-          <p>Memory: a private history of photos and answers.</p>
+          <p>History: optional saved records, currently off by default.</p>
           <p>Orchestration: one Worker for models, speech and SOS.</p>
           <p><a class="link" href="https://github.com/KaranJoyKundu/Daredevil-s-Eye">Read the code on GitHub</a></p>
         </div>
@@ -349,9 +352,15 @@
           <div class="faq__item"><h3><svg class="ic ic-svg ic-24" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12l2 2l4-4"/></g></svg>Does the assistant replace a cane or a guide dog?</h3><p>No. It is an experimental helper. Keep using your cane, guide dog and the people you trust.</p></div>
           <div class="faq__item"><h3><svg class="ic ic-svg ic-24" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 8l6 6m-7 0l6-6l2-3M2 5h12M7 2h1m14 20l-5-10l-5 10m2-4h6"/></svg>Does it answer in Bangla and English?</h3><p>Bangla or English, switched with one tap. You can speak Bangla, English or a mix.</p></div>
           <div class="faq__item"><h3><svg class="ic ic-svg ic-24" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></g></svg>Does it need an install on Android?</h3><p>No. It runs in Chrome on Android, and you can add it to the home screen.</p></div>
-          <div class="faq__item"><h3><svg class="ic ic-svg ic-24" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></g></svg>Where do photos go after Describe?</h3><p>To a Cloudflare Worker and Google Gemini for the answer, then to your private history. Guest history is deleted after 30 days.</p></div>
+          <div class="faq__item"><h3><svg class="ic ic-svg ic-24" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></g></svg>Where do photos go after Describe?</h3><p>To the Cloudflare Worker and, in Gemini mode, Google Gemini for analysis. Photo history is currently off by default; new submissions are not saved unless the client explicitly enables history. Do not send confidential images.</p></div>
           <div class="faq__item"><h3><svg class="ic ic-svg ic-24" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.268 21a2 2 0 0 0 3.464 0M22 8c0-2.3-.8-4.3-2-6M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326M4 2C2.8 3.7 2 5.7 2 8"/></svg>Does SOS call 999?</h3><p>No. It sends a push alert to one paired phone, and a sent push is not proof of delivery.</p></div>
           <div class="faq__item"><h3><svg class="ic ic-svg ic-24" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></g></svg>Which camera does Describe use?</h3><p>The phone camera, or an ESP32-CAM on the same Wi-Fi. It takes up to three frames and keeps the sharpest.</p></div>
+          <div class="faq__item"><h3>Can I remove an RFID reader after authorizing it?</h3><p>Yes. Open Medicine, find Authorized ESP32 readers, and choose Revoke authorization. The reader immediately loses permission to send scans to your account. Then erase the ESP32's saved credential by clearing its Preferences namespace <code>de-rfid</code> before setting it up again.</p></div>
+          <div class="faq__item"><h3>Can I remove a medicine card or RFID tag?</h3><p>Yes. In Medicine, find Registered medicine cards and choose Delete beside the card. This removes that UID from your account; scans for it will no longer resolve to your medicine record.</p></div>
+          <div class="faq__item"><h3>What if I lose my ESP32 token?</h3><p>Revoke the old reader in Medicine, clear the old token from the ESP32's <code>de-rfid</code> storage, and authorize it again to generate a fresh one-time token. Never share a device token.</p></div>
+          <div class="faq__item"><h3>Can I remove an RFID reader after authorizing it?</h3><p>Yes. Open Medicine, find Authorized ESP32 readers, and choose Revoke authorization. The reader immediately loses permission to send scans to your account. Then erase the ESP32's saved credential by clearing its Preferences namespace <code>de-rfid</code> before setting it up again.</p></div>
+          <div class="faq__item"><h3>Can I remove a medicine card or RFID tag?</h3><p>Yes. In Medicine, find Registered medicine cards and choose Delete beside the card. This removes that UID from your account; scans for it will no longer resolve to your medicine record.</p></div>
+          <div class="faq__item"><h3>What if I lose my ESP32 token?</h3><p>Revoke the old reader in Medicine, clear the old token from the ESP32's <code>de-rfid</code> storage, and authorize it again to generate a fresh one-time token. Never share a device token.</p></div>
         </div>
       </div>
     </div>
@@ -373,10 +382,10 @@
           <a class="nav__logo" href="#top"><span class="mark" data-mark="arc" aria-hidden="true"></span>Daredevil’s Eye</a>
           <p class="footer__lede">A Bangla AI camera assistant for blind and low-vision people.</p>
         </div>
-        <div class="span-2 footer__col"><h3>App</h3><ul><li><a href="/action/">Main app</a></li><li><a href="/blind/">Blind mode</a></li><li><a href="/help/">Help</a></li></ul></div>
-        <div class="span-2 footer__col"><h3>Setup</h3><ul><li><a href="/admin/">Settings</a></li><li><a href="/diagnostics/">Diagnostics</a></li><li><a href="/sos-receiver/">SOS receiver</a></li></ul></div>
-        <div class="span-2 footer__col"><h3>Account</h3><ul><li><a href="/account/">History</a></li><li><a href="/support/">Support</a></li><li><a href="/contact/">Contact</a></li></ul></div>
-        <div class="span-2 footer__col"><h3>Project</h3><ul><li><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye">GitHub</a></li><li><a href="#faq">Questions</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Use &amp; safety</h3><ul><li><a href="/action/">Action</a></li><li><a href="/blind/">Blind mode</a></li><li><a href="/sos/">SOS Center</a></li><li><a href="/medicine/">Medicine</a></li><li><a href="/help/">Help</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Devices &amp; control</h3><ul><li><a href="/devices/">Devices</a></li><li><a href="/admin/">Admin / Settings</a></li><li><a href="/diagnostics/">Diagnostics</a></li><li><a href="/documentation/">Documentation</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Account &amp; information</h3><ul><li><a href="/account/">Account &amp; History</a></li><li><a href="/privacy/">Privacy</a></li><li><a href="/terms/">Terms</a></li><li><a href="/support/">Support</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Project</h3><ul><li><a href="https://github.com/KaranJoyKundu/Daredevil-s-Eye">GitHub</a></li><li><a href="#faq">Questions</a></li><li><a href="/contact/">Contact</a></li></ul></div>
       </div>
       <div class="footer__legal">
         <span><span>&copy; 2026 Daredevil’s Eye</span><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></span>
@@ -387,6 +396,7 @@
   </div>
 </footer>
 
+<script>if(location.hostname.endsWith(".vercel.app")){const n=document.getElementById("home-preview-note");n.hidden=false;n.style.display="block";}</script>
 <script type="module" src="/assets/system.js"></script>
 <script>navigator.serviceWorker?.register('/sw.js',{scope:'/'}).catch(()=>{})</script>
 <script type="module" src="/assets/motion/motion.js"></script>

@@ -119,7 +119,7 @@ $('#pair-receiver').addEventListener('click',async()=>{
   deviceId=result.deviceId;receiverToken=result.receiverToken;
   localStorage.setItem(DEVICE_KEY,deviceId);localStorage.setItem(TOKEN_KEY,receiverToken);
   // Refresh so the receiver opens directly into its paired state.
-  location.replace('/sos-receiver/?paired=1');
+  location.replace('/sos/?mode=receiver&paired=1');
  }catch(error){updateStatus('Pairing failed: '+error.message);}
  finally{button.disabled=false;}
 });

@@ -3,33 +3,36 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#07111f"><title>Admin / Settings · Daredevil's Eye</title>
-<link rel="stylesheet" href="/shared/style.css?v=20261117-release5">
+<link rel="stylesheet" href="/shared/style.css?v=20261128-groups3">
 </head>
 <body><main>
-<header><p class="eyebrow">DEVICE SETTINGS</p><h1>Admin / Settings</h1><p class="subtitle">Tune the camera, AI behaviour and spoken voice. Settings stay in this browser on this device.</p></header>
+<header><p class="eyebrow">CONTROL CENTER / CONFIGURATION</p><h1>Admin / Settings</h1><p class="subtitle">Configure app behaviour, AI, voice and SOS trigger preferences. Start hardware connection setup in <a href="/devices/">Devices</a>.</p></header>
 
-<nav class="quick-jump" aria-label="Admin shortcuts"><a href="#camera-settings"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg><span>Camera & SOS</span></a><a href="#ai-settings"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594zM20 2v4m2-2h-4"/><circle cx="4" cy="20" r="2"/></g></svg><span>AI models</span></a><a href="#voice-settings"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12 19v3m7-12v2a7 7 0 0 1-14 0v-2"/><rect width="6" height="13" x="9" y="2" rx="3"/></g></svg><span>Voice</span></a><a href="#image-lab"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></g></svg><span>Image tester</span></a><a href="/diagnostics/"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12l2 2l4-4"/></g></svg><span>Diagnostics</span></a><a href="/account/"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Account & History</span></a><a href="/action/"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Home</span></a></nav>
+<nav class="quick-jump" aria-label="Settings sections"><a href="#general-settings">General</a><a href="#camera-settings">Camera &amp; Devices</a><a href="#ai-settings">AI &amp; Intelligence</a><a href="#voice-settings">Voice &amp; Accessibility</a><a href="#sos-settings">SOS &amp; Triggers</a><a href="#image-lab">Testing tools</a><a href="/account/">Account &amp; Data</a></nav>
 <form id="settings-form">
+<section id="general-settings" class="panel settings-section">
+<h2>General</h2>
+<p>Choose the default language used for AI descriptions and spoken responses.</p>
+<label for="language">AI response language</label>
+<select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
+<p class="hint">Account, history and privacy records live in <a href="/account/">Account &amp; Data</a>. Device health checks live in <a href="/diagnostics/">Diagnostics</a>.</p>
+</section>
 <section id="camera-settings" class="panel settings-section">
-<h2>Camera & trusted contact</h2>
+<h2>Camera &amp; Devices</h2>
 <label for="camera">ESP32-CAM address</label>
 <input id="camera" type="text" inputmode="url" required placeholder="192.168.0.100 or http://192.168.0.100">
 <small>Current camera address: http://192.168.0.100. The app adds http:// when you enter a plain IP.</small><div class="field-grid"><div><label for="esp32-test">Connection test</label><button id="esp32-test" type="button" class="secondary">Test ESP32 connection</button></div><div><label for="esp32-brightness">LED brightness: <output id="esp32-brightness-value">0</output> / 255</label><input id="esp32-brightness" type="range" min="0" max="255" step="1" value="0"><button id="esp32-set-brightness" type="button" class="secondary">Apply brightness</button></div></div><p id="esp32-status" class="hint" role="status" aria-live="polite">ESP32 controls require the phone and camera to be on the same Wi-Fi network. Chrome may ask for local-network permission.</p><div class="field-grid"><div><button id="esp32-stream-start" type="button" class="secondary">Start live stream</button></div><div><button id="esp32-stream-stop" type="button" class="secondary">Stop live stream</button></div></div><img id="esp32-stream-preview" alt="ESP32-CAM live stream preview" hidden style="display:none;width:100%;max-height:360px;object-fit:contain;background:#000;border-radius:12px">
 <label class="inline-checkbox" for="require-photo-confirmation"><input id="require-photo-confirmation" type="checkbox" checked> Preview every phone photo before sending (recommended)</label>
 <small>When enabled, the selected camera/upload photo stays on this device until the user reviews it and presses Ask AI. Turn this off to automatically describe a selected photo.</small>
-<label class="inline-checkbox" for="save-photo-history"><input id="save-photo-history" type="checkbox"> Automatically save every submitted photo and AI answer</label>
-<small>On by default after Terms acceptance. Signed-in photos are saved to your private account history; signed-out photos are saved to this browser's private guest history for 30 days. A photo is saved when you submit it for AI analysis, even if Gemini fails. Turn this off here to stop saving new photos. Raw IP addresses are not stored.</small>
+</section>
+
+<section id="sos-settings" class="panel settings-section">
+<h2>SOS &amp; Triggers</h2>
+<p>Pair the sender and receiver in the <a href="/sos/">SOS Center</a>. Configure only the optional trigger preferences here.</p>
 <div class="field-grid">
 <div><label for="contact-name">Trusted contact name</label><input id="contact-name" maxlength="80" placeholder="Name"></div>
 <div><label for="contact-phone">Trusted contact phone</label><input id="contact-phone" type="tel" maxlength="30" placeholder="+880..."></div>
 </div>
-<h3>SOS receiver pairing</h3>
-<p>Create a one-time six-character invitation, then enter it on the second phone at <a href="/sos/">SOS Sender &amp; Receiver</a>. A new invitation immediately replaces the old receiver and expires after 10 minutes.</p>
-<div class="field-grid">
-<div><label for="sos-code">Receiver pairing code</label><input id="sos-code" maxlength="6" minlength="6" readonly autocomplete="off" placeholder="Generate a six-character code"></div>
-<div><label>&nbsp;</label><button id="generate-sos-code" type="button" class="secondary">Generate pairing code</button></div>
-</div>
-<small>Share this one-time code privately. It is not stored permanently. Generating another code disconnects the previous receiver.</small>
 <h3>Optional hands-free SOS triggers</h3>
 <p>These are disabled by default. They work only while Blind mode is open and visible on a supported phone. Shake sensing stays on the device; voice wake-word recognition may send audio to the browser's speech provider. Each automatic trigger has a cancellation window.</p>
 <div class="field-grid">
@@ -47,23 +50,17 @@
 <label for="sos-voice-language">Voice SOS recognition language</label>
 <select id="sos-voice-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
 <small>Voice SOS uses the browser's continuous speech-recognition API, not Gemini. The microphone is monitored only in the visible Blind mode page. English: say “Daredevil SOS”, then “Confirm SOS”. Bangla: say “ডেয়ারডেভিল এসওএস”, then “নিশ্চিত করুন” or “এসওএস পাঠান”. Say “Cancel SOS” / “এসওএস বাতিল” during the countdown to stop it. Recognition availability depends on Android/Chrome and installed speech services.</small>
-<label for="language">AI response language</label>
-<select id="language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="bn-BD">বাংলা (Bangladesh)</option></select>
-<label for="speech-input-mode">Voice input mode</label>
-<select id="speech-input-mode"><option value="auto">Automatic multilingual detection (recommended — Gemini)</option><option value="browser">Browser speech recognition first</option></select>
-<label for="input-language">Browser recognition language</label>
-<select id="input-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
-<small>Automatic mode records a short clip and sends it to Gemini to detect Bangla, English or mixed speech. Browser mode uses the selected language first and switches to Gemini if it fails. Audio is processed externally; do not speak confidential information.</small>
+
 </section>
 
 <section id="ai-settings" class="panel settings-section">
-<h2>AI model & response</h2>
+<h2>AI &amp; Intelligence</h2>
 <label for="model">Vision / photo-analysis model</label>
 <select id="model"><option value="gemini-3.8-flash">Gemini 3.8 Flash (configured default)</option></select>
 <div class="inline-actions"><button id="refresh-models" type="button" class="secondary">Refresh available models</button></div>
 <p id="model-status" class="hint" role="status" aria-live="polite">Loading models enabled for this public demo…</p>
 <small>Models are ranked for camera-photo understanding, not image generation. Image-generation-only models cannot analyse your camera photo. Compatible models rotate automatically after model-specific quota or availability errors; Google project-wide limits still apply.</small>
-<section class="key-panel" aria-labelledby="own-key-title"><h3 id="own-key-title">Use your own Gemini API key (optional)</h3><p>Useful during a showcase if the shared demo key reaches a limit. Your key stays in this browser tab only and is sent in a same-site request header. It is not saved in Admin settings or stored by this app on the server.</p><label for="personal-api-key">Your Gemini API key</label><input id="personal-api-key" type="password" autocomplete="off" placeholder="Paste your own Gemini API key"><div class="inline-actions"><button id="save-personal-key" type="button" class="secondary">Use key for this tab</button><button id="remove-personal-key" type="button" class="secondary">Remove my key</button></div><p id="personal-key-status" class="hint" role="status" aria-live="polite">No personal key is set in this tab.</p></section>
+<section class="key-panel" aria-labelledby="own-key-title"><h3 id="own-key-title">Use your own Gemini API key (optional)</h3><p>Useful during a showcase if the shared demo key reaches a limit. This Admin key stays in this browser tab only and is sent in a same-site request header. Signed-in users can separately manage an encrypted account key in <a href="/account/">Account &amp; History</a>.</p><label for="personal-api-key">Your Gemini API key</label><input id="personal-api-key" type="password" autocomplete="off" placeholder="Paste your own Gemini API key"><div class="inline-actions"><button id="save-personal-key" type="button" class="secondary">Use key for this tab</button><button id="remove-personal-key" type="button" class="secondary">Remove my key</button></div><p id="personal-key-status" class="hint" role="status" aria-live="polite">No personal key is set in this tab.</p></section>
 <div class="field-grid">
 <div><label for="wait-seconds">Maximum wait for Gemini</label>
 <select id="wait-seconds">
@@ -94,7 +91,13 @@
 </section>
 
 <section id="voice-settings" class="panel settings-section">
-<h2>Voice & speech</h2>
+<h2>Voice &amp; Accessibility</h2>
+
+<label for="speech-input-mode">Voice input mode</label>
+<select id="speech-input-mode"><option value="auto">Automatic multilingual detection (recommended — Gemini)</option><option value="browser">Browser speech recognition first</option></select>
+<label for="input-language">Browser recognition language</label>
+<select id="input-language"><option value="bn-BD">বাংলা (Bangladesh)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select>
+<small>Automatic mode records a short clip and sends it to Gemini to detect Bangla, English or mixed speech. Browser mode uses the selected language first and switches to Gemini if it fails. Audio is processed externally; do not speak confidential information.</small>
 <label for="voice-preset">Voice style</label>
 <select id="voice-preset">
 <option value="gentle">Gentle · soft and slightly higher</option>
@@ -150,5 +153,5 @@
 <div class="inline-actions admin-save-actions"><button type="submit" form="settings-form">Save all settings</button></div>
 </main>
 <script type="module" src="/admin/admin.js?v=20261126-camera2"></script>
-<script type="module" src="/shared/site-nav.js?v=20261126-privacy-notice1"></script>
+<script type="module" src="/shared/site-nav.js?v=20261128-groups3"></script>
 </body></html>

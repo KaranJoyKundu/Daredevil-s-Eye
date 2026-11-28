@@ -71,6 +71,12 @@ Set `WIFI_SSID` and `WIFI_PASSWORD` for a 2.4 GHz network.
 
 The firmware uses the ESP32 Arduino core's built-in trusted CA certificate bundle through `useBuiltinCACertBundle()`. Do not disable TLS certificate verification.
 
+## Manage and revoke authorized readers
+
+Open the Medicine page and use **Authorized ESP32 readers** to see every reader linked to the signed-in account. Each reader shows its authorization date, last-seen time and a shortened device ID. Choose **Revoke authorization** to invalidate its server-side credential immediately. A revoked reader can no longer submit medicine scans, even if it still has the old token stored locally.
+
+After revocation, clear the ESP32's local token before authorizing it again. In Arduino IDE, use the ESP32 Preferences/NVS tools or a temporary sketch to clear the `de-rfid` namespace. Clearing the namespace removes the saved token and device ID; the next firmware boot asks for a fresh one-time token. Do not erase unrelated application namespaces or flash contents unnecessarily.
+
 ## Authorize the ESP32
 
 1. Sign into Daredevil's Eye and open `/medicine/`.

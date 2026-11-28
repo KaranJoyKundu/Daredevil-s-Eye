@@ -23,4 +23,5 @@ $('sos-generate-code').addEventListener('click',async()=>{
  }catch(error){$('sos-sender-status').textContent='Could not generate invitation: '+error.message;}
  finally{button.disabled=false;}
 });
-showMode('sender');
+const requestedMode=new URLSearchParams(location.search).get('mode');
+showMode(requestedMode==='receiver'||location.hash==='#receiver'?'receiver':'sender');

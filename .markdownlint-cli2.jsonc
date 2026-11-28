@@ -1,0 +1,11 @@
+{
+  "config": {
+    "default": false,
+    "MD047": true
+  },
+  "globs": [
+    "**/*.md",
+    "!node_modules/**",
+    "!android/**"
+  ]
+}

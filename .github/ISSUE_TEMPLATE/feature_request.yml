@@ -1,0 +1,22 @@
+name: Feature request
+description: Propose a user outcome or improvement
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What user problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: What should the user be able to do?
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Accessibility, safety or privacy considerations
+      description: Consider blind/low-vision use, false alarms, data handling and failure states.

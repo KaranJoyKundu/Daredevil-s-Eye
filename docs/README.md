@@ -1,76 +1,106 @@
-# Daredevil's Eye — documentation hub
+# Daredevil's Eye documentation
 
-Welcome. This folder is organised around the questions people actually arrive with: getting started, completing a task, understanding the system, and checking exact technical behaviour.
+This is the documentation portal for users, testers, contributors and maintainers. It is an index, not a second Admin dashboard. Use the live product to perform tasks, Help for short user instructions, and these version-controlled guides for complete reference.
 
-## Choose your path
+## Find your destination in the product
 
-### I am a user or tester
+| Group | Canonical destination | Responsibility |
+|---|---|---|
+| **USE** | [Action](https://daredevils-eye.karanjoykundu.workers.dev/action/) · [Blind Mode](https://daredevils-eye.karanjoykundu.workers.dev/blind/) | Describe a scene, ask a question, use camera/upload or the four-action accessible interface. |
+| **SAFETY** | [SOS Center](https://daredevils-eye.karanjoykundu.workers.dev/sos/) · [Medicine](https://daredevils-eye.karanjoykundu.workers.dev/medicine/) | Trusted-contact alert workflows and medicine identification. |
+| **DEVICES** | [Devices](https://daredevils-eye.karanjoykundu.workers.dev/devices/) | Phone shortcut settings, connected camera and hardware setup entry points. |
+| **CONTROL CENTER** | [Admin](https://daredevils-eye.karanjoykundu.workers.dev/admin/) · [Diagnostics](https://daredevils-eye.karanjoykundu.workers.dev/diagnostics/) | Admin changes preferences; Diagnostics tests and reports health. |
+| **INFORMATION** | [Help](https://daredevils-eye.karanjoykundu.workers.dev/help/) · [Documentation](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Privacy](https://daredevils-eye.karanjoykundu.workers.dev/privacy/) · [About](https://daredevils-eye.karanjoykundu.workers.dev/) · [Support](https://daredevils-eye.karanjoykundu.workers.dev/support/) · [Contact](https://daredevils-eye.karanjoykundu.workers.dev/contact/) | User guidance, technical reference, transparency and support. |
 
-- [Try the live app](https://daredevils-eye.karanjoykundu.workers.dev/)
-- [Blind mode](https://daredevils-eye.karanjoykundu.workers.dev/blind/)
-- [Help and usage notes](https://daredevils-eye.karanjoykundu.workers.dev/help/)
-- [Accessibility notes](ACCESSIBILITY.md)
-- [Safety and privacy](SAFETY.md)
+**Ownership rules:** Admin is configuration only. Diagnostics is health/testing only. Documentation is a guide index/reference library. Hardware setup belongs under Devices; the detailed instructions live in these guides. SOS sender and receiver share the canonical SOS Center. Medicine is separate from general settings.
 
-### I want to develop or run it
+## Choose a guide by what you need
 
-1. [Local setup](SETUP.md)
-2. [Architecture overview](ARCHITECTURE.md)
-3. [Testing and acceptance matrix](TESTING.md)
-4. [Deployment](DEPLOYMENT.md)
+### Get started
 
-### I want to install the Android test app
+- [Local development setup](SETUP.md) — Windows/PowerShell prerequisites, installation and first run.
+- [Operations](OPERATIONS.md) — Cloudflare deployment, protected configuration, Supabase and account/history operations.
+- [User Help](https://daredevils-eye.karanjoykundu.workers.dev/help/) — short task-oriented usage guidance.
+- [Accessibility](ACCESSIBILITY.md) — Blind Mode, speech, assistive technology and evaluation.
 
-- **[Download Daredevil's Eye for Android]( https://appdistribution.firebase.google.com/testerapps/1:196832423983:android:5398d21c07fd260c21d6da/releases/5u4gh86a181lo?utm_source=firebase-console )** — Firebase App Distribution tester release. Sign in with the invited Google account and follow the installation prompts. Access is limited to invited testers; this is not a public Play Store listing.
+### Use the product
 
-### I am working on the Android companion
+- [Action](https://daredevils-eye.karanjoykundu.workers.dev/action/)
+- [Blind Mode](https://daredevils-eye.karanjoykundu.workers.dev/blind/)
+- [SOS Center](https://daredevils-eye.karanjoykundu.workers.dev/sos/)
+- [Medicine](https://daredevils-eye.karanjoykundu.workers.dev/medicine/)
+- [Privacy information](https://daredevils-eye.karanjoykundu.workers.dev/privacy/)
 
-1. [Native Android master plan](NATIVE-ANDROID-APP.md)
-2. [Phone controls](PHONE-CONTROLS.md)
-3. [Android release signing](ANDROID-RELEASE-SETUP.md)
-4. [Current release checklist](CURRENT-RELEASE-CHECKLIST.md)
-5. [Live implementation status](STATUS.md)
+### Devices and Android
 
-## Reference library
+- [Device control centre](https://daredevils-eye.karanjoykundu.workers.dev/devices/)
+- [Android companion guide](ANDROID.md) — Capacitor, volume-button mapping, Accessibility Service, background limitations, APK and signing.
+- [ESP32-CAM firmware guide](../firmware/esp32-cam-ai-thinker/README.md)
+- [RFID / RC522 hardware guide](../hardware/esp32-rfid/README.md)
+- [Native Android source overlay](../native-android/README.md)
 
-| Document | Use it for |
+### Understand the system
+
+- [Architecture](ARCHITECTURE.md) — routes, runtime components, data flows and trust boundaries.
+- [Feature map](FEATURE-MAP.md) — every feature's canonical home, implementation pointers and evidence gaps.
+- [Safety and threat model](SAFETY.md) — limitations, privacy, assets, threats and mitigations.
+- [Operations](OPERATIONS.md) — production hosting, deployment, secrets, Supabase and data operations.
+- [Security reporting policy](../SECURITY.md)
+
+### Test and release
+
+- [Release and verification handbook](RELEASE.md) — test commands, manual acceptance, evidence and release gates.
+- [Current status](STATUS.md) — factual current snapshot only.
+- [Roadmap](ROADMAP.md) — future work only.
+- [Decisions log](DECISIONS.md) — durable product and architecture decisions.
+- [Changelog](../CHANGELOG.md) — user-visible history.
+
+## Project source of truth
+
+| Document | Owns |
 |---|---|
-| [STATUS.md](STATUS.md) | Current verified state, recent incidents and open validation |
-| [CURRENT-RELEASE-CHECKLIST.md](CURRENT-RELEASE-CHECKLIST.md) | Release gates and real-device evidence |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Components, routes, data flows and trust boundaries |
-| [SETUP.md](SETUP.md) | Local install, secrets, camera, voice and web-app install |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | Cloudflare, GitHub Actions, secrets and production checks |
-| [TESTING.md](TESTING.md) | Automated tests and manual acceptance criteria |
-| [ACCESSIBILITY.md](ACCESSIBILITY.md) | Blind mode, voice, assistive technology and evaluation |
-| [PHONE-CONTROLS.md](PHONE-CONTROLS.md) | Web shortcuts, SOS triggers and Android physical keys |
-| [NATIVE-ANDROID-APP.md](NATIVE-ANDROID-APP.md) | Capacitor architecture, volume mapping, Android limitations and release phases |
-| [ANDROID-RELEASE-SETUP.md](ANDROID-RELEASE-SETUP.md) | Owner-managed keystore and signed APK release |
-| [SAFETY.md](SAFETY.md) | Product safety and privacy boundaries |
-| [THREAT-MODEL.md](THREAT-MODEL.md) | Assets, trust boundaries, threats and mitigations |
-| [SECURITY.md](../SECURITY.md) | Responsible vulnerability reporting |
-| [SUPABASE-ACCOUNT-HISTORY-SETUP.md](SUPABASE-ACCOUNT-HISTORY-SETUP.md) | Account and private photo-history backend |
-| [ROADMAP.md](ROADMAP.md) | Product phases and planned work |
-| [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md) | Historical implementation plan |
-| [NEXT-GENERATION-CAMERA-AND-EMERGENCY-ROADMAP.md](NEXT-GENERATION-CAMERA-AND-EMERGENCY-ROADMAP.md) | Proposed future camera and emergency capabilities |
-| [CHANGELOG.md](../CHANGELOG.md) | User-visible changes over time |
+| [FEATURE-MAP.md](FEATURE-MAP.md) | Feature inventory, canonical route ownership, source references and evidence gaps. |
+| [STATUS.md](STATUS.md) | Current state and observed evidence only. |
+| [DECISIONS.md](DECISIONS.md) | Durable decisions, rationale, consequences and supersession. |
+| [ROADMAP.md](ROADMAP.md) | Future work only; never use it to prove implementation. |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Actual runtime components, routes, data flows and trust boundaries. |
+| [OPERATIONS.md](OPERATIONS.md) | Deployment, secrets, database and storage operations. |
+| [RELEASE.md](RELEASE.md) | Automated/manual tests, release gates and verification evidence. |
+| [ANDROID.md](ANDROID.md) | Android companion, physical controls, permissions and signing. |
+| [SAFETY.md](SAFETY.md) | Product safety, privacy boundaries and threat model. |
+| [HISTORY.md](HISTORY.md) | Superseded proposals and dated historical context; not current instructions. |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution workflow and documentation writing/maintenance rules. |
+| [OVERHAUL-CHECKLIST.md](OVERHAUL-CHECKLIST.md) | Master acceptance checklist for the ongoing product and documentation overhaul. |
+| [RECOVERY.md](RECOVERY.md) | Temporary checkpoint/recovery notes for this branch; retire after the overhaul is merged. |
 
-## How to read project status
+## How we write and maintain documentation
 
-Every feature should be described at the correct evidence level:
+The project follows the [Diátaxis framework](https://diataxis.fr/): tutorials teach, how-to guides solve a task, reference describes exact behaviour, and explanations document why a design exists. A single guide may link to more than one type, but should not blur their purpose.
 
-- **Implemented:** code/configuration exists in the repository.
-- **Automated-tested:** an automated test covers it and the exact commit's CI passed.
-- **Browser-tested:** the stated route and scenario were manually/browser-automated checked.
-- **Device-tested:** the stated physical device, OS, app version and steps were exercised.
-- **User-evaluated:** blind/low-vision participants evaluated the workflow under an appropriate, informed process.
+- Keep one canonical source for each changing fact. Link to it instead of copying it into several files.
+- Mark planned, incomplete and blocked work explicitly. Never present a proposal as an implemented feature.
+- Separate source implementation, automated tests, browser verification, physical-device verification and user evaluation.
+- Update documentation in the same pull request as the code or UI change.
+- Do not publish secrets, private tokens, personal data or device-specific credentials.
+- Use [CONTRIBUTING](CONTRIBUTING.md) for the writing style, templates and PR checklist.
+- The [master overhaul checklist](OVERHAUL-CHECKLIST.md) records the remaining structural, documentation, testing and release work.
 
-Never promote a feature to a stronger evidence level because a lower-level check passed.
+## Evidence vocabulary
 
-## Documentation maintenance rules
+- **Implemented in source:** implementation or configuration exists in the repository.
+- **Automated-tested:** an automated test covers the behaviour and the exact commit's CI result is recorded.
+- **Browser-verified:** the stated route and scenario were exercised in a browser.
+- **Device-verified:** the named physical device, OS, build and steps were tested.
+- **User-evaluated:** blind/low-vision participants evaluated the workflow through an appropriate, informed process.
+- **Planned / incomplete / blocked:** not yet delivered or not yet validated; never present as available.
 
-- Keep the root [README](../README.md) as the concise project introduction and navigation entry point; link to detailed guides instead of copying every technical paragraph into it.
-- Put current state in [STATUS.md](STATUS.md), release acceptance in [CURRENT-RELEASE-CHECKLIST.md](CURRENT-RELEASE-CHECKLIST.md), and long-lived Android decisions in [NATIVE-ANDROID-APP.md](NATIVE-ANDROID-APP.md).
-- Date volatile facts such as workflow runs, artifact expiry and deployment status.
-- Label proposed, implemented, tested and physically verified behaviour distinctly.
-- When changing a feature, update its guide, status/checklist if evidence changed, and README summary only if the user-facing capability changed.
-- Do not publish secrets, private tokens, personal data, or device-specific network credentials.
+A passing build does not prove that a camera, microphone, speaker, screen-off shortcut, RFID reader or SOS receiver works on a physical device.
+
+
+## Search and future scale
+
+The current in-app Documentation search filters guide titles and short descriptions by category. It is intentionally lightweight, client-side and dependency-free; it does not yet index every paragraph or code example.
+
+If the guide collection grows, keep Markdown as the source of truth and generate a small static search index at build time. A lightweight client-side index such as MiniSearch or Fuse.js is the preferred next step; consider a hosted documentation search service only if the project later needs versioned documentation, analytics or a much larger corpus. Do not add a heavyweight documentation platform just to search this small set of guides. Never index private user data, secrets or local device addresses.
+
+The complete product/navigation/docs redesign work is tracked in [OVERHAUL-CHECKLIST](OVERHAUL-CHECKLIST.md).

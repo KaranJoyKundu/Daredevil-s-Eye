@@ -22,7 +22,6 @@ function formSettings(){
  return {
   cameraBaseUrl:normalizeCameraAddress($('#camera').value),
   requirePhotoConfirmation:$('#require-photo-confirmation').checked,
-  savePhotoHistory:$('#save-photo-history').checked,
   emergencyName:$('#contact-name').value.trim(),
   emergencyPhone:$('#contact-phone').value.trim(),
   speechLanguage:$('#language').value,
@@ -75,10 +74,8 @@ $('#save-personal-key').addEventListener('click',()=>{
 $('#remove-personal-key').addEventListener('click',()=>{clearSessionGeminiApiKey();$('#personal-api-key').value='';$('#personal-key-status').textContent='Personal key removed from this tab. Using the project key if configured.';loadModels();});
 $('#camera').value=saved.cameraBaseUrl;
 $('#require-photo-confirmation').checked=saved.requirePhotoConfirmation!==false;
-$('#save-photo-history').checked=saved.savePhotoHistory!==false;
 $('#contact-name').value=saved.emergencyName;
 $('#contact-phone').value=saved.emergencyPhone;
-$('#sos-code').value=saved.sosPairingCode;
 $('#language').value=saved.speechLanguage;
 $('#speech-input-mode').value=saved.speechInputMode||'auto';
 $('#input-language').value=saved.speechInputLanguage||'bn-BD';
@@ -146,16 +143,6 @@ $('#enable-voice-sos').addEventListener('click',async()=>{
  }finally{button.disabled=false;}
 });
 
-$('#generate-sos-code').addEventListener('click',async()=>{
- const button=$('#generate-sos-code');button.disabled=true;
- try{
-  const result=await requestAI('/api/sos/invite',{deviceId:saved.deviceId});
-  $('#sos-code').value=result.code;
-  $('#message').textContent='New six-character code generated. It expires in 10 minutes and immediately disconnects the previous receiver. Give it to the receiver phone now.';
- }catch(error){$('#message').textContent='Could not create SOS invitation: '+error.message;}
- finally{button.disabled=false;}
-});
-
 async function loadModels(){
  const button=$('#refresh-models');button.disabled=true;
  $('#model-status').textContent='Checking models available to your Gemini API key…';
@@ -175,7 +162,7 @@ async function loadModels(){
   select.value=selected;
   $('#model-status').textContent=data.models.length+' ranked vision models available. Automatic fallback is enabled. Selected: '+selected+'.';
  }catch(error){
-  $('#model-status').textContent='Model list unavailable: '+error.message+'. The saved model remains selected.';
+  $('#model-status').textContent=location.hostname.endsWith('.vercel.app')?'Vercel preview: the Cloudflare Worker API is not connected here. Model refresh and AI tests require the live app.':'Model list unavailable: '+error.message+'. The saved model remains selected.';
   const select=$('#model');
   if(![...select.options].some(option=>option.value===(saved.aiModel||'gemini-3.8-flash'))){
    const option=document.createElement('option');option.value=saved.aiModel||'gemini-3.8-flash';option.textContent=option.value;select.append(option);
@@ -281,7 +268,7 @@ form.addEventListener('submit',async event=>{
   const next=formSettings();
   saveSettings(next);
   $('#camera').value=next.cameraBaseUrl;
-  $('#message').textContent='All settings saved on this device. Generate a fresh SOS invitation whenever you want to pair or replace the receiver.';
+  $('#message').textContent='All settings saved on this device. Pair or replace the receiver in the SOS Center.';
  }catch(error){$('#message').textContent=error.message;}
  finally{if(submitButton)submitButton.disabled=false;}
 });

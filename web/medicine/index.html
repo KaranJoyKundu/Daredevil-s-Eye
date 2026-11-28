@@ -94,7 +94,14 @@ RST    →  GPIO 22
 GND    →  GND</pre>
 <p class="medicine-muted">Use 3.3V only. The reader's SDA pin is SPI chip-select, not I²C SDA.</p>
 </section>
+
+<section class="medicine-card" style="margin-top:16px" aria-labelledby="authorized-devices-title">
+<h2 id="authorized-devices-title">5 · Authorized ESP32 readers</h2>
+<p class="medicine-muted">These readers can send medicine scans to this account. You can revoke any reader here. Revocation takes effect on the server immediately; the physical ESP32 still stores its old token until you erase its local <code>de-rfid</code> Preferences namespace.</p>
+<div id="authorized-devices" class="medicine-list" aria-live="polite"><p class="medicine-muted">Loading authorized readers…</p></div>
+<p id="devices-status" class="medicine-status" role="status" aria-live="polite"></p>
+</section>
 </main>
 <script type="module" src="/medicine/rfid.js?v=20261126-bg3"></script>
-<script type="module" src="/shared/site-nav.js?v=20261126-privacy-notice1"></script>
+<script type="module" src="/shared/site-nav.js?v=20261128-groups3"></script>
 </body></html>

@@ -1,5 +1,8 @@
 # Local setup (Windows 11 / PowerShell)
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 ## Requirements
 
 - Node.js 24 or supported current LTS.
@@ -50,7 +53,7 @@ On Admin → AI models, enter your own Gemini key and select “Use key for this
 
 ## SOS
 
-Generate a fresh invitation in Admin. The receiver opens `/sos-receiver/`, enters the six-character code and taps Enable alarm & start listening. Keep the receiver foregrounded and online for testing. See Help for detailed steps.
+Generate a fresh invitation in Admin. The receiver opens the canonical SOS Center at `/sos/`, enters the six-character code and taps Enable alarm & start listening. Keep the receiver foregrounded and online for testing. See Help for detailed steps.
 
 ## Blind mode
 

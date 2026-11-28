@@ -1,5 +1,8 @@
 # Accessibility notes
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 Daredevil's Eye is an experimental audio-first interface. It is not accessibility-certified and must not replace a white cane, guide dog, orientation and mobility training, or human assistance.
 
 ## Blind mode
@@ -68,4 +71,25 @@ Global controls require the user to explicitly enable Daredevil's Eye in Android
 
 The strongest supported background behaviour is best-effort: store a pending action, surface a notification and resume the app when Android allows it. Android background-start restrictions and foreground-service rules can prevent immediate camera or microphone use while locked. Phone-camera capture and microphone recording are not promised with the display off. SOS always requires confirmation and backend acknowledgement before the UI may say it was sent.
 
-See [Native Android app master plan](NATIVE-ANDROID-APP.md) for the release checklist and device-test matrix.
+See [Native Android app master plan](ANDROID.md) for the release checklist and device-test matrix.
+
+## Quiet Clarity visual-system contrast check
+
+The shared light design system uses these semantic source colors: ink `#17231F`, muted text `#4B5B54`, background `#F5F6F3`, surface `#FFFFFF`, muted surface `#E9EEEA`, primary `#145C4A`, primary foreground `#FFFFFF`, secondary `#DCE9E2` and secondary foreground `#173D32`.
+
+Relative-luminance ratios calculated from the authored sRGB tokens:
+
+| Foreground / control | Background | Contrast |
+|---|---|---:|
+| Ink | Background | 14.93:1 |
+| Ink | Surface | 16.20:1 |
+| Ink | Muted surface | 13.79:1 |
+| Muted text | Background | 6.62:1 |
+| Muted text | Surface | 7.18:1 |
+| Muted text | Muted surface | 6.12:1 |
+| Primary | Background | 7.28:1 |
+| White button text | Primary button | 7.90:1 |
+| Secondary foreground | Secondary surface | 9.60:1 |
+| Form-control border `#7D8D83` | Muted surface | 3.22:1 |
+
+These source-token calculations meet the usual 4.5:1 normal-text and 3:1 non-text contrast thresholds for the listed pairs. They do **not** certify the rendered application: opacity, images, state changes, browser rendering, disabled states, icons, charts, third-party components and every individual page still require testing. The focus ring, keyboard behavior, accessible names and screen-reader announcements must be evaluated separately.

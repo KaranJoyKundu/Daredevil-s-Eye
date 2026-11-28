@@ -1,0 +1,29 @@
+name: Accessibility feedback
+description: Report an accessibility barrier or suggest an improvement
+title: "[Accessibility]: "
+labels: ["accessibility", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: "Please share only what you are comfortable sharing. Do not include sensitive health or identity information."
+  - type: textarea
+    id: barrier
+    attributes:
+      label: What barrier did you encounter?
+    validations:
+      required: true
+  - type: dropdown
+    id: assistive_technology
+    attributes:
+      label: Assistive technology (optional)
+      options:
+        - TalkBack
+        - VoiceOver
+        - NVDA
+        - Keyboard only
+        - Screen magnification
+        - Other / prefer not to say
+  - type: textarea
+    id: expected
+    attributes:
+      label: What would make this easier?

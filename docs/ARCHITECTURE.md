@@ -1,20 +1,30 @@
 # Architecture
 
+> [Documentation hub](https://daredevils-eye.karanjoykundu.workers.dev/documentation/) · [Open the app](https://daredevils-eye.karanjoykundu.workers.dev/)
+
+
 ## Runtime
 
-A Cloudflare Worker serves the static files in `web/` and the API routes in `worker/src/index.js`. The project's Gemini API key stays a Worker secret. A personal key can be sent by the browser in a same-origin request header, or stored encrypted for a signed-in user. Durable Objects store SOS invitations and alert state. Supabase (Postgres plus a private storage bucket) stores optional account and guest photo history. A daily cron trigger deletes guest history older than 30 days.
+A Cloudflare Worker serves the static files in `web/` and the API routes in `worker/src/index.js`. The project's Gemini API key stays a Worker secret. Admin can send a tab-scoped personal key in a same-origin request header. Signed-in users can separately save an account key through Account & History; the Worker encrypts it with AES-256-GCM and stores ciphertext plus IV in Supabase. Durable Objects store SOS invitations and alert state. Supabase (Postgres plus a private storage bucket) stores optional account and guest photo history plus encrypted signed-in Gemini API keys. A daily cron trigger deletes guest history older than 30 days.
 
 ## Browser and route layout
 
-- `/`: project landing page (`web/index.html`, styles and scripts in `web/assets/`).
-- `/action/`: the main app, with four actions and the phone camera and upload preview.
-- `/blind/`: Blind mode, with four tiles and spoken help. It has no shared header or menu. The installed app opens here.
-- `/admin/`: settings kept in this browser: camera, SOS pairing, model list, assistant mode and system prompt, voice, BYOK and an image tester.
-- `/diagnostics/`: camera, microphone, AI, speaker, motion and backend checks.
-- `/account/`: sign in, account and guest photo history, saved personal key and usage.
-- `/help/`, `/terms/`, `/privacy/`, `/support/`, `/contact/`, `/sos-receiver/`: supporting pages.
-- `web/shared/site-nav.js`: the shared menu and brand link. `web/shared/language.js` and `web/shared/bn-text.js` handle the English / বাংলা switch and the Bangla interface text.
-- `web/manifest.webmanifest` and `web/sw.js`: the installable app and the web push handler for SOS.
+The canonical page ownership and full feature inventory are maintained in [FEATURE-MAP](FEATURE-MAP.md). The five navigation groups are USE, SAFETY, DEVICES, CONTROL CENTER and INFORMATION.
+
+- `/`: project landing and About page (`web/index.html` and `web/assets/`).
+- `/action/`: main task interface: Describe, Ask AI, phone camera and upload.
+- `/blind/`: blind-first four-action interface with spoken help and accessible status.
+- `/sos/`: canonical SOS Center containing both sender and receiver workflows.
+- `/sos-receiver/`: legacy compatibility route only; it must not be a second SOS feature home.
+- `/medicine/`: medicine identification and RFID-assisted result.
+- `/devices/`: phone shortcut settings and hardware setup entry points.
+- `/admin/`: app/device configuration, assistant prompt, model, voice and preferences. No documentation index or roadmap.
+- `/diagnostics/`: camera, microphone, AI, speaker, motion and backend health checks; not a settings page.
+- `/account/`: sign-in and optional account/guest photo history.
+- `/documentation/`: structured guide hub; task-oriented instructions are in Help and technical references are in versioned Markdown.
+- `/help/`, `/terms/`, `/privacy/`, `/support/`, `/contact/`: information and support pages.
+- `web/shared/site-nav.js`: grouped global navigation and privacy notice. `web/shared/language.js` and `web/shared/bn-text.js` handle English / বাংলা.
+- `web/manifest.webmanifest` and `web/sw.js`: installable web app and SOS Web Push handler.
 
 ## Prompt assembly
 
@@ -62,7 +72,7 @@ The audio is processed transiently by the Worker and forwarded to Google. App co
 - Worker reads the custom request header or the project secret.
 - The Worker does not write the personal key to the database or durable storage.
 - Closing the tab clears the browser session key.
-- This is not an account-level key vault or an encrypted saved-key feature.
+- This Admin path is not an account-level key vault. Signed-in users can manage a separately encrypted saved key from Account & History; the Worker decrypts it only for the provider request.
 
 ## Public API and provider quotas
 
@@ -92,9 +102,9 @@ SOS is started by the user. A push service accepting the notification does not p
 - Usage counts use a keyed hash of the IP address (HMAC). Raw IP addresses are never stored.
 - Not built yet: email OTP, guest trial limits, per-user quotas and an admin usage dashboard (see [Roadmap](ROADMAP.md)). An IP address alone must not be treated as one person.
 
-See [Supabase setup](SUPABASE-ACCOUNT-HISTORY-SETUP.md).
+See [Supabase setup](OPERATIONS.md).
 
 
 ## Native Android application
 
-The native Android companion is merged into `main` and documented in [NATIVE-ANDROID-APP.md](NATIVE-ANDROID-APP.md). It uses Capacitor for the Android WebView and a native volume-key plugin plus an optional, explicitly enabled Accessibility Service. The current wrapper loads the existing HTTPS Worker app so same-origin API calls and HttpOnly session cookies remain intact; it is online-first. A debug APK was built successfully by CI, but this is not evidence of physical Galaxy A55 acceptance. WebView mixed content and Android cleartext are enabled for the existing configurable HTTP ESP32-CAM LAN endpoint; keep that endpoint on a trusted local network and never expose it to the public Internet. Global volume shortcuts, screen-off event delivery, TalkBack coexistence and camera/microphone behaviour require physical Galaxy A55 validation. Never assume a WebView can run camera or microphone actions after Android suspends it.
+The native Android companion is merged into `main` and documented in [ANDROID.md](ANDROID.md). It uses Capacitor for the Android WebView and a native volume-key plugin plus an optional, explicitly enabled Accessibility Service. The current wrapper loads the existing HTTPS Worker app so same-origin API calls and HttpOnly session cookies remain intact; it is online-first. A debug APK was built successfully by CI, but this is not evidence of physical Galaxy A55 acceptance. WebView mixed content and Android cleartext are enabled for the existing configurable HTTP ESP32-CAM LAN endpoint; keep that endpoint on a trusted local network and never expose it to the public Internet. Global volume shortcuts, screen-off event delivery, TalkBack coexistence and camera/microphone behaviour require physical Galaxy A55 validation. Never assume a WebView can run camera or microphone actions after Android suspends it.
