@@ -124,7 +124,12 @@ const DEFAULT_EXPIRED_TEXT='Warning! This medicine has expired.';
 async function medicineApi(url,options={}){
  const response=await fetch(url,{credentials:'same-origin',cache:'no-store',...options,headers:{'content-type':'application/json',...(options.headers||{})}});
  const data=await response.json().catch(()=>({}));
- if(!response.ok||data.ok===false)throw new Error(data.error||'Medicine request failed (HTTP '+response.status+').');
+ if(!response.ok||data.ok===false){
+  if(location.hostname.endsWith('.vercel.app')&&(response.status===404||response.status===405)){
+   throw new Error('This preview is for interface review only. Account and RFID services are not connected here; open the live app to manage real readers and medicine cards.');
+  }
+  throw new Error(data.error||'Medicine request failed (HTTP '+response.status+').');
+ }
  return data;
 }
 function renderMedicines(){
