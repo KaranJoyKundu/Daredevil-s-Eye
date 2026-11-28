@@ -236,6 +236,18 @@ The Documentation hub must organise content by reader intent, not by an unstruct
 - [ ] Retire the temporary recovery checkpoint only after the merged branch and backup are confirmed.
 - [ ] Publish a final handoff with PR, preview URL, production URL, test evidence, remaining limitations and final Markdown count.
 
+## 11. Visual system and product polish
+
+- [x] Use design exploration to establish a distinct product direction: **Quiet Clarity** — calm, editorial, task-first and accessibility-led rather than a generic AI dashboard.
+- [x] Define shared semantic colors, typography, surfaces, spacing, borders, focus states and reduced-motion behavior in the app-wide stylesheet.
+- [x] Apply a matching landing-page treatment with a clear two-column desktop hero, restrained product preview, quiet surfaces and responsive stacking.
+- [x] Reduce decorative gradients, oversized card treatments and heavy shadows across shared app surfaces without changing product workflows.
+- [x] Preserve Blind Mode's separate full-screen, high-contrast 2×2 interaction surface.
+- [ ] Verify the new styles on the exact latest Vercel preview deployment across homepage, Action, Admin, Documentation, Devices, SOS and Blind Mode.
+- [ ] Verify 390×844 phone layout, tablet and desktop, including no horizontal overflow and no clipped controls.
+- [ ] Keyboard-test focus visibility and navigation; verify contrast with rendered colors and test screen-reader labels/live regions.
+- [ ] Run supervised blind/low-vision usability evaluation and physical Galaxy A55 acceptance; CSS review alone is not accessibility certification.
+
 ---
 
 ## Evidence and completion rules
